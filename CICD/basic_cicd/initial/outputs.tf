@@ -25,3 +25,16 @@ output "codebuild_project_arns" {
     for k, v in aws_codebuild_project.codebuild : k => v.arn
   }
 }
+output "codepipeline_names" {
+  description = "Map of CodePipeline pipeline names"
+  value = {
+    for k, v in aws_codepipeline.codepipeline : k => v.name
+  }
+}
+
+output "codepipeline_arns" {
+  description = "Map of CodePipeline pipeline ARNs"
+  value = {
+    for k, v in aws_codepipeline.codepipeline : k => v.arn
+  }
+}

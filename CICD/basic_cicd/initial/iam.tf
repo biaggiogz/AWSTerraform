@@ -28,6 +28,17 @@ data "aws_iam_policy_document" "codebuild_policy" {
 
 }
 
+data "aws_iam_policy_document" "codepipeline_trust_relationship" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["codepipeline.amazonaws.com"]
+    }
+  }
+}
+
 resource "aws_iam_role" "codebuild_service_role" {
   count              = var.create_codebuild_service_role ? 1 : 0
   name               = "${var.project_prefix}-codebuild-service-role-${random_string.random_string.result}"
@@ -39,6 +50,17 @@ resource "aws_iam_role_policy_attachment" "codebuild_service_role" {
   role       = aws_iam_role.codebuild_service_role[0].name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 
-  # - Challenge: resolve Checkov issues -
-  #checkov:skip=CKV_AWS_274: "Disallow IAM roles, users, and groups from using the AWS AdministratorAccess policy"
+
+}
+
+resource "aws_iam_role" "codepipeline_service_role" {
+  count              = var.create_codepipeline_service_role ? 1 : 0
+  name               = "${var.project_prefix}-codepipeline-service-role-${random_string.random_string.result}"
+  assume_role_policy = data.aws_iam_policy_document.codepipeline_trust_relationship.json
+}
+resource "aws_iam_role_policy_attachment" "codepipeline_service_role" {
+  count      = var.create_codepipeline_service_role ? 1 : 0
+  role       = aws_iam_role.codepipeline_service_role[0].name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+
 }

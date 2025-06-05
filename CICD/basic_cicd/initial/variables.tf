@@ -56,3 +56,42 @@ variable "project_prefix" {
     error_message = "The defined 'project_prefix' has too many characters (${length(var.project_prefix)}). This can cause deployment failures for AWS resources with smaller character limits. Please reduce the character count and try again."
   }
 }
+
+variable "codepipeline_pipelines" {
+  description = "Map of CodePipeline pipeline configurations"
+  type = map(object({
+    name                     = string
+    pipeline_type            = string
+    existing_s3_bucket_name  = optional(string, null)
+    stages                   = list(object({
+      name    = string
+      enabled = optional(bool, true)
+      action  = list(object({
+        name             = string
+        owner            = string
+        version          = string
+        category         = string
+        provider         = string
+        input_artifacts  = optional(list(string), [])
+        output_artifacts = optional(list(string), [])
+        configuration    = optional(map(string), {})
+        role_arn         = optional(string, null)
+        run_order        = optional(number, null)
+        region           = optional(string, null)  # will default to current region in resource
+      }))
+    }))
+  }))
+  default = {}
+}
+
+variable "codepipeline_service_role_arn" {
+  description = "ARN of the IAM role CodePipeline will use. If null, a default role is created."
+  type        = string
+  default     = null
+}
+
+variable "create_codepipeline_service_role" {
+  type        = bool
+  default     = true
+  description = "Conditional creation of CodePipeline IAM Role."
+}

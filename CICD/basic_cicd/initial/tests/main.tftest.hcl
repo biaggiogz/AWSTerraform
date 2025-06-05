@@ -41,6 +41,58 @@ variables {
     }
   }
 
+
+
+  codepipeline_pipelines = {
+    test_pipeline = {
+      name          = "test-pipeline"
+      pipeline_type = "Custom"
+
+      existing_s3_bucket_name = null
+
+      stages = [
+        {
+          name    = "Source"
+          enabled = true
+          action = [
+            {
+              name             = "SourceAction"
+              owner           = "AWS"
+              version         = "1"
+              category        = "Source"
+              provider        = "CodeStarSourceConnection"
+              output_artifacts = ["source_output"]
+              configuration = {
+                ConnectionArn    = "arn:aws:codestar-connections:us-east-1:123456789012:connection/abcde-12345"
+                FullRepositoryId = "hashicorp/terraform"
+                BranchName       = "main"
+              }
+            }
+          ]
+        },
+        {
+          name    = "Build"
+          enabled = true
+          action = [
+            {
+              name            = "BuildAction"
+              owner           = "AWS"
+              version         = "1"
+              category        = "Build"
+              provider        = "CodeBuild"
+              input_artifacts = ["source_output"]
+              output_artifacts = ["build_output"]
+              configuration = {
+                ProjectName = "test-project"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+
+
   tags = {
     Project = "Example"
   }
@@ -76,5 +128,22 @@ run "test_codebuild_project" {
   assert {
     condition     = length(output.codebuild_project_arns["test_project"]) > 0
     error_message = "CodeBuild project ARN is empty"
+  }
+}
+
+
+run "test_codepipeline" {
+  module {
+    source = "../"
+  }
+
+  assert {
+    condition     = output.codepipeline_names["test_pipeline"] == "test-pipeline"
+    error_message = "CodePipeline name is incorrect"
+  }
+
+  assert {
+    condition     = length(output.codepipeline_arns["test_pipeline"]) > 0
+    error_message = "CodePipeline ARN is empty"
   }
 }
