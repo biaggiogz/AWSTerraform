@@ -20,13 +20,13 @@ resource "aws_s3_bucket_versioning" "codepipeline_artifacts_buckets" {
 }
 
 resource "aws_s3_bucket_logging" "codepipeline_artifacts_buckets" {
-  for_each = var.tf_remote_state_resource_configs
+  for_each = var.codepipeline_pipelines  # <-- match the buckets' for_each
 
   bucket = aws_s3_bucket.codepipeline_artifacts_buckets[each.key].id
-
   target_bucket = aws_s3_bucket.codepipeline_artifacts_buckets[each.key].id
   target_prefix = "log/"
 }
+
 
 resource "aws_s3_bucket_public_access_block" "codepipeline_bucket_pabs" {
   for_each = var.codepipeline_pipelines == null ? {} : var.codepipeline_pipelines

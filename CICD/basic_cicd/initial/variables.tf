@@ -22,17 +22,19 @@ variable "codebuild_projects" {
     name             = string
     description      = optional(string, "")
     build_timeout    = optional(number, 60)
-    env_compute_type = string
-    env_image        = string
-    env_type         = string
-    source_type      = string
-    source_location  = string
+    env_compute_type = optional(string, "BUILD_GENERAL1_SMALL")
+    env_image        = optional(string, "hashicorp/terraform:latest")
+    env_type         = optional(string, "LINUX_CONTAINER")
+    source_type      = optional(string, "NO_SOURCE")
+    source_location    = optional(string, null)
     source_clone_depth = optional(number, 1)
     path_to_build_spec = optional(string, null)
     build_spec       = optional(string, null)
     source_version   = optional(string, null)
   }))
   default = {}
+
+
 }
 
 variable "codebuild_service_role_arn" {
@@ -61,8 +63,9 @@ variable "codepipeline_pipelines" {
   description = "Map of CodePipeline pipeline configurations"
   type = map(object({
     name                     = string
-    pipeline_type            = string
+    pipeline_type           = optional(string, "V2")
     existing_s3_bucket_name  = optional(string, null)
+    event_pattern           = optional(string, null)
     stages                   = list(object({
       name    = string
       enabled = optional(bool, true)
@@ -82,6 +85,8 @@ variable "codepipeline_pipelines" {
     }))
   }))
   default = {}
+
+
 }
 
 variable "codepipeline_service_role_arn" {
