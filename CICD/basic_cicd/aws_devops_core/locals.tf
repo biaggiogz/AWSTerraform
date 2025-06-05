@@ -1,12 +1,6 @@
 locals {
-  # -- CodeCommit --
-  # CodeCommit Repository Names
-  module_aws_tf_cicd_repository_name          = "AWSTerraform"
-  aws_devops_core_repository_name             = "AWSTerraform"
-  dev_workload_repository_name = "ELT-Piping"
-
-
-  tf_test_module_inital_codebuild_project_name = "TerraformTest-module-initial"
+  codestar_connection_arns = module.module-aws-tf-cicd.connection_arns
+  tf_test_module_initial_codebuild_project_name = "TerraformTest-module-initial"
   chevkov_module_initial_codebuild_project_name = "Checkov-module-initial"
 
   tf_test_aws_devops_core_codebuild_project_name = "TerraformTest-aws-devops-core"

@@ -9,7 +9,23 @@ resource "aws_s3_bucket" "codepipeline_artifacts_buckets" {
   for_each = var.codepipeline_pipelines == null ? {} : var.codepipeline_pipelines
   bucket   = "pipeline-artifacts-${each.value.name}-${random_string.codepipeline_artifacts_s3_buckets[each.key].result}"
   force_destroy = true
+}
 
+resource "aws_s3_bucket_versioning" "codepipeline_artifacts_buckets" {
+  for_each = var.codepipeline_pipelines == null ? {} : var.codepipeline_pipelines
+  bucket   = aws_s3_bucket.codepipeline_artifacts_buckets[each.key].id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_logging" "codepipeline_artifacts_buckets" {
+  for_each = var.tf_remote_state_resource_configs
+
+  bucket = aws_s3_bucket.codepipeline_artifacts_buckets[each.key].id
+
+  target_bucket = aws_s3_bucket.codepipeline_artifacts_buckets[each.key].id
+  target_prefix = "log/"
 }
 
 resource "aws_s3_bucket_public_access_block" "codepipeline_bucket_pabs" {

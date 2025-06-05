@@ -35,6 +35,15 @@ resource "aws_codebuild_project" "codebuild" {
     type = "NO_ARTIFACTS" # No build artifacts are produced
   }
 
+  # Logging configuration for CloudWatch logs
+  logs_config {
+    cloudwatch_logs {
+      status = "ENABLED"
+      group_name = "/aws/codebuild/${each.value.name}"
+      stream_name = "build-log"
+    }
+  }
+
   # Resource tags - merges Name tag with provided tags
   tags = merge(
     {

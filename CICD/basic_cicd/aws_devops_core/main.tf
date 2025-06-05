@@ -23,7 +23,7 @@ module "module-aws-tf-cicd" {
 
   codebuild_projects = {
     tf_test_module_intial : {
-      name        = local.tf_test_module_inital_codebuild_project_name
+      name        = local.tf_test_module_initial_codebuild_project_name
       description = "CodeBuild Project that uses the Terraform Test Framework to test the functionality of the module initial Terraform Module."
       path_to_build_spec = local.tf_test_path_to_buildspec
     },
@@ -71,6 +71,7 @@ module "module-aws-tf-cicd" {
 
     tf_module_validation_module_initial: {
       name = local.tf_module_validation_module_initial_codepipeline_pipeline_name
+      pipeline_type = "V2"
 
       tags = {
         "Description"         = "Pipeline that validates functionality and security of the module initial Terraform Module.",
@@ -93,7 +94,7 @@ module "module-aws-tf-cicd" {
               output_artifacts = ["source_output_artifacts"]
               run_order        = 1
               configuration = {
-                ConnectionArn    = var.codestar_connections["initial"].arn  # <-- pass ARN here
+                ConnectionArn    = local.codestar_connection_arns["initial"]  # <-- pass ARN here
                 FullRepositoryId = "biaggiogz/AWSTerraform"               # Use your GitHub repo path
                 BranchName       = "CICD"
               }
@@ -112,7 +113,7 @@ module "module-aws-tf-cicd" {
               provider         = "CodeBuild"
               run_order = 2
               configuration = {
-                ProjectName= local.tf_test_module_inital_codebuild_project_name
+                ProjectName= local.tf_test_module_initial_codebuild_project_name
               }
               input_artifacts = ["source_output_artifacts"]
               output_artifacts = ["build_tf_test_output_artifacts"]
@@ -130,7 +131,6 @@ module "module-aws-tf-cicd" {
               version          = "1"
               category         = "Build"
               provider         = "CodeBuild"
-              input_artifacts = []
               input_artifacts = ["source_output_artifacts"]
               output_artifacts = ["build_checkov_output_artifacts"]
               run_order = 3
@@ -147,7 +147,7 @@ module "module-aws-tf-cicd" {
 
 
     tf_deployment_dev_workload : {
-
+      pipeline_type = "V2"
       name = local.tf_deployment_dev_workload_codepipeline_pipeline_name
       tags = {
         "Description"         = "Pipeline that validates functionality/security and deploys the Example Production Workload.",
@@ -170,7 +170,7 @@ module "module-aws-tf-cicd" {
               output_artifacts = ["source_output_artifacts"]
               run_order        = 1
               configuration = {
-                ConnectionArn    = var.codestar_connections["initial"].arn  # <-- pass ARN here
+                ConnectionArn    = local.codestar_connection_arns["initial"]  # <-- pass ARN here
                 FullRepositoryId = "biaggiogz/AWSTerraform"               # Use your GitHub repo path
                 BranchName       = "CICD"
                 DetectChanges: false

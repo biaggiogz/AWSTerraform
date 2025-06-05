@@ -19,6 +19,15 @@ resource "aws_s3_bucket" "tf_remote_state_s3_buckets" {
   force_destroy = true  # Careful with this in production
 }
 
+resource "aws_s3_bucket_logging" "tf_remote_state_s3_buckets" {
+  for_each = var.tf_remote_state_resource_configs
+
+  bucket = aws_s3_bucket.tf_remote_state_s3_buckets[each.key].id
+
+  target_bucket = aws_s3_bucket.tf_remote_state_s3_buckets[each.key].id
+  target_prefix = "log/"
+}
+
 # Enables versioning on the S3 buckets to maintain state file history
 # Versioning helps protect against accidental deletions/changes
 # Applied to each bucket created above
