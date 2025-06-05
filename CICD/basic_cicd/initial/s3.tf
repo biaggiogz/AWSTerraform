@@ -11,3 +11,13 @@ resource "aws_s3_bucket" "codepipeline_artifacts_buckets" {
   force_destroy = true
 
 }
+
+resource "aws_s3_bucket_public_access_block" "codepipeline_bucket_pabs" {
+  for_each = var.codepipeline_pipelines == null ? {} : var.codepipeline_pipelines
+  bucket   = aws_s3_bucket.codepipeline_artifacts_buckets[each.key].id
+
+  block_public_acls       = var.s3_public_access_block
+  block_public_policy     = var.s3_public_access_block
+  ignore_public_acls      = var.s3_public_access_block
+  restrict_public_buckets = var.s3_public_access_block
+}

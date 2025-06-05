@@ -38,3 +38,12 @@ output "codepipeline_arns" {
     for k, v in aws_codepipeline.codepipeline : k => v.arn
   }
 }
+output "s3_bucket_names" {
+  description = "Map of S3 bucket names"
+  value = { for k, v in aws_s3_bucket.tf_remote_state_s3_buckets : k => v.bucket }
+}
+
+output "dynamodb_table_names" {
+  description = "Map of DynamoDB table names"
+  value = { for k, v in aws_dynamodb_table.tf_remote_state_lock_tables : k => v.name }
+}

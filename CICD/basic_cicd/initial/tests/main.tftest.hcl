@@ -92,6 +92,16 @@ variables {
     }
   }
 
+    tf_remote_state_resource_configs = {
+      test_tf_remote_state_config_1 = {
+        prefix              = "test-tf-state-lock"
+        ddb_billing_mode    = "PAY_PER_REQUEST"
+        ddb_hash_key        = "LockID"
+        s3_public_access_block = true
+      }
+    }
+    s3_public_access_block = true
+
 
   tags = {
     Project = "Example"
@@ -146,4 +156,22 @@ run "test_codepipeline" {
     condition     = length(output.codepipeline_arns["test_pipeline"]) > 0
     error_message = "CodePipeline ARN is empty"
   }
+}
+
+run "test_s3_bucket_and_dynamodb_table" {
+  module {
+    source = "../"
+  }
+
+  assert {
+    condition     = startswith(output.s3_bucket_names["test_tf_remote_state_config_1"], "test-tf-state")
+    error_message = "S3 bucket name does not start with expected prefix"
+  }
+
+
+  assert {
+    condition     = startswith(output.dynamodb_table_names["test_tf_remote_state_config_1"], "test-tf-state-lock")
+    error_message = "DynamoDB table name does not start with expected prefix"
+  }
+
 }

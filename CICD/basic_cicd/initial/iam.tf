@@ -38,6 +38,45 @@ data "aws_iam_policy_document" "codepipeline_trust_relationship" {
     }
   }
 }
+data "aws_iam_policy_document" "codepipeline_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:GetBucketVersioning",
+      "s3:PutObjectAcl",
+      "s3:PutObject",
+    ]
+    resources = ["*"]
+  }
+
+
+}
+
+data "aws_iam_policy_document" "eventbridge_trust_relationship" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["events.amazonaws.com"]
+    }
+  }
+}
+
+
+data "aws_iam_policy_document" "eventbridge_invoke_tf_workshop_event_bus_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "events:PutEvents",
+    ]
+    resources = [
+      aws_cloudwatch_event_bus.tf_workshop_event_bus.arn,
+    ]
+  }
+}
 
 resource "aws_iam_role" "codebuild_service_role" {
   count              = var.create_codebuild_service_role ? 1 : 0
@@ -52,7 +91,12 @@ resource "aws_iam_role_policy_attachment" "codebuild_service_role" {
 
 
 }
-
+resource "aws_iam_policy" "codebuild_policy" {
+  count       = var.create_codebuild_service_role ? 1 : 0
+  name        = "${var.project_prefix}-codebuild-service-role-policy${random_string.random_string.result}"
+  description = "Policy granting AWS CodePipeling restricted access to _____"
+  policy      = data.aws_iam_policy_document.codebuild_policy[0].json
+}
 resource "aws_iam_role" "codepipeline_service_role" {
   count              = var.create_codepipeline_service_role ? 1 : 0
   name               = "${var.project_prefix}-codepipeline-service-role-${random_string.random_string.result}"
@@ -63,4 +107,70 @@ resource "aws_iam_role_policy_attachment" "codepipeline_service_role" {
   role       = aws_iam_role.codepipeline_service_role[0].name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 
+}
+resource "aws_iam_policy" "codepipeline_policy" {
+  count       = var.create_codepipeline_service_role ? 1 : 0
+  name        = "${var.project_prefix}-codepipeline-service-role-policy-${random_string.random_string.result}"
+  description = "Policy granting AWS CodePipeline access to Amazon S3."
+  policy      = data.aws_iam_policy_document.codepipeline_policy.json
+}
+resource "aws_iam_policy" "eventbridge_invoke_tf_workshop_event_bus_policy" {
+  count       = var.create_cloudwatch_service_role ? 1 : 0
+  name        = "${var.project_prefix}-cloudwatch-service-role-policy-${random_string.random_string.result}"
+  description = "Policy allowing events on the Default Event Bus to invoke the TF Workshop Event Bus."
+  policy      = data.aws_iam_policy_document.eventbridge_invoke_tf_workshop_event_bus_policy.json
+}
+
+data "aws_iam_policy_document" "eventbridge_invoke_codepipeline_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "codepipeline:StartPipelineExecution",
+    ]
+    resources = [
+      "*"
+    ]
+  }
+
+}
+resource "aws_iam_policy" "eventbridge_invoke_codepipeline_policy" {
+  name        = "${var.project_prefix}-eventbridge-invoke-codepipeline-${random_string.random_string.result}"
+  description = "Policy that allows EventBridge to invoke the any CodePipelines."
+  policy      = data.aws_iam_policy_document.eventbridge_invoke_codepipeline_policy.json
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.project_prefix}-eventbridge-invoke-codepipeline"
+    },
+  )
+}
+
+resource "aws_iam_role" "eventbridge_invoke_tf_workshop_event_bus" {
+  count              = var.create_cloudwatch_service_role ? 1 : 0
+  name               = "${var.project_prefix}-eventbridge-invoke-tf-workshop-event-bus-${random_string.random_string.result}"
+  assume_role_policy = data.aws_iam_policy_document.eventbridge_trust_relationship.json
+}
+resource "aws_iam_role_policy_attachment" "eventbridge_invoke_tf_workshop_event_bus" {
+  count      = var.create_cloudwatch_service_role ? 1 : 0
+  role       = aws_iam_role.eventbridge_invoke_tf_workshop_event_bus[0].name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+
+}
+
+resource "aws_iam_role" "eventbridge_invoke_codepipeline" {
+  name                  = "${var.project_prefix}-eventbridge-invoke-codepipeline-${random_string.random_string.result}"
+  assume_role_policy    = data.aws_iam_policy_document.eventbridge_trust_relationship.json
+  force_detach_policies = var.enable_force_detach_policies
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.project_prefix}-eventbridge-invoke-codepipeline"
+    },
+  )
+}
+resource "aws_iam_role_policy_attachment" "eventbridge_invoke_codepipeline" {
+  role       = aws_iam_role.eventbridge_invoke_codepipeline.name
+  policy_arn = aws_iam_policy.eventbridge_invoke_codepipeline_policy.arn
 }
