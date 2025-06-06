@@ -218,7 +218,27 @@ module "module-aws-tf-cicd" {
             },
           ]
         },
+        {
+          name = "Manual_Approval"
+          action = [
+            {
+              name     = "ManualApprovalAction"
+              category = "Approval"
+              owner    = "AWS"
+              provider = "Manual"
+              version  = "1"
+              configuration = {
+                CustomData      = "Please approve this deployment."
+                NotificationArn = aws_sns_topic.manual_approval_sns_topic.arn
+              }
 
+              input_artifacts = []
+              output_artifacts = []
+
+              run_order = 4
+            },
+          ]
+        },
         {
           name = "Apply"
           action = [
@@ -234,7 +254,7 @@ module "module-aws-tf-cicd" {
               input_artifacts = ["source_output_artifacts"]
               output_artifacts = ["build_tf_apply_output_artifacts"]
 
-              run_order = 4
+              run_order = 5
             },
           ]
         },
@@ -245,3 +265,12 @@ module "module-aws-tf-cicd" {
   }
 }
 
+resource "aws_sns_topic" "manual_approval_sns_topic" {
+  name = "manual-approval-sns-topic"
+}
+
+resource "aws_sns_topic_subscription" "manual_approval_sns_subscription" {
+  topic_arn = aws_sns_topic.manual_approval_sns_topic.arn
+  protocol  = "email"
+  endpoint  = "gabirelgutierrez@outlook.com"
+}
