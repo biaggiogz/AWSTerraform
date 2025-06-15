@@ -1,0 +1,76 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app {
+  display: flex;
+}
+
+.main-header {
+  font-size: 2.5rem;
+  color: #FF9900;
+  text-align: center;
+}
+
+.sub-header {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.metric-card {
+  background-color: #f0f2f6;
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  height: 100%;
+}
+
+.sidebar {
+  background-color: #232F3E;
+  color: white;
+  padding: 20px;
+  height: 100vh;
+  position: fixed;
+  width: 250px;
+}
+
+.main-content {
+  margin-left: 250px;
+  padding: 20px;
+  width: calc(100% - 250px);
+}
+
+.metric-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.metric-label {
+  font-size: 1rem;
+  color: #666;
+}
+
+.metric-change {
+  font-size: 0.9rem;
+}
+
+.positive-change {
+  color: green;
+}
+
+.negative-change {
+  color: red;
+}
+
+.footer {
+  margin-top: 30px;
+  text-align: center;
+  color: #666;
+  padding: 10px;
+  border-top: 1px solid #eee;
+}
