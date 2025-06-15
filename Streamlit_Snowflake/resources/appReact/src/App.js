@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer 
@@ -14,6 +14,10 @@ function App() {
   
   const [dataSource, setDataSource] = useState('Sales Data');
   const [regions, setRegions] = useState(['North America', 'Europe']);
+  
+  // State for filtering
+  const [filter, setFilter] = useState(null);
+  const chartsRef = useRef(null);
 
   // Generate sample data
   const generateSampleData = () => {
@@ -21,10 +25,12 @@ function App() {
     const endDate = new Date(dateRange[1]);
     
     const dates = eachDayOfInterval({ start: startDate, end: endDate });
+    const allRegions = ['North America', 'Europe', 'Asia Pacific', 'South America', 'Africa'];
     
     if (dataSource === 'Sales Data') {
       return dates.map(date => ({
         date: format(date, 'yyyy-MM-dd'),
+        region: allRegions[Math.floor(Math.random() * allRegions.length)],
         Revenue: Math.floor(Math.random() * 10000) + 5000,
         Orders: Math.floor(Math.random() * 400) + 100,
         AverageOrderValue: Math.floor(Math.random() * 100) + 50
@@ -32,6 +38,7 @@ function App() {
     } else if (dataSource === 'Website Traffic') {
       return dates.map(date => ({
         date: format(date, 'yyyy-MM-dd'),
+        region: allRegions[Math.floor(Math.random() * allRegions.length)],
         Visitors: Math.floor(Math.random() * 4000) + 1000,
         PageViews: Math.floor(Math.random() * 12000) + 3000,
         BounceRate: (Math.random() * 0.4) + 0.2
@@ -39,6 +46,7 @@ function App() {
     } else { // User Engagement
       return dates.map(date => ({
         date: format(date, 'yyyy-MM-dd'),
+        region: allRegions[Math.floor(Math.random() * allRegions.length)],
         ActiveUsers: Math.floor(Math.random() * 1500) + 500,
         SessionDuration: (Math.random() * 8) + 2,
         ConversionRate: (Math.random() * 0.09) + 0.01
@@ -47,6 +55,16 @@ function App() {
   };
 
   const data = generateSampleData();
+  
+  // Filter data based on selection
+  const filteredData = filter ? data.filter(item => {
+    if (filter.type === 'date') {
+      return item.date === filter.value;
+    } else if (filter.type === 'region') {
+      return filter.value === 'All Regions' || filter.value === item.region;
+    }
+    return true;
+  }) : data;
   
   // Calculate metrics
   const calculateMetrics = () => {
@@ -132,6 +150,41 @@ function App() {
   };
 
   const barChartDataKey = getBarChartData();
+  
+  // Handle click outside charts to clear filter
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (chartsRef.current && !chartsRef.current.contains(event.target)) {
+        setFilter(null);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [chartsRef]);
+  
+  // Handle chart click for filtering
+  const handleChartClick = (data, type) => {
+    if (data && data.activePayload && data.activePayload[0]) {
+      const clickedData = data.activePayload[0].payload;
+      setFilter({
+        type: type,
+        value: clickedData.date
+      });
+    }
+  };
+  
+  // Handle region chart click
+  const handleRegionClick = (data) => {
+    if (data && data.name) {
+      setFilter({
+        type: 'region',
+        value: data.name
+      });
+    }
+  };
 
   return (
     <div className="app">
@@ -232,48 +285,94 @@ function App() {
         
         {/* Charts */}
         <h2 className="sub-header">Trend Analysis</h2>
-        <div style={{ marginBottom: '30px' }}>
-          <h3>Time Series</h3>
-          <div style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                {chartData.map((item, index) => (
-                  <Line 
-                    key={index}
-                    type="monotone" 
-                    dataKey={item.dataKey} 
-                    stroke={item.color} 
-                    activeDot={{ r: 8 }} 
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
+        <div ref={chartsRef}>
+          <div style={{ marginBottom: '30px' }}>
+            <h3>Time Series {filter?.type === 'date' && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.value})</span>}</h3>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart 
+                  data={data}
+                  onClick={(data) => handleChartClick(data, 'date')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  {chartData.map((item, index) => (
+                    <Line 
+                      key={index}
+                      type="monotone" 
+                      dataKey={item.dataKey} 
+                      stroke={item.color} 
+                      activeDot={{ r: 8 }} 
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-        
-        <div style={{ marginBottom: '30px' }}>
-          <h3>Distribution</h3>
-          <div style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey={barChartDataKey} fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
+          
+          <div style={{ marginBottom: '30px' }}>
+            <h3>Distribution {filter?.type === 'date' && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.value})</span>}</h3>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={data}
+                  onClick={(data) => handleChartClick(data, 'date')}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey={barChartDataKey} fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+          <div style={{ marginBottom: '30px' }}>
+            <h3>Breakdown by Region {filter?.type === 'region' && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.value})</span>}</h3>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={regions.map(region => ({
+                    name: region,
+                    value: Math.floor(Math.random() * 10000) + 1000
+                  }))}
+                  onClick={(data) => handleRegionClick(data.activePayload?.[0]?.payload)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="value" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
         
         {/* Data Table */}
-        <h2 className="sub-header">Detailed Data</h2>
+        <h2 className="sub-header">
+          Detailed Data
+          {filter && (
+            <span style={{fontSize: '0.8em', color: '#666', marginLeft: '10px'}}>
+              (Filtered by: {filter.value}) 
+              <button 
+                onClick={() => setFilter(null)} 
+                style={{marginLeft: '10px', cursor: 'pointer', border: 'none', background: 'none', color: '#0066cc'}}
+              >
+                Clear Filter
+              </button>
+            </span>
+          )}
+        </h2>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -285,7 +384,7 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {data.map((row, index) => (
+              {(filter ? filteredData : data).map((row, index) => (
                 <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#f2f2f2' : 'white' }}>
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{row.date}</td>
                   {Object.keys(row).filter(key => key !== 'date').map(key => (
