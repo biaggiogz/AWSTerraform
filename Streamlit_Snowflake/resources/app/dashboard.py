@@ -4,6 +4,8 @@ import numpy as np
 from PIL import Image
 import datetime
 import plotly.express as px
+import json
+from streamlit.components.v1 import html
 
 # Load favicon with error handling
 try:
@@ -37,11 +39,59 @@ st.markdown("""
         padding: 1rem;
         text-align: center;
     }
+    .filter-badge {
+        background-color: #FF9900;
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 1rem;
+        font-size: 0.8rem;
+        margin-right: 0.5rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # Header
 st.markdown('<p class="main-header">Analytics Dashboard</p>', unsafe_allow_html=True)
+
+# Add JavaScript for handling chart click events
+st.markdown("""
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const handlePlotlyClick = (e) => {
+        const curveNumber = e.points[0].curveNumber;
+        const pointNumber = e.points[0].pointNumber;
+        const customdata = e.points[0].customdata;
+        
+        // Send data to Streamlit
+        const data = {
+            curveNumber: curveNumber,
+            pointNumber: pointNumber,
+            customdata: customdata
+        };
+        
+        // Use the chart key to identify which chart was clicked
+        const chartId = e.target.id;
+        const callbackKey = 'callback_' + chartId.split('_')[1];
+        
+        // Store in session state
+        window.parent.postMessage({
+            type: 'streamlit:setComponentValue',
+            value: {
+                [callbackKey]: [data]
+            }
+        }, '*');
+    };
+    
+    // Wait for Plotly charts to be rendered
+    setTimeout(() => {
+        const charts = document.querySelectorAll('.js-plotly-plot');
+        charts.forEach(chart => {
+            chart.on('plotly_click', handlePlotlyClick);
+        });
+    }, 1000);
+});
+</script>
+""", unsafe_allow_html=True)
 
 # Sidebar
 with st.sidebar:
@@ -192,11 +242,44 @@ def resample_data(df, granularity):
     else:  # Daily
         return df_copy
 
+# Helper function for plotly chart with click callback
+def plotly_chart_with_callback(fig, key=None):
+    # Create a unique key for the chart
+    chart_key = f"chart_{key}" if key else "chart"
+    callback_key = f"callback_{key}" if key else "callback"
+    
+    # Add a container for the chart
+    chart_container = st.empty()
+    
+    # Add the chart to the container
+    chart_container.plotly_chart(fig, use_container_width=True, key=chart_key)
+    
+    # Check if there's a callback in session state
+    if callback_key in st.session_state and st.session_state[callback_key]:
+        selected_points = st.session_state[callback_key]
+        # Clear the callback to avoid repeated triggers
+        st.session_state[callback_key] = None
+        return selected_points
+    
+    return None
+
+# Initialize session state for cross-filtering if not exists
+if 'chart_filter' not in st.session_state:
+    st.session_state['chart_filter'] = None
+
 # Generate data based on selection
 df = generate_sample_data(data_source, regions)
 
 # Apply filters
 filtered_df = filter_dataframe(df, data_source)
+
+# Apply chart filter from cross-filtering
+if st.session_state['chart_filter'] is not None:
+    filter_col, filter_val = st.session_state['chart_filter']
+    if filter_col in filtered_df.columns:
+        filtered_df = filtered_df[filtered_df[filter_col] == filter_val]
+        st.sidebar.markdown(f"**Active Filter:** {filter_col} = {filter_val}")
+        st.sidebar.button("Clear Filter", on_click=lambda: st.session_state.update({'chart_filter': None}))
 
 # Apply time granularity
 resampled_df = resample_data(filtered_df, time_granularity)
@@ -253,7 +336,19 @@ with tab1:
                 type="date"
             )
         )
-        st.plotly_chart(fig, use_container_width=True)
+        
+        # Enable click events for cross-filtering
+        fig.update_traces(
+            customdata=resampled_df['Region'],
+            hovertemplate="<b>Date:</b> %{x}<br><b>Value:</b> %{y}<br><b>Region:</b> %{customdata}<extra></extra>"
+        )
+        
+        # Use custom callback for handling click events
+        selected_points = plotly_chart_with_callback(fig, key="timeseries_sales")
+        if selected_points:
+            region = selected_points[0]['customdata']
+            st.session_state['chart_filter'] = ('Region', region)
+            st.rerun()
         
     elif data_source == "Website Traffic":
         fig = px.line(resampled_df, x='Date', y=['Visitors', 'Page Views'], color='Region',
@@ -267,7 +362,19 @@ with tab1:
                 type="date"
             )
         )
-        st.plotly_chart(fig, use_container_width=True)
+        
+        # Enable click events for cross-filtering
+        fig.update_traces(
+            customdata=resampled_df['Region'],
+            hovertemplate="<b>Date:</b> %{x}<br><b>Value:</b> %{y}<br><b>Region:</b> %{customdata}<extra></extra>"
+        )
+        
+        # Use custom callback for handling click events
+        selected_points = plotly_chart_with_callback(fig, key="timeseries_traffic")
+        if selected_points:
+            region = selected_points[0]['customdata']
+            st.session_state['chart_filter'] = ('Region', region)
+            st.rerun()
         
     else:  # User Engagement
         fig = px.line(resampled_df, x='Date', y=['Active Users', 'Session Duration'], color='Region',
@@ -281,7 +388,19 @@ with tab1:
                 type="date"
             )
         )
-        st.plotly_chart(fig, use_container_width=True)
+        
+        # Enable click events for cross-filtering
+        fig.update_traces(
+            customdata=resampled_df['Region'],
+            hovertemplate="<b>Date:</b> %{x}<br><b>Value:</b> %{y}<br><b>Region:</b> %{customdata}<extra></extra>"
+        )
+        
+        # Use custom callback for handling click events
+        selected_points = plotly_chart_with_callback(fig, key="timeseries_engagement")
+        if selected_points:
+            region = selected_points[0]['customdata']
+            st.session_state['chart_filter'] = ('Region', region)
+            st.rerun()
 
 with tab2:
     # Interactive distribution chart
@@ -368,7 +487,30 @@ if search_term:
     for col in string_columns:
         mask = mask | filtered_df[col].str.contains(search_term, case=False, na=False)
     search_results = filtered_df[mask]
-    st.dataframe(search_results, use_container_width=True)
+    
+    # Display interactive dataframe with selection
+    selected_rows = st.data_editor(
+        search_results,
+        use_container_width=True,
+        hide_index=True,
+        disabled=True,
+        key="search_results_table"
+    )
+    
+    # Handle row selection for cross-filtering
+    if st.button("Filter by Selected Row"):
+        if isinstance(selected_rows, dict) and len(selected_rows) > 0:
+            # Get the first selected row index
+            try:
+                row_index = next(iter(selected_rows))
+                # Use the row index to get the corresponding data
+                selected_row = search_results.iloc[int(row_index) if isinstance(row_index, str) and row_index.isdigit() else 0]
+                # Use Region as the filter column
+                st.session_state['chart_filter'] = ('Region', selected_row['Region'])
+                st.rerun()
+            except (ValueError, IndexError, KeyError):
+                st.error("Please select a valid row first")
+                pass
 else:
     # Add column sorting and pagination
     page_size = st.selectbox("Rows per page", [10, 25, 50, 100], key="page_size")
@@ -377,7 +519,30 @@ else:
     start_idx = (page_number - 1) * page_size
     end_idx = min(start_idx + page_size, len(filtered_df))
     
-    st.dataframe(filtered_df.iloc[start_idx:end_idx], use_container_width=True)
+    # Display interactive dataframe with selection
+    selected_rows = st.data_editor(
+        filtered_df.iloc[start_idx:end_idx],
+        use_container_width=True,
+        hide_index=True,
+        disabled=True,
+        key="data_table"
+    )
+    
+    # Handle row selection for cross-filtering
+    if st.button("Filter by Selected Row"):
+        if isinstance(selected_rows, dict) and len(selected_rows) > 0:
+            # Get the first selected row index
+            try:
+                row_index = next(iter(selected_rows))
+                # Use the row index to get the corresponding data
+                selected_row = filtered_df.iloc[start_idx + (int(row_index) if isinstance(row_index, str) and row_index.isdigit() else 0)]
+                # Use Region as the filter column
+                st.session_state['chart_filter'] = ('Region', selected_row['Region'])
+                st.rerun()
+            except (ValueError, IndexError, KeyError):
+                st.error("Please select a valid row first")
+                pass
+            
     st.text(f"Showing {start_idx+1} to {end_idx} of {len(filtered_df)} entries")
 
 # Download data option
