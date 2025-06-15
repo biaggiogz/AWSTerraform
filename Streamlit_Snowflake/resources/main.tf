@@ -657,9 +657,11 @@ resource "aws_ecr_lifecycle_policy" "streamlit_ecr_repo" {
 # }
 data "archive_file" "streamlit_assets" {
   type = "zip"
-  source_dir  = var.path_to_app_dir != null ? var.path_to_app_dir : "${path.root}/app/"
+  source_dir  = var.path_to_app_dir != null ? var.path_to_app_dir : "${path.root}/appStreamlit/"
   output_path = "${var.app_name}-assets.zip"
 }
+
+
 
 resource "aws_s3_bucket" "streamlit_s3_bucket" {
   bucket        = "${var.app_name}-assets-${random_string.streamlit_s3_bucket.result}"
