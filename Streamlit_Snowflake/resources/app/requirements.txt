@@ -4,3 +4,4 @@ langchain
 pandas
 numpy
 pillow
+plotly
