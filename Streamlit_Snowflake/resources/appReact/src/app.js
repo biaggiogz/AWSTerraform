@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div id="metrics" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px"></div>
     
     <h2 class="sub-header">Trend Analysis</h2>
+    <p class="chart-instructions">Click on chart elements to filter the data table. Click again to clear the filter.</p>
     
     <!-- Tab navigation for charts -->
     <div class="chart-tabs">
@@ -100,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     
     <h2 class="sub-header">Detailed Data</h2>
+    <p class="table-instructions">Click on table rows to filter the charts. Click again to clear the filter.</p>
     
     <!-- Search and pagination controls -->
     <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center">
@@ -140,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
   appDiv.appendChild(mainContent);
   root.appendChild(appDiv);
   
-  // Add CSS for tabs
+  // Add CSS for tabs and interactive elements
   const style = document.createElement('style');
   style.textContent = `
     .chart-tabs {
@@ -164,6 +166,20 @@ document.addEventListener('DOMContentLoaded', function() {
     .chart-panel.active {
       display: block;
     }
+    .data-row:hover {
+      background-color: #e6f7ff !important;
+    }
+    .positive-change {
+      color: green;
+    }
+    .negative-change {
+      color: red;
+    }
+    #filterIndicator {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
   `;
   document.head.appendChild(style);
   
@@ -176,6 +192,14 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentPage = 1;
   let rowsPerPage = 10;
   let filteredData = [];
+  
+  // Cross-filtering state
+  let rawData = [];
+  let activeFilters = {
+    date: null,
+    region: null,
+    metric: null
+  };
   
   // Generate sample data
   function generateSampleData() {
@@ -296,6 +320,75 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
+  // Update filter indicator
+  function updateFilterIndicator() {
+    // Create filter indicator if it doesn't exist
+    let filterIndicator = document.getElementById('filterIndicator');
+    if (!filterIndicator) {
+      filterIndicator = document.createElement('div');
+      filterIndicator.id = 'filterIndicator';
+      filterIndicator.style.padding = '10px';
+      filterIndicator.style.margin = '10px 0';
+      filterIndicator.style.backgroundColor = '#f8f9fa';
+      filterIndicator.style.borderRadius = '4px';
+      filterIndicator.style.display = 'none';
+      
+      const clearButton = document.createElement('button');
+      clearButton.textContent = 'Clear Filters';
+      clearButton.style.marginLeft = '10px';
+      clearButton.style.padding = '4px 8px';
+      clearButton.style.backgroundColor = '#FF9900';
+      clearButton.style.border = 'none';
+      clearButton.style.borderRadius = '4px';
+      clearButton.style.color = 'white';
+      clearButton.style.cursor = 'pointer';
+      clearButton.addEventListener('click', clearFilters);
+      
+      filterIndicator.appendChild(clearButton);
+      
+      // Insert after the chart tabs
+      const chartTabs = document.querySelector('.chart-tabs');
+      chartTabs.parentNode.insertBefore(filterIndicator, chartTabs.nextSibling);
+    }
+    
+    // Update filter text
+    let filterText = 'Active filters: ';
+    let hasFilters = false;
+    
+    if (activeFilters.date) {
+      filterText += `Date: ${activeFilters.date} `;
+      hasFilters = true;
+    }
+    
+    if (activeFilters.region) {
+      filterText += `Region: ${activeFilters.region} `;
+      hasFilters = true;
+    }
+    
+    if (activeFilters.metric) {
+      filterText += `Metric: ${activeFilters.metric}`;
+      hasFilters = true;
+    }
+    
+    if (hasFilters) {
+      filterIndicator.innerHTML = filterText;
+      const clearButton = document.createElement('button');
+      clearButton.textContent = 'Clear Filters';
+      clearButton.style.marginLeft = '10px';
+      clearButton.style.padding = '4px 8px';
+      clearButton.style.backgroundColor = '#FF9900';
+      clearButton.style.border = 'none';
+      clearButton.style.borderRadius = '4px';
+      clearButton.style.color = 'white';
+      clearButton.style.cursor = 'pointer';
+      clearButton.addEventListener('click', clearFilters);
+      filterIndicator.appendChild(clearButton);
+      filterIndicator.style.display = 'block';
+    } else {
+      filterIndicator.style.display = 'none';
+    }
+  }
+
   // Update charts
   function updateCharts(data) {
     const dataSource = document.getElementById('dataSource').value;
@@ -457,6 +550,25 @@ document.addEventListener('DOMContentLoaded', function() {
               display: true,
               text: 'Time Series Analysis'
             }
+          },
+          onClick: (e, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const date = uniqueDates[index];
+              
+              // Toggle filter
+              if (activeFilters.date === date) {
+                activeFilters.date = null;
+              } else {
+                activeFilters.date = date;
+              }
+              
+              // Update dashboard with filtered data
+              const filteredData = applyFilters(rawData);
+              updateMetrics(filteredData);
+              updateDataTable(filteredData);
+              updateFilterIndicator();
+            }
           }
         }
       });
@@ -490,6 +602,25 @@ document.addEventListener('DOMContentLoaded', function() {
               display: true,
               text: 'Distribution Analysis'
             }
+          },
+          onClick: (e, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const date = uniqueDates[index];
+              
+              // Toggle filter
+              if (activeFilters.date === date) {
+                activeFilters.date = null;
+              } else {
+                activeFilters.date = date;
+              }
+              
+              // Update dashboard with filtered data
+              const filteredData = applyFilters(rawData);
+              updateMetrics(filteredData);
+              updateDataTable(filteredData);
+              updateFilterIndicator();
+            }
           }
         }
       });
@@ -515,6 +646,18 @@ document.addEventListener('DOMContentLoaded', function() {
             title: {
               display: true,
               text: 'Breakdown by Region'
+            },
+            tooltip: {
+              callbacks: {
+                title: function(tooltipItems) {
+                  return tooltipItems[0].label;
+                },
+                label: function(tooltipItem) {
+                  const datasetLabel = tooltipItem.dataset.label || '';
+                  const value = tooltipItem.parsed.y;
+                  return `${datasetLabel}: ${value.toLocaleString()}`;
+                }
+              }
             }
           },
           scales: {
@@ -523,6 +666,25 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             y: {
               stacked: true
+            }
+          },
+          onClick: (e, elements) => {
+            if (elements.length > 0) {
+              const datasetIndex = elements[0].datasetIndex;
+              const region = regionBreakdownDatasets[datasetIndex].label;
+              
+              // Toggle filter
+              if (activeFilters.region === region) {
+                activeFilters.region = null;
+              } else {
+                activeFilters.region = region;
+              }
+              
+              // Update dashboard with filtered data
+              const filteredData = applyFilters(rawData);
+              updateMetrics(filteredData);
+              updateDataTable(filteredData);
+              updateFilterIndicator();
             }
           }
         }
@@ -540,7 +702,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return color;
   }
   
-  // Filter data based on search input
+  // Filter data based on search input and active filters
   function filterData(data) {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     
@@ -614,7 +776,12 @@ document.addEventListener('DOMContentLoaded', function() {
     tableHTML += '<tbody>';
     
     currentPageData.forEach((row, index) => {
-      tableHTML += `<tr style="background-color: ${index % 2 === 0 ? '#f2f2f2' : 'white'}">`;
+      tableHTML += `<tr 
+        style="background-color: ${index % 2 === 0 ? '#f2f2f2' : 'white'}; cursor: pointer;" 
+        data-date="${row.date}" 
+        data-region="${row.region}"
+        class="data-row"
+      >`;
       tableHTML += `<td style="border: 1px solid #ddd; padding: 8px">${row.date}</td>`;
       tableHTML += `<td style="border: 1px solid #ddd; padding: 8px">${row.region}</td>`;
       
@@ -638,17 +805,81 @@ document.addEventListener('DOMContentLoaded', function() {
     tableHTML += '</tbody></table>';
     
     tableDiv.innerHTML = tableHTML;
+    
+    // Add click event listeners to table rows
+    document.querySelectorAll('.data-row').forEach(row => {
+      row.addEventListener('click', function() {
+        const date = this.getAttribute('data-date');
+        const region = this.getAttribute('data-region');
+        
+        // Toggle date filter if clicked on the same row
+        if (activeFilters.date === date && activeFilters.region === region) {
+          activeFilters.date = null;
+          activeFilters.region = null;
+        } else {
+          activeFilters.date = date;
+          activeFilters.region = region;
+        }
+        
+        // Update dashboard with filtered data
+        const filteredData = applyFilters(rawData);
+        updateMetrics(filteredData);
+        updateCharts(filteredData);
+        updateFilterIndicator();
+      });
+    });
+  }
+  
+  // Apply filters to data
+  function applyFilters(data) {
+    let result = [...data];
+    
+    if (activeFilters.date) {
+      result = result.filter(item => item.date === activeFilters.date);
+    }
+    
+    if (activeFilters.region) {
+      result = result.filter(item => item.region === activeFilters.region);
+    }
+    
+    return result;
+  }
+  
+  // Clear all filters
+  function clearFilters() {
+    activeFilters = {
+      date: null,
+      region: null,
+      metric: null
+    };
+    
+    // Update UI to show filters are cleared
+    const filterIndicator = document.getElementById('filterIndicator');
+    if (filterIndicator) {
+      filterIndicator.style.display = 'none';
+    }
+    
+    // Update dashboard with raw data
+    updateMetrics(rawData);
+    updateCharts(rawData);
+    currentPage = 1;
+    updateDataTable(rawData);
   }
   
   // Update dashboard
   function updateDashboard() {
-    const data = generateSampleData();
-    updateMetrics(data);
-    updateCharts(data);
+    rawData = generateSampleData();
+    const filteredData = applyFilters(rawData);
+    
+    updateMetrics(filteredData);
+    updateCharts(filteredData);
     
     // Reset pagination when data changes
     currentPage = 1;
-    updateDataTable(data);
+    updateDataTable(filteredData);
+    
+    // Update filter indicator
+    updateFilterIndicator();
   }
   
   // Initialize dashboard
@@ -668,22 +899,28 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('africa').addEventListener('change', updateDashboard);
   
   // Add event listeners for search and pagination
-  document.getElementById('searchBtn').addEventListener('click', () => updateDataTable(generateSampleData()));
+  document.getElementById('searchBtn').addEventListener('click', () => {
+    const filteredData = applyFilters(rawData);
+    updateDataTable(filteredData);
+  });
   document.getElementById('searchInput').addEventListener('keyup', (e) => {
     if (e.key === 'Enter') {
-      updateDataTable(generateSampleData());
+      const filteredData = applyFilters(rawData);
+      updateDataTable(filteredData);
     }
   });
   
   document.getElementById('rowsPerPage').addEventListener('change', () => {
     currentPage = 1; // Reset to first page when changing rows per page
-    updateDataTable(generateSampleData());
+    const filteredData = applyFilters(rawData);
+    updateDataTable(filteredData);
   });
   
   document.getElementById('prevPageBtn').addEventListener('click', () => {
     if (currentPage > 1) {
       currentPage--;
-      updateDataTable(generateSampleData());
+      const filteredData = applyFilters(rawData);
+      updateDataTable(filteredData);
     }
   });
   
@@ -691,7 +928,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalPages = Math.ceil(filteredData.length / rowsPerPage);
     if (currentPage < totalPages) {
       currentPage++;
-      updateDataTable(generateSampleData());
+      const filteredData = applyFilters(rawData);
+      updateDataTable(filteredData);
     }
   });
   

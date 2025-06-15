@@ -18,6 +18,15 @@ function App() {
   // State for filtering
   const [filter, setFilter] = useState(null);
   const chartsRef = useRef(null);
+  
+  // Effect to update document title when filter changes
+  useEffect(() => {
+    if (filter) {
+      document.title = `Dashboard (Filtered by ${filter.type === 'date' ? 'Date' : 'Region'}: ${filter.value})`;
+    } else {
+      document.title = 'Analytics Dashboard';
+    }
+  }, [filter]);
 
   // Generate sample data
   const generateSampleData = () => {
@@ -57,14 +66,23 @@ function App() {
   const data = generateSampleData();
   
   // Filter data based on selection
-  const filteredData = filter ? data.filter(item => {
-    if (filter.type === 'date') {
-      return item.date === filter.value;
-    } else if (filter.type === 'region') {
-      return filter.value === 'All Regions' || filter.value === item.region;
-    }
-    return true;
-  }) : data;
+  const filteredData = React.useMemo(() => {
+    if (!filter) return data;
+    
+    return data.filter(item => {
+      if (filter.type === 'date') {
+        return item.date === filter.value;
+      } else if (filter.type === 'region') {
+        return filter.value === item.region;
+      }
+      return true;
+    });
+  }, [data, filter]);
+  
+  // Get filtered data for charts based on current filter
+  const getFilteredChartData = () => {
+    return filteredData;
+  };
   
   // Calculate metrics
   const calculateMetrics = () => {
@@ -114,6 +132,8 @@ function App() {
     // In a real app, this would fetch new data
     // For this demo, we'll just force a re-render
     setDataSource(prev => prev);
+    // Clear any active filters when refreshing data
+    setFilter(null);
   };
 
   // Determine which chart data to show based on data source
@@ -155,7 +175,11 @@ function App() {
   useEffect(() => {
     function handleClickOutside(event) {
       if (chartsRef.current && !chartsRef.current.contains(event.target)) {
-        setFilter(null);
+        // Only clear if we're not clicking on a filter-related element
+        const isFilterControl = event.target.closest('[data-filter-control]');
+        if (!isFilterControl) {
+          setFilter(null);
+        }
       }
     }
     
@@ -173,6 +197,7 @@ function App() {
         type: type,
         value: clickedData.date
       });
+      console.log("Filter set:", type, clickedData.date);
     }
   };
   
@@ -183,6 +208,7 @@ function App() {
         type: 'region',
         value: data.name
       });
+      console.log("Filter set: region", data.name);
     }
   };
 
@@ -287,12 +313,20 @@ function App() {
         <h2 className="sub-header">Trend Analysis</h2>
         <div ref={chartsRef}>
           <div style={{ marginBottom: '30px' }}>
-            <h3>Time Series {filter?.type === 'date' && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.value})</span>}</h3>
+            <h3>Time Series {filter && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.type === 'date' ? 'Date' : 'Region'} - {filter.value})</span>}</h3>
             <div style={{ height: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart 
-                  data={data}
-                  onClick={(data) => handleChartClick(data, 'date')}
+                  data={filter?.type === 'region' ? filteredData : data}
+                  onClick={(chartState) => {
+                    if (chartState && chartState.activePayload && chartState.activePayload.length > 0) {
+                      setFilter({
+                        type: 'date',
+                        value: chartState.activePayload[0].payload.date
+                      });
+                      console.log("Time Series filter applied:", chartState.activePayload[0].payload.date);
+                    }
+                  }}
                   style={{ cursor: 'pointer' }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -315,12 +349,20 @@ function App() {
           </div>
           
           <div style={{ marginBottom: '30px' }}>
-            <h3>Distribution {filter?.type === 'date' && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.value})</span>}</h3>
+            <h3>Distribution {filter && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.type === 'date' ? 'Date' : 'Region'} - {filter.value})</span>}</h3>
             <div style={{ height: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
-                  data={data}
-                  onClick={(data) => handleChartClick(data, 'date')}
+                  data={filter?.type === 'region' ? filteredData : data}
+                  onClick={(chartState) => {
+                    if (chartState && chartState.activePayload && chartState.activePayload.length > 0) {
+                      setFilter({
+                        type: 'date',
+                        value: chartState.activePayload[0].payload.date
+                      });
+                      console.log("Distribution filter applied:", chartState.activePayload[0].payload.date);
+                    }
+                  }}
                   style={{ cursor: 'pointer' }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -335,15 +377,39 @@ function App() {
           </div>
           
           <div style={{ marginBottom: '30px' }}>
-            <h3>Breakdown by Region {filter?.type === 'region' && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.value})</span>}</h3>
+            <h3>Breakdown by Region {filter && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.type === 'date' ? 'Date' : 'Region'} - {filter.value})</span>}</h3>
             <div style={{ height: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart 
-                  data={regions.map(region => ({
-                    name: region,
-                    value: Math.floor(Math.random() * 10000) + 1000
-                  }))}
-                  onClick={(data) => handleRegionClick(data.activePayload?.[0]?.payload)}
+                  data={filter?.type === 'date' 
+                    ? filteredData.reduce((acc, item) => {
+                        const existingRegion = acc.find(r => r.name === item.region);
+                        if (existingRegion) {
+                          existingRegion.value += dataSource === 'Sales Data' ? item.Revenue : 
+                                                dataSource === 'Website Traffic' ? item.Visitors : item.ActiveUsers;
+                        } else {
+                          acc.push({
+                            name: item.region,
+                            value: dataSource === 'Sales Data' ? item.Revenue : 
+                                  dataSource === 'Website Traffic' ? item.Visitors : item.ActiveUsers
+                          });
+                        }
+                        return acc;
+                      }, [])
+                    : regions.map(region => ({
+                        name: region,
+                        value: Math.floor(Math.random() * 10000) + 1000
+                      }))
+                  }
+                  onClick={(chartState) => {
+                    if (chartState && chartState.activePayload && chartState.activePayload.length > 0) {
+                      setFilter({
+                        type: 'region',
+                        value: chartState.activePayload[0].payload.name
+                      });
+                      console.log("Region filter applied:", chartState.activePayload[0].payload.name);
+                    }
+                  }}
                   style={{ cursor: 'pointer' }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -363,9 +429,10 @@ function App() {
           Detailed Data
           {filter && (
             <span style={{fontSize: '0.8em', color: '#666', marginLeft: '10px'}}>
-              (Filtered by: {filter.value}) 
+              (Filtered by: {filter.type === 'date' ? 'Date' : 'Region'} - {filter.value}) 
               <button 
                 onClick={() => setFilter(null)} 
+                data-filter-control="true"
                 style={{marginLeft: '10px', cursor: 'pointer', border: 'none', background: 'none', color: '#0066cc'}}
               >
                 Clear Filter
@@ -378,14 +445,37 @@ function App() {
             <thead>
               <tr>
                 <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Date</th>
-                {Object.keys(data[0]).filter(key => key !== 'date').map(key => (
-                  <th key={key} style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>{key}</th>
-                ))}
+                {Object.keys(data[0])
+                  .filter(key => key !== 'date')
+                  .map(key => (
+                    <th key={key} style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>{key}</th>
+                  ))}
               </tr>
             </thead>
             <tbody>
-              {(filter ? filteredData : data).map((row, index) => (
-                <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#f2f2f2' : 'white' }}>
+              {filteredData.map((row, index) => (
+                <tr 
+                  key={index} 
+                  style={{ 
+                    backgroundColor: index % 2 === 0 ? '#f2f2f2' : 'white',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (filter?.type === 'date' && filter.value === row.date) {
+                      // If already filtered by this date, clear the filter
+                      setFilter(null);
+                    } else if (filter?.type === 'region' && filter.value === row.region) {
+                      // If already filtered by this region, clear the filter
+                      setFilter(null);
+                    } else if (row.date) {
+                      // Set date filter
+                      setFilter({
+                        type: 'date',
+                        value: row.date
+                      });
+                    }
+                  }}
+                >
                   <td style={{ border: '1px solid #ddd', padding: '8px' }}>{row.date}</td>
                   {Object.keys(row).filter(key => key !== 'date').map(key => (
                     <td key={key} style={{ border: '1px solid #ddd', padding: '8px' }}>
