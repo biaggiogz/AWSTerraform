@@ -10,14 +10,16 @@
 export const processCSVData = (csvData) => {
   const lines = csvData.split('\n');
   const headers = lines[0].split(',').map(header => 
-    header.replace(/"/g, '').trim()
+    header.replace(/\"/g, '').trim()
   );
   
-  return lines.slice(1)
+  const processedRows = [];
+  
+  lines.slice(1)
     .filter(line => line.trim() !== '')
-    .map(line => {
+    .forEach(line => {
       const values = line.split(',').map(value => 
-        value.replace(/"/g, '').trim()
+        value.replace(/\"/g, '').trim()
       );
       
       const row = {};
@@ -27,8 +29,20 @@ export const processCSVData = (csvData) => {
         row[header] = !isNaN(value) && value !== '' ? parseFloat(value) : value;
       });
       
-      return row;
+      // Handle multiple test packs separated by '|'
+      if (row['TEST PACK'] && typeof row['TEST PACK'] === 'string' && row['TEST PACK'].includes('|')) {
+        const testPacks = row['TEST PACK'].split('|');
+        testPacks.forEach(testPack => {
+          const newRow = {...row};
+          newRow['TEST PACK'] = testPack.trim();
+          processedRows.push(newRow);
+        });
+      } else {
+        processedRows.push(row);
+      }
     });
+  
+  return processedRows;
 };
 
 /**
@@ -85,8 +99,8 @@ export const calculateMetricsByGroup = (data, groupBy) => {
     }
     
     // Accumulate metrics
-    groups[groupValue].totalDiainch += parseFloat(item['TOTAL DIAINCH (")'] || 0);
-    groups[groupValue].totalDoneDiainch += parseFloat(item['TOTAL DONE DIAINCH (")'] || 0);
+    groups[groupValue].totalDiainch += parseFloat(item['TOTAL DIAINCH ("")'] || 0);
+    groups[groupValue].totalDoneDiainch += parseFloat(item['TOTAL DONE DIAINCH ("")'] || 0);
     
     if (item['RATIO DONE DIAINCH (%)']) {
       groups[groupValue].ratioDoneDiainch.push(parseFloat(item['RATIO DONE DIAINCH (%)']));
