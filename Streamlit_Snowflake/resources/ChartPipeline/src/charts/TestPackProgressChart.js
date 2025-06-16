@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { Box, Heading, HStack, Text } from '@chakra-ui/react';
+import { Box, Heading, HStack, Text, Checkbox, VStack, Flex, Wrap, WrapItem } from '@chakra-ui/react';
 import { calculateMetricsByGroup } from '../utils/dataProcessor';
 
 /**
@@ -15,6 +15,9 @@ const TestPackProgressChart = ({ data }) => {
     between70And90: true,
     below70: true
   });
+  
+  // State for selected test packs
+  const [selectedTestPacks, setSelectedTestPacks] = useState({});
 
   // Calculate metrics by test pack
   const testPackMetrics = calculateMetricsByGroup(data, 'TEST PACK');
@@ -26,10 +29,23 @@ const TestPackProgressChart = ({ data }) => {
       obj[key] = value;
       return obj;
     }, {});
+    
+  // Initialize selected test packs on first render
+  useEffect(() => {
+    const initialSelectedState = Object.keys(sortedTestPacks).reduce((acc, testPack) => {
+      acc[testPack] = true;
+      return acc;
+    }, {});
+    setSelectedTestPacks(initialSelectedState);
+  }, []);
   
-  // Filter test packs based on active filters
+  // Filter test packs based on active filters and selected test packs
   const filteredTestPacks = Object.entries(sortedTestPacks)
-    .filter(([_, value]) => {
+    .filter(([key, value]) => {
+      // First check if the test pack is selected
+      if (!selectedTestPacks[key]) return false;
+      
+      // Then apply progress filters
       const progress = value.avgConstructionProgress;
       if (progress > 90) return activeFilters.above90;
       if (progress >= 70 && progress <= 90) return activeFilters.between70And90;
@@ -121,6 +137,23 @@ const TestPackProgressChart = ({ data }) => {
       [filter]: !prev[filter]
     }));
   };
+  
+  // Toggle test pack selection
+  const toggleTestPack = (testPack) => {
+    setSelectedTestPacks(prev => ({
+      ...prev,
+      [testPack]: !prev[testPack]
+    }));
+  };
+  
+  // Toggle all test packs
+  const toggleAllTestPacks = (value) => {
+    const newState = Object.keys(sortedTestPacks).reduce((acc, testPack) => {
+      acc[testPack] = value;
+      return acc;
+    }, {});
+    setSelectedTestPacks(newState);
+  };
 
   // Legend for status icons with interactive filtering
   const statusLegend = (
@@ -160,11 +193,39 @@ const TestPackProgressChart = ({ data }) => {
       </HStack>
     </HStack>
   );
+  
+  // Test pack selection component
+  const testPackSelector = (
+    <Box mt={3} mb={2} maxH="150px" overflowY="auto" borderWidth="1px" borderRadius="md" p={2}>
+      <Flex justify="space-between" mb={2}>
+        <Text fontWeight="bold">Test Pack Selection</Text>
+        <HStack>
+          <Text as="span" fontSize="sm" cursor="pointer" color="blue.500" onClick={() => toggleAllTestPacks(true)}>Select All</Text>
+          <Text as="span" fontSize="sm" mx={2}>|</Text>
+          <Text as="span" fontSize="sm" cursor="pointer" color="blue.500" onClick={() => toggleAllTestPacks(false)}>Clear All</Text>
+        </HStack>
+      </Flex>
+      <Wrap spacing={2}>
+        {Object.keys(sortedTestPacks).map(testPack => (
+          <WrapItem key={testPack}>
+            <Checkbox 
+              isChecked={selectedTestPacks[testPack] || false}
+              onChange={() => toggleTestPack(testPack)}
+              size="sm"
+            >
+              {testPack}
+            </Checkbox>
+          </WrapItem>
+        ))}
+      </Wrap>
+    </Box>
+  );
 
   return (
-    <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" height={`${Math.max(400, Object.keys(filteredTestPacks).length * 25)}px`}>
+    <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
       <Heading size="md" mb={2}>Test Pack Construction Progress</Heading>
       {statusLegend}
+      {testPackSelector}
       <Box height={`${Math.max(320, Object.keys(filteredTestPacks).length * 25)}px`} mt={2}>
         <Bar data={chartData} options={options} />
       </Box>
