@@ -43,6 +43,13 @@ const TestPackProgressChart = ({ data }) => {
     setSelectedTestPacks(initialSelectedState);
   }, []);
   
+  // Calculate pagination values
+  const testPackKeys = Object.keys(sortedTestPacks);
+  const totalPages = Math.ceil(testPackKeys.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, testPackKeys.length);
+  const currentTestPacks = testPackKeys.slice(startIndex, endIndex);
+  
   // Filter test packs based on active filters and selected test packs
   const filteredTestPacks = Object.entries(sortedTestPacks)
     .filter(([key, value]) => {
@@ -60,20 +67,28 @@ const TestPackProgressChart = ({ data }) => {
       return obj;
     }, {});
     
-  // Prepare chart data
+  // Filter test packs to only show those on the current page
+  const paginatedTestPacks = Object.entries(filteredTestPacks)
+    .filter(([key]) => currentTestPacks.includes(key))
+    .reduce((obj, [key, value]) => {
+      obj[key] = value;
+      return obj;
+    }, {});
+    
+  // Prepare chart data with paginated test packs
   const chartData = {
-    labels: Object.keys(filteredTestPacks),
+    labels: Object.keys(paginatedTestPacks),
     datasets: [
       {
         label: 'Construction Coordination Progress (%)',
-        data: Object.values(filteredTestPacks).map(testPack => testPack.avgConstructionProgress),
-        backgroundColor: Object.values(filteredTestPacks).map(testPack => {
+        data: Object.values(paginatedTestPacks).map(testPack => testPack.avgConstructionProgress),
+        backgroundColor: Object.values(paginatedTestPacks).map(testPack => {
           const progress = testPack.avgConstructionProgress;
           if (progress > 90) return 'rgba(75, 192, 192, 0.6)'; // Green for Above 90%
           if (progress >= 70 && progress <= 90) return 'rgba(255, 206, 86, 0.6)'; // Yellow for 70-90%
           return 'rgba(255, 99, 132, 0.6)'; // Red for Below 70%
         }),
-        borderColor: Object.values(filteredTestPacks).map(testPack => {
+        borderColor: Object.values(paginatedTestPacks).map(testPack => {
           const progress = testPack.avgConstructionProgress;
           if (progress > 90) return 'rgba(75, 192, 192, 1)'; // Green for Above 90%
           if (progress >= 70 && progress <= 90) return 'rgba(255, 206, 86, 1)'; // Yellow for 70-90%
@@ -159,6 +174,11 @@ const TestPackProgressChart = ({ data }) => {
     setSelectedTestPacks(newState);
   };
 
+  // Handle page navigation
+  const goToPage = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
   // Legend for status icons with interactive filtering
   const statusLegend = (
     <HStack spacing={4} mt={2} justifyContent="center">
@@ -197,18 +217,6 @@ const TestPackProgressChart = ({ data }) => {
       </HStack>
     </HStack>
   );
-  
-  // Calculate pagination values
-  const testPackKeys = Object.keys(sortedTestPacks);
-  const totalPages = Math.ceil(testPackKeys.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, testPackKeys.length);
-  const currentTestPacks = testPackKeys.slice(startIndex, endIndex);
-  
-  // Handle page navigation
-  const goToPage = (page) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  };
 
   // Test pack selection component
   const testPackSelector = (
@@ -281,7 +289,7 @@ const TestPackProgressChart = ({ data }) => {
       <Heading size="md" mb={2}>Test Pack Construction Progress</Heading>
       {statusLegend}
       {testPackSelector}
-      <Box height={`${Math.max(320, Object.keys(filteredTestPacks).length * 25)}px`} mt={2}>
+      <Box height={`${Math.max(320, Object.keys(paginatedTestPacks).length * 25)}px`} mt={2}>
         <Bar data={chartData} options={options} />
       </Box>
     </Box>
