@@ -12,20 +12,28 @@ const TestPackProgressChart = ({ data }) => {
   // Calculate metrics by test pack
   const testPackMetrics = calculateMetricsByGroup(data, 'TEST PACK');
   
+  // Sort test packs for better visualization
+  const sortedTestPacks = Object.entries(testPackMetrics)
+    .sort((a, b) => a[0].localeCompare(b[0], undefined, {numeric: true}))
+    .reduce((obj, [key, value]) => {
+      obj[key] = value;
+      return obj;
+    }, {});
+    
   // Prepare chart data
   const chartData = {
-    labels: Object.keys(testPackMetrics),
+    labels: Object.keys(sortedTestPacks),
     datasets: [
       {
         label: 'Construction Coordination Progress (%)',
-        data: Object.values(testPackMetrics).map(testPack => testPack.avgConstructionProgress),
-        backgroundColor: Object.values(testPackMetrics).map(testPack => {
+        data: Object.values(sortedTestPacks).map(testPack => testPack.avgConstructionProgress),
+        backgroundColor: Object.values(sortedTestPacks).map(testPack => {
           const progress = testPack.avgConstructionProgress;
           if (progress >= 90) return 'rgba(75, 192, 192, 0.6)'; // Green
           if (progress >= 70) return 'rgba(255, 206, 86, 0.6)'; // Yellow
           return 'rgba(255, 99, 132, 0.6)'; // Red
         }),
-        borderColor: Object.values(testPackMetrics).map(testPack => {
+        borderColor: Object.values(sortedTestPacks).map(testPack => {
           const progress = testPack.avgConstructionProgress;
           if (progress >= 90) return 'rgba(75, 192, 192, 1)'; // Green
           if (progress >= 70) return 'rgba(255, 206, 86, 1)'; // Yellow
@@ -71,6 +79,13 @@ const TestPackProgressChart = ({ data }) => {
         title: {
           display: true,
           text: 'Test Pack'
+        },
+        ticks: {
+          autoSkip: false, // Prevent automatic skipping of labels
+          callback: function(value) {
+            // Ensure all labels are displayed by returning the original value
+            return this.getLabelForValue(value);
+          }
         }
       }
     }
@@ -95,10 +110,10 @@ const TestPackProgressChart = ({ data }) => {
   );
 
   return (
-    <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" height="400px">
+    <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" height={`${Math.max(400, Object.keys(testPackMetrics).length * 25)}px`}>
       <Heading size="md" mb={2}>Test Pack Construction Progress</Heading>
       {statusLegend}
-      <Box height="320px" mt={2}>
+      <Box height={`${Math.max(320, Object.keys(testPackMetrics).length * 25)}px`} mt={2}>
         <Bar data={chartData} options={options} />
       </Box>
     </Box>
