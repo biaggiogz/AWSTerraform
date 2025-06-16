@@ -1,0 +1,71 @@
+.progress-tracker {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+}
+
+.progress-tracker:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.chart-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.chart-type-toggle {
+  background-color: #f0f2f5;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.chart-type-toggle:hover {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .chart-controls {
+    margin-top: 10px;
+  }
+}
+
+/* Custom tooltip styles */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Active elements highlighting */
+.recharts-active-dot {
+  stroke-width: 2px;
+  stroke: #fff;
+}
