@@ -75,7 +75,7 @@ function App() {
         <Heading mb={6}>Pipeline Construction Dashboard</Heading>
         
         {/* Main layout with filter panel on left and charts on right */}
-        <Grid templateColumns="250px 1fr" gap={6}>
+        <Grid templateColumns="200px 1fr" gap={6}>
           {/* Filter panel - left side */}
           <GridItem>
             <FilterPanel 

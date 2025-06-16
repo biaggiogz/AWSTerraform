@@ -84,13 +84,13 @@ const TestPackProgressChart = ({ data }) => {
         data: Object.values(paginatedTestPacks).map(testPack => testPack.avgConstructionProgress),
         backgroundColor: Object.values(paginatedTestPacks).map(testPack => {
           const progress = testPack.avgConstructionProgress;
-          if (progress > 90) return 'rgba(75, 192, 192, 0.6)'; // Green for Above 90%
+          if (progress > 90) return 'rgba(75, 150, 192, 0.6)'; // Green for Above 90%
           if (progress >= 70 && progress <= 90) return 'rgba(255, 206, 86, 0.6)'; // Yellow for 70-90%
           return 'rgba(255, 99, 132, 0.6)'; // Red for Below 70%
         }),
         borderColor: Object.values(paginatedTestPacks).map(testPack => {
           const progress = testPack.avgConstructionProgress;
-          if (progress > 90) return 'rgba(75, 192, 192, 1)'; // Green for Above 90%
+          if (progress > 90) return 'rgba(75, 150, 192, 1)'; // Green for Above 90%
           if (progress >= 70 && progress <= 90) return 'rgba(255, 206, 86, 1)'; // Yellow for 70-90%
           return 'rgba(255, 99, 132, 1)'; // Red for Below 70%
         }),
@@ -190,7 +190,7 @@ const TestPackProgressChart = ({ data }) => {
         borderRadius="md"
         _hover={{ bg: "gray.100" }}
       >
-        <Box width="15px" height="15px" bg="rgba(75, 192, 192, 0.6)" borderColor="rgba(75, 192, 192, 1)" borderWidth="1px" />
+        <Box width="15px" height="15px" bg="rgba(75, 150, 192, 0.6)" borderColor="rgba(75, 150, 192, 1)" borderWidth="1px" />
         <Text>Above 90%</Text>
       </HStack>
       <HStack 
