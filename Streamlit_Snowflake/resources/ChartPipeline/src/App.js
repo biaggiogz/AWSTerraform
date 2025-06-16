@@ -28,15 +28,12 @@ function App() {
   const [filters, setFilters] = useState({
     'Design Area': '',
     'SUBSYSTEM': '',
-    'TEST PACK': ''
   });
   
   // Handle filter changes
   const handleFilterChange = (filterName, value) => {
     const filterKey = filterName === 'area' ? 'Design Area' : 
-                     filterName === 'subsystem' ? 'SUBSYSTEM' : 
-                     filterName === 'testPack' ? 'TEST PACK' : filterName;
-    
+                     filterName === 'subsystem' ? 'SUBSYSTEM' : filterName
     setFilters(prev => ({
       ...prev,
       [filterKey]: value === '' ? '' : value
@@ -87,8 +84,7 @@ function App() {
               testPacks={testPacks}
               filters={{
                 area: filters['Design Area'],
-                subsystem: filters['SUBSYSTEM'],
-                testPack: filters['TEST PACK']
+                subsystem: filters['SUBSYSTEM']
               }}
               onFilterChange={handleFilterChange}
             />
