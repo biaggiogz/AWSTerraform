@@ -1,502 +1,222 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import Papa from 'papaparse';
 import { 
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
-import { format, subDays, eachDayOfInterval } from 'date-fns';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 function App() {
-  // State for dashboard settings
-  const [dateRange, setDateRange] = useState([
-    subDays(new Date(), 30).toISOString().split('T')[0],
-    new Date().toISOString().split('T')[0]
-  ]);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    designArea: 'all',
+    fluido: 'all',
+    train: 'all'
+  });
   
-  const [dataSource, setDataSource] = useState('Sales Data');
-  const [regions, setRegions] = useState(['North America', 'Europe']);
-  
-  // State for filtering
-  const [filter, setFilter] = useState(null);
-  const chartsRef = useRef(null);
-  
-  // Effect to update document title when filter changes
+  // Filter options
+  const [filterOptions, setFilterOptions] = useState({
+    designAreas: [],
+    fluidos: [],
+    trains: []
+  });
+
   useEffect(() => {
-    if (filter) {
-      document.title = `Dashboard (Filtered by ${filter.type === 'date' ? 'Date' : 'Region'}: ${filter.value})`;
-    } else {
-      document.title = 'Analytics Dashboard';
-    }
-  }, [filter]);
-
-  // Generate sample data
-  const generateSampleData = () => {
-    const startDate = new Date(dateRange[0]);
-    const endDate = new Date(dateRange[1]);
-    
-    const dates = eachDayOfInterval({ start: startDate, end: endDate });
-    const allRegions = ['North America', 'Europe', 'Asia Pacific', 'South America', 'Africa'];
-    
-    if (dataSource === 'Sales Data') {
-      return dates.map(date => ({
-        date: format(date, 'yyyy-MM-dd'),
-        region: allRegions[Math.floor(Math.random() * allRegions.length)],
-        Revenue: Math.floor(Math.random() * 10000) + 5000,
-        Orders: Math.floor(Math.random() * 400) + 100,
-        AverageOrderValue: Math.floor(Math.random() * 100) + 50
-      }));
-    } else if (dataSource === 'Website Traffic') {
-      return dates.map(date => ({
-        date: format(date, 'yyyy-MM-dd'),
-        region: allRegions[Math.floor(Math.random() * allRegions.length)],
-        Visitors: Math.floor(Math.random() * 4000) + 1000,
-        PageViews: Math.floor(Math.random() * 12000) + 3000,
-        BounceRate: (Math.random() * 0.4) + 0.2
-      }));
-    } else { // User Engagement
-      return dates.map(date => ({
-        date: format(date, 'yyyy-MM-dd'),
-        region: allRegions[Math.floor(Math.random() * allRegions.length)],
-        ActiveUsers: Math.floor(Math.random() * 1500) + 500,
-        SessionDuration: (Math.random() * 8) + 2,
-        ConversionRate: (Math.random() * 0.09) + 0.01
-      }));
-    }
-  };
-
-  const data = generateSampleData();
-  
-  // Filter data based on selection
-  const filteredData = React.useMemo(() => {
-    if (!filter) return data;
-    
-    return data.filter(item => {
-      if (filter.type === 'date') {
-        return item.date === filter.value;
-      } else if (filter.type === 'region') {
-        return filter.value === item.region;
-      }
-      return true;
-    });
-  }, [data, filter]);
-  
-  // Get filtered data for charts based on current filter
-  const getFilteredChartData = () => {
-    return filteredData;
-  };
-  
-  // Calculate metrics
-  const calculateMetrics = () => {
-    if (dataSource === 'Sales Data') {
-      const totalRevenue = data.reduce((sum, item) => sum + item.Revenue, 0);
-      const totalOrders = data.reduce((sum, item) => sum + item.Orders, 0);
-      const avgOrderValue = totalRevenue / totalOrders;
-      const conversionRate = (Math.random() * 4) + 1;
-      
-      return [
-        { label: 'Total Revenue', value: `$${totalRevenue.toLocaleString()}`, change: `${Math.floor(Math.random() * 30) - 10}%` },
-        { label: 'Total Orders', value: totalOrders.toLocaleString(), change: `${Math.floor(Math.random() * 30) - 10}%` },
-        { label: 'Avg Order Value', value: `$${avgOrderValue.toFixed(2)}`, change: `${Math.floor(Math.random() * 30) - 10}%` },
-        { label: 'Conversion Rate', value: `${conversionRate.toFixed(2)}%`, change: `${Math.floor(Math.random() * 30) - 10}%` }
-      ];
-    } else if (dataSource === 'Website Traffic') {
-      const totalVisitors = data.reduce((sum, item) => sum + item.Visitors, 0);
-      const totalPageViews = data.reduce((sum, item) => sum + item.PageViews, 0);
-      const avgBounceRate = data.reduce((sum, item) => sum + item.BounceRate, 0) / data.length;
-      const avgPagesPerSession = totalPageViews / totalVisitors;
-      
-      return [
-        { label: 'Total Visitors', value: totalVisitors.toLocaleString(), change: `${Math.floor(Math.random() * 30) - 10}%` },
-        { label: 'Total Page Views', value: totalPageViews.toLocaleString(), change: `${Math.floor(Math.random() * 30) - 10}%` },
-        { label: 'Avg Bounce Rate', value: `${(avgBounceRate * 100).toFixed(2)}%`, change: `${Math.floor(Math.random() * 30) - 10}%` },
-        { label: 'Avg Pages/Session', value: avgPagesPerSession.toFixed(2), change: `${Math.floor(Math.random() * 30) - 10}%` }
-      ];
-    } else { // User Engagement
-      const totalActiveUsers = data.reduce((sum, item) => sum + item.ActiveUsers, 0);
-      const avgSessionDuration = data.reduce((sum, item) => sum + item.SessionDuration, 0) / data.length;
-      const avgConversionRate = data.reduce((sum, item) => sum + item.ConversionRate, 0) / data.length;
-      const retentionRate = (Math.random() * 60) + 20;
-      
-      return [
-        { label: 'Active Users', value: totalActiveUsers.toLocaleString(), change: `${Math.floor(Math.random() * 30) - 10}%` },
-        { label: 'Avg Session Duration', value: `${avgSessionDuration.toFixed(2)} min`, change: `${Math.floor(Math.random() * 30) - 10}%` },
-        { label: 'Conversion Rate', value: `${(avgConversionRate * 100).toFixed(2)}%`, change: `${Math.floor(Math.random() * 30) - 10}%` },
-        { label: 'Retention Rate', value: `${retentionRate.toFixed(2)}%`, change: `${Math.floor(Math.random() * 30) - 10}%` }
-      ];
-    }
-  };
-
-  const metrics = calculateMetrics();
-
-  // Handle refresh data
-  const handleRefreshData = () => {
-    // In a real app, this would fetch new data
-    // For this demo, we'll just force a re-render
-    setDataSource(prev => prev);
-    // Clear any active filters when refreshing data
-    setFilter(null);
-  };
-
-  // Determine which chart data to show based on data source
-  const getChartData = () => {
-    if (dataSource === 'Sales Data') {
-      return [
-        { dataKey: 'Revenue', color: '#8884d8' },
-        { dataKey: 'Orders', color: '#82ca9d' }
-      ];
-    } else if (dataSource === 'Website Traffic') {
-      return [
-        { dataKey: 'Visitors', color: '#8884d8' },
-        { dataKey: 'PageViews', color: '#82ca9d' }
-      ];
-    } else { // User Engagement
-      return [
-        { dataKey: 'ActiveUsers', color: '#8884d8' },
-        { dataKey: 'SessionDuration', color: '#82ca9d' }
-      ];
-    }
-  };
-
-  const chartData = getChartData();
-  
-  // Determine which data to show in bar chart
-  const getBarChartData = () => {
-    if (dataSource === 'Sales Data') {
-      return 'Revenue';
-    } else if (dataSource === 'Website Traffic') {
-      return 'Visitors';
-    } else { // User Engagement
-      return 'ActiveUsers';
-    }
-  };
-
-  const barChartDataKey = getBarChartData();
-  
-  // Handle click outside charts to clear filter
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (chartsRef.current && !chartsRef.current.contains(event.target)) {
-        // Only clear if we're not clicking on a filter-related element
-        const isFilterControl = event.target.closest('[data-filter-control]');
-        if (!isFilterControl) {
-          setFilter(null);
+    const fetchData = async () => {
+      try {
+        // Use local CSV file instead of API
+        const response = await fetch('/data/pipelinedata.csv');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
+        
+        const csvText = await response.text();
+        
+        Papa.parse(csvText, {
+          header: true,
+          complete: (results) => {
+            // Clean and transform data
+            const parsedData = results.data
+              .filter(row => Object.values(row).some(val => val)) // Remove empty rows
+              .map(row => ({
+                ...row,
+                // Convert string percentages to numbers
+                'RATIO DONE DIAINCH (%)': parseFloat(row['RATIO DONE DIAINCH (%)'] || 0),
+                'RATIO DONE SHOP DIAINCH (%)': parseFloat(row['RATIO DONE SHOP DIAINCH (%)'] || 0),
+                'RATIO DONE FIELD DIAINCH (%)': parseFloat(row['RATIO DONE FIELD DIAINCH (%)'] || 0),
+                'PROGRESS SW+FW (%)': parseFloat(row['PROGRESS SW+FW (%)'] || 0),
+                '% PROGRESS DELIVERY IN SITE': parseFloat(row['% PROGRESS DELIVERY IN SITE'] || 0),
+                '% PROGRESS ERECTED': parseFloat(row['% PROGRESS ERECTED'] || 0),
+              }));
+            
+            setData(parsedData);
+            
+            // Extract unique values for filters
+            setFilterOptions({
+              designAreas: ['all', ...new Set(parsedData.map(item => item['Design Area']))],
+              fluidos: ['all', ...new Set(parsedData.map(item => item['FLUIDO']))],
+              trains: ['all', ...new Set(parsedData.map(item => item['TRAIN']))]
+            });
+            
+            setLoading(false);
+          },
+          error: (error) => {
+            setError('Error parsing CSV: ' + error.message);
+            setLoading(false);
+          }
+        });
+      } catch (err) {
+        setError('Error fetching data: ' + err.message);
+        setLoading(false);
       }
-    }
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [chartsRef]);
-  
-  // Handle chart click for filtering
-  const handleChartClick = (data, type) => {
-    if (data && data.activePayload && data.activePayload[0]) {
-      const clickedData = data.activePayload[0].payload;
-      setFilter({
-        type: type,
-        value: clickedData.date
-      });
-      console.log("Filter set:", type, clickedData.date);
-    }
-  };
-  
-  // Handle region chart click
-  const handleRegionClick = (data) => {
-    if (data && data.name) {
-      setFilter({
-        type: 'region',
-        value: data.name
-      });
-      console.log("Filter set: region", data.name);
-    }
-  };
+
+    fetchData();
+  }, []);
+
+  // Filter data based on selected filters
+  const filteredData = data.filter(item => {
+    return (filters.designArea === 'all' || item['Design Area'] === filters.designArea) &&
+           (filters.fluido === 'all' || item['FLUIDO'] === filters.fluido) &&
+           (filters.train === 'all' || item['TRAIN'] === filters.train);
+  });
+
+  // Prepare data for progress chart
+  const progressData = [
+    { name: 'Total Progress', value: filteredData.reduce((sum, item) => sum + parseFloat(item['PROGRESS SW+FW (%)'] || 0), 0) / (filteredData.length || 1) },
+    { name: 'Shop Welds', value: filteredData.reduce((sum, item) => sum + parseFloat(item['RATIO DONE SHOP DIAINCH (%)'] || 0), 0) / (filteredData.length || 1) },
+    { name: 'Field Welds', value: filteredData.reduce((sum, item) => sum + parseFloat(item['RATIO DONE FIELD DIAINCH (%)'] || 0), 0) / (filteredData.length || 1) },
+    { name: 'Support Delivery', value: filteredData.reduce((sum, item) => sum + parseFloat(item['% PROGRESS DELIVERY IN SITE'] || 0), 0) / (filteredData.length || 1) },
+    { name: 'Support Erected', value: filteredData.reduce((sum, item) => sum + parseFloat(item['% PROGRESS ERECTED'] || 0), 0) / (filteredData.length || 1) }
+  ];
+
+  // Prepare data for fluido distribution
+  const fluidoDistribution = filteredData.reduce((acc, item) => {
+    const fluido = item['FLUIDO'] || 'Unknown';
+    if (!acc[fluido]) acc[fluido] = 0;
+    acc[fluido]++;
+    return acc;
+  }, {});
+
+  const fluidoChartData = Object.keys(fluidoDistribution).map(key => ({
+    name: key,
+    value: fluidoDistribution[key]
+  }));
+
+  // Prepare data for weld counts
+  const weldData = [
+    { name: 'Shop Welds', value: filteredData.reduce((sum, item) => sum + parseInt(item['QTY Welds Shop (SW)'] || 0), 0) },
+    { name: 'Field Welds', value: filteredData.reduce((sum, item) => sum + parseInt(item['QTY Welds Field (FW)'] || 0), 0) }
+  ];
+
+  if (loading) return <div>Loading data...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="app">
-      {/* Sidebar */}
-      <div className="sidebar">
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <img src="/assets/AWS_logo_RGB_REV.png" alt="AWS Logo" style={{ width: '100px', marginBottom: '10px' }} />
-          <img src="/assets/tf-logo.png" alt="Terraform Logo" style={{ width: '100px' }} />
-        </div>
-        
-        <h3>Dashboard Settings</h3>
-        
-        <div style={{ marginBottom: '15px' }}>
-          <label>Select Date Range</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <input 
-              type="date" 
-              value={dateRange[0]} 
-              onChange={(e) => setDateRange([e.target.value, dateRange[1]])}
-            />
-            <input 
-              type="date" 
-              value={dateRange[1]} 
-              onChange={(e) => setDateRange([dateRange[0], e.target.value])}
-            />
-          </div>
-        </div>
-        
-        <div style={{ marginBottom: '15px' }}>
-          <label>Data Source</label>
+    <div className="dashboard">
+      <h1>Pipeline Construction Progress Dashboard</h1>
+      
+      <div className="filters">
+        <div>
+          <label>Design Area: </label>
           <select 
-            value={dataSource} 
-            onChange={(e) => setDataSource(e.target.value)}
-            style={{ width: '100%', padding: '5px' }}
+            value={filters.designArea} 
+            onChange={(e) => setFilters({...filters, designArea: e.target.value})}
           >
-            <option>Sales Data</option>
-            <option>Website Traffic</option>
-            <option>User Engagement</option>
+            {filterOptions.designAreas.map(area => (
+              <option key={area} value={area}>{area}</option>
+            ))}
           </select>
         </div>
         
-        <div style={{ marginBottom: '15px' }}>
-          <label>Region</label>
-          <div>
-            {['North America', 'Europe', 'Asia Pacific', 'South America', 'Africa'].map(region => (
-              <div key={region}>
-                <input 
-                  type="checkbox" 
-                  id={region} 
-                  checked={regions.includes(region)} 
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setRegions([...regions, region]);
-                    } else {
-                      setRegions(regions.filter(r => r !== region));
-                    }
-                  }}
-                />
-                <label htmlFor={region}>{region}</label>
-              </div>
+        <div>
+          <label>Fluido: </label>
+          <select 
+            value={filters.fluido} 
+            onChange={(e) => setFilters({...filters, fluido: e.target.value})}
+          >
+            {filterOptions.fluidos.map(fluido => (
+              <option key={fluido} value={fluido}>{fluido}</option>
             ))}
-          </div>
+          </select>
         </div>
         
-        <button 
-          onClick={handleRefreshData}
-          style={{ 
-            width: '100%', 
-            padding: '8px', 
-            backgroundColor: '#FF9900', 
-            border: 'none', 
-            borderRadius: '4px',
-            color: 'white',
-            cursor: 'pointer'
-          }}
-        >
-          Refresh Data
-        </button>
+        <div>
+          <label>Train: </label>
+          <select 
+            value={filters.train} 
+            onChange={(e) => setFilters({...filters, train: e.target.value})}
+          >
+            {filterOptions.trains.map(train => (
+              <option key={train} value={train}>{train}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="main-content">
-        <h1 className="main-header">Analytics Dashboard</h1>
-        
-        {/* Key Metrics */}
-        <h2 className="sub-header">Key Metrics</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
-          {metrics.map((metric, index) => (
-            <div key={index} className="metric-card">
-              <div className="metric-label">{metric.label}</div>
-              <div className="metric-value">{metric.value}</div>
-              <div className={`metric-change ${parseInt(metric.change) >= 0 ? 'positive-change' : 'negative-change'}`}>
-                {parseInt(metric.change) >= 0 ? '↑' : '↓'} {metric.change}
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Charts */}
-        <h2 className="sub-header">Trend Analysis</h2>
-        <div ref={chartsRef}>
-          <div style={{ marginBottom: '30px' }}>
-            <h3>Time Series {filter && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.type === 'date' ? 'Date' : 'Region'} - {filter.value})</span>}</h3>
-            <div style={{ height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart 
-                  data={filter?.type === 'region' ? filteredData : data}
-                  onClick={(chartState) => {
-                    if (chartState && chartState.activePayload && chartState.activePayload.length > 0) {
-                      setFilter({
-                        type: 'date',
-                        value: chartState.activePayload[0].payload.date
-                      });
-                      console.log("Time Series filter applied:", chartState.activePayload[0].payload.date);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  {chartData.map((item, index) => (
-                    <Line 
-                      key={index}
-                      type="monotone" 
-                      dataKey={item.dataKey} 
-                      stroke={item.color} 
-                      activeDot={{ r: 8 }} 
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <div style={{ marginBottom: '30px' }}>
-            <h3>Distribution {filter && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.type === 'date' ? 'Date' : 'Region'} - {filter.value})</span>}</h3>
-            <div style={{ height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={filter?.type === 'region' ? filteredData : data}
-                  onClick={(chartState) => {
-                    if (chartState && chartState.activePayload && chartState.activePayload.length > 0) {
-                      setFilter({
-                        type: 'date',
-                        value: chartState.activePayload[0].payload.date
-                      });
-                      console.log("Distribution filter applied:", chartState.activePayload[0].payload.date);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey={barChartDataKey} fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <div style={{ marginBottom: '30px' }}>
-            <h3>Breakdown by Region {filter && <span style={{fontSize: '0.8em', color: '#666'}}>(Filtered by: {filter.type === 'date' ? 'Date' : 'Region'} - {filter.value})</span>}</h3>
-            <div style={{ height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={filter?.type === 'date' 
-                    ? filteredData.reduce((acc, item) => {
-                        const existingRegion = acc.find(r => r.name === item.region);
-                        if (existingRegion) {
-                          existingRegion.value += dataSource === 'Sales Data' ? item.Revenue : 
-                                                dataSource === 'Website Traffic' ? item.Visitors : item.ActiveUsers;
-                        } else {
-                          acc.push({
-                            name: item.region,
-                            value: dataSource === 'Sales Data' ? item.Revenue : 
-                                  dataSource === 'Website Traffic' ? item.Visitors : item.ActiveUsers
-                          });
-                        }
-                        return acc;
-                      }, [])
-                    : regions.map(region => ({
-                        name: region,
-                        value: Math.floor(Math.random() * 10000) + 1000
-                      }))
-                  }
-                  onClick={(chartState) => {
-                    if (chartState && chartState.activePayload && chartState.activePayload.length > 0) {
-                      setFilter({
-                        type: 'region',
-                        value: chartState.activePayload[0].payload.name
-                      });
-                      console.log("Region filter applied:", chartState.activePayload[0].payload.name);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="value" fill="#82ca9d" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-        
-        {/* Data Table */}
-        <h2 className="sub-header">
-          Detailed Data
-          {filter && (
-            <span style={{fontSize: '0.8em', color: '#666', marginLeft: '10px'}}>
-              (Filtered by: {filter.type === 'date' ? 'Date' : 'Region'} - {filter.value}) 
-              <button 
-                onClick={() => setFilter(null)} 
-                data-filter-control="true"
-                style={{marginLeft: '10px', cursor: 'pointer', border: 'none', background: 'none', color: '#0066cc'}}
-              >
-                Clear Filter
-              </button>
-            </span>
-          )}
-        </h2>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Date</th>
-                {Object.keys(data[0])
-                  .filter(key => key !== 'date')
-                  .map(key => (
-                    <th key={key} style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>{key}</th>
-                  ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.map((row, index) => (
-                <tr 
-                  key={index} 
-                  style={{ 
-                    backgroundColor: index % 2 === 0 ? '#f2f2f2' : 'white',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    if (filter?.type === 'date' && filter.value === row.date) {
-                      // If already filtered by this date, clear the filter
-                      setFilter(null);
-                    } else if (filter?.type === 'region' && filter.value === row.region) {
-                      // If already filtered by this region, clear the filter
-                      setFilter(null);
-                    } else if (row.date) {
-                      // Set date filter
-                      setFilter({
-                        type: 'date',
-                        value: row.date
-                      });
-                    }
-                  }}
-                >
-                  <td style={{ border: '1px solid #ddd', padding: '8px' }}>{row.date}</td>
-                  {Object.keys(row).filter(key => key !== 'date').map(key => (
-                    <td key={key} style={{ border: '1px solid #ddd', padding: '8px' }}>
-                      {typeof row[key] === 'number' && key.toLowerCase().includes('rate') 
-                        ? `${(row[key] * 100).toFixed(2)}%` 
-                        : typeof row[key] === 'number' 
-                          ? row[key].toLocaleString() 
-                          : row[key]}
-                    </td>
-                  ))}
-                </tr>
+      <div className="chart-container">
+        <h2>Overall Progress (%)</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={progressData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis domain={[0, 100]} />
+            <Tooltip formatter={(value) => value.toFixed(2) + '%'} />
+            <Legend />
+            <Bar dataKey="value" fill="#8884d8" name="Completion %" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="chart-container">
+        <h2>Fluido Distribution</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={fluidoChartData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="value"
+              label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            >
+              {fluidoChartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Footer */}
-        <div className="footer">
-          <hr />
-          <p>Dashboard created with React and deployed with Terraform on AWS</p>
-        </div>
+            </Pie>
+            <Tooltip formatter={(value) => value} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="chart-container">
+        <h2>Weld Distribution</h2>
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart>
+            <Pie
+              data={weldData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="value"
+              label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            >
+              <Cell fill="#0088FE" />
+              <Cell fill="#00C49F" />
+            </Pie>
+            <Tooltip formatter={(value) => value} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

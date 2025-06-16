@@ -1,18 +1,20 @@
-FROM nginx:alpine
+FROM node:16-alpine
 
-WORKDIR /usr/share/nginx/html
+WORKDIR /app
 
-# Copy pre-built static files directly
-COPY public/assets ./assets
-COPY public/index.html ./index.html
+# Copy package.json and install dependencies
+COPY package*.json ./
+RUN npm install
 
-# Copy our app files
-COPY src/app.js ./app.js
-COPY src/index.css ./index.css
+# Copy the rest of the application
+COPY . .
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Build the React app
+RUN npm run build
 
+# Expose the port
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+# Use a simple HTTP server to serve the static files
+RUN npm install -g serve
+CMD ["serve", "-s", "build", "-l", "80"]

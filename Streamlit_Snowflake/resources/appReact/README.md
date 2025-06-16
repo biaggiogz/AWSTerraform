@@ -1,48 +1,36 @@
-# Analytics Dashboard React App
+# Pipeline Construction Progress Dashboard
 
-This is a React version of the Streamlit Analytics Dashboard application.
+This React application displays interactive charts for pipeline construction progress data fetched from an S3 bucket.
 
 ## Features
 
-- Interactive analytics dashboard with key metrics
-- Time series and distribution charts
-- Detailed data table
-- Configurable date range, data source, and regions
+- Interactive charts using Recharts
+- Data fetched from S3 bucket (react-pipelinetechnip-2025/datasource/pipelinedata.csv)
+- Filtering by Design Area, Fluido, and Train
+- Responsive design
 
-## Getting Started
+## Charts
 
-### Prerequisites
+1. Overall Progress Bar Chart
+2. Fluido Distribution Pie Chart
+3. Weld Distribution Pie Chart
 
-- Node.js (v14 or later)
-- npm or yarn
+## Development
 
-### Installation
+```bash
+# Install dependencies
+npm install
 
-1. Clone the repository
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Start the development server:
-   ```
-   npm start
-   ```
-
-### Building for Production
-
+# Start development server
+npm start
 ```
+
+## Production Build
+
+```bash
+# Build the app
 npm run build
+
+# Run with Docker
+docker-compose up --build
 ```
-
-### Docker
-
-To build and run the Docker container:
-
-```
-docker build -t analytics-dashboard .
-docker run -p 80:80 analytics-dashboard
-```
-
-## Deployment
-
-This application can be deployed to AWS using Terraform and ECS.

@@ -1,0 +1,14 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+      - REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=AKIA23WHUDI5EYR2VLF3
+      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_REGION=us-east-1
