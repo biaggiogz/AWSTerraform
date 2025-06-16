@@ -1,22 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Box, 
   FormControl, 
   FormLabel, 
   Select, 
   Stack,
-  Heading
+  Heading,
+  Checkbox,
+  VStack,
+  Button,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  HStack
 } from '@chakra-ui/react';
+import { SearchIcon } from '@chakra-ui/icons';
 
-/**
- * FilterPanel component for filtering chart data
- * @param {Object} props - Component props
- * @param {Array} props.areas - List of design areas
- * @param {Array} props.subsystems - List of subsystems
- * @param {Array} props.testPacks - List of test packs
- * @param {Object} props.filters - Current filter values
- * @param {Function} props.onFilterChange - Filter change handler
- */
 const FilterPanel = ({ 
   areas, 
   subsystems, 

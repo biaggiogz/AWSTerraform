@@ -51,7 +51,7 @@ const TestPackProgressChart = ({ data }) => {
           const progress = testPack.avgConstructionProgress;
           if (progress > 90) return 'rgba(75, 192, 192, 0.6)'; // Green for Above 90%
           if (progress >= 70 && progress <= 90) return 'rgba(255, 206, 86, 0.6)'; // Yellow for 70-90%
-          return 'rgba(255, 40, 132, 0.6)'; // Red for Below 70%
+          return 'rgba(255, 99, 132, 0.6)'; // Red for Below 70%
         }),
         borderColor: Object.values(filteredTestPacks).map(testPack => {
           const progress = testPack.avgConstructionProgress;
