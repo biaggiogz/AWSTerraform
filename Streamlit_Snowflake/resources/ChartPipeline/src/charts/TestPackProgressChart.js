@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { Box, Heading, HStack, Text, Checkbox, VStack, Flex, Wrap, WrapItem } from '@chakra-ui/react';
+import { Box, Heading, HStack, Text, Checkbox, VStack, Flex, Wrap, WrapItem, Button } from '@chakra-ui/react';
 import { calculateMetricsByGroup } from '../utils/dataProcessor';
 
 /**
@@ -18,6 +18,10 @@ const TestPackProgressChart = ({ data }) => {
   
   // State for selected test packs
   const [selectedTestPacks, setSelectedTestPacks] = useState({});
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 40;
 
   // Calculate metrics by test pack
   const testPackMetrics = calculateMetricsByGroup(data, 'TEST PACK');
@@ -194,9 +198,21 @@ const TestPackProgressChart = ({ data }) => {
     </HStack>
   );
   
+  // Calculate pagination values
+  const testPackKeys = Object.keys(sortedTestPacks);
+  const totalPages = Math.ceil(testPackKeys.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, testPackKeys.length);
+  const currentTestPacks = testPackKeys.slice(startIndex, endIndex);
+  
+  // Handle page navigation
+  const goToPage = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
   // Test pack selection component
   const testPackSelector = (
-    <Box mt={3} mb={2} maxH="150px" overflowY="auto" borderWidth="1px" borderRadius="md" p={2}>
+    <Box mt={3} mb={2} borderWidth="1px" borderRadius="md" p={2}>
       <Flex justify="space-between" mb={2}>
         <Text fontWeight="bold">Test Pack Selection</Text>
         <HStack>
@@ -205,19 +221,58 @@ const TestPackProgressChart = ({ data }) => {
           <Text as="span" fontSize="sm" cursor="pointer" color="blue.500" onClick={() => toggleAllTestPacks(false)}>Clear All</Text>
         </HStack>
       </Flex>
-      <Wrap spacing={2}>
-        {Object.keys(sortedTestPacks).map(testPack => (
-          <WrapItem key={testPack}>
-            <Checkbox 
-              isChecked={selectedTestPacks[testPack] || false}
-              onChange={() => toggleTestPack(testPack)}
-              size="sm"
+      <Box maxH="150px" overflowY="auto" mb={2}>
+        <Wrap spacing={2}>
+          {currentTestPacks.map(testPack => (
+            <WrapItem key={testPack}>
+              <Checkbox 
+                isChecked={selectedTestPacks[testPack] || false}
+                onChange={() => toggleTestPack(testPack)}
+                size="sm"
+              >
+                {testPack}
+              </Checkbox>
+            </WrapItem>
+          ))}
+        </Wrap>
+      </Box>
+      {totalPages > 1 && (
+        <Flex justify="space-between" align="center" mt={2}>
+          <Text fontSize="sm">
+            Page {currentPage} of {totalPages} ({testPackKeys.length} items)
+          </Text>
+          <HStack>
+            <Button 
+              size="xs" 
+              onClick={() => goToPage(1)} 
+              isDisabled={currentPage === 1}
             >
-              {testPack}
-            </Checkbox>
-          </WrapItem>
-        ))}
-      </Wrap>
+              First
+            </Button>
+            <Button 
+              size="xs" 
+              onClick={() => goToPage(currentPage - 1)} 
+              isDisabled={currentPage === 1}
+            >
+              Prev
+            </Button>
+            <Button 
+              size="xs" 
+              onClick={() => goToPage(currentPage + 1)} 
+              isDisabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+            <Button 
+              size="xs" 
+              onClick={() => goToPage(totalPages)} 
+              isDisabled={currentPage === totalPages}
+            >
+              Last
+            </Button>
+          </HStack>
+        </Flex>
+      )}
     </Box>
   );
 
