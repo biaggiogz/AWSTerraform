@@ -18,8 +18,7 @@ import { SearchIcon } from '@chakra-ui/icons';
 
 const FilterPanel = ({ 
   areas, 
-  subsystems, 
-  testPacks, 
+  subsystems,
   filters, 
   onFilterChange 
 }) => {
@@ -60,24 +59,7 @@ const FilterPanel = ({
           </Select>
         </FormControl>
 
-        <FormControl>
-          <FormLabel>Test Pack</FormLabel>
-          <Select 
-            value={filters.testPack || ''} 
-            onChange={(e) => onFilterChange('testPack', e.target.value)}
-            placeholder="All Test Packs"
-          >
-            {[...testPacks].sort((a, b) => {
-              // Sort numerically if possible, otherwise alphabetically
-              const numA = parseInt(a);
-              const numB = parseInt(b);
-              if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-              return String(a).localeCompare(String(b), undefined, {numeric: true});
-            }).map(testPack => (
-              <option key={testPack} value={testPack}>{testPack}</option>
-            ))}
-          </Select>
-        </FormControl>
+
       </Stack>
     </Box>
   );
