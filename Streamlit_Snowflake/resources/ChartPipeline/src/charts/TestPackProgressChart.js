@@ -119,6 +119,10 @@ const TestPackProgressChart = ({ data }) => {
       },
       legend: {
         position: 'top',
+        display: false,
+        labels: {
+            color: 'black'  // Set legend label color here
+        }
       },
       title: {
         display: false,
