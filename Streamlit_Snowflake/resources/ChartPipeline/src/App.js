@@ -87,6 +87,7 @@ function App() {
                 subsystem: filters['SUBSYSTEM']
               }}
               onFilterChange={handleFilterChange}
+              data={data}
             />
           </GridItem>
 
