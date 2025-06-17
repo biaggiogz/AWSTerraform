@@ -30,6 +30,9 @@ const FilterPanel = ({
       width="100%"
       bg="white"
       boxShadow="sm"
+      position="sticky"
+      top="0"
+      zIndex="10"
     >
       <Heading size="md" mb={4}>Filters</Heading>
       <Stack spacing={4}>

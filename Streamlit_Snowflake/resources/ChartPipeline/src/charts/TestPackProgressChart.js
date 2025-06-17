@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Box, Heading, HStack, Text, Checkbox, VStack, Flex, Wrap, WrapItem, Button } from '@chakra-ui/react';
 import { calculateMetricsByGroup } from '../utils/dataProcessor';
@@ -185,7 +185,7 @@ const TestPackProgressChart = ({ data }) => {
 
   // Legend for status icons with interactive filtering
   const statusLegend = (
-    <HStack spacing={4} mt={2} justifyContent="center">
+    <HStack spacing={4} justifyContent="center">
       <HStack 
         onClick={() => toggleFilter('above90')} 
         cursor="pointer" 
@@ -216,7 +216,7 @@ const TestPackProgressChart = ({ data }) => {
         borderRadius="md"
         _hover={{ bg: "gray.100" }}
       >
-        <Box width="10px" height="15px" bg="rgba(255, 99, 132, 0.6)" borderColor="rgba(255, 99, 132, 1)" borderWidth="1px" />
+        <Box width="15px" height="15px" bg="rgba(255, 99, 132, 0.6)" borderColor="rgba(255, 99, 132, 1)" borderWidth="1px" />
         <Text>Below 70%</Text>
       </HStack>
     </HStack>
@@ -224,7 +224,17 @@ const TestPackProgressChart = ({ data }) => {
 
   // Test pack selection component
   const testPackSelector = (
-    <Box mt={3} mb={2} borderWidth="2px" borderRadius="md" p={2}>
+    <Box 
+      mt={3} 
+      mb={2} 
+      borderWidth="2px" 
+      borderRadius="md" 
+      p={2}
+      position="sticky"
+      top="100px"
+      bg="white"
+      zIndex="9"
+    >
       <Flex justify="space-between" mb={2}>
         <Text fontWeight="bold">Test Pack Selection</Text>
         <HStack>
@@ -290,11 +300,23 @@ const TestPackProgressChart = ({ data }) => {
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
-       <Flex justify="space-between" align="center" mb={2}>
-          <Heading size="md" fontSize="16px">Test Pack Construction Progress</Heading>
-          {statusLegend}
-       </Flex>
+      {/* Sticky header section */}
+      <Box 
+        position="sticky" 
+        top="0" 
+        bg="white" 
+        pt={4} 
+        pb={2} 
+        zIndex="10"
+        borderBottomWidth="1px"
+        borderBottomColor="gray.200"
+      >
+        <Heading size="md" mb={2}>Test Pack Construction Progress</Heading>
+        {statusLegend}
+      </Box>
+      
       {testPackSelector}
+      
       <Box height={`${Math.max(320, Object.keys(paginatedTestPacks).length * 25)}px`} mt={2}>
         <Bar data={chartData} options={options} />
       </Box>
