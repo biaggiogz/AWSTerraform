@@ -72,13 +72,13 @@ function App() {
   return (
     <ChakraProvider>
       <Box p={4}>
-        <Heading mb={6}>Pipeline Construction Dashboard</Heading>
-        
+        <Heading mb={2} fontSize="16px">Pipeline Construction Dashboard</Heading>
+
         {/* Main layout with filter panel on left and charts on right */}
-        <Grid templateColumns="200px 1fr" gap={6}>
+        <Grid templateColumns="250px 1fr" gap={6}>
           {/* Filter panel - left side */}
           <GridItem>
-            <FilterPanel 
+            <FilterPanel
               areas={areas}
               subsystems={subsystems}
               testPacks={testPacks}
@@ -89,7 +89,7 @@ function App() {
               onFilterChange={handleFilterChange}
             />
           </GridItem>
-          
+
           {/* Chart area - right side */}
           <GridItem>
             <ChartSelector data={filteredData} />

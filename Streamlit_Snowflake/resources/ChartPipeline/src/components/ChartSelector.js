@@ -18,7 +18,7 @@ import TestPackProgressChart from '../charts/TestPackProgressChart';
  */
 const ChartSelector = ({ data }) => {
   return (
-    <Box width="100%">
+    <Box width="100%" mt="5px">
       <Tabs isFitted variant="enclosed" colorScheme="blue">
         <TabList mb="1em">
           <Tab>Welding Progress by Area</Tab>

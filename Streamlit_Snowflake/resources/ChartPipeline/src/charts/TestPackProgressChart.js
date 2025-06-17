@@ -286,7 +286,7 @@ const TestPackProgressChart = ({ data }) => {
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
-      <Heading size="md" mb={2}>Test Pack Construction Progress</Heading>
+      <Heading size="md" mb={2} fontSize="16px">Test Pack Construction Progress</Heading>
       {statusLegend}
       {testPackSelector}
       <Box height={`${Math.max(320, Object.keys(paginatedTestPacks).length * 25)}px`} mt={2}>
