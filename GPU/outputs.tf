@@ -47,3 +47,23 @@ output "cloudwatch_log_group" {
   description = "Name of the CloudWatch log group"
   value       = aws_cloudwatch_log_group.ecs_logs.name
 }
+
+output "load_balancer_dns" {
+  description = "DNS name of the load balancer"
+  value       = aws_lb.gpu_lb.dns_name
+}
+
+output "triton_inference_endpoint" {
+  description = "Endpoint for Triton Inference Server"
+  value       = "http://${aws_lb.gpu_lb.dns_name}:80/v2"
+}
+
+output "gpu_dashboard_url" {
+  description = "URL for the GPU monitoring dashboard"
+  value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.gpu_dashboard.dashboard_name}"
+}
+
+output "fargate_service_name" {
+  description = "Name of the Fargate ECS service (if enabled)"
+  value       = var.enable_fargate ? aws_ecs_service.gpu_service_fargate[0].name : "Fargate not enabled"
+}

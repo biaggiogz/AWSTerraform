@@ -54,6 +54,36 @@ variable "gpu_instance_type" {
   default     = "g4dn.xlarge"  # Entry-level NVIDIA T4 GPU instance
 }
 
+variable "enable_fargate" {
+  description = "Enable Fargate for serverless container execution"
+  type        = bool
+  default     = true
+}
+
+variable "gpu_instance_family" {
+  description = "GPU instance family to use"
+  type        = string
+  default     = "g4dn"  # Options: g4dn, g5, p3, p4d
+}
+
+variable "nvidia_driver_version" {
+  description = "NVIDIA driver version to install"
+  type        = string
+  default     = "525.105.17"  # Latest stable version
+}
+
+variable "enable_nvidia_fabric_manager" {
+  description = "Enable NVIDIA Fabric Manager for P4d instances"
+  type        = bool
+  default     = true
+}
+
+variable "enable_nvidia_persistence_daemon" {
+  description = "Enable NVIDIA Persistence Daemon for P5 instances"
+  type        = bool
+  default     = true
+}
+
 variable "min_gpu_instances" {
   description = "Minimum number of GPU instances in the Auto Scaling Group"
   type        = number
