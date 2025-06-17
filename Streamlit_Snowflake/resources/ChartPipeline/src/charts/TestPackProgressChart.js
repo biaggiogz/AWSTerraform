@@ -216,7 +216,7 @@ const TestPackProgressChart = ({ data }) => {
         borderRadius="md"
         _hover={{ bg: "gray.100" }}
       >
-        <Box width="15px" height="15px" bg="rgba(255, 99, 132, 0.6)" borderColor="rgba(255, 99, 132, 1)" borderWidth="1px" />
+        <Box width="10px" height="15px" bg="rgba(255, 99, 132, 0.6)" borderColor="rgba(255, 99, 132, 1)" borderWidth="1px" />
         <Text>Below 70%</Text>
       </HStack>
     </HStack>
@@ -224,7 +224,7 @@ const TestPackProgressChart = ({ data }) => {
 
   // Test pack selection component
   const testPackSelector = (
-    <Box mt={3} mb={2} borderWidth="1px" borderRadius="md" p={2}>
+    <Box mt={3} mb={2} borderWidth="2px" borderRadius="md" p={2}>
       <Flex justify="space-between" mb={2}>
         <Text fontWeight="bold">Test Pack Selection</Text>
         <HStack>
@@ -250,7 +250,7 @@ const TestPackProgressChart = ({ data }) => {
       </Box>
       {totalPages > 1 && (
         <Flex justify="space-between" align="center" mt={2}>
-          <Text fontSize="sm">
+          <Text fontSize="12px">
             Page {currentPage} of {totalPages} ({testPackKeys.length} items)
           </Text>
           <HStack>
@@ -290,8 +290,10 @@ const TestPackProgressChart = ({ data }) => {
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
-      <Heading size="md" mb={2} fontSize="16px">Test Pack Construction Progress</Heading>
-      {statusLegend}
+       <Flex justify="space-between" align="center" mb={2}>
+          <Heading size="md" fontSize="16px">Test Pack Construction Progress</Heading>
+          {statusLegend}
+       </Flex>
       {testPackSelector}
       <Box height={`${Math.max(320, Object.keys(paginatedTestPacks).length * 25)}px`} mt={2}>
         <Bar data={chartData} options={options} />
