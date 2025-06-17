@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { Box, Heading, HStack, Text, Checkbox, VStack, Flex, Wrap, WrapItem, Button } from '@chakra-ui/react';
+import { Box, Heading, HStack, Text, Checkbox, VStack, Flex, Wrap, WrapItem, Button, Tooltip } from '@chakra-ui/react';
 import { calculateMetricsByGroup } from '../utils/dataProcessor';
 
 /**
@@ -9,12 +9,8 @@ import { calculateMetricsByGroup } from '../utils/dataProcessor';
  * @param {Array} props.data - Filtered dataset
  */
 const TestPackProgressChart = ({ data }) => {
-  // State for active filters
-  const [activeFilters, setActiveFilters] = useState({
-    above90: true,
-    between70And90: true,
-    below70: true
-  });
+  // State for exclusive filter (only one active at a time, or all active)
+  const [exclusiveFilter, setExclusiveFilter] = useState(null);
   
   // State for selected test packs
   const [selectedTestPacks, setSelectedTestPacks] = useState({});
@@ -50,17 +46,22 @@ const TestPackProgressChart = ({ data }) => {
   const endIndex = Math.min(startIndex + itemsPerPage, testPackKeys.length);
   const currentTestPacks = testPackKeys.slice(startIndex, endIndex);
   
-  // Filter test packs based on active filters and selected test packs
+  // Filter test packs based on exclusive filter and selected test packs
   const filteredTestPacks = Object.entries(sortedTestPacks)
     .filter(([key, value]) => {
       // First check if the test pack is selected
       if (!selectedTestPacks[key]) return false;
       
-      // Then apply progress filters
-      const progress = value.avgConstructionProgress;
-      if (progress > 90) return activeFilters.above90;
-      if (progress >= 70 && progress <= 90) return activeFilters.between70And90;
-      return activeFilters.below70;
+      // Then apply exclusive filter if active
+      if (exclusiveFilter) {
+        const progress = value.avgConstructionProgress;
+        if (exclusiveFilter === 'above90') return progress > 90;
+        if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
+        if (exclusiveFilter === 'below70') return progress < 70;
+      }
+      
+      // If no exclusive filter, show all
+      return true;
     })
     .reduce((obj, [key, value]) => {
       obj[key] = value;
@@ -153,12 +154,9 @@ const TestPackProgressChart = ({ data }) => {
     }
   };
 
-  // Toggle filter function
-  const toggleFilter = (filter) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [filter]: !prev[filter]
-    }));
+  // Toggle exclusive filter function
+  const toggleExclusiveFilter = (filter) => {
+    setExclusiveFilter(prev => prev === filter ? null : filter);
   };
   
   // Toggle test pack selection
@@ -186,39 +184,56 @@ const TestPackProgressChart = ({ data }) => {
   // Legend for status icons with interactive filtering
   const statusLegend = (
     <HStack spacing={4} justifyContent="center">
-      <HStack 
-        onClick={() => toggleFilter('above90')} 
-        cursor="pointer" 
-        opacity={activeFilters.above90 ? 1 : 0.5}
-        p={1}
-        borderRadius="md"
-        _hover={{ bg: "gray.100" }}
-      >
-        <Box width="15px" height="15px" bg="rgba(75, 150, 192, 0.6)" borderColor="rgba(75, 150, 192, 1)" borderWidth="1px" />
-        <Text>Above 90%</Text>
-      </HStack>
-      <HStack 
-        onClick={() => toggleFilter('between70And90')} 
-        cursor="pointer" 
-        opacity={activeFilters.between70And90 ? 1 : 0.5}
-        p={1}
-        borderRadius="md"
-        _hover={{ bg: "gray.100" }}
-      >
-        <Box width="15px" height="15px" bg="rgba(255, 206, 86, 0.6)" borderColor="rgba(255, 206, 86, 1)" borderWidth="1px" />
-        <Text>70-90%</Text>
-      </HStack>
-      <HStack 
-        onClick={() => toggleFilter('below70')} 
-        cursor="pointer" 
-        opacity={activeFilters.below70 ? 1 : 0.5}
-        p={1}
-        borderRadius="md"
-        _hover={{ bg: "gray.100" }}
-      >
-        <Box width="15px" height="15px" bg="rgba(255, 99, 132, 0.6)" borderColor="rgba(255, 99, 132, 1)" borderWidth="1px" />
-        <Text>Below 70%</Text>
-      </HStack>
+      <Tooltip label={exclusiveFilter === 'above90' ? "Click to show all categories" : "Click to show only this category"} placement="top">
+        <HStack 
+          onClick={() => toggleExclusiveFilter('above90')} 
+          cursor="pointer" 
+          p={1}
+          borderRadius="md"
+          bg={exclusiveFilter === 'above90' ? "blue.50" : "transparent"}
+          borderWidth="1px"
+          borderColor={exclusiveFilter === 'above90' ? "blue.300" : "transparent"}
+          _hover={{ bg: "gray.100" }}
+        >
+          <Box width="15px" height="15px" bg="rgba(75, 150, 192, 0.6)" borderColor="rgba(75, 150, 192, 1)" borderWidth="1px" />
+          <Text fontWeight={exclusiveFilter === 'above90' ? "bold" : "normal"}>Above 90%</Text>
+          {exclusiveFilter === 'above90' && <Text fontSize="xs" color="blue.500" ml={1}>(active)</Text>}
+        </HStack>
+      </Tooltip>
+      
+      <Tooltip label={exclusiveFilter === 'between70And90' ? "Click to show all categories" : "Click to show only this category"} placement="top">
+        <HStack 
+          onClick={() => toggleExclusiveFilter('between70And90')} 
+          cursor="pointer" 
+          p={1}
+          borderRadius="md"
+          bg={exclusiveFilter === 'between70And90' ? "blue.50" : "transparent"}
+          borderWidth="1px"
+          borderColor={exclusiveFilter === 'between70And90' ? "blue.300" : "transparent"}
+          _hover={{ bg: "gray.100" }}
+        >
+          <Box width="15px" height="15px" bg="rgba(255, 206, 86, 0.6)" borderColor="rgba(255, 206, 86, 1)" borderWidth="1px" />
+          <Text fontWeight={exclusiveFilter === 'between70And90' ? "bold" : "normal"}>70-90%</Text>
+          {exclusiveFilter === 'between70And90' && <Text fontSize="xs" color="blue.500" ml={1}>(active)</Text>}
+        </HStack>
+      </Tooltip>
+      
+      <Tooltip label={exclusiveFilter === 'below70' ? "Click to show all categories" : "Click to show only this category"} placement="top">
+        <HStack 
+          onClick={() => toggleExclusiveFilter('below70')} 
+          cursor="pointer" 
+          p={1}
+          borderRadius="md"
+          bg={exclusiveFilter === 'below70' ? "blue.50" : "transparent"}
+          borderWidth="1px"
+          borderColor={exclusiveFilter === 'below70' ? "blue.300" : "transparent"}
+          _hover={{ bg: "gray.100" }}
+        >
+          <Box width="15px" height="15px" bg="rgba(255, 99, 132, 0.6)" borderColor="rgba(255, 99, 132, 1)" borderWidth="1px" />
+          <Text fontWeight={exclusiveFilter === 'below70' ? "bold" : "normal"}>Below 70%</Text>
+          {exclusiveFilter === 'below70' && <Text fontSize="xs" color="blue.500" ml={1}>(active)</Text>}
+        </HStack>
+      </Tooltip>
     </HStack>
   );
 
@@ -311,8 +326,15 @@ const TestPackProgressChart = ({ data }) => {
         borderBottomWidth="1px"
         borderBottomColor="gray.200"
       >
+        <Flex justify="space-between" align="center" mb={2}>
         <Heading size="md" mb={2}>Test Pack Construction Progress</Heading>
+        {exclusiveFilter && (
+          <Text fontSize="sm" color="blue.600" mb={2} textAlign="center">
+            Showing only {exclusiveFilter === 'above90' ? 'Above 90%' : exclusiveFilter === 'between70And90' ? '70-90%' : 'Below 70%'} test packs
+          </Text>
+        )}
         {statusLegend}
+        </Flex>
       </Box>
       
       {testPackSelector}
