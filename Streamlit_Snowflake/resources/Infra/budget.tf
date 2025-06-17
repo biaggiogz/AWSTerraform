@@ -1,5 +1,5 @@
 resource "aws_budgets_budget" "streamlit_snowflake_budget" {
-  name              = "${var.app_name}-monthly-budget"
+  name              = "${var.app_name_streamlit}-monthly-budget"
   budget_type       = "COST"
   time_unit         = "MONTHLY"
   time_period_start = formatdate("YYYY-MM-01_00:00", timestamp())
@@ -62,7 +62,7 @@ resource "aws_budgets_budget" "streamlit_snowflake_budget" {
 }
 # CloudWatch Dashboard for daily cost monitoring
 resource "aws_cloudwatch_dashboard" "cost_dashboard" {
-  dashboard_name = "${var.app_name}-cost-dashboard"
+  dashboard_name = "${var.app_name_streamlit}-cost-dashboard"
   
   dashboard_body = jsonencode({
     widgets = [

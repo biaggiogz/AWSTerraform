@@ -25,7 +25,7 @@ data "aws_availability_zones" "available" {
 # Fetch details about S3 object
 data "aws_s3_object" "streamlit_assets" {
   bucket = aws_s3_bucket.streamlit_s3_bucket.id
-  key    = "${var.app_name}-assets.zip"
+  key    = "${var.app_name_streamlit}-assets.zip"
 
   depends_on = [
     time_sleep.wait_20_seconds,

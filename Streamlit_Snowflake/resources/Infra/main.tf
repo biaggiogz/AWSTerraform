@@ -24,7 +24,7 @@ resource "aws_vpc" "streamlit_vpc" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-vpc"
+      Name = "${var.app_name_streamlit}-vpc"
     }
   )
 }
@@ -41,7 +41,7 @@ resource "aws_subnet" "public_subnet1" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-public-subnet1"
+      Name = "${var.app_name_streamlit}-public-subnet1"
     }
   )
 }
@@ -56,7 +56,7 @@ resource "aws_subnet" "public_subnet2" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-public-subnet2"
+      Name = "${var.app_name_streamlit}-public-subnet2"
     }
   )
 }
@@ -97,7 +97,7 @@ resource "aws_internet_gateway" "streamlit_igw" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-igw"
+      Name = "${var.app_name_streamlit}-igw"
     }
   )
 }
@@ -126,7 +126,7 @@ resource "aws_eip" "streamlit_eip" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-eip"
+      Name = "${var.app_name_streamlit}-eip"
     }
   )
 }
@@ -144,7 +144,7 @@ resource "aws_route_table" "streamlit_route_table_public" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-public-rt"
+      Name = "${var.app_name_streamlit}-public-rt"
     }
   )
 }
@@ -200,12 +200,12 @@ resource "aws_route_table_association" "public_subnet2_association" {
 resource "aws_security_group" "streamlit_ecs_sg" {
   count = var.create_ecs_security_group ? 1 : 0
 
-  name        = "${var.app_name}-ecs-sg"
+  name        = "${var.app_name_streamlit}-ecs-sg"
   vpc_id      = aws_vpc.streamlit_vpc[0].id 
   description = "Security group for Streamlit ECS container."
 
   tags = {
-    Name = "${var.app_name}-ecs-sg"
+    Name = "${var.app_name_streamlit}-ecs-sg"
   }
 }
 
@@ -220,7 +220,7 @@ resource "aws_vpc_security_group_ingress_rule" "streamlit_ecs_sg_alb_traffic" {
   description                  = "Allow inbound traffic from ALB Security Group on port 8501 (Streamlit default port)."
 
   tags = {
-    SecurityGroup = "${var.app_name}-ecs-sg"
+    SecurityGroup = "${var.app_name_streamlit}-ecs-sg"
   }
 }
 resource "aws_vpc_security_group_ingress_rule" "streamlit_ecs_sg_http_traffic" {
@@ -234,7 +234,7 @@ resource "aws_vpc_security_group_ingress_rule" "streamlit_ecs_sg_http_traffic" {
   description = "Allow inbound traffic from ALB Security Group on port 80 (HTTP)."
 
   tags = {
-    SecurityGroup = "${var.app_name}-ecs-sg"
+    SecurityGroup = "${var.app_name_streamlit}-ecs-sg"
   }
 }
 resource "aws_vpc_security_group_ingress_rule" "streamlit_ecs_sg_https_traffic" {
@@ -248,7 +248,7 @@ resource "aws_vpc_security_group_ingress_rule" "streamlit_ecs_sg_https_traffic" 
   description                  = "Allow inbound traffic from ALB Security Group on port 443 (HTTPS)."
 
   tags = {
-    SecurityGroup = "${var.app_name}-ecs-sg"
+    SecurityGroup = "${var.app_name_streamlit}-ecs-sg"
   }
 }
 # Egress
@@ -263,19 +263,19 @@ resource "aws_vpc_security_group_egress_rule" "streamlit_ecs_sg_alb_all_traffic"
   description = "Allow outbound traffic to Internet on any port."
 
   tags = {
-    SecurityGroup = "${var.app_name}-ecs-sg"
+    SecurityGroup = "${var.app_name_streamlit}-ecs-sg"
   }
 }
 
 resource "aws_security_group" "streamlit_alb_sg" {
   count = var.create_alb_security_group ? 1 : 0
 
-  name        = "${var.app_name}-alb-sg"
+  name        = "${var.app_name_streamlit}-alb-sg"
   vpc_id      = aws_vpc.streamlit_vpc[0].id 
   description = "Security group for Streamlit ALB."
 
   tags = {
-    Name = "${var.app_name}-alb-sg"
+    Name = "${var.app_name_streamlit}-alb-sg"
   }
 }
 
@@ -290,7 +290,7 @@ resource "aws_vpc_security_group_ingress_rule" "streamlit_alb_sg_alb_traffic" {
   description       = "Allow inbound traffic from Internet on port 8501 (Streamlit default port)."
 
   tags = {
-    SecurityGroup = "${var.app_name}-alb-sg"
+    SecurityGroup = "${var.app_name_streamlit}-alb-sg"
   }
 }
 resource "aws_vpc_security_group_ingress_rule" "streamlit_alb_sg_http_traffic" {
@@ -304,7 +304,7 @@ resource "aws_vpc_security_group_ingress_rule" "streamlit_alb_sg_http_traffic" {
   description = "Allow inbound traffic from Internet on port 80 (HTTP)."
 
   tags = {
-    SecurityGroup = "${var.app_name}-alb-sg"
+    SecurityGroup = "${var.app_name_streamlit}-alb-sg"
   }
 }
 resource "aws_vpc_security_group_ingress_rule" "streamlit_alb_sg_https_traffic" {
@@ -318,7 +318,7 @@ resource "aws_vpc_security_group_ingress_rule" "streamlit_alb_sg_https_traffic" 
   description       = "Allow inbound traffic from Internet on port 443 (HTTPS)."
 
   tags = {
-    SecurityGroup = "${var.app_name}-alb-sg"
+    SecurityGroup = "${var.app_name_streamlit}-alb-sg"
   }
 }
 resource "aws_vpc_security_group_egress_rule" "streamlit_alb_sg_alb_all_traffic" {
@@ -332,14 +332,14 @@ resource "aws_vpc_security_group_egress_rule" "streamlit_alb_sg_alb_all_traffic"
   description = "Allow outbound traffic to Internet on any port."
 
   tags = {
-    SecurityGroup = "${var.app_name}-alb-sg"
+    SecurityGroup = "${var.app_name_streamlit}-alb-sg"
   }
 }
 
 
 
 resource "aws_lb" "streamlit_alb" {
-  name                       = "${var.app_name}-alb"
+  name                       = "${var.app_name_streamlit}-alb"
   internal                   = false
   load_balancer_type         = "application"
   drop_invalid_header_fields = true
@@ -348,13 +348,13 @@ resource "aws_lb" "streamlit_alb" {
   enable_deletion_protection = var.enable_alb_deletion_protection
 
   tags = {
-    Name = "${var.app_name}-alb"
+    Name = "${var.app_name_streamlit}-alb"
   }
 }
 
 
 resource "aws_lb_target_group" "streamlit_tg" {
-  name        = "${var.app_name}-tg"
+  name        = "${var.app_name_streamlit}-tg"
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
@@ -370,7 +370,7 @@ resource "aws_lb_target_group" "streamlit_tg" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-tg"
+      Name = "${var.app_name_streamlit}-tg"
     }
   )
 }
@@ -450,7 +450,7 @@ resource "aws_lb_listener_rule" "redirect_rule" {
 resource "aws_cloudfront_distribution" "streamlit_distribution" {
   origin {
     domain_name = aws_lb.streamlit_alb.dns_name
-    origin_id   = "${var.app_name}-origin"
+    origin_id   = "${var.app_name_streamlit}-origin"
 
     custom_header {
       name  = var.custom_header_name
@@ -471,7 +471,7 @@ resource "aws_cloudfront_distribution" "streamlit_distribution" {
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods   = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id = "${var.app_name}-origin"
+    target_origin_id = "${var.app_name_streamlit}-origin"
 
     viewer_protocol_policy = "redirect-to-https"
 
@@ -513,7 +513,7 @@ resource "null_resource" "streamlit_cloudfront_invalidation" {
 
 
 resource "aws_ecs_cluster" "streamlit_ecs_cluster" {
-  name = "${var.app_name}-ecs-cluster"
+  name = "${var.app_name_streamlit}-ecs-cluster"
 
 }
 
@@ -530,7 +530,7 @@ resource "aws_ecs_cluster_capacity_providers" "streamlit_ecs_cluster" {
 }
 
 resource "aws_ecs_service" "streamlit_ecs_service" {
-  name            = "${var.app_name}-ecs-service"
+  name            = "${var.app_name_streamlit}-ecs-service"
   cluster         = aws_ecs_cluster.streamlit_ecs_cluster.id
   task_definition = aws_ecs_task_definition.streamlit_ecs_task_definition.arn
   desired_count   = var.desired_count # Number of tasks to run
@@ -543,14 +543,14 @@ resource "aws_ecs_service" "streamlit_ecs_service" {
   }
   load_balancer {
     target_group_arn = aws_lb_target_group.streamlit_tg.arn
-    container_name   = "${var.app_name}-container"
+    container_name   = "${var.app_name_streamlit}-container"
     container_port   = var.container_port
   }
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-ecs-service"
+      Name = "${var.app_name_streamlit}-ecs-service"
     }
   )
   # The Amazon ECS service requires an explicit dependency on the Application Load Balancer listener rule and the Application Load Balancer listener. This prevents the service from starting before the listener is ready.
@@ -558,19 +558,19 @@ resource "aws_ecs_service" "streamlit_ecs_service" {
 }
 
 resource "aws_cloudwatch_log_group" "streamlit_ecs_service_log_group" {
-  name              = "/ecs/${var.app_name}-ecs-log-group"
+  name              = "/ecs/${var.app_name_streamlit}-ecs-log-group"
   retention_in_days = 365
   kms_key_id        = var.streamlit_ecs_service_log_group_kms_key
 
   tags = merge(var.tags,
     {
-      Name = "/ecs/${var.app_name}-ecs-log-group"
+      Name = "/ecs/${var.app_name_streamlit}-ecs-log-group"
     }
   )
 }
 
 resource "aws_ecs_task_definition" "streamlit_ecs_task_definition" {
-  family                   = "${var.app_name}-ecs-task"
+  family                   = "${var.app_name_streamlit}-ecs-task"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = var.task_cpu    # CPU units for Fargate (must be number, not string)
@@ -581,7 +581,7 @@ resource "aws_ecs_task_definition" "streamlit_ecs_task_definition" {
   # Important: all numbers must not be in strings, see this: https://github.com/hashicorp/terraform-provider-aws/issues/6380
   container_definitions = jsonencode([
     {
-      name      = "${var.app_name}-container",
+      name      = "${var.app_name_streamlit}-container",
       image     = "${aws_ecr_repository.streamlit_ecr_repo.repository_url}:${var.ecs_task_desired_image_tag != null ? var.ecs_task_desired_image_tag : data.aws_s3_object.streamlit_assets.version_id}",
       cpu       = var.task_cpu    # CPU units for Fargate (must be number, not string)
       memory    = var.task_memory # Memory in MiB for Fargate (must be number, not string)
@@ -611,7 +611,7 @@ resource "aws_ecs_task_definition" "streamlit_ecs_task_definition" {
   }
 
   tags = {
-    Name        = "${var.app_name}-ecs-task"
+    Name        = "${var.app_name_streamlit}-ecs-task"
     Environment = var.environment
   }
 
@@ -621,7 +621,7 @@ resource "aws_ecs_task_definition" "streamlit_ecs_task_definition" {
 
 
 resource "aws_ecr_repository" "streamlit_ecr_repo" {
-  name                 = "${var.app_name}-repo"
+  name                 = "${var.app_name_streamlit}-repo"
   image_tag_mutability = var.streamlit_ecr_repo_image_tag_mutability
   image_scanning_configuration {
     scan_on_push = var.enable_streamlit_ecr_repo_scan_on_push
@@ -632,7 +632,7 @@ resource "aws_ecr_repository" "streamlit_ecr_repo" {
   }
   force_delete = var.streamlit_ecr_repo_enable_force_delete
   tags = {
-    Name = "${var.app_name}-repo"
+    Name = "${var.app_name_streamlit}-repo"
   }
 }
 
@@ -657,19 +657,35 @@ resource "aws_ecr_lifecycle_policy" "streamlit_ecr_repo" {
 # }
 data "archive_file" "streamlit_assets" {
   type = "zip"
-  source_dir  = var.path_to_app_dir != null ? var.path_to_app_dir : "${path.root}/appStreamlit/"
-  output_path = "${var.app_name}-assets.zip"
+  source_dir  = var.path_to_app_dir != null ? var.path_to_app_dir : "${path.root}/../appStreamlit/"
+  output_path = "${var.app_name_streamlit}-assets.zip"
 }
 
 
 
 resource "aws_s3_bucket" "streamlit_s3_bucket" {
-  bucket        = "${var.app_name}-assets-${random_string.streamlit_s3_bucket.result}"
+  bucket        = "${var.app_name_streamlit}-assets-${random_string.streamlit_s3_bucket.result}"
   force_destroy = true
   tags = {
-    Name = "${var.app_name}-assets-${random_string.streamlit_s3_bucket.result}"
+    Name = "${var.app_name_streamlit}-assets-${random_string.streamlit_s3_bucket.result}"
+  }
+  lifecycle {
+    prevent_destroy = false
   }
 }
+resource "aws_s3_bucket_lifecycle_configuration" "streamlit_s3_bucket" {
+  bucket = aws_s3_bucket.streamlit_s3_bucket.id
+
+  rule {
+    id     = "delete-all"
+    status = "Enabled"
+
+    expiration {
+      days = 1
+    }
+  }
+}
+
 
 resource "aws_s3_bucket_notification" "streamlit_s3_bucket" {
   bucket      = aws_s3_bucket.streamlit_s3_bucket.id
@@ -698,7 +714,7 @@ data "aws_iam_policy_document" "streamlit_s3_bucket" {
     # Allows S3:PutObject but only if the file being uploaded is the Streamlit .zip file
     resources = [
       # aws_s3_bucket.streamlit_s3_bucket.id,
-      "${aws_s3_bucket.streamlit_s3_bucket.arn}/${var.app_name}-assets.zip",
+      "${aws_s3_bucket.streamlit_s3_bucket.arn}/${var.app_name_streamlit}-assets.zip",
     ]
   }
   statement {
@@ -713,7 +729,7 @@ data "aws_iam_policy_document" "streamlit_s3_bucket" {
       "s3:PutObject",
     ]
     not_resources = [
-      "${aws_s3_bucket.streamlit_s3_bucket.arn}/${var.app_name}-assets.zip",
+      "${aws_s3_bucket.streamlit_s3_bucket.arn}/${var.app_name_streamlit}-assets.zip",
     ]
   }
 }
@@ -742,7 +758,7 @@ resource "null_resource" "put_s3_object" {
   }
 
   provisioner "local-exec" {
-    command = "aws s3 cp ${var.app_name}-assets.zip s3://${aws_s3_bucket.streamlit_s3_bucket.id}/${var.app_name}-assets.zip"
+    command = "aws s3 cp ${var.app_name_streamlit}-assets.zip s3://${aws_s3_bucket.streamlit_s3_bucket.id}/${var.app_name_streamlit}-assets.zip"
 
   }
 
@@ -756,26 +772,43 @@ resource "null_resource" "put_s3_object" {
 
 # Create S3 bucket to store CodePipeline Artifacts
 resource "aws_s3_bucket" "streamlit_codepipeline_artifacts" {
-  bucket        = "${var.app_name}-pipeline-artifacts-${random_string.streamlit_s3_bucket.result}"
+  bucket        = "${var.app_name_streamlit}-pipeline-artifacts-${random_string.streamlit_s3_bucket.result}"
   force_destroy = true
   tags = {
-    Name = "${var.app_name}-pipeline-artifacts-${random_string.streamlit_s3_bucket.result}"
+    Name = "${var.app_name_streamlit}-pipeline-artifacts-${random_string.streamlit_s3_bucket.result}"
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+# Add bucket emptying configuration
+resource "aws_s3_bucket_lifecycle_configuration" "streamlit_codepipeline_artifacts" {
+  bucket = aws_s3_bucket.streamlit_codepipeline_artifacts.id
+
+  rule {
+    id     = "delete-all"
+    status = "Enabled"
+
+    expiration {
+      days = 1
+    }
   }
 }
 
 
 resource "aws_cloudwatch_event_bus" "streamlit_event_bus" {
-  name = "${var.app_name}-event_bus"
+  name = "${var.app_name_streamlit}-event_bus"
   tags = merge(
     {
-      "Name" = "${var.app_name}-event_bus"
+      "Name" = "${var.app_name_streamlit}-event_bus"
     },
     var.tags,
   )
 }
 
 resource "aws_cloudwatch_event_rule" "default_event_bus_to_streamlit_event_bus" {
-  name          = "${var.app_name}-default_event_bus_to_${var.app_name}-event_bus"
+  name          = "${var.app_name_streamlit}-default_event_bus_to_${var.app_name_streamlit}-event_bus"
   description   = "Send all defined events from default event bus to Streamlit event bus."
   role_arn      = aws_iam_role.eventbridge_invoke_streamlit_event_bus.arn
   force_destroy = var.eventbridge_rules_enable_force_destroy
@@ -805,7 +838,7 @@ resource "aws_cloudwatch_event_rule" "default_event_bus_to_streamlit_event_bus" 
   tags = merge(
     var.tags,
     {
-      "Name" = "${var.app_name}-default_event_bus_to_${var.app_name}-event_bus"
+      "Name" = "${var.app_name_streamlit}-default_event_bus_to_${var.app_name_streamlit}-event_bus"
     },
   )
 }
@@ -817,7 +850,7 @@ resource "aws_cloudwatch_event_target" "default_event_bus_to_streamlit_event_bus
 }
 
 resource "aws_cloudwatch_event_rule" "invoke_streamlit_codepipeline" {
-  name           = "${var.app_name}-invoke-streamlit-codepipeline"
+  name           = "${var.app_name_streamlit}-invoke-streamlit-codepipeline"
   event_bus_name = aws_cloudwatch_event_bus.streamlit_event_bus.name
   description    = "Invoke Streamlit CodePipeline when object is uploaded to Streamlit S3 Bucket."
   role_arn       = aws_iam_role.eventbridge_invoke_streamlit_codepipeline.arn
@@ -839,7 +872,7 @@ resource "aws_cloudwatch_event_rule" "invoke_streamlit_codepipeline" {
   tags = merge(
     var.tags,
     {
-      "Name" = "${var.app_name}-default_event_bus_to_${var.app_name}-event_bus"
+      "Name" = "${var.app_name_streamlit}-default_event_bus_to_${var.app_name_streamlit}-event_bus"
     },
   )
 }
@@ -854,7 +887,7 @@ resource "aws_cloudwatch_event_target" "streamlit_codepipeline" {
 
 
 resource "aws_codepipeline" "streamlit_codepipeline" {
-  name          = "${var.app_name}-pipeline"
+  name          = "${var.app_name_streamlit}-pipeline"
   role_arn      = aws_iam_role.streamlit_codepipeline_service_role.arn
   pipeline_type = "V2"
 
@@ -914,8 +947,8 @@ resource "aws_codepipeline" "streamlit_codepipeline" {
 # CodeBuild
 ################################################################################
 resource "aws_codebuild_project" "streamlit_codebuild_project" {
-  name          = "${var.app_name}-image-builder"
-  description   = "CodeBuild project that creates Docker image and pushes to ECR when file is uploaded to ${var.app_name}-assets-${random_string.streamlit_s3_bucket.result} S3 bucket."
+  name          = "${var.app_name_streamlit}-image-builder"
+  description   = "CodeBuild project that creates Docker image and pushes to ECR when file is uploaded to ${var.app_name_streamlit}-assets-${random_string.streamlit_s3_bucket.result} S3 bucket."
   build_timeout = "10"
   # TODO - allow for users to supply existing IAM role to be used with CodeBuild
   service_role = aws_iam_role.streamlit_codebuild_service_role.arn
@@ -927,7 +960,7 @@ resource "aws_codebuild_project" "streamlit_codebuild_project" {
     type         = var.codebuild_image_type
     environment_variable {
       name  = "APP_NAME"
-      value = var.app_name
+      value = var.app_name_streamlit
     }
     environment_variable {
       name  = "IMAGE_TAG"
@@ -935,7 +968,7 @@ resource "aws_codebuild_project" "streamlit_codebuild_project" {
     }
     environment_variable {
       name  = "IMAGE_REPO_NAME"
-      value = "${var.app_name}-repo"
+      value = "${var.app_name_streamlit}-repo"
     }
     environment_variable {
       name  = "IMAGE_REPO_URL"
@@ -947,7 +980,7 @@ resource "aws_codebuild_project" "streamlit_codebuild_project" {
     }
     environment_variable {
       name  = "STREAMLIT_S3_OBJECT"
-      value = "${var.app_name}-assets.zip"
+      value = "${var.app_name_streamlit}-assets.zip"
     }
     environment_variable {
       name  = "AWS_REGION"
@@ -958,7 +991,7 @@ resource "aws_codebuild_project" "streamlit_codebuild_project" {
 
   source {
     type     = "S3"
-    location = "${aws_s3_bucket.streamlit_s3_bucket.id}/${var.app_name}-assets.zip"
+    location = "${aws_s3_bucket.streamlit_s3_bucket.id}/${var.app_name_streamlit}-assets.zip"
 
     buildspec = var.path_to_build_spec != null ? file(var.path_to_build_spec) : <<EOF
       version: 0.2
@@ -996,7 +1029,7 @@ resource "aws_codebuild_project" "streamlit_codebuild_project" {
   tags = merge(
     var.tags,
     {
-      "Name" = "${var.app_name}-image-builder"
+      "Name" = "${var.app_name_streamlit}-image-builder"
     },
   )
 
@@ -1060,14 +1093,14 @@ data "aws_iam_policy_document" "eventbridge_invoke_streamlit_event_bus_policy" {
   }
 }
 resource "aws_iam_policy" "eventbridge_invoke_streamlit_event_bus_policy" {
-  name        = "${var.app_name}-eventbridge-invoke-streamlit-event-bus"
+  name        = "${var.app_name_streamlit}-eventbridge-invoke-streamlit-event-bus"
   description = "Policy to events on the Default Event Bus to invoke the Streamlit Event Bus."
   policy      = data.aws_iam_policy_document.eventbridge_invoke_streamlit_event_bus_policy.json
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-eventbridge-invoke-streamlit-event-bus"
+      Name = "${var.app_name_streamlit}-eventbridge-invoke-streamlit-event-bus"
     },
   )
 }
@@ -1133,7 +1166,7 @@ data "aws_iam_policy_document" "eventbridge_invoke_streamlit_codepipeline_policy
       "s3:PutObject",
     ]
     resources = [
-      "${aws_s3_bucket.streamlit_s3_bucket.arn}/${var.app_name}-assets.zip",
+      "${aws_s3_bucket.streamlit_s3_bucket.arn}/${var.app_name_streamlit}-assets.zip",
     ]
   }
 }
@@ -1181,7 +1214,7 @@ data "aws_iam_policy_document" "streamlit_codepipeline_policy" {
 
 }
 resource "aws_iam_policy" "streamlit_codepipeline_policy" {
-  name        = "${var.app_name}-codepipeline-service-role-policy"
+  name        = "${var.app_name_streamlit}-codepipeline-service-role-policy"
   description = "Policy granting AWS CodePipeline access to S3 and CodeBuild."
   policy      = data.aws_iam_policy_document.streamlit_codepipeline_policy.json
 }
@@ -1246,7 +1279,7 @@ data "aws_iam_policy_document" "streamlit_codebuild_policy" {
     ]
     resources = [
       "*",
-      "arn:aws:logs:${data.aws_region.current.name}${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/${var.app_name}-image-builder:log-stream:*"
+      "arn:aws:logs:${data.aws_region.current.name}${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/${var.app_name_streamlit}-image-builder:log-stream:*"
     ]
   }
 }
@@ -1256,7 +1289,7 @@ resource "aws_iam_role_policy_attachment" "streamlit_codebuild_service_role_poli
 }
 
 resource "aws_iam_policy" "streamlit_codebuild_policy" {
-  name        = "${var.app_name}-codebuild-service-role-policy"
+  name        = "${var.app_name_streamlit}-codebuild-service-role-policy"
   description = "Policy granting the Streamlit CodeBuild Project access to ECR, S3, and CloudWatch."
   policy      = data.aws_iam_policy_document.streamlit_codebuild_policy.json
 }
@@ -1291,14 +1324,14 @@ data "aws_iam_policy_document" "ecs_default_policy" {
 
 
 resource "aws_iam_role" "eventbridge_invoke_streamlit_event_bus" {
-  name                  = "${var.app_name}-eventbridge-invoke-streamlit-event-bus"
+  name                  = "${var.app_name_streamlit}-eventbridge-invoke-streamlit-event-bus"
   assume_role_policy    = data.aws_iam_policy_document.eventbridge_trust_relationship.json
   force_detach_policies = true
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-eventbridge-invoke-streamlit-event-bus"
+      Name = "${var.app_name_streamlit}-eventbridge-invoke-streamlit-event-bus"
     },
   )
 }
@@ -1309,13 +1342,13 @@ resource "aws_iam_role_policy_attachment" "eventbridge_invoke_streamlit_event_bu
 }
 
 resource "aws_iam_role" "eventbridge_invoke_streamlit_codepipeline" {
-  name                  = "${var.app_name}-eventbridge-invoke-streamlit-codepipeline"
+  name                  = "${var.app_name_streamlit}-eventbridge-invoke-streamlit-codepipeline"
   assume_role_policy    = data.aws_iam_policy_document.eventbridge_trust_relationship.json
   force_detach_policies = var.enable_force_detach_policies
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-eventbridge-invoke-streamlit-codepipeline"
+      Name = "${var.app_name_streamlit}-eventbridge-invoke-streamlit-codepipeline"
     },
   )
 }
@@ -1326,7 +1359,7 @@ resource "aws_iam_role_policy_attachment" "eventbridge_invoke_streamlit_codepipe
 }
 
 resource "aws_iam_policy" "eventbridge_invoke_streamlit_codepipeline_policy" {
-  name        = "${var.app_name}-eventbridge-invoke-streamlit-codepipeline"
+  name        = "${var.app_name_streamlit}-eventbridge-invoke-streamlit-codepipeline"
   description = "Policy that allows EventBridge to invoke the Streamlit CodePipeline."
   policy      = jsonencode({
     Version = "2012-10-17"
@@ -1362,19 +1395,19 @@ resource "aws_iam_policy" "eventbridge_invoke_streamlit_codepipeline_policy" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-eventbridge-invoke-streamlit-codepipeline"
+      Name = "${var.app_name_streamlit}-eventbridge-invoke-streamlit-codepipeline"
     },
   )
 }
 
 resource "aws_iam_role" "streamlit_codepipeline_service_role" {
-  name                  = "${var.app_name}-codepipeline-service-role"
+  name                  = "${var.app_name_streamlit}-codepipeline-service-role"
   force_detach_policies = var.enable_force_detach_policies
   assume_role_policy    = data.aws_iam_policy_document.codepipeline_trust_relationship.json
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-codepipeline-service-role"
+      Name = "${var.app_name_streamlit}-codepipeline-service-role"
     },
   )
 }
@@ -1389,14 +1422,14 @@ resource "aws_iam_role_policy_attachment" "streamlit_codepipeline_service_role" 
 
 
 resource "aws_iam_role" "streamlit_codebuild_service_role" {
-  name                  = "${var.app_name}-codebuild-service-role"
+  name                  = "${var.app_name_streamlit}-codebuild-service-role"
   assume_role_policy    = data.aws_iam_policy_document.codebuild_trust_relationship.json
   force_detach_policies = var.enable_force_detach_policies
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-codebuild-service-role"
+      Name = "${var.app_name_streamlit}-codebuild-service-role"
     },
   )
 }
@@ -1411,14 +1444,14 @@ resource "aws_iam_role_policy_attachment" "streamlit_codebuild_service_role" {
 
 resource "aws_iam_role" "ecs_default_role" {
   count = var.create_ecs_default_role ? 1 : 0
-  name                  = "${var.app_name}-ecs-default-role"
+  name                  = "${var.app_name_streamlit}-ecs-default-role"
   assume_role_policy    = data.aws_iam_policy_document.ecs_tasks_trust_relationship[0].json
   force_detach_policies = var.enable_force_detach_policies  
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-ecs-default-role"
+      Name = "${var.app_name_streamlit}-ecs-default-role"
     },
   )
 }
@@ -1431,20 +1464,20 @@ resource "aws_iam_role_policy_attachment" "ecs_default_role_policy" {
 
 resource "aws_iam_policy" "ecs_default_policy" {
   count = var.create_ecs_default_policy ? 1 : 0
-  name        = "${var.app_name}-ecs-default-policy"
+  name        = "${var.app_name_streamlit}-ecs-default-policy"
   description = "Policy granting permissions for ECS to ECR and CloudWatch."
   policy      = data.aws_iam_policy_document.ecs_default_policy[0].json
 
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-ecs-default-policy"
+      Name = "${var.app_name_streamlit}-ecs-default-policy"
     },
   )
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${var.app_name}-ecs-task-execution-role"
+  name = "${var.app_name_streamlit}-ecs-task-execution-role"
 
   assume_role_policy    = data.aws_iam_policy_document.ecs_tasks_trust_relationship[0].json
   force_detach_policies = var.enable_force_detach_policies
@@ -1452,7 +1485,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = merge(
     var.tags,
     {
-      Name = "${var.app_name}-ecs-task-execution-role"
+      Name = "${var.app_name_streamlit}-ecs-task-execution-role"
     },
   )
 }

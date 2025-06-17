@@ -4,10 +4,15 @@ variable "aws_region" {
   type        = string
   default     = null
 }
-variable "app_name" {
+variable "app_name_streamlit" {
   description = "The name of your application. This value is appended at the beginning of resource names."
   type        = string
   default     = "streamlit"
+}
+variable "app_name_react" {
+  description = "The name of your application. This value is appended at the beginning of resource names."
+  type        = string
+  default     = "react"
 }
 variable "app_version" {
   description = "The version of the application. This is set to be used as the tag for the Docker image. Defaults to latest. Update this variable when making changes to your application to ensure you don't overwrite your previous image. Overwriting your previous image will prevent you from being able to roll back if you need."
@@ -131,7 +136,7 @@ variable "ecs_task_desired_image_tag" {
 variable "desired_count" {
   description = "The desired number of ECS tasks to run. Default is 1."
   type        = number
-  default     = 1
+  default     = 0
 }
 variable "task_cpu" {
   description = "The CPU resources (in CPU units) allocated to each task. Default is 256."
