@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { 
   Box, 
@@ -7,7 +7,8 @@ import {
   Text, 
   VStack, 
   Flex, 
-  Badge
+  Badge,
+  Button
 } from '@chakra-ui/react';
 
 /**
@@ -16,6 +17,9 @@ import {
  * @param {Array} props.data - Dataset from CSV
  */
 const LoopTestProgressChart = ({ data }) => {
+  // State to track the active measure filter
+  const [activeFilter, setActiveFilter] = useState(null);
+  
   // Calculate metrics with optimized processing
   const metrics = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -63,51 +67,83 @@ const LoopTestProgressChart = ({ data }) => {
       }
     });
     
-    // Convert to array format for chart and sort by total loops
+    // Convert to array format for chart
     return Object.entries(groupedData)
       .map(([subsPre, values]) => ({
         subsPre,
         ...values
-      }))
-      .sort((a, b) => b.totalLoops - a.totalLoops);
+      }));
   }, [data]);
+  
+  // Filter metrics based on active filter
+  const filteredMetrics = useMemo(() => {
+    if (!activeFilter) return metrics;
+    
+    return metrics.filter(item => {
+      switch (activeFilter) {
+        case 'LOOPS NOT STARTED CONSTRUCTION':
+          return item.loopsNotStartedConstruction > 0;
+        case 'LOOPS DONE':
+          return item.loopsDone > 0;
+        case 'DOSSIER COMPLETED':
+          return item.dossierCompleted > 0;
+        case 'LOOPS CONSTRUCTION DONE':
+          return item.loopsConstructionDone > 0;
+        default:
+          return true;
+      }
+    });
+  }, [metrics, activeFilter]);
+  
+  // Sort metrics by total loops (descending)
+  const sortedMetrics = useMemo(() => {
+    return [...filteredMetrics].sort((a, b) => b.totalLoops - a.totalLoops);
+  }, [filteredMetrics]);
   
   // Prepare chart data with memoization
   const chartData = useMemo(() => {
+    // Define all datasets
+    const allDatasets = [
+      {
+        label: 'LOOPS NOT STARTED CONSTRUCTION',
+        data: sortedMetrics.map(item => item.loopsNotStartedConstruction),
+        backgroundColor: '#AEE6F9', // Light Blue
+        borderColor: '#99D5E8',
+        borderWidth: 1,
+      },
+      {
+        label: 'LOOPS DONE',
+        data: sortedMetrics.map(item => item.loopsDone),
+        backgroundColor: '#FFB4A2', // Blue
+        borderColor: '#E5989B',
+        borderWidth: 1,
+      },
+      {
+        label: 'DOSSIER COMPLETED',
+        data: sortedMetrics.map(item => item.dossierCompleted),
+        backgroundColor: '#D7A0C3', // Pink
+        borderColor: '#C68FB2',
+        borderWidth: 1,
+      },
+      {
+        label: 'LOOPS CONSTRUCTION DONE',
+        data: sortedMetrics.map(item => item.loopsConstructionDone),
+        backgroundColor: '#E7D1B0', // Beige
+        borderColor: '#D6C09F',
+        borderWidth: 1,
+      }
+    ];
+    
+    // If there's an active filter, only show that dataset
+    const datasets = activeFilter 
+      ? allDatasets.filter(dataset => dataset.label === activeFilter)
+      : allDatasets;
+    
     return {
-      labels: metrics.map(item => item.subsPre),
-      datasets: [
-        {
-          label: 'LOOPS NOT STARTED CONSTRUCTION',
-          data: metrics.map(item => item.loopsNotStartedConstruction),
-          backgroundColor: '#AEE6F9', // Light Blue
-          borderColor: '#99D5E8',
-          borderWidth: 1,
-        },
-        {
-          label: 'LOOPS DONE',
-          data: metrics.map(item => item.loopsDone),
-          backgroundColor: '#3B4CCA', // Blue
-          borderColor: '#2A3BB9',
-          borderWidth: 1,
-        },
-        {
-          label: 'DOSSIER COMPLETED',
-          data: metrics.map(item => item.dossierCompleted),
-          backgroundColor: '#D7A0C3', // Pink
-          borderColor: '#C68FB2',
-          borderWidth: 1,
-        },
-        {
-          label: 'LOOPS CONSTRUCTION DONE',
-          data: metrics.map(item => item.loopsConstructionDone),
-          backgroundColor: '#E7D1B0', // Beige
-          borderColor: '#D6C09F',
-          borderWidth: 1,
-        }
-      ]
+      labels: sortedMetrics.map(item => item.subsPre),
+      datasets
     };
-  }, [metrics]);
+  }, [sortedMetrics, activeFilter]);
   
   // Chart options with memoization
   const options = useMemo(() => {
@@ -131,13 +167,20 @@ const LoopTestProgressChart = ({ data }) => {
             },
             footer: (tooltipItems) => {
               const index = tooltipItems[0].dataIndex;
-              const subsPre = metrics[index].subsPre;
-              const total = metrics[index].totalLoops;
+              const subsPre = sortedMetrics[index].subsPre;
+              const total = sortedMetrics[index].totalLoops;
+              
+              // If there's an active filter, show both the filtered value and total
+              if (activeFilter) {
+                const filteredValue = tooltipItems[0].raw;
+                return `${activeFilter}: ${filteredValue} / TOTAL LOOPS: ${total}`;
+              }
+              
               return `TOTAL LOOPS: ${total}`;
             }
           },
           enabled: true,
-          mode: 'index',
+          mode: activeFilter ? 'nearest' : 'index',
           intersect: false
         }
       },
@@ -161,7 +204,7 @@ const LoopTestProgressChart = ({ data }) => {
         }
       }
     };
-  }, [metrics]);
+  }, [sortedMetrics, activeFilter]);
 
   // Custom legend items - memoized to prevent unnecessary re-renders
   const legendItems = useMemo(() => [
@@ -170,30 +213,51 @@ const LoopTestProgressChart = ({ data }) => {
     { label: 'DOSSIER COMPLETED', color: '#D7A0C3' },
     { label: 'LOOPS CONSTRUCTION DONE', color: '#E7D1B0' }
   ], []);
+  
+  // Handle legend item click
+  const handleLegendItemClick = (label) => {
+    if (activeFilter === label) {
+      // If clicking the active filter, remove it
+      setActiveFilter(null);
+    } else {
+      // Otherwise, set the new filter
+      setActiveFilter(label);
+    }
+  };
 
   // Calculate summary statistics once
-  const totalSubsystems = metrics.length;
+  const totalSubsystems = sortedMetrics.length;
   const totalLoops = useMemo(() => 
-    metrics.reduce((sum, item) => sum + item.totalLoops, 0), 
-  [metrics]);
+    sortedMetrics.reduce((sum, item) => sum + item.totalLoops, 0), 
+  [sortedMetrics]);
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
       <Heading size="md" mb={4}>LOOP TEST PROGRESS</Heading>
       
-      {/* Custom legend */}
+      {/* Interactive legend */}
       <Flex wrap="wrap" mb={4} justifyContent="center">
         {legendItems.map((item, index) => (
-          <HStack key={index} mx={2} mb={2}>
-            <Box w="16px" h="16px" bg={item.color} borderRadius="sm" />
-            <Text fontSize="sm">{item.label}</Text>
-          </HStack>
+          <Button
+            key={index}
+            size="sm"
+            mx={1}
+            mb={2}
+            variant={activeFilter === item.label ? "solid" : "outline"}
+            colorScheme={activeFilter === item.label ? "blue" : "gray"}
+            leftIcon={<Box w="12px" h="12px" bg={item.color} borderRadius="sm" />}
+            onClick={() => handleLegendItemClick(item.label)}
+            aria-pressed={activeFilter === item.label}
+            role="checkbox"
+          >
+            {item.label}
+          </Button>
         ))}
       </Flex>
       
       {/* Chart container with fixed height and scrollable if needed */}
-      <Box height="500px" overflowY={metrics.length > 15 ? "auto" : "visible"}>
-        <Box minHeight={`${Math.max(400, metrics.length * 30)}px`}>
+      <Box height="500px" overflowY={sortedMetrics.length > 15 ? "auto" : "visible"}>
+        <Box minHeight={`${Math.max(400, sortedMetrics.length * 30)}px`}>
           <Bar data={chartData} options={options} />
         </Box>
       </Box>
@@ -202,6 +266,9 @@ const LoopTestProgressChart = ({ data }) => {
       <VStack mt={4} align="flex-start">
         <Text fontSize="sm">
           <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
+          {activeFilter && (
+            <Badge ml={2} colorScheme="green">Filtered by: {activeFilter}</Badge>
+          )}
         </Text>
         <Text fontSize="sm">
           <Badge colorScheme="blue" mr={2}>Total Loops:</Badge> {totalLoops}
