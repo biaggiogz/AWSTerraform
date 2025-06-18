@@ -285,7 +285,7 @@ const LoopTestProgressChart = ({ data }) => {
           // Dynamic spacing based on number of bars
           categoryPercentage: sortedMetrics.length <= 3 ? 0.5 : categoryPercentage,
           barPercentage: sortedMetrics.length <= 3 ? 0.5 : barPercentage,
-          offset: sortedMetrics.length <= 3,
+          offset: true, // Always enable offset to prevent bars from being cut off
           grid: {
             display: true,
             drawBorder: true,
@@ -293,15 +293,21 @@ const LoopTestProgressChart = ({ data }) => {
           },
           ticks: {
             padding: 5 // Add padding to the ticks
+          },
+          // Add extra space at the beginning and end of the axis
+          afterFit: function(scaleInstance) {
+            // Add extra space at the top and bottom of the scale
+            scaleInstance.paddingTop = 15;
+            scaleInstance.paddingBottom = 15;
           }
         }
       },
       layout: {
         padding: {
-          left: 5,
-          right: 5,
-          top: sortedMetrics.length <= 3 ? 15 : 5,
-          bottom: sortedMetrics.length <= 3 ? 15 : 5
+          left: 10,
+          right: 10,
+          top: 20,
+          bottom: 20
         }
       }
     };
