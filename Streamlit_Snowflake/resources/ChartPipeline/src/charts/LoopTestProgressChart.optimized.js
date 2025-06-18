@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { 
   Box, 
@@ -28,6 +28,12 @@ const LoopTestProgressChart = ({ data }) => {
   // State for sort field and direction
   const [sortField, setSortField] = useState('totalLoops');
   const [sortDirection, setSortDirection] = useState('desc');
+  
+  // Reference to chart container for layout recalculation
+  const chartRef = useRef(null);
+  
+  // Force chart re-render when filters change
+  const [chartKey, setChartKey] = useState(0);
   
   // Calculate metrics with optimized processing
   const metrics = useMemo(() => {
@@ -113,6 +119,31 @@ const LoopTestProgressChart = ({ data }) => {
     });
   }, [filteredMetrics, sortField, sortDirection]);
   
+  // Update chart when filters change
+  useEffect(() => {
+    setChartKey(prev => prev + 1);
+    
+    // Trigger resize to recalculate layout
+    if (chartRef.current) {
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+    }
+  }, [sortedMetrics.length, activeFilter]);
+  
+  // Calculate optimal spacing based on number of bars
+  const getOptimalSpacing = (count) => {
+    if (count <= 3) return { barPercentage: 0.6, categoryPercentage: 0.8 };
+    if (count <= 5) return { barPercentage: 0.7, categoryPercentage: 0.85 };
+    if (count <= 10) return { barPercentage: 0.8, categoryPercentage: 0.9 };
+    return { barPercentage: 0.85, categoryPercentage: 0.95 };
+  };
+  
+  // Calculate optimal chart height based on number of bars
+  const getChartHeight = (count) => {
+    const baseHeight = 300;
+    const heightPerBar = Math.max(30, Math.min(60, 200 / count));
+    return Math.max(200, count * heightPerBar);
+  };
+  
   // Prepare chart data with memoization
   const chartData = useMemo(() => {
     // Define all datasets
@@ -123,8 +154,6 @@ const LoopTestProgressChart = ({ data }) => {
         backgroundColor: '#AEE6F9', // Light Blue
         borderColor: '#99D5E8',
         borderWidth: 1,
-        barThickness: 20, // Fixed bar thickness
-        maxBarThickness: 30, // Maximum bar thickness
       },
       {
         label: 'LOOPS DONE',
@@ -132,8 +161,6 @@ const LoopTestProgressChart = ({ data }) => {
         backgroundColor: '#3B4CCA', // Blue
         borderColor: '#2A3BB9',
         borderWidth: 1,
-        barThickness: 20, // Fixed bar thickness
-        maxBarThickness: 30, // Maximum bar thickness
       },
       {
         label: 'DOSSIER COMPLETED',
@@ -141,8 +168,6 @@ const LoopTestProgressChart = ({ data }) => {
         backgroundColor: '#D7A0C3', // Pink
         borderColor: '#C68FB2',
         borderWidth: 1,
-        barThickness: 20, // Fixed bar thickness
-        maxBarThickness: 30, // Maximum bar thickness
       },
       {
         label: 'LOOPS CONSTRUCTION DONE',
@@ -150,8 +175,6 @@ const LoopTestProgressChart = ({ data }) => {
         backgroundColor: '#E7D1B0', // Beige
         borderColor: '#D6C09F',
         borderWidth: 1,
-        barThickness: 20, // Fixed bar thickness
-        maxBarThickness: 30, // Maximum bar thickness
       }
     ];
     
@@ -168,12 +191,15 @@ const LoopTestProgressChart = ({ data }) => {
   
   // Chart options with memoization
   const options = useMemo(() => {
+    // Get optimal spacing based on number of bars
+    const { barPercentage, categoryPercentage } = getOptimalSpacing(sortedMetrics.length);
+    
     return {
       indexAxis: 'y', // Horizontal bar chart
       responsive: true,
       maintainAspectRatio: false,
       animation: {
-        duration: 500 // Reduced animation time for better performance
+        duration: sortedMetrics.length <= 5 ? 0 : 300
       },
       plugins: {
         legend: {
@@ -200,7 +226,7 @@ const LoopTestProgressChart = ({ data }) => {
               return `TOTAL LOOPS: ${total}`;
             }
           },
-          enabled: false,
+          enabled: true,
           mode: activeFilter ? 'nearest' : 'index',
           intersect: false
         },
@@ -242,7 +268,13 @@ const LoopTestProgressChart = ({ data }) => {
           },
           ticks: {
             maxTicksLimit: 10 // Limit the number of ticks for better performance
-          }
+          },
+          grid: {
+            display: true,
+            drawBorder: true,
+            color: 'rgba(0, 0, 0, 0.1)' // Light grid lines
+          },
+          beginAtZero: true
         },
         y: {
           stacked: true,
@@ -250,9 +282,26 @@ const LoopTestProgressChart = ({ data }) => {
             display: true,
             text: 'SUBS_PRE'
           },
-          // Fix the bar thickness to maintain consistent width regardless of number of bars
-          barThickness: 20, // Fixed bar thickness
-          maxBarThickness: 30 // Maximum bar thickness
+          // Dynamic spacing based on number of bars
+          categoryPercentage: sortedMetrics.length <= 3 ? 0.5 : categoryPercentage,
+          barPercentage: sortedMetrics.length <= 3 ? 0.5 : barPercentage,
+          offset: sortedMetrics.length <= 3,
+          grid: {
+            display: true,
+            drawBorder: true,
+            color: 'rgba(0, 0, 0, 0.1)' // Light grid lines
+          },
+          ticks: {
+            padding: 5 // Add padding to the ticks
+          }
+        }
+      },
+      layout: {
+        padding: {
+          left: 5,
+          right: 5,
+          top: sortedMetrics.length <= 3 ? 15 : 5,
+          bottom: sortedMetrics.length <= 3 ? 15 : 5
         }
       }
     };
@@ -282,6 +331,9 @@ const LoopTestProgressChart = ({ data }) => {
   const totalLoops = useMemo(() => 
     sortedMetrics.reduce((sum, item) => sum + item.totalLoops, 0), 
   [sortedMetrics]);
+
+  // Calculate dynamic chart height
+  const chartHeight = getChartHeight(sortedMetrics.length);
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
@@ -320,17 +372,22 @@ const LoopTestProgressChart = ({ data }) => {
         ))}
       </Flex>
       
-
-      
-      {/* Chart container with fixed height and scrollable if needed */}
-      <Box height="500px" overflowY={sortedMetrics.length > 15 ? "auto" : "visible"}>
-        <Box 
-          minHeight={`${Math.max(400, sortedMetrics.length * 30)}px`}
-          maxWidth="100%"
-          className="chart-container"
-        >
-          <Bar data={chartData} options={options} />
-        </Box>
+      {/* Chart container with dynamic height based on number of bars */}
+      <Box
+        ref={chartRef}
+        height={`${chartHeight}px`}
+        minHeight={sortedMetrics.length <= 3 ? "200px" : "300px"}
+        position="relative"
+        borderWidth="1px"
+        borderColor="gray.200"
+        borderRadius="md"
+        p={2}
+      >
+        <Bar
+          data={chartData}
+          options={options}
+          key={`chart-${chartKey}`}
+        />
       </Box>
     </Box>
   );
