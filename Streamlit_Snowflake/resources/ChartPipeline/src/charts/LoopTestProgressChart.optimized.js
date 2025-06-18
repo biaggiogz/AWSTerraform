@@ -98,11 +98,11 @@ const LoopTestProgressChart = ({ data }) => {
       switch (activeFilter) {
         case 'LOOPS NOT STARTED CONSTRUCTION':
           return item.loopsNotStartedConstruction > 0;
-        case 'LOOPS DONE':
+        case 'TEST LOOP DONE':
           return item.loopsDone > 0;
         case 'DOSSIER COMPLETED':
           return item.dossierCompleted > 0;
-        case 'LOOPS CONSTRUCTION DONE':
+        case 'LOOPS PHASE CONSTRUCTION DONE':
           return item.loopsConstructionDone > 0;
         default:
           return true;
@@ -156,7 +156,7 @@ const LoopTestProgressChart = ({ data }) => {
         borderWidth: 1,
       },
       {
-        label: 'LOOPS DONE',
+        label: 'TEST LOOP DONE',
         data: sortedMetrics.map(item => item.loopsDone),
         backgroundColor: '#3B4CCA', // Blue
         borderColor: '#2A3BB9',
@@ -170,7 +170,7 @@ const LoopTestProgressChart = ({ data }) => {
         borderWidth: 1,
       },
       {
-        label: 'LOOPS CONSTRUCTION DONE',
+        label: 'LOOPS PHASE CONSTRUCTION DONE',
         data: sortedMetrics.map(item => item.loopsConstructionDone),
         backgroundColor: '#E7D1B0', // Beige
         borderColor: '#D6C09F',
@@ -226,7 +226,7 @@ const LoopTestProgressChart = ({ data }) => {
               return `TOTAL LOOPS: ${total}`;
             }
           },
-          enabled: true,
+          enabled: false,
           mode: activeFilter ? 'nearest' : 'index',
           intersect: false
         },
@@ -316,9 +316,9 @@ const LoopTestProgressChart = ({ data }) => {
   // Custom legend items - memoized to prevent unnecessary re-renders
   const legendItems = useMemo(() => [
     { label: 'LOOPS NOT STARTED CONSTRUCTION', color: '#AEE6F9' },
-    { label: 'LOOPS DONE', color: '#3B4CCA' },
+    { label: 'TEST LOOP DONE', color: '#3B4CCA' },
     { label: 'DOSSIER COMPLETED', color: '#D7A0C3' },
-    { label: 'LOOPS CONSTRUCTION DONE', color: '#E7D1B0' }
+    { label: 'LOOPS PHASE CONSTRUCTION DONE', color: '#E7D1B0' }
   ], []);
   
   // Handle legend item click
