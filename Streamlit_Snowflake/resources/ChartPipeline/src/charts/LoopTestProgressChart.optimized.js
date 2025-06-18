@@ -320,39 +320,7 @@ const LoopTestProgressChart = ({ data }) => {
         ))}
       </Flex>
       
-      {/* Sort controls */}
-      <Flex wrap="wrap" mb={4} justifyContent="center">
-        <Text fontSize="sm" fontWeight="bold" mr={2} alignSelf="center">Sort by:</Text>
-        <HStack spacing={2} flexWrap="wrap" justifyContent="center">
-          {[
-            { id: 'totalLoops', label: 'TOTAL LOOPS' },
-            { id: 'loopsConstructionDone', label: 'LOOPS CONSTRUCTION DONE' },
-            { id: 'dossierCompleted', label: 'DOSSIER COMPLETED' },
-            { id: 'loopsDone', label: 'LOOPS DONE' },
-            { id: 'loopsNotStartedConstruction', label: 'LOOPS NOT STARTED CONSTRUCTION' }
-          ].map((sortOption) => (
-            <Button
-              key={sortOption.id}
-              size="xs"
-              variant={sortField === sortOption.id ? "solid" : "outline"}
-              colorScheme={sortField === sortOption.id ? "blue" : "gray"}
-              onClick={() => {
-                if (sortField === sortOption.id) {
-                  // Toggle direction if clicking the same field
-                  setSortDirection(sortDirection === 'desc' ? 'asc' : 'desc');
-                } else {
-                  // Set new field and default to descending
-                  setSortField(sortOption.id);
-                  setSortDirection('desc');
-                }
-              }}
-              mb={2}
-            >
-              {sortOption.label} {sortField === sortOption.id && (sortDirection === 'desc' ? '↓' : '↑')}
-            </Button>
-          ))}
-        </HStack>
-      </Flex>
+
       
       {/* Chart container with fixed height and scrollable if needed */}
       <Box height="500px" overflowY={sortedMetrics.length > 15 ? "auto" : "visible"}>
