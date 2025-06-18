@@ -123,6 +123,8 @@ const LoopTestProgressChart = ({ data }) => {
         backgroundColor: '#AEE6F9', // Light Blue
         borderColor: '#99D5E8',
         borderWidth: 1,
+        barThickness: 20, // Fixed bar thickness
+        maxBarThickness: 30, // Maximum bar thickness
       },
       {
         label: 'LOOPS DONE',
@@ -130,6 +132,8 @@ const LoopTestProgressChart = ({ data }) => {
         backgroundColor: '#3B4CCA', // Blue
         borderColor: '#2A3BB9',
         borderWidth: 1,
+        barThickness: 20, // Fixed bar thickness
+        maxBarThickness: 30, // Maximum bar thickness
       },
       {
         label: 'DOSSIER COMPLETED',
@@ -137,6 +141,8 @@ const LoopTestProgressChart = ({ data }) => {
         backgroundColor: '#D7A0C3', // Pink
         borderColor: '#C68FB2',
         borderWidth: 1,
+        barThickness: 20, // Fixed bar thickness
+        maxBarThickness: 30, // Maximum bar thickness
       },
       {
         label: 'LOOPS CONSTRUCTION DONE',
@@ -144,6 +150,8 @@ const LoopTestProgressChart = ({ data }) => {
         backgroundColor: '#E7D1B0', // Beige
         borderColor: '#D6C09F',
         borderWidth: 1,
+        barThickness: 20, // Fixed bar thickness
+        maxBarThickness: 30, // Maximum bar thickness
       }
     ];
     
@@ -192,7 +200,7 @@ const LoopTestProgressChart = ({ data }) => {
               return `TOTAL LOOPS: ${total}`;
             }
           },
-          enabled: true,
+          enabled: false,
           mode: activeFilter ? 'nearest' : 'index',
           intersect: false
         },
@@ -241,7 +249,10 @@ const LoopTestProgressChart = ({ data }) => {
           title: {
             display: true,
             text: 'SUBS_PRE'
-          }
+          },
+          // Fix the bar thickness to maintain consistent width regardless of number of bars
+          barThickness: 20, // Fixed bar thickness
+          maxBarThickness: 30 // Maximum bar thickness
         }
       }
     };
@@ -345,7 +356,11 @@ const LoopTestProgressChart = ({ data }) => {
       
       {/* Chart container with fixed height and scrollable if needed */}
       <Box height="500px" overflowY={sortedMetrics.length > 15 ? "auto" : "visible"}>
-        <Box minHeight={`${Math.max(400, sortedMetrics.length * 30)}px`}>
+        <Box 
+          minHeight={`${Math.max(400, sortedMetrics.length * 30)}px`}
+          maxWidth="100%"
+          className="chart-container"
+        >
           <Bar data={chartData} options={options} />
         </Box>
       </Box>
