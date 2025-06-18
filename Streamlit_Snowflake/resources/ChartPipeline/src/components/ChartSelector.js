@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Box, 
   Tabs, 
@@ -7,7 +7,7 @@ import {
   Tab, 
   TabPanel 
 } from '@chakra-ui/react';
-import WeldingProgressChart from '../charts/WeldingProgressChart';
+import MetricsBarChart from '../charts/MetricsBarChart.optimized';
 import SubsystemComparisonChart from '../charts/SubsystemComparisonChart';
 import TestPackProgressChart from '../charts/TestPackProgressChart';
 
@@ -15,19 +15,42 @@ import TestPackProgressChart from '../charts/TestPackProgressChart';
  * ChartSelector component to switch between different charts
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset
+ * @param {string} props.activeDashboard - Currently active dashboard
+ * @param {Function} props.onDashboardChange - Function to call when dashboard changes
  */
-const ChartSelector = ({ data }) => {
+const ChartSelector = ({ data, activeDashboard, onDashboardChange }) => {
+  // Map tab index to dashboard name
+  const dashboardNames = [
+    'TAG_LOOP Metrics',
+    'Support vs Welding by Subsystem',
+    'Test Pack Progress'
+  ];
+  
+  // Find the index of the active dashboard
+  const activeIndex = dashboardNames.indexOf(activeDashboard);
+  
+  // Handle tab change
+  const handleTabChange = (index) => {
+    onDashboardChange(dashboardNames[index]);
+  };
+  
   return (
     <Box width="100%" mt="5px">
-      <Tabs isFitted variant="enclosed" colorScheme="blue">
+      <Tabs 
+        isFitted 
+        variant="enclosed" 
+        colorScheme="blue" 
+        index={activeIndex !== -1 ? activeIndex : 2} // Default to Test Pack Progress if not found
+        onChange={handleTabChange}
+      >
         <TabList mb="1em">
-          <Tab>Welding Progress by Area</Tab>
+          <Tab>TAG_LOOP Metrics</Tab>
           <Tab>Support vs Welding by Subsystem</Tab>
           <Tab>Test Pack Progress</Tab>
         </TabList>
         <TabPanels>
           <TabPanel p={0}>
-            <WeldingProgressChart data={data} />
+            <MetricsBarChart data={data} />
           </TabPanel>
           <TabPanel p={0}>
             <SubsystemComparisonChart data={data} />

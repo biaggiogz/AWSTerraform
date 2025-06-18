@@ -18,20 +18,21 @@ const FilterPanel = ({
   filters,
   onFilterChange,
   data,
+  filterMappings,
 }) => {
   const [areaToSubsystems, setAreaToSubsystems] = useState({});
   const [subsystemToAreas, setSubsystemToAreas] = useState({});
 
   // Process data to create mappings
   useEffect(() => {
-    if (!data || data.length === 0) return;
+    if (!data || data.length === 0 || !filterMappings) return;
 
     const areaMap = {};
     const subsystemMap = {};
 
     data.forEach(item => {
-      const area = item['Design Area'];
-      const subsystem = item['SUBSYSTEM'];
+      const area = item[filterMappings.area];
+      const subsystem = item[filterMappings.subsystem];
 
       if (area && subsystem) {
         if (!areaMap[area]) areaMap[area] = new Set();
@@ -54,7 +55,7 @@ const FilterPanel = ({
 
     setAreaToSubsystems(processedAreaMap);
     setSubsystemToAreas(processedSubsystemMap);
-  }, [data]);
+  }, [data, filterMappings]);
 
   const resetFilters = () => {
     onFilterChange('area', '');
@@ -85,6 +86,21 @@ const FilterPanel = ({
         filters.area &&
         areaToSubsystems[filters.area]?.includes(subsystem),
     }));
+  };
+  
+  // Get the appropriate labels for the filter fields based on the current mappings
+  const getAreaLabel = () => {
+    if (filterMappings && filterMappings.area) {
+      return filterMappings.area === 'Area' ? 'Area' : 'Design Area';
+    }
+    return 'Design Area';
+  };
+  
+  const getSubsystemLabel = () => {
+    if (filterMappings && filterMappings.subsystem) {
+      return filterMappings.subsystem === 'SUBS_PRE' ? 'Subsystem' : 'Subsystem';
+    }
+    return 'Subsystem';
   };
 
   const customStyles = {
@@ -144,7 +160,7 @@ const FilterPanel = ({
 
       <Stack spacing={4}>
         <FormControl>
-          <FormLabel>Design Area</FormLabel>
+          <FormLabel>{getAreaLabel()}</FormLabel>
           <Select
             name="area"
             placeholder="All Areas"
@@ -169,7 +185,7 @@ const FilterPanel = ({
         </FormControl>
 
         <FormControl>
-          <FormLabel>Subsystem</FormLabel>
+          <FormLabel>{getSubsystemLabel()}</FormLabel>
           <Select
             name="subsystem"
             placeholder="All Subsystems"

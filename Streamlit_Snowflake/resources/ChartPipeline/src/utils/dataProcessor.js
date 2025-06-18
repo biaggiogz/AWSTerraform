@@ -62,6 +62,10 @@ export const getUniqueValues = (data, field) => {
  * @returns {Array} - Filtered dataset
  */
 export const filterData = (data, filters) => {
+  if (!data || data.length === 0 || !filters || Object.keys(filters).length === 0) {
+    return data;
+  }
+  
   return data.filter(item => {
     // Check each filter criteria
     for (const [key, value] of Object.entries(filters)) {

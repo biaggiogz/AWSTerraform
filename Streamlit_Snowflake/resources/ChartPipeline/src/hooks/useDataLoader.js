@@ -4,9 +4,10 @@ import { processCSVData, getUniqueValues } from '../utils/dataProcessor';
 /**
  * Custom hook to load and process CSV data
  * @param {string} csvPath - Path to the CSV file
+ * @param {Object} filterMappings - Mappings for filter columns
  * @returns {Object} - Processed data and loading state
  */
-const useDataLoader = (csvPath) => {
+const useDataLoader = (csvPath, filterMappings = {}) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,10 +26,16 @@ const useDataLoader = (csvPath) => {
         const processedData = processCSVData(csvText);
         setData(processedData);
         
-        // Extract unique values for filters
-        setAreas(getUniqueValues(processedData, 'Design Area'));
-        setSubsystems(getUniqueValues(processedData, 'SUBSYSTEM'));
-        setTestPacks(getUniqueValues(processedData, 'TEST PACK'));
+        // Extract unique values for filters using the provided mappings
+        const areaColumn = filterMappings.area || 'Design Area';
+        const subsystemColumn = filterMappings.subsystem || 'SUBSYSTEM';
+        
+        setAreas(getUniqueValues(processedData, areaColumn));
+        setSubsystems(getUniqueValues(processedData, subsystemColumn));
+        
+        // Test Pack column might be different between datasets
+        const testPackColumn = processedData[0] && 'TEST PACK' in processedData[0] ? 'TEST PACK' : 'TEST LOOP';
+        setTestPacks(getUniqueValues(processedData, testPackColumn));
         
         setLoading(false);
       } catch (err) {
@@ -37,8 +44,10 @@ const useDataLoader = (csvPath) => {
       }
     };
 
-    loadData();
-  }, [csvPath]);
+    if (csvPath) {
+      loadData();
+    }
+  }, [csvPath, filterMappings]);
 
   return {
     data,
@@ -46,7 +55,8 @@ const useDataLoader = (csvPath) => {
     error,
     areas,
     subsystems,
-    testPacks
+    testPacks,
+    filterMappings
   };
 };
 

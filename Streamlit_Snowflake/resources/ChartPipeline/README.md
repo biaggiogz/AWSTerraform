@@ -19,8 +19,6 @@ ChartPipeline/
 │   ├── components/         # UI components
 │   │   ├── FilterPanel.js  # Left-side filter panel
 │   │   └── ChartSelector.js # Tab-based chart selector
-│   ├── contexts/           # React contexts
-│   │   └── FilterContext.js # Context for global filter state
 │   ├── hooks/              # Custom React hooks
 │   │   └── useDataLoader.js # Hook for loading and processing CSV data
 │   ├── utils/              # Utility functions
