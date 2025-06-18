@@ -1,32 +1,44 @@
 # Pipeline Construction Dashboard
 
-A modular React application for visualizing pipeline construction data with interactive charts and filtering capabilities.
+A modular React application for visualizing pipeline construction data with interactive charts and filtering capabilities. This application has been optimized for performance to handle large datasets and provide a smooth user experience.
 
 ## Project Structure
 
 ```
 ChartPipeline/
 ├── data/                   # Data files
-│   └── pipelinedata.csv    # Pipeline construction data
+│   ├── pipelinedata.csv    # Pipeline construction data
+│   └── test_of_lazos_updated.csv # Loop test progress data
 ├── public/                 # Static files
 │   ├── index.html          # HTML template
 │   └── manifest.json       # Web app manifest
 ├── src/                    # Source code
 │   ├── charts/             # Chart components
-│   │   ├── WeldingProgressChart.js        # Chart A: Welding progress by area
-│   │   ├── SubsystemComparisonChart.js    # Chart B: Support vs welding by subsystem
-│   │   └── TestPackProgressChart.js       # Chart C: Test pack progress with status icons
+│   │   ├── LoopTestProgressChart.js        # Chart for loop test progress
+│   │   ├── LoopTestProgressChart.optimized.js # Optimized version
+│   │   ├── SubsystemComparisonChart.js     # Chart for support vs welding by subsystem
+│   │   ├── SubsystemComparisonChart.optimized.js # Optimized version
+│   │   ├── TestPackProgressChart.js        # Chart for test pack progress with status icons
+│   │   └── TestPackProgressChart.optimized.js # Optimized version
 │   ├── components/         # UI components
 │   │   ├── FilterPanel.js  # Left-side filter panel
-│   │   └── ChartSelector.js # Tab-based chart selector
+│   │   ├── FilterPanel.optimized.js # Optimized version
+│   │   ├── ChartSelector.js # Tab-based chart selector
+│   │   └── ChartSelector.optimized.js # Optimized version
 │   ├── hooks/              # Custom React hooks
-│   │   └── useDataLoader.js # Hook for loading and processing CSV data
+│   │   ├── useDashboardConfig.js # Hook for dashboard configuration
+│   │   ├── useDataLoader.js # Hook for loading and processing CSV data
+│   │   └── useDataLoader.optimized.js # Optimized version
 │   ├── utils/              # Utility functions
-│   │   └── dataProcessor.js # Data processing utilities
+│   │   ├── dataProcessor.js # Data processing utilities
+│   │   └── dataProcessor.optimized.js # Optimized version
 │   ├── App.js              # Main application component
+│   ├── App.optimized.js    # Optimized version with code splitting
 │   └── index.js            # Application entry point
 ├── Dockerfile              # Docker configuration for containerization
 ├── nginx.conf              # Nginx configuration for Docker deployment
+├── optimization-guide.md   # Guide for performance optimizations
+├── implementation-plan.md  # Plan for implementing optimizations
 └── package.json            # Project dependencies and scripts
 ```
 
@@ -62,6 +74,7 @@ ChartPipeline/
 5. **Tab-based Chart Selection**: Users can switch between charts using tabs, showing one chart at a time as required.
 6. **Responsive Design**: Charts adapt to container size for better viewing experience.
 7. **Status Indicators**: Test pack progress chart includes visual indicators for progress status.
+8. **Performance Optimizations**: Implemented code splitting, lazy loading, memoization, and efficient data processing for improved performance.
 
 ## Data Processing
 
@@ -86,6 +99,8 @@ The application processes the pipeline data to calculate the following metrics:
 - **Chakra UI**: Component library for consistent styling and UI elements
 - **Chart.js & react-chartjs-2**: For creating interactive data visualizations
 - **React Select**: For enhanced dropdown components with filtering capabilities
+- **React.lazy & Suspense**: For code splitting and lazy loading components
+- **useMemo & useCallback**: For memoization and performance optimization
 
 ## Deployment Pipeline
 
@@ -113,10 +128,23 @@ The application is deployed using AWS infrastructure provisioned with Terraform:
 ## Getting Started
 
 ### Local Development
-1. Place the CSV data file in the `data/pipelinedata.csv` directory
+1. Place the CSV data files in the `data/` directory:
+   - `pipelinedata.csv` for pipeline construction data
+   - `test_of_lazos_updated.csv` for loop test progress data
 2. Install dependencies: `npm install`
 3. Start the development server: `npm start`
 4. Build for production: `npm run build`
+
+### Performance Analysis
+1. Install development dependencies: `npm install --save-dev webpack-bundle-analyzer source-map-explorer`
+2. Add to package.json scripts:
+   ```json
+   "analyze": "source-map-explorer 'build/static/js/*.js'",
+   "profile": "react-scripts start --profile"
+   ```
+3. Build the app: `npm run build`
+4. Analyze bundle size: `npm run analyze`
+5. Profile performance: `npm run profile`
 
 ### Docker Deployment
 1. Ensure your CSV data file is in the `data/pipelinedata.csv` location
@@ -131,9 +159,39 @@ The application is deployed using AWS infrastructure provisioned with Terraform:
 4. Access the application using the CloudFront URL provided in the outputs
 
 ### Data File Configuration
-The Dockerfile automatically copies the CSV data file from `data/pipelinedata.csv` to all necessary locations:
-- `/app/public/data/pipelinedata.csv` (for development)
-- `/app/build/pipelinedata.csv` (for production root access)
-- `/app/build/data/pipelinedata.csv` (for production with path)
+The Dockerfile automatically copies the CSV data files from the `data/` directory to all necessary locations:
+- `/app/public/data/` (for development)
+- `/app/build/` (for production root access)
+- `/app/build/data/` (for production with path)
 
-The application is configured to find the data file in the appropriate location based on the environment.
+The application is configured to find the data files in the appropriate location based on the environment.
+
+## Performance Optimizations
+
+The application has been optimized for performance in several ways:
+
+### 1. Code Splitting and Lazy Loading
+- Components are loaded only when needed using React.lazy and Suspense
+- Reduces initial bundle size and improves time-to-interactive
+- See `App.optimized.js` and `ChartSelector.optimized.js`
+
+### 2. Memoization
+- Expensive calculations are memoized using useMemo and useCallback
+- Prevents unnecessary recalculations and reduces re-renders
+- Implemented throughout the application in optimized components
+
+### 3. Efficient Data Processing
+- Optimized algorithms for data processing
+- Reduced unnecessary iterations and improved lookup performance
+- See `dataProcessor.optimized.js`
+
+### 4. React Component Optimization
+- Used React.memo for pure components
+- Optimized rendering cycles
+- Implemented proper cleanup functions
+
+### 5. Z-Index Management
+- Proper z-index management for dropdown menus and overlays
+- Ensures UI elements appear in the correct order
+
+For more details on the optimizations and how to implement them, see the `optimization-guide.md` file.
