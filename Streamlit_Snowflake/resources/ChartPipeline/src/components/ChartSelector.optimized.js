@@ -12,8 +12,8 @@ import {
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../charts/LoopTestProgressChart.optimized'));
-const SubsystemComparisonChart = lazy(() => import('../charts/SubsystemComparisonChart'));
-const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart'));
+const SubsystemComparisonChart = lazy(() => import('../charts/SubsystemComparisonChart.optimized'));
+const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart.optimized'));
 
 /**
  * ChartSelector component to switch between different charts

@@ -136,6 +136,10 @@ const FilterPanel = ({
       borderColor: state.isFocused ? '#319795' : '#CBD5E0',
       boxShadow: state.isFocused ? '0 0 0 1px #319795' : undefined,
     }),
+    menuPortal: (provided) => ({
+      ...provided,
+      zIndex: 9999
+    }),
   };
 
   return (
@@ -148,7 +152,7 @@ const FilterPanel = ({
       boxShadow="sm"
       position="sticky"
       top="0"
-      zIndex="10"
+      zIndex="100"
     >
       <HStack justify="space-between" mb={4}>
         <Heading size="md">Filters</Heading>
