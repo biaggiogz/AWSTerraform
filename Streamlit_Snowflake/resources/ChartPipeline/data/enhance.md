@@ -4,14 +4,11 @@
 - ECS/Streamlit_Snowflake/resources/ChartPipeline/README.md
 - ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-guide.md
 
-### Enable interactive filtering on "LOOP TEST PROGRESS" dashboard so 
+### Enhance visualization on "LOOP TEST PROGRESS" dashboard 
 
-When a user clicks on a measure at the top of the chart (e.g., "LOOPS DONE", "DOSSIER COMPLETED"), 
-the bars are filtered to show only those for the selected measure. 
-The selected measure should be visually indicated as active. 
-Clicking the same measure again will disable the filter and restore 
-the original, unfiltered chart view
-
+Configure "LOOP TEST PROGRESS" dashboard  bar chart 
+so that the numeric value of each measure appears inside its c
+corresponding colored segment within each bar
 
 ### VERY IMPORTANT
 
@@ -23,32 +20,33 @@ the original, unfiltered chart view
 
 #### Functional Requirements
 
-    Clickable Measures: Each measure label at the top of the chart acts as a toggle button.
+Prompt for Implementation
 
-    Filtering Behavior:
+    Show Values Inside Bar Segments:
 
-        When a measure is clicked, filter the bars to display only those SUBS_PRE items
-        The selected measure is visually highlighted (e.g., with a different background, border, or bold text) to indicate it is active.
-        If the user clicks the active measure again, the filter is removed and all bars are shown as in the original state.
+        For each bar (representing a SUBS_PRE), display the value of each measure (e.g., "LOOPS ≥ 100%", "LOOPS DONE", "DOSSIER COMPLETED", "LOOPS CONSTRUCTION DONE") inside its respective colored segment.
 
-    Single Active Filter: Only one measure can be active at a time. Clicking a different measure switches the filter to the new selection.
+        The value must be centered or clearly positioned within the segment, ensuring it is legible and does not overlap with other segments or text
 
-UI/UX Requirements
+Color Consistency:
 
-    Active State Indication: Use Chakra UI components (e.g., Badge, Button, or custom styles) to clearly show which measure is currently active.
-    Accessibility: Ensure that the active state is accessible (e.g., with ARIA attributes or clear visual contrast).
-    Responsiveness: The filtering and active state indication should work seamlessly across all device sizes.
+    Each value should use a text color that ensures high contrast and readability against the background color of its segment.
 
-Example User Flow
 
-    Initial State: All bars are displayed, and no measure is highlighted.
-    User Clicks a Measure: The bar filtered that measure are shown. The measure is highlighted as active.
-    User Clicks the Same Measure Again: The filter is removed, all bars are displayed, and no measure is highlighted.
-    User Clicks a Different Measure: The filter updates to the new measure, and the new measure is highlighted.
+Measure Association:
 
-Implementation Hints
+    Each value must be placed within the segment that represents its measure, not outside or overlapping other segments.
 
-    Use React state to track the currently selected measure.
-    Filter the data array based on the selected measure before passing it to the chart.
-    Use Chakra UI's styling props or conditional classes to highlight the active measure.
-    Add click handlers to the measure labels to toggle filtering.
+    The value should correspond exactly to the measure and SUBS_PRE item it represents
+
+Chart.js Plugin Usage:
+
+    Use the Chart.js dataLabels plugin (or chartjs-plugin-datalabels) to render values inside the bars.
+
+    Configure the plugin so that:
+
+        The label for each segment displays the value of that measure.
+
+        The label is positioned inside the segment, centered vertically and horizontally.
+
+        The label's font size and color are set for optimal readability against the segment's background
