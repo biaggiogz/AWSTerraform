@@ -18,10 +18,11 @@ const FilterPanel = ({
   filters,
   onFilterChange,
   data,
+  filterMappings,
 }) => {
   // Process data to create mappings using memoization
   const { areaToSubsystems, subsystemToAreas } = useMemo(() => {
-    if (!data || data.length === 0) {
+    if (!data || data.length === 0 || !filterMappings) {
       return { areaToSubsystems: {}, subsystemToAreas: {} };
     }
 
@@ -31,8 +32,8 @@ const FilterPanel = ({
     // Single pass through data to build both maps
     for (let i = 0; i < data.length; i++) {
       const item = data[i];
-      const area = item['Design Area'];
-      const subsystem = item['SUBSYSTEM'];
+      const area = item[filterMappings.area];
+      const subsystem = item[filterMappings.subsystem];
 
       if (area && subsystem) {
         if (!areaMap[area]) areaMap[area] = new Set();
@@ -58,7 +59,7 @@ const FilterPanel = ({
       areaToSubsystems: processedAreaMap,
       subsystemToAreas: processedSubsystemMap
     };
-  }, [data]);
+  }, [data, filterMappings]);
 
   const resetFilters = () => {
     onFilterChange('area', '');
@@ -91,6 +92,21 @@ const FilterPanel = ({
         areaToSubsystems[filters.area]?.includes(subsystem),
     }));
   }, [subsystems, filters.area, areaToSubsystems]);
+  
+  // Get the appropriate labels for the filter fields based on the current mappings
+  const getAreaLabel = () => {
+    if (filterMappings && filterMappings.area) {
+      return filterMappings.area === 'Area' ? 'Area' : 'Design Area';
+    }
+    return 'Design Area';
+  };
+  
+  const getSubsystemLabel = () => {
+    if (filterMappings && filterMappings.subsystem) {
+      return filterMappings.subsystem === 'SUBS_PRE' ? 'Subsystem' : 'Subsystem';
+    }
+    return 'Subsystem';
+  };
 
   const customStyles = {
     option: (provided, state) => ({
@@ -149,7 +165,7 @@ const FilterPanel = ({
 
       <Stack spacing={4}>
         <FormControl>
-          <FormLabel>Design Area</FormLabel>
+          <FormLabel>{getAreaLabel()}</FormLabel>
           <Select
             name="area"
             placeholder="All Areas"
@@ -176,7 +192,7 @@ const FilterPanel = ({
         </FormControl>
 
         <FormControl>
-          <FormLabel>Subsystem</FormLabel>
+          <FormLabel>{getSubsystemLabel()}</FormLabel>
           <Select
             name="subsystem"
             placeholder="All Subsystems"

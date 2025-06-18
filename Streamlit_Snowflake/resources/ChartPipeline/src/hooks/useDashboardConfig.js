@@ -16,7 +16,7 @@ const useDashboardConfig = (activeDashboard) => {
 
   useEffect(() => {
     // Configure dataset and filter mappings based on active dashboard
-    if (activeDashboard === 'TAG_LOOP Metrics') {
+    if (activeDashboard === 'LOOP TEST PROGRESS') {
       setConfig({
         datasetPath: '/data/test_of_lazos_updated.csv',
         filterMappings: {

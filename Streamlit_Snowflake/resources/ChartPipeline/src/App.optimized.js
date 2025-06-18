@@ -12,34 +12,41 @@ import {
   AlertTitle,
   AlertDescription
 } from '@chakra-ui/react';
-import FilterPanel from './components/FilterPanel';
-import useDataLoader from './hooks/useDataLoader';
-import { filterData } from './utils/dataProcessor';
+import FilterPanel from './components/FilterPanel.optimized';
+import useDataLoader from './hooks/useDataLoader.optimized';
+import useDashboardConfig from './hooks/useDashboardConfig';
+import { filterData } from './utils/dataProcessor.optimized';
 
 // Lazy load chart components
-const ChartSelector = lazy(() => import('./components/ChartSelector'));
-
-// Path to the CSV file
-const CSV_PATH = '/data/pipelinedata.csv';
+const ChartSelector = lazy(() => import('./components/ChartSelector.optimized'));
 
 function App() {
-  // Load data using custom hook
-  const { data, loading, error, areas, subsystems, testPacks } = useDataLoader(CSV_PATH);
+  // State for active dashboard
+  const [activeDashboard, setActiveDashboard] = useState('LOOP TEST PROGRESS');
+  
+  // Get dashboard configuration based on active dashboard
+  const { datasetPath, filterMappings } = useDashboardConfig(activeDashboard);
+  
+  // Load data using custom hook with the appropriate dataset path and filter mappings
+  const { data, loading, error, areas, subsystems, testPacks } = useDataLoader(datasetPath, filterMappings);
   
   // State for filters
-  const [filters, setFilters] = useState({
-    'Design Area': '',
-    'SUBSYSTEM': '',
-  });
+  const [filters, setFilters] = useState({});
   
   // Handle filter changes
   const handleFilterChange = (filterName, value) => {
-    const filterKey = filterName === 'area' ? 'Design Area' : 
-                     filterName === 'subsystem' ? 'SUBSYSTEM' : filterName
+    const filterKey = filterName === 'area' ? filterMappings.area : 
+                     filterName === 'subsystem' ? filterMappings.subsystem : filterName;
     setFilters(prev => ({
       ...prev,
       [filterKey]: value === '' ? '' : value
     }));
+  };
+  
+  // Handle dashboard change
+  const handleDashboardChange = (dashboard) => {
+    setActiveDashboard(dashboard);
+    setFilters({}); // Reset filters when changing dashboards
   };
   
   // Filter data based on selected filters
@@ -85,18 +92,23 @@ function App() {
               subsystems={subsystems}
               testPacks={testPacks}
               filters={{
-                area: filters['Design Area'],
-                subsystem: filters['SUBSYSTEM']
+                area: filters[filterMappings.area] || '',
+                subsystem: filters[filterMappings.subsystem] || ''
               }}
               onFilterChange={handleFilterChange}
               data={data}
+              filterMappings={filterMappings}
             />
           </GridItem>
 
           {/* Chart area - right side */}
           <GridItem>
             <Suspense fallback={<Center p={4}><Spinner /></Center>}>
-              <ChartSelector data={filteredData} />
+              <ChartSelector 
+                data={filteredData} 
+                activeDashboard={activeDashboard}
+                onDashboardChange={handleDashboardChange}
+              />
             </Suspense>
           </GridItem>
         </Grid>

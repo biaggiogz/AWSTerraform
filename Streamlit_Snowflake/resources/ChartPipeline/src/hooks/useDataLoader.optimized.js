@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import { processCSVData, getUniqueValues } from '../utils/dataProcessor';
+import { processCSVData, getUniqueValues } from '../utils/dataProcessor.optimized';
 
 /**
  * Custom hook to load and process CSV data with memoization
  * @param {string} csvPath - Path to the CSV file
+ * @param {Object} filterMappings - Mappings for filter columns
  * @returns {Object} - Processed data and loading state
  */
-const useDataLoader = (csvPath) => {
+const useDataLoader = (csvPath, filterMappings = {}) => {
   const [rawData, setRawData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,7 +32,9 @@ const useDataLoader = (csvPath) => {
       }
     };
 
-    loadData();
+    if (csvPath) {
+      loadData();
+    }
     
     // Cleanup function to abort fetch if component unmounts
     return () => controller.abort();
@@ -43,17 +46,21 @@ const useDataLoader = (csvPath) => {
     return processCSVData(rawData);
   }, [rawData]);
 
-  // Extract unique values with memoization
+  // Extract unique values with memoization using the provided mappings
   const areas = useMemo(() => {
-    return getUniqueValues(processedData, 'Design Area');
-  }, [processedData]);
+    const areaColumn = filterMappings.area || 'Design Area';
+    return getUniqueValues(processedData, areaColumn);
+  }, [processedData, filterMappings.area]);
 
   const subsystems = useMemo(() => {
-    return getUniqueValues(processedData, 'SUBSYSTEM');
-  }, [processedData]);
+    const subsystemColumn = filterMappings.subsystem || 'SUBSYSTEM';
+    return getUniqueValues(processedData, subsystemColumn);
+  }, [processedData, filterMappings.subsystem]);
 
   const testPacks = useMemo(() => {
-    return getUniqueValues(processedData, 'TEST PACK');
+    // Test Pack column might be different between datasets
+    const testPackColumn = processedData[0] && 'TEST PACK' in processedData[0] ? 'TEST PACK' : 'TEST LOOP';
+    return getUniqueValues(processedData, testPackColumn);
   }, [processedData]);
 
   return {
@@ -62,7 +69,8 @@ const useDataLoader = (csvPath) => {
     error,
     areas,
     subsystems,
-    testPacks
+    testPacks,
+    filterMappings
   };
 };
 

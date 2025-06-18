@@ -7,7 +7,7 @@ import {
   Tab, 
   TabPanel 
 } from '@chakra-ui/react';
-import MetricsBarChart from '../charts/MetricsBarChart.optimized';
+import LoopTestProgressChart from '../charts/LoopTestProgressChart.optimized';
 import SubsystemComparisonChart from '../charts/SubsystemComparisonChart';
 import TestPackProgressChart from '../charts/TestPackProgressChart';
 
@@ -21,7 +21,7 @@ import TestPackProgressChart from '../charts/TestPackProgressChart';
 const ChartSelector = ({ data, activeDashboard, onDashboardChange }) => {
   // Map tab index to dashboard name
   const dashboardNames = [
-    'TAG_LOOP Metrics',
+    'LOOP TEST PROGRESS',
     'Support vs Welding by Subsystem',
     'Test Pack Progress'
   ];
@@ -44,13 +44,13 @@ const ChartSelector = ({ data, activeDashboard, onDashboardChange }) => {
         onChange={handleTabChange}
       >
         <TabList mb="1em">
-          <Tab>TAG_LOOP Metrics</Tab>
+          <Tab>LOOP TEST PROGRESS</Tab>
           <Tab>Support vs Welding by Subsystem</Tab>
           <Tab>Test Pack Progress</Tab>
         </TabList>
         <TabPanels>
           <TabPanel p={0}>
-            <MetricsBarChart data={data} />
+            <LoopTestProgressChart data={data} />
           </TabPanel>
           <TabPanel p={0}>
             <SubsystemComparisonChart data={data} />

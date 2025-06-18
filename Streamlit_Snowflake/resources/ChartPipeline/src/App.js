@@ -20,7 +20,7 @@ import { filterData } from './utils/dataProcessor';
 
 function App() {
   // State for active dashboard
-  const [activeDashboard, setActiveDashboard] = useState('Test Pack Progress');
+  const [activeDashboard, setActiveDashboard] = useState('LOOP TEST PROGRESS');
   
   // Get dashboard configuration based on active dashboard
   const { datasetPath, filterMappings } = useDashboardConfig(activeDashboard);
