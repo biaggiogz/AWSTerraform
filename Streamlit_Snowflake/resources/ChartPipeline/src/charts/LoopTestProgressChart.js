@@ -96,7 +96,7 @@ const LoopTestProgressChart = ({ data }) => {
           return item.loopsDone > 0;
         case 'DOSSIER COMPLETED':
           return item.dossierCompleted > 0;
-        case 'LOOPS PHASE CONSTRUCTION DONE':
+        case 'LOOP PHASE CONSTRUCTION DONE':
           return item.loopsConstructionDone > 0;
         default:
           return true;
@@ -139,7 +139,7 @@ const LoopTestProgressChart = ({ data }) => {
         borderWidth: 1,
       },
       {
-        label: 'LOOPS PHASE CONSTRUCTION DONE',
+        label: 'LOOP PHASE CONSTRUCTION DONE',
         data: sortedMetrics.map(item => item.loopsConstructionDone),
         backgroundColor: '#E7D1B0', // Beige
         borderColor: '#D6C09F',
@@ -252,7 +252,7 @@ const LoopTestProgressChart = ({ data }) => {
     { label: 'LOOPS NOT STARTED CONSTRUCTION', color: '#AEE6F9' },
     { label: 'TEST LOOP DONE', color: '#3B4CCA' },
     { label: 'DOSSIER COMPLETED', color: '#D7A0C3' },
-    { label: 'LOOPS PHASE CONSTRUCTION DONE', color: '#E7D1B0' }
+    { label: 'LOOP PHASE CONSTRUCTION DONE', color: '#E7D1B0' }
   ], []);
   
   // Handle legend item click
@@ -315,7 +315,7 @@ const LoopTestProgressChart = ({ data }) => {
         <HStack spacing={2} flexWrap="wrap" justifyContent="center">
           {[
             { id: 'totalLoops', label: 'TOTAL LOOPS' },
-            { id: 'loopsConstructionDone', label: 'LOOPS PHASE CONSTRUCTION DONE' },
+            { id: 'loopsConstructionDone', label: 'LOOP PHASE CONSTRUCTION DONE' },
             { id: 'dossierCompleted', label: 'DOSSIER COMPLETED' },
             { id: 'loopsDone', label: 'TEST LOOP DONE' },
             { id: 'loopsNotStartedConstruction', label: 'LOOPS NOT STARTED CONSTRUCTION' }
