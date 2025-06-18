@@ -179,7 +179,7 @@ const LoopTestProgressChart = ({ data }) => {
               return `TOTAL LOOPS: ${total}`;
             }
           },
-          enabled: true,
+          enabled: false,
           mode: activeFilter ? 'nearest' : 'index',
           intersect: false
         }
@@ -209,7 +209,7 @@ const LoopTestProgressChart = ({ data }) => {
   // Custom legend items - memoized to prevent unnecessary re-renders
   const legendItems = useMemo(() => [
     { label: 'LOOPS NOT STARTED CONSTRUCTION', color: '#AEE6F9' },
-    { label: 'LOOPS DONE', color: '#3B4CCA' },
+    { label: 'LOOPS DONE', color: '#FFB4A2' },
     { label: 'DOSSIER COMPLETED', color: '#D7A0C3' },
     { label: 'LOOPS CONSTRUCTION DONE', color: '#E7D1B0' }
   ], []);
@@ -233,7 +233,20 @@ const LoopTestProgressChart = ({ data }) => {
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
-      <Heading size="md" mb={4}>LOOP TEST PROGRESS</Heading>
+      <Heading size="md" mb={2}>LOOP TEST PROGRESS</Heading>
+      
+      {/* Summary statistics */}
+      <VStack mb={4} align="flex-start">
+        <Text fontSize="sm">
+          <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
+          {activeFilter && (
+            <Badge ml={2} colorScheme="green">Filtered by: {activeFilter}</Badge>
+          )}
+        </Text>
+        <Text fontSize="sm">
+          <Badge colorScheme="blue" mr={2}>Total Loops:</Badge> {totalLoops}
+        </Text>
+      </VStack>
       
       {/* Interactive legend */}
       <Flex wrap="wrap" mb={4} justifyContent="center">
@@ -261,19 +274,6 @@ const LoopTestProgressChart = ({ data }) => {
           <Bar data={chartData} options={options} />
         </Box>
       </Box>
-      
-      {/* Summary statistics */}
-      <VStack mt={4} align="flex-start">
-        <Text fontSize="sm">
-          <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
-          {activeFilter && (
-            <Badge ml={2} colorScheme="green">Filtered by: {activeFilter}</Badge>
-          )}
-        </Text>
-        <Text fontSize="sm">
-          <Badge colorScheme="blue" mr={2}>Total Loops:</Badge> {totalLoops}
-        </Text>
-      </VStack>
     </Box>
   );
 };
