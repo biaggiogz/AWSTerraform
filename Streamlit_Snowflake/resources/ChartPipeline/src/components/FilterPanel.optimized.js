@@ -19,6 +19,8 @@ const FilterPanel = ({
   onFilterChange,
   data,
   filterMappings,
+  progressFilter,
+  onResetAll,
 }) => {
   // Process data to create mappings using memoization
   const { areaToSubsystems, subsystemToAreas } = useMemo(() => {
@@ -62,8 +64,12 @@ const FilterPanel = ({
   }, [data, filterMappings]);
 
   const resetFilters = () => {
-    onFilterChange('area', '');
-    onFilterChange('subsystem', '');
+    if (onResetAll) {
+      onResetAll();
+    } else {
+      onFilterChange('area', '');
+      onFilterChange('subsystem', '');
+    }
   };
 
   // Memoize options to prevent unnecessary recalculations
@@ -166,6 +172,14 @@ const FilterPanel = ({
           Reset
         </Button>
       </HStack>
+
+      {progressFilter && (
+        <Box mb={4} p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
+          <Text fontSize="sm" fontWeight="medium" color="blue.700">
+            Progress Filter Active: {progressFilter}
+          </Text>
+        </Box>
+      )}
 
       <Stack spacing={4}>
         <FormControl>

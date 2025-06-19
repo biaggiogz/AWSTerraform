@@ -21,10 +21,12 @@ Chart.register(ChartDataLabels);
  * Optimized Stacked Bar Chart showing LOOP TEST PROGRESS by SUBS_PRE
  * @param {Object} props - Component props
  * @param {Array} props.data - Dataset from CSV
+ * @param {Function} props.onProgressFilter - Function to handle progress filtering
+ * @param {string} props.progressFilter - Current progress filter
  */
-const LoopTestProgressChart = ({ data }) => {
-  // State to track the active measure filter
-  const [activeFilter, setActiveFilter] = useState(null);
+const LoopTestProgressChart = ({ data, onProgressFilter, progressFilter }) => {
+  // State to track the active measure filter - sync with external progressFilter
+  const [activeFilter, setActiveFilter] = useState(progressFilter);
   
   // State for sort field and direction
   const [sortField, setSortField] = useState('totalLoops');
@@ -35,6 +37,11 @@ const LoopTestProgressChart = ({ data }) => {
   
   // Force chart re-render when filters change
   const [chartKey, setChartKey] = useState(0);
+  
+  // Sync activeFilter with external progressFilter
+  useEffect(() => {
+    setActiveFilter(progressFilter);
+  }, [progressFilter]);
   
   // Calculate metrics with optimized processing
   const metrics = useMemo(() => {
@@ -302,9 +309,17 @@ const LoopTestProgressChart = ({ data }) => {
     if (activeFilter === label) {
       // If clicking the active filter, remove it
       setActiveFilter(null);
+      // Also clear the table filter
+      if (onProgressFilter && (label === 'LOOP (Signal) DONE' || label === 'LOOP (Signal) PENDING')) {
+        onProgressFilter(null);
+      }
     } else {
       // Otherwise, set the new filter
       setActiveFilter(label);
+      // Apply table filter for relevant metrics
+      if (onProgressFilter && (label === 'LOOP (Signal) DONE' || label === 'LOOP (Signal) PENDING')) {
+        onProgressFilter(label);
+      }
     }
   };
 

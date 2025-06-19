@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useMemo } from 'react';
 import { 
   ChakraProvider, 
   Box, 
@@ -33,6 +33,9 @@ function App() {
   // State for filters
   const [filters, setFilters] = useState({});
   
+  // State for progress filter from chart
+  const [progressFilter, setProgressFilter] = useState(null);
+  
   // Handle filter changes
   const handleFilterChange = (filterName, value) => {
     const filterKey = filterName === 'area' ? filterMappings.area : 
@@ -43,14 +46,43 @@ function App() {
     }));
   };
   
+  // Handle progress filter from chart
+  const handleProgressFilter = (filterType) => {
+    setProgressFilter(filterType);
+  };
+  
   // Handle dashboard change
   const handleDashboardChange = (dashboard) => {
     setActiveDashboard(dashboard);
     setFilters({}); // Reset filters when changing dashboards
+    setProgressFilter(null); // Reset progress filter when changing dashboards
   };
   
-  // Filter data based on selected filters
-  const filteredData = data.length > 0 ? filterData(data, filters) : [];
+  // Filter data based on selected filters and progress filter
+  const filteredData = useMemo(() => {
+    if (data.length === 0) return [];
+    
+    let result = filterData(data, filters);
+    
+    // Apply progress filter if active
+    if (progressFilter) {
+      result = result.filter(item => {
+        const progressStr = item['OK=100%']?.toString().replace('%', '').trim();
+        const progress = parseFloat(progressStr) || 0;
+        
+        switch (progressFilter) {
+          case 'LOOP (Signal) DONE':
+            return progress === 100;
+          case 'LOOP (Signal) PENDING':
+            return progress < 100;
+          default:
+            return true;
+        }
+      });
+    }
+    
+    return result;
+  }, [data, filters, progressFilter]);
 
   // Show loading spinner while data is being fetched
   if (loading) {
@@ -98,6 +130,11 @@ function App() {
               onFilterChange={handleFilterChange}
               data={data}
               filterMappings={filterMappings}
+              progressFilter={progressFilter}
+              onResetAll={() => {
+                setFilters({});
+                setProgressFilter(null);
+              }}
             />
           </GridItem>
 
@@ -108,6 +145,8 @@ function App() {
                 data={filteredData} 
                 activeDashboard={activeDashboard}
                 onDashboardChange={handleDashboardChange}
+                onProgressFilter={handleProgressFilter}
+                progressFilter={progressFilter}
               />
             </Suspense>
           </GridItem>

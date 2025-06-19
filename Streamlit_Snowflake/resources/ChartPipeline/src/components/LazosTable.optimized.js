@@ -111,12 +111,6 @@ const LazosTable = React.memo(({ data }) => {
       size: 70,
       cell: ({ getValue }) => {
         const priority = getValue();
-        // const colorScheme = priority === '1' ? 'red' : priority === '2' ? 'orange' : 'green';
-        // return (
-        //   <Badge colorScheme="gray" variant="solid" fontSize="xs" px={2} py={1}>
-        //     {priority}
-        //   </Badge>
-        // );
         return (
             <Text fontSize="sm" fontWeight="medium" textAlign="center">
               {priority}
@@ -304,7 +298,7 @@ const LazosTable = React.memo(({ data }) => {
           Loop Test Control - Precommissioning
         </Heading>
         <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
-          {processedData.length} records
+          {processedData.length} LOOPS
         </Badge>
       </HStack>
 

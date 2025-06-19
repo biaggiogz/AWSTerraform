@@ -23,8 +23,10 @@ const LazosTable = lazy(() => import('./LazosTable.optimized'));
  * @param {Array} props.data - Filtered dataset
  * @param {string} props.activeDashboard - Currently active dashboard
  * @param {Function} props.onDashboardChange - Function to call when dashboard changes
+ * @param {Function} props.onProgressFilter - Function to handle progress filtering
+ * @param {string} props.progressFilter - Current progress filter
  */
-const ChartSelector = ({ data, activeDashboard, onDashboardChange }) => {
+const ChartSelector = ({ data, activeDashboard, onDashboardChange, onProgressFilter, progressFilter }) => {
   // Map tab index to dashboard name
   const dashboardNames = [
     'LOOP TEST PROGRESS',
@@ -59,7 +61,11 @@ const ChartSelector = ({ data, activeDashboard, onDashboardChange }) => {
           <TabPanel p={0}>
             <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
               <VStack spacing={0} align="stretch">
-                <LoopTestProgressChart data={data} />
+                <LoopTestProgressChart 
+                  data={data} 
+                  onProgressFilter={onProgressFilter}
+                  progressFilter={progressFilter}
+                />
                 <LazosTable data={data} />
               </VStack>
             </Suspense>

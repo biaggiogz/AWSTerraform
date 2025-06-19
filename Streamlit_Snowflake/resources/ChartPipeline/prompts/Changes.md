@@ -53,3 +53,10 @@ When the user clicks the **"LOOP (Signal) DONE"** metric bar (blue bar in dashbo
 ✅ Keep architecture and performance optimizations (e.g., `@tanstack/react-virtual`, Chakra UI, memoization, etc.)  
 ✅ Follow existing UI/UX patterns  
 ✅ Do not duplicate filtering logic — filter table once based on combined state
+✅ You can request a small test live using http://localhost:3000/ which is active as decribe below to verify:
+
+| COMMAND |  PID  | USER  | FD  | TYPE | DEVICE  | SIZE/OFF | NODE | NAME                                                 |
+|---------|-------|--------|-----|------|---------|----------|------|------------------------------------------------------|
+| firefox |  4712 | ubuntu | 65u | IPv4 | 1105168 | 0t0      | TCP  | localhost:51086->localhost:3000 (ESTABLISHED)       |
+| node    | 29760 | ubuntu | 18u | IPv4 | 736052  | 0t0      | TCP  | *:3000 (LISTEN)                                      |
+| node    | 29760 | ubuntu | 21u | IPv4 | 1102976 | 0t0      | TCP  | localhost:3000->localhost:51086 (ESTABLISHED)       |
