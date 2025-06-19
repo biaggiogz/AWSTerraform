@@ -1,47 +1,31 @@
+## 🔧 Request: Fix UI Layout and Visual Consistency for Table "Lazos"
 
-⚙️ Request: Dashboard "LOOP TEST PROGRESS" (Maintain Architecture)
-⚠️ Implementation Principle
+### 🎯 Objective:
+Align all table columns and rows properly, apply consistent styling, and match the UI to the existing design system.
 
-    Note: ✅ Accuracy and verification of changes are more important than implementation speed.
+---
 
-🧠 Objective
+### 📐 Fixes to Apply:
 
-Update the dashboard to reflect the new metrics and conditional logic below, without altering the existing architecture, styling, or design language.
+| Area            | Required Fix                                                                                     |
+|------------------|--------------------------------------------------------------------------------------------------|
+| 🧱 Table Layout   | Use `table-layout: fixed` and ensure equal column widths with `minWidth` + `maxWidth` settings  |
+| 🎨 Badge Styling  | Use Chakra UI's `Badge` with consistent `variant`, `colorScheme`, and padding/margin rules     |
+| 📏 Row Height     | Normalize padding in each `td` — use `py={2}` or `py={1}` consistently                         |
+| 📊 Progress Bar   | Ensure it's inside a container with fixed height and consistent margin                         |
+| 🧭 Horizontal Scroll | Enable proper overflow with `overflowX: auto` on table container                              |
+| ⚙️ Cell Alignment | Add `textAlign="center"` or `start`/`end` consistently across columns                          |
 
-## Metrics
-⚠️ Note: It is more important to implement changes correctly and with verification than to do so quickly
+---
 
-| PREVIOUS MEASURE               | NEW MEASURE            | ORDER VISUAL |
-|--------------------------------|------------------------|--------------|
-| TOTAL LOOPS                    | TOTAL LOOP (Signal)    | 1            |
-| LOOPS NOT STARTED CONSTRUCTION | LOOP (Signal) DONE     | 2            |
-| LOOPS PHASE CONSTRUCTION DONE  | LOOPS (Signal) PENDING | 3            |
-| DOSSIER COMPLETED              | DOSSIER COMPLETED      | 4            |
+### 🔎 QA Checklist:
 
-| Metric                     | Condition                                                                                                                    | Meaning                                                                        |
-|:---------------------------|:-----------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------|
-| **TOTAL LOOPS**            | `df.groupby("SUBS_PRE")["TAG LOOP"].count()`                                                                                 | Number of TAG_LOOPs for each SUBS_PRE.                                         |
-| **LOOP (Signal) DONE**     | `df[df["OK=100%"].astype(str).str.replace("%","").str.strip().astype(float) == 100].groupby("SUBS_PRE")["TAG LOOP"].count()` | Number of TAG_LOOPs with OK=100% for each SUBS_PRE (fully installed/verified). |
-| **DOSSIER COMPLETED**      | `df.dropna(subset=["DOSSIER"]).groupby("SUBS_PRE")["TAG LOOP"].nunique()`                                                    | Number of TAG_LOOPs with a non-null DOSSIER for each SUBS_PRE.                 |
-| **LOOPS (Signal) PENDING** | `df[df["OK=100%"].astype(str).str.replace("%","").str.strip().astype(float) < 100].groupby("SUBS_PRE")["TAG LOOP"].count()`  | Number of TAG_LOOPs with OK<100% for each SUBS_PRE (not started).              |
+- [ ] ✅ Columns align with headers
+- [ ] ✅ Vertical scroll works independently
+- [ ] ✅ Filtering does not break table structure
+- [ ] ✅ UI uses consistent Chakra design tokens
+- [ ] ✅ Responsive layout does not overflow or collapse
 
-### Dataset
+---
 
-    data/test_of_lazos_updated.csv
-
-### Project Structure:
-
-    Source Path: ECS/Streamlit_Snowflake/resources/ChartPipeline/README.md
-    Optimization Guide: ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-guide.md
-      
-
-### Change Requirements
-    Maintain Existing UI/UX:
-
-        Preserve all component styles, actions, transitions, and color schemes.
-
-    Update Logic Only:
-
-        Modify only the logic that computes and displays metric values.
-
-        Adjust any filters/sorting as required by the new metric definitions.
+Please re-implement the rendering logic with **proper styling, alignment, and performance optimizations**.

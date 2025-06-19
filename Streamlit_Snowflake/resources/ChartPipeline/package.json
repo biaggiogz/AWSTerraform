@@ -16,7 +16,8 @@
     "react-scripts": "5.0.1",
     "@chakra-ui/icons":"2.2.4",
     "react-select": "5.10.1",
-    "@tanstack/react-table": "8.10.7"
+    "@tanstack/react-table": "^8.11.8",
+    "@tanstack/react-virtual": "^3.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
