@@ -77,9 +77,9 @@ const LazosTable = React.memo(({ data }) => {
       maxSize: 120,
       size: 120,
       cell: ({ getValue }) => (
-        <Badge colorScheme="purple" variant="subtle" fontSize="xs" px={2} py={1}>
-          {getValue()}
-        </Badge>
+          <Text fontSize="sm" fontWeight="medium" textAlign="center">
+            {getValue()}
+          </Text>
       )
     }),
     columnHelper.accessor('tagLoop', {
@@ -99,9 +99,9 @@ const LazosTable = React.memo(({ data }) => {
       maxSize: 80,
       size: 80,
       cell: ({ getValue }) => (
-        <Badge colorScheme="teal" variant="outline" fontSize="xs" px={2} py={1}>
-          {getValue()}
-        </Badge>
+          <Text fontSize="sm" fontWeight="medium" textAlign="center">
+            {getValue()}
+          </Text>
       )
     }),
     columnHelper.accessor('priority', {
@@ -111,11 +111,16 @@ const LazosTable = React.memo(({ data }) => {
       size: 70,
       cell: ({ getValue }) => {
         const priority = getValue();
-        const colorScheme = priority === '1' ? 'red' : priority === '2' ? 'orange' : 'green';
+        // const colorScheme = priority === '1' ? 'red' : priority === '2' ? 'orange' : 'green';
+        // return (
+        //   <Badge colorScheme="gray" variant="solid" fontSize="xs" px={2} py={1}>
+        //     {priority}
+        //   </Badge>
+        // );
         return (
-          <Badge colorScheme={colorScheme} variant="solid" fontSize="xs" px={2} py={1}>
-            {priority}
-          </Badge>
+            <Text fontSize="sm" fontWeight="medium" textAlign="center">
+              {priority}
+            </Text>
         );
       }
     }),
@@ -139,17 +144,16 @@ const LazosTable = React.memo(({ data }) => {
       size: 100,
       cell: ({ getValue }) => {
         const value = getValue();
-        const isCompleted = value && value !== 'NA' && value !== '';
+        const parts = value ? value.split(' ') : ['Pending'];
+
         return (
-          <Badge 
-            colorScheme={isCompleted ? 'green' : 'gray'} 
-            variant={isCompleted ? 'solid' : 'outline'}
-            fontSize="xs"
-            px={2}
-            py={1}
-          >
-            {value || 'Pending'}
-          </Badge>
+            <VStack spacing={0} py={1}>
+              {parts.map((part, i) => (
+                  <Text key={i} fontSize="xs" fontWeight="medium" textAlign="center">
+                    {part}
+                  </Text>
+              ))}
+            </VStack>
         );
       }
     }),
@@ -160,17 +164,15 @@ const LazosTable = React.memo(({ data }) => {
       size: 100,
       cell: ({ getValue }) => {
         const value = getValue();
-        const isCompleted = value && value !== 'NA' && value !== '';
+        const parts = value ? value.split(' ') : ['Pending'];
         return (
-          <Badge 
-            colorScheme={isCompleted ? 'green' : 'gray'} 
-            variant={isCompleted ? 'solid' : 'outline'}
-            fontSize="xs"
-            px={2}
-            py={1}
-          >
-            {value || 'Pending'}
-          </Badge>
+            <VStack spacing={0} py={1}>
+              {parts.map((part, i) => (
+                  <Text key={i} fontSize="xs" fontWeight="medium" textAlign="center">
+                    {part}
+                  </Text>
+              ))}
+            </VStack>
         );
       }
     }),
@@ -181,17 +183,15 @@ const LazosTable = React.memo(({ data }) => {
       size: 100,
       cell: ({ getValue }) => {
         const value = getValue();
-        const isCompleted = value && value !== 'NA' && value !== '';
+        const parts = value ? value.split(' ') : ['Pending'];
         return (
-          <Badge 
-            colorScheme={isCompleted ? 'green' : 'gray'} 
-            variant={isCompleted ? 'solid' : 'outline'}
-            fontSize="xs"
-            px={2}
-            py={1}
-          >
-            {value || 'Pending'}
-          </Badge>
+            <VStack spacing={0} py={1}>
+              {parts.map((part, i) => (
+                  <Text key={i} fontSize="xs" fontWeight="medium" textAlign="center">
+                    {part}
+                  </Text>
+              ))}
+            </VStack>
         );
       }
     }),
@@ -202,17 +202,15 @@ const LazosTable = React.memo(({ data }) => {
       size: 100,
       cell: ({ getValue }) => {
         const value = getValue();
-        const isCompleted = value && value !== 'NA' && value !== '';
+        const parts = value ? value.split(' ') : ['Pending'];
         return (
-          <Badge 
-            colorScheme={isCompleted ? 'green' : 'gray'} 
-            variant={isCompleted ? 'solid' : 'outline'}
-            fontSize="xs"
-            px={2}
-            py={1}
-          >
-            {value || 'Pending'}
-          </Badge>
+            <VStack spacing={0} py={1}>
+              {parts.map((part, i) => (
+                  <Text key={i} fontSize="xs" fontWeight="medium" textAlign="center">
+                    {part}
+                  </Text>
+              ))}
+            </VStack>
         );
       }
     }),
@@ -305,7 +303,7 @@ const LazosTable = React.memo(({ data }) => {
     <Box mt={6}>
       <HStack justify="space-between" align="center" mb={4}>
         <Heading size="md" color="gray.700">
-          Table "Lazos" - Loop Test Progress
+          Loop Test Control - Precommissioning
         </Heading>
         <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
           {processedData.length} records

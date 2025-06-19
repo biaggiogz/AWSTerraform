@@ -358,9 +358,9 @@ const LoopTestProgressChart = ({ data }) => {
         <Text fontSize="sm" fontWeight="bold" mr={2} alignSelf="center">Sort by:</Text>
         <HStack spacing={2} flexWrap="wrap" justifyContent="center">
           {useMemo(() => [
-            { id: 'totalLoops', label: 'TOTAL LOOP (Signal)' },
-            { id: 'loopSignalDone', label: 'LOOP (Signal) DONE' },
-            { id: 'loopsSignalPending', label: 'LOOP (Signal) PENDING' },
+            { id: 'totalLoops', label: 'TOTAL LOOP' },
+            { id: 'loopSignalDone', label: 'LOOP DONE' },
+            { id: 'loopsSignalPending', label: 'LOOP PENDING' },
             { id: 'dossierCompleted', label: 'DOSSIER COMPLETED' }
           ].map((sortOption) => (
             <Button
