@@ -16,7 +16,7 @@ import {
 import { calculateMetricsByGroup } from '../utils/dataProcessor.optimized';
 
 /**
- * Optimized Progress Bars with Status Icons for Test Packs
+ * Chart C: Progress Bars with Status Icons for Test Packs
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset
  */
@@ -30,6 +30,9 @@ const TestPackProgressChart = ({ data }) => {
   // Reference for chart container
   const chartContainerRef = useRef(null);
   
+  // Force chart re-render when filters change
+  const [chartKey, setChartKey] = useState(0);
+  
   // Maximum number of visible test packs at once
   const MAX_VISIBLE_TEST_PACKS = 15;
   
@@ -38,6 +41,7 @@ const TestPackProgressChart = ({ data }) => {
 
   // Calculate metrics by test pack with memoization
   const testPackMetrics = useMemo(() => {
+    if (!data || data.length === 0) return {};
     return calculateMetricsByGroup(data, 'TEST PACK');
   }, [data]);
 
@@ -53,11 +57,14 @@ const TestPackProgressChart = ({ data }) => {
 
   // Initialize selected test packs on first render
   useEffect(() => {
-    const initialSelectedState = Object.keys(sortedTestPacks).reduce((acc, testPack) => {
-      acc[testPack] = true;
-      return acc;
-    }, {});
-    setSelectedTestPacks(initialSelectedState);
+    const testPackKeys = Object.keys(sortedTestPacks);
+    if (testPackKeys.length > 0 && Object.keys(selectedTestPacks).length === 0) {
+      const initialSelectedState = testPackKeys.reduce((acc, testPack) => {
+        acc[testPack] = true;
+        return acc;
+      }, {});
+      setSelectedTestPacks(initialSelectedState);
+    }
   }, [sortedTestPacks]);
 
   // Filter test packs based on exclusive filter and selected test packs with memoization
@@ -86,27 +93,41 @@ const TestPackProgressChart = ({ data }) => {
     
   // Calculate dynamic chart height based on number of test packs
   const chartHeight = useMemo(() => {
+    const filteredCount = Object.keys(filteredTestPacks).length;
     return Math.max(
       500, // Minimum height
-      Object.keys(filteredTestPacks).length * BAR_HEIGHT + 100 // Dynamic height based on number of bars + padding
+      filteredCount * BAR_HEIGHT + 100 // Dynamic height based on number of bars + padding
     );
   }, [filteredTestPacks]);
 
-  // Prepare chart data with filtered test packs using memoization
+  // Update chart when filters change
+  useEffect(() => {
+    setChartKey(prev => prev + 1);
+    
+    // Trigger resize to recalculate layout
+    if (chartContainerRef.current) {
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+    }
+  }, [Object.keys(filteredTestPacks).length]);
+
+  // Prepare chart data with filtered test packs
   const chartData = useMemo(() => {
+    const filteredKeys = Object.keys(filteredTestPacks);
+    const filteredValues = Object.values(filteredTestPacks);
+    
     return {
-      labels: Object.keys(filteredTestPacks),
+      labels: filteredKeys,
       datasets: [
         {
           label: 'Construction Coordination Progress (%)',
-          data: Object.values(filteredTestPacks).map(testPack => testPack.avgConstructionProgress),
-          backgroundColor: Object.values(filteredTestPacks).map(testPack => {
+          data: filteredValues.map(testPack => testPack.avgConstructionProgress),
+          backgroundColor: filteredValues.map(testPack => {
             const progress = testPack.avgConstructionProgress;
             if (progress > 90) return 'rgb(0, 112, 116)'; // Green for Above 90%
             if (progress >= 70 && progress <= 90) return 'rgba(255, 206, 86, 0.6)'; // Yellow for 70-90%
             return 'rgba(255, 99, 132, 0.6)'; // Red for Below 70%
           }),
-          borderColor: Object.values(filteredTestPacks).map(testPack => {
+          borderColor: filteredValues.map(testPack => {
             const progress = testPack.avgConstructionProgress;
             if (progress > 90) return 'rgb(0, 112, 116)'; // Green for Above 90%
             if (progress >= 70 && progress <= 90) return 'rgba(255, 206, 86, 1)'; // Yellow for 70-90%
@@ -121,15 +142,18 @@ const TestPackProgressChart = ({ data }) => {
 
   // Chart options with memoization
   const options = useMemo(() => {
+    const filteredCount = Object.keys(filteredTestPacks).length;
+    
     return {
       responsive: true,
       maintainAspectRatio: false,
       indexAxis: 'y', // Horizontal bar chart
       animation: {
-        duration: 500 // Reduced animation time for better performance
+        duration: filteredCount <= 5 ? 0 : 300 // Disable animation for small datasets
       },
       plugins: {
         tooltip: {
+          enabled: false, // Disable tooltips for better performance
           callbacks: {
             label: (context) => {
               const progress = context.raw;
@@ -159,6 +183,10 @@ const TestPackProgressChart = ({ data }) => {
           title: {
             display: true,
             text: 'Construction Coordination Progress (%)'
+          },
+          grid: {
+            display: true,
+            color: 'rgba(0, 0, 0, 0.1)' // Light grid lines
           }
         },
         y: {
@@ -167,7 +195,8 @@ const TestPackProgressChart = ({ data }) => {
             text: 'Test Pack'
           },
           ticks: {
-            autoSkip: false, // Prevent automatic skipping of labels
+            autoSkip: filteredCount > 30, // Only skip labels if there are many
+            maxTicksLimit: 30, // Limit the number of ticks for better performance
             callback: function(value) {
               // Ensure all labels are displayed by returning the original value
               return this.getLabelForValue(value);
@@ -194,7 +223,7 @@ const TestPackProgressChart = ({ data }) => {
         }
       }
     };
-  }, []);
+  }, [filteredTestPacks]);
 
   // Toggle exclusive filter function with useCallback
   const toggleExclusiveFilter = useCallback((filter) => {
@@ -211,20 +240,22 @@ const TestPackProgressChart = ({ data }) => {
 
   // Toggle all test packs with useCallback
   const toggleAllTestPacks = useCallback((value) => {
-    setSelectedTestPacks(Object.keys(sortedTestPacks).reduce((acc, testPack) => {
+    const newState = Object.keys(sortedTestPacks).reduce((acc, testPack) => {
       acc[testPack] = value;
       return acc;
-    }, {}));
+    }, {});
+    setSelectedTestPacks(newState);
   }, [sortedTestPacks]);
 
   // Invert test pack selection with useCallback
   const invertTestPackSelection = useCallback(() => {
-    setSelectedTestPacks(prev => 
-      Object.keys(sortedTestPacks).reduce((acc, testPack) => {
-        acc[testPack] = !prev[testPack];
-        return acc;
-      }, {})
-    );
+    setSelectedTestPacks(prev => {
+      const invertedState = {};
+      Object.keys(sortedTestPacks).forEach(testPack => {
+        invertedState[testPack] = !prev[testPack];
+      });
+      return invertedState;
+    });
   }, [sortedTestPacks]);
 
   // Get color based on progress with memoization
@@ -234,7 +265,7 @@ const TestPackProgressChart = ({ data }) => {
     return { bg: "rgba(255, 99, 132, 0.6)", border: "rgba(255, 99, 132, 1)" };
   }, []);
 
-  // Legend for status icons with interactive filtering
+  // Legend for status icons with interactive filtering - memoized
   const statusLegend = useMemo(() => (
     <HStack spacing={4} justifyContent="center">
       <Tooltip label={exclusiveFilter === 'above90' ? "Click to show all categories" : "Click to show only this category"} placement="top">
@@ -290,7 +321,59 @@ const TestPackProgressChart = ({ data }) => {
     </HStack>
   ), [exclusiveFilter, toggleExclusiveFilter]);
 
-  // Redesigned Test Pack Selection Panel with memoization
+  // Memoized test pack buttons to prevent unnecessary re-renders
+  const testPackButtons = useMemo(() => {
+    // Create chunks of test packs to process in batches
+    const testPackEntries = Object.entries(sortedTestPacks);
+    const chunkSize = 20;
+    const chunks = [];
+    
+    for (let i = 0; i < testPackEntries.length; i += chunkSize) {
+      chunks.push(testPackEntries.slice(i, i + chunkSize));
+    }
+    
+    return chunks.map((chunk, chunkIndex) => (
+      <React.Fragment key={`chunk-${chunkIndex}`}>
+        {chunk.map(([testPack, metrics]) => {
+          const progress = metrics.avgConstructionProgress;
+          const colors = getProgressColor(progress);
+          const isSelected = selectedTestPacks[testPack] || false;
+          const isVisible = !exclusiveFilter ||
+                          (exclusiveFilter === 'above90' && progress > 90) ||
+                          (exclusiveFilter === 'between70And90' && progress >= 70 && progress <= 90) ||
+                          (exclusiveFilter === 'below70' && progress < 70);
+
+          return (
+            <Button
+              key={testPack}
+              size="sm"
+              height="36px"
+              variant={isSelected ? "solid" : "outline"}
+              colorScheme={isSelected ? "blue" : "gray"}
+              bg={isSelected ? "blue.300" : undefined}
+              color={isSelected ? "white" : undefined}
+              opacity={isVisible ? 1 : 0.5}
+              onClick={() => toggleTestPack(testPack)}
+              mb={1}
+              position="relative"
+              overflow="hidden"
+            >
+              <VStack spacing={0} align="center">
+                <Text fontSize="xs" fontWeight="bold" noOfLines={1}>
+                  {testPack}
+                </Text>
+                <Text fontSize="10px" color={isSelected ? "white" : undefined} noOfLines={1}>
+                  {progress.toFixed(1)}%
+                </Text>
+              </VStack>
+            </Button>
+          );
+        })}
+      </React.Fragment>
+    ));
+  }, [sortedTestPacks, selectedTestPacks, exclusiveFilter, getProgressColor, toggleTestPack]);
+
+  // Redesigned Test Pack Selection Panel - memoized
   const testPackSelectionPanel = useMemo(() => (
     <Box
       borderWidth="1px"
@@ -331,45 +414,11 @@ const TestPackProgressChart = ({ data }) => {
         }}
       >
         <SimpleGrid columns={3} spacing={2}>
-          {Object.entries(sortedTestPacks).map(([testPack, metrics], index) => {
-            const progress = metrics.avgConstructionProgress;
-            const colors = getProgressColor(progress);
-            const isSelected = selectedTestPacks[testPack] || false;
-            const isVisible = !exclusiveFilter ||
-                             (exclusiveFilter === 'above90' && progress > 90) ||
-                             (exclusiveFilter === 'between70And90' && progress >= 70 && progress <= 90) ||
-                             (exclusiveFilter === 'below70' && progress < 70);
-
-            return (
-              <Button
-                key={testPack}
-                size="sm"
-                height="36px"
-                variant={isSelected ? "solid" : "outline"}
-                colorScheme={isSelected ? "blue" : "gray"}
-                bg={isSelected ? "blue.300" : undefined}
-                color={isSelected ? "white" : undefined}
-                opacity={isVisible ? 1 : 0.5}
-                onClick={() => toggleTestPack(testPack)}
-                mb={1}
-                position="relative"
-                overflow="hidden"
-              >
-                <VStack spacing={0} align="center">
-                  <Text fontSize="xs" fontWeight="bold" noOfLines={1}>
-                    {testPack}
-                  </Text>
-                  <Text fontSize="10px" color={getProgressColor(progress)} noOfLines={1}>
-                    {progress.toFixed(1)}%
-                  </Text>
-                </VStack>
-              </Button>
-            );
-          })}
+          {testPackButtons}
         </SimpleGrid>
       </Box>
     </Box>
-  ), [sortedTestPacks, selectedTestPacks, exclusiveFilter, toggleAllTestPacks, invertTestPackSelection, toggleTestPack, getProgressColor]);
+  ), [sortedTestPacks, testPackButtons, toggleAllTestPacks, invertTestPackSelection]);
 
   return (
     <Flex>
@@ -421,7 +470,11 @@ const TestPackProgressChart = ({ data }) => {
             },
           }}
         >
-          <Box height={`${chartHeight}px`} position="relative">
+          <Box 
+            key={chartKey}
+            height={`${chartHeight}px`} 
+            position="relative"
+          >
             <Bar data={chartData} options={options} />
           </Box>
         </Box>

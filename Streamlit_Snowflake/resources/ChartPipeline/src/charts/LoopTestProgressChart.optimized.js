@@ -283,31 +283,8 @@ const LoopTestProgressChart = ({ data }) => {
             text: 'SUBS_PRE'
           },
           // Dynamic spacing based on number of bars
-          categoryPercentage: sortedMetrics.length <= 3 ? 0.5 : categoryPercentage,
-          barPercentage: sortedMetrics.length <= 3 ? 0.5 : barPercentage,
-          offset: true, // Always enable offset to prevent bars from being cut off
-          grid: {
-            display: true,
-            drawBorder: true,
-            color: 'rgba(0, 0, 0, 0.1)' // Light grid lines
-          },
-          ticks: {
-            padding: 5 // Add padding to the ticks
-          },
-          // Add extra space at the beginning and end of the axis
-          afterFit: function(scaleInstance) {
-            // Add extra space at the top and bottom of the scale
-            scaleInstance.paddingTop = 15;
-            scaleInstance.paddingBottom = 15;
-          }
-        }
-      },
-      layout: {
-        padding: {
-          left: 10,
-          right: 10,
-          top: 20,
-          bottom: 20
+          barPercentage,
+          categoryPercentage
         }
       }
     };
@@ -321,7 +298,7 @@ const LoopTestProgressChart = ({ data }) => {
     { label: 'LOOP PHASE CONSTRUCTION DONE', color: '#E7D1B0' }
   ], []);
   
-  // Handle legend item click
+  // Handle legend item click with debounce to prevent rapid state changes
   const handleLegendItemClick = (label) => {
     if (activeFilter === label) {
       // If clicking the active filter, remove it
@@ -338,8 +315,10 @@ const LoopTestProgressChart = ({ data }) => {
     sortedMetrics.reduce((sum, item) => sum + item.totalLoops, 0), 
   [sortedMetrics]);
 
-  // Calculate dynamic chart height
-  const chartHeight = getChartHeight(sortedMetrics.length);
+  // Calculate optimal chart height based on data size
+  const chartHeight = useMemo(() => 
+    getChartHeight(sortedMetrics.length),
+  [sortedMetrics.length]);
 
   return (
     <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
@@ -358,7 +337,7 @@ const LoopTestProgressChart = ({ data }) => {
         </Text>
       </VStack>
       
-      {/* Interactive legend */}
+      {/* Interactive legend - optimized with fewer re-renders */}
       <Flex wrap="wrap" mb={4} justifyContent="center">
         {legendItems.map((item, index) => (
           <Button
@@ -378,22 +357,54 @@ const LoopTestProgressChart = ({ data }) => {
         ))}
       </Flex>
       
-      {/* Chart container with dynamic height based on number of bars */}
-      <Box
+      {/* Sort controls - optimized with fewer re-renders */}
+      <Flex wrap="wrap" mb={4} justifyContent="center">
+        <Text fontSize="sm" fontWeight="bold" mr={2} alignSelf="center">Sort by:</Text>
+        <HStack spacing={2} flexWrap="wrap" justifyContent="center">
+          {useMemo(() => [
+            { id: 'totalLoops', label: 'TOTAL LOOPS' },
+            { id: 'loopsConstructionDone', label: 'LOOP PHASE CONSTRUCTION DONE' },
+            { id: 'dossierCompleted', label: 'DOSSIER COMPLETED' },
+            { id: 'loopsDone', label: 'TEST LOOP DONE' },
+            { id: 'loopsNotStartedConstruction', label: 'LOOPS NOT STARTED CONSTRUCTION' }
+          ].map((sortOption) => (
+            <Button
+              key={sortOption.id}
+              size="xs"
+              variant={sortField === sortOption.id ? "solid" : "outline"}
+              colorScheme={sortField === sortOption.id ? "blue" : "gray"}
+              onClick={() => {
+                if (sortField === sortOption.id) {
+                  // Toggle direction if clicking the same field
+                  setSortDirection(sortDirection === 'desc' ? 'asc' : 'desc');
+                } else {
+                  // Set new field and default to descending
+                  setSortField(sortOption.id);
+                  setSortDirection('desc');
+                }
+              }}
+              mb={2}
+            >
+              {sortOption.label} {sortField === sortOption.id && (sortDirection === 'desc' ? '↓' : '↑')}
+            </Button>
+          )), [sortField, sortDirection])}
+        </HStack>
+      </Flex>
+      
+      {/* Chart container with dynamic height based on data size */}
+      <Box 
         ref={chartRef}
-        height={`${chartHeight}px`}
-        minHeight={sortedMetrics.length <= 3 ? "200px" : "300px"}
-        position="relative"
-        borderWidth="1px"
-        borderColor="gray.200"
-        borderRadius="md"
-        p={2}
+        height={`${chartHeight}px`} 
+        maxHeight="600px"
+        overflowY={sortedMetrics.length > 15 ? "auto" : "visible"}
       >
-        <Bar
-          data={chartData}
-          options={options}
-          key={`chart-${chartKey}`}
-        />
+        <Box 
+          key={chartKey} 
+          height="100%" 
+          minHeight={`${Math.max(200, sortedMetrics.length * 30)}px`}
+        >
+          <Bar data={chartData} options={options} />
+        </Box>
       </Box>
     </Box>
   );

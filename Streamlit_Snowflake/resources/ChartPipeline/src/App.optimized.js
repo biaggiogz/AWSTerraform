@@ -14,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 import FilterPanel from './components/FilterPanel.optimized';
 import useDataLoader from './hooks/useDataLoader.optimized';
-import useDashboardConfig from './hooks/useDashboardConfig';
+import useDashboardConfig from './hooks/useDashboardConfig.optimized';
 import { filterData } from './utils/dataProcessor.optimized';
 
 // Lazy load chart components
