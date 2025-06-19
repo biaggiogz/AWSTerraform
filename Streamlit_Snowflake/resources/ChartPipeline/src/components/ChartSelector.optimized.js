@@ -7,13 +7,15 @@ import {
   Tab, 
   TabPanel,
   Center,
-  Spinner
+  Spinner,
+  VStack
 } from '@chakra-ui/react';
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../charts/LoopTestProgressChart.optimized'));
 const SubsystemComparisonChart = lazy(() => import('../charts/SubsystemComparisonChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart.optimized'));
+const LoopTestTable = lazy(() => import('./LoopTestTable'));
 
 /**
  * ChartSelector component to switch between different charts
@@ -55,9 +57,14 @@ const ChartSelector = ({ data, activeDashboard, onDashboardChange }) => {
         </TabList>
         <TabPanels>
           <TabPanel p={0}>
-            <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-              <LoopTestProgressChart data={data} />
-            </Suspense>
+            <VStack spacing={6} align="stretch">
+              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
+                <LoopTestProgressChart data={data} />
+              </Suspense>
+              <Suspense fallback={<Center height="200px"><Spinner /></Center>}>
+                <LoopTestTable data={data} />
+              </Suspense>
+            </VStack>
           </TabPanel>
           <TabPanel p={0}>
             <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
