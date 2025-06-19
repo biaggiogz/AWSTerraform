@@ -130,11 +130,9 @@ const LazosTable = React.memo(({ data }) => {
       maxSize: 200,
       size: 200,
       cell: ({ getValue }) => (
-        <Tooltip label={getValue()} placement="top">
-          <Text fontSize="sm" noOfLines={2} maxW="190px" textAlign="start">
+          <Text fontSize="sm" noOfLines={2} maxW="190px" textAlign="center">
             {getValue()}
           </Text>
-        </Tooltip>
       )
     }),
     columnHelper.accessor('installed', {

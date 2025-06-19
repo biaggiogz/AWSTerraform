@@ -1,31 +1,55 @@
-## 🔧 Request: Fix UI Layout and Visual Consistency for Table "Lazos"
+## ⚙️ Request: Add Click-to-Filter Behavior from Metric Bar to Table
 
-### 🎯 Objective:
-Align all table columns and rows properly, apply consistent styling, and match the UI to the existing design system.
+### 🧭 Tab: LOOP TEST PROGRESS
+
+---
+### ⚠️ Implementation Principle
+
+> ✅ *Accuracy and verification of logic are more important than speed of implementation.*
 
 ---
 
-### 📐 Fixes to Apply:
+### 📂 Dataset
 
-| Area            | Required Fix                                                                                     |
-|------------------|--------------------------------------------------------------------------------------------------|
-| 🧱 Table Layout   | Use `table-layout: fixed` and ensure equal column widths with `minWidth` + `maxWidth` settings  |
-| 🎨 Badge Styling  | Use Chakra UI's `Badge` with consistent `variant`, `colorScheme`, and padding/margin rules     |
-| 📏 Row Height     | Normalize padding in each `td` — use `py={2}` or `py={1}` consistently                         |
-| 📊 Progress Bar   | Ensure it's inside a container with fixed height and consistent margin                         |
-| 🧭 Horizontal Scroll | Enable proper overflow with `overflowX: auto` on table container                              |
-| ⚙️ Cell Alignment | Add `textAlign="center"` or `start`/`end` consistently across columns                          |
+- **Source File:** `data/test_of_lazos_updated.csv`
 
 ---
 
-### 🔎 QA Checklist:
+### 🏗️ Project Structure
 
-- [ ] ✅ Columns align with headers
-- [ ] ✅ Vertical scroll works independently
-- [ ] ✅ Filtering does not break table structure
-- [ ] ✅ UI uses consistent Chakra design tokens
-- [ ] ✅ Responsive layout does not overflow or collapse
+- **Source Path:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/README.md`
+- **Optimization Guide:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-guide.md`
+
+### 🎯 Goal
+
+When the user clicks the **"LOOP (Signal) DONE"** metric bar (blue bar in dashboard), it should:
+
+✅ **Filter the table "Loop Test Control - Precommissioning"**  
+✅ **Only show rows where `PROGRESS == 100%` (OK=100%)**
 
 ---
 
-Please re-implement the rendering logic with **proper styling, alignment, and performance optimizations**.
+### 🔄 Filter Flow Logic
+
+| Trigger Element           | Filter Effect                                                                            | Target Component                      |
+|--------------------------|-------------------------------------------------------------------------------------------|----------------------------------------|
+| Click: "LOOP (Signal) DONE" metric (dashboard bar) | Filter the table by `PROGRESS == 100%`                                         | Table: Loop Test Control - Precommissioning |
+| Click: "LOOP (Signal) PENDING" metric             | Filter the table by `PROGRESS < 100%`                                          | Same table                             |
+| Reset Filters Button      | Clear this filter and show all rows again                                                | Both Dashboard + Table                 |
+
+---
+
+### 🧠 Additional Notes
+
+- Column `"PROGRESS"` in the table is mapped from field `"OK=100%"` in the CSV file.
+- Ensure this new filter works **in combination with existing filters** (Area and Subsystem), **not as a replacement**.
+- The visual state of the metric bar should update (e.g., highlight active filter) to indicate an active filter is applied.
+- Avoid full table re-renders — use `useMemo`, proper table state management, and ensure row virtualization remains active.
+
+---
+
+### 📌 Reminder
+
+✅ Keep architecture and performance optimizations (e.g., `@tanstack/react-virtual`, Chakra UI, memoization, etc.)  
+✅ Follow existing UI/UX patterns  
+✅ Do not duplicate filtering logic — filter table once based on combined state
