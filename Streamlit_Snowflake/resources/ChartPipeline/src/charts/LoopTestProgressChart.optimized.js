@@ -1,5 +1,5 @@
 import { Profiler } from 'react';
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { 
   Box, 
@@ -38,10 +38,47 @@ const LoopTestProgressChart = ({ data, onProgressFilter, progressFilter }) => {
   // Force chart re-render when filters change
   const [chartKey, setChartKey] = useState(0);
   
+  // State for resizable height
+  const [chartContainerHeight, setChartContainerHeight] = useState(400);
+  const [isResizing, setIsResizing] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [startHeight, setStartHeight] = useState(400);
+  
   // Sync activeFilter with external progressFilter
   useEffect(() => {
     setActiveFilter(progressFilter);
   }, [progressFilter]);
+
+  // Resize handlers
+  const handleMouseDown = useCallback((e) => {
+    setIsResizing(true);
+    setStartY(e.clientY);
+    setStartHeight(chartContainerHeight);
+    e.preventDefault();
+  }, [chartContainerHeight]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isResizing) return;
+    const deltaY = e.clientY - startY;
+    const newHeight = Math.max(200, Math.min(800, startHeight + deltaY));
+    setChartContainerHeight(newHeight);
+  }, [isResizing, startY, startHeight]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  // Add global mouse event listeners
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isResizing, handleMouseMove, handleMouseUp]);
   
   // Calculate metrics with optimized processing
   const metrics = useMemo(() => {
@@ -431,19 +468,50 @@ const LoopTestProgressChart = ({ data, onProgressFilter, progressFilter }) => {
         </HStack>
       </Flex>
       
-      {/* Chart container with dynamic height based on data size */}
-      <Box 
-        ref={chartRef}
-        height={`${chartHeight}px`} 
-        maxHeight="600px"
-        overflowY={sortedMetrics.length > 15 ? "auto" : "visible"}
-      >
+      {/* Resizable Chart container */}
+      <Box position="relative">
         <Box 
-          key={chartKey} 
-          height="100%" 
-          minHeight={`${Math.max(200, sortedMetrics.length * 30)}px`}
+          ref={chartRef}
+          height={`${chartContainerHeight}px`}
+          overflowY="auto"
+          border="1px solid"
+          borderColor="gray.200"
+          borderRadius="md"
+          position="relative"
         >
-          <Bar data={chartData} options={options} />
+          <Box 
+            key={chartKey} 
+            height={`${Math.max(chartContainerHeight, chartHeight)}px`}
+            minHeight={`${Math.max(200, sortedMetrics.length * 30)}px`}
+          >
+            <Bar data={chartData} options={options} />
+          </Box>
+        </Box>
+        
+        {/* Custom resize handle */}
+        <Box
+          position="absolute"
+          bottom="-5px"
+          left="50%"
+          transform="translateX(-50%)"
+          width="40px"
+          height="10px"
+          bg="gray.300"
+          borderRadius="md"
+          cursor="ns-resize"
+          onMouseDown={handleMouseDown}
+          _hover={{ bg: "gray.400" }}
+          _active={{ bg: "gray.500" }}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Box
+            width="20px"
+            height="2px"
+            bg="gray.600"
+            borderRadius="sm"
+          />
         </Box>
       </Box>
     </Box>
