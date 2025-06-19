@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
   Box,
   Table,
@@ -13,8 +13,11 @@ import {
   Heading,
   HStack,
   VStack,
-  Tooltip
+  Button,
+  Portal,
+  IconButton
 } from '@chakra-ui/react';
+import { ExternalLinkIcon, AttachmentIcon } from '@chakra-ui/icons';
 import {
   useReactTable,
   getCoreRowModel,
@@ -24,6 +27,7 @@ import {
   createColumnHelper
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import Draggable from 'react-draggable';
 
 const columnHelper = createColumnHelper();
 
@@ -33,6 +37,8 @@ const columnHelper = createColumnHelper();
  * @param {Array} props.data - Filtered dataset
  */
 const LazosTable = React.memo(({ data }) => {
+  // State for detached table
+  const [isDetached, setIsDetached] = useState(false);
   // Memoize processed data to avoid recalculations
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -283,6 +289,156 @@ const LazosTable = React.memo(({ data }) => {
   // Memoize header rendering
   const headerGroups = useMemo(() => table.getHeaderGroups(), [table]);
 
+  // Toggle detach/attach functionality
+  const toggleDetach = useCallback(() => {
+    setIsDetached(prev => !prev);
+  }, []);
+
+  // Render table content (reusable for both inline and detached)
+  const renderTableContent = useCallback((showControls = false) => (
+    <Box
+      border="1px solid"
+      borderColor="gray.200"
+      borderRadius="lg"
+      overflow="hidden"
+      bg="white"
+      boxShadow={isDetached ? "2xl" : "sm"}
+      width={isDetached ? "90vw" : "100%"}
+      maxWidth={isDetached ? "1400px" : "100%"}
+    >
+      {/* Header with controls for detached mode */}
+      {showControls && (
+        <Box 
+          bg="blue.50" 
+          borderBottom="1px solid" 
+          borderColor="gray.200"
+          p={2}
+          cursor="move"
+          className="drag-handle"
+        >
+          <HStack justify="space-between" align="center">
+            <HStack>
+              <Heading size="sm" color="gray.700">
+                Loop Test Control - Precommissioning (Detached)
+              </Heading>
+              <Badge colorScheme="blue" fontSize="xs" px={2} py={1}>
+                {processedData.length} LOOPS
+              </Badge>
+            </HStack>
+            <IconButton
+              icon={<AttachmentIcon />}
+              size="sm"
+              colorScheme="blue"
+              variant="ghost"
+              onClick={toggleDetach}
+              aria-label="Attach table"
+              title="Attach table back to tab"
+            />
+          </HStack>
+        </Box>
+      )}
+      
+      {/* Table Header */}
+      <Box bg="gray.50" borderBottom="1px solid" borderColor="gray.200">
+        <Table size="sm" style={{ tableLayout: 'fixed' }}>
+          <Thead>
+            {headerGroups.map(headerGroup => (
+              <Tr key={headerGroup.id}>
+                {headerGroup.headers.map(header => (
+                  <Th
+                    key={header.id}
+                    width={`${header.getSize()}px`}
+                    minWidth={`${header.getSize()}px`}
+                    maxWidth={`${header.getSize()}px`}
+                    cursor={header.column.getCanSort() ? 'pointer' : 'default'}
+                    onClick={header.column.getToggleSortingHandler()}
+                    bg="gray.50"
+                    borderColor="gray.200"
+                    fontSize="xs"
+                    fontWeight="bold"
+                    textTransform="uppercase"
+                    letterSpacing="wide"
+                    color="gray.600"
+                    py={2}
+                    px={2}
+                    textAlign="center"
+                  >
+                    {header.isPlaceholder ? null : (
+                      <HStack spacing={1} justify="center">
+                        <Text>
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                        </Text>
+                        {header.column.getIsSorted() && (
+                          <Text fontSize="xs">
+                            {header.column.getIsSorted() === 'desc' ? '↓' : '↑'}
+                          </Text>
+                        )}
+                      </HStack>
+                    )}
+                  </Th>
+                ))}
+              </Tr>
+            ))}
+          </Thead>
+        </Table>
+      </Box>
+
+      {/* Virtualized Table Body */}
+      <Box
+        ref={parentRef}
+        height={isDetached ? "70vh" : "500px"}
+        overflowY="auto"
+        overflowX="auto"
+      >
+        <Box
+          height={`${rowVirtualizer.getTotalSize()}px`}
+          position="relative"
+        >
+          {rowVirtualizer.getVirtualItems().map(virtualRow => {
+            const row = rows[virtualRow.index];
+            return (
+              <Box
+                key={row.id}
+                position="absolute"
+                top={0}
+                left={0}
+                width="100%"
+                height={`${virtualRow.size}px`}
+                transform={`translateY(${virtualRow.start}px)`}
+              >
+                <Table size="sm" style={{ tableLayout: 'fixed' }}>
+                  <Tbody>
+                    <Tr
+                      _hover={{ bg: 'gray.50' }}
+                      borderBottom="1px solid"
+                      borderColor="gray.100"
+                    >
+                      {row.getVisibleCells().map(cell => (
+                        <Td
+                          key={cell.id}
+                          width={`${cell.column.getSize()}px`}
+                          minWidth={`${cell.column.getSize()}px`}
+                          maxWidth={`${cell.column.getSize()}px`}
+                          borderColor="gray.100"
+                          py={2}
+                          px={2}
+                          textAlign="center"
+                          verticalAlign="middle"
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </Td>
+                      ))}
+                    </Tr>
+                  </Tbody>
+                </Table>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
+    </Box>
+  ), [headerGroups, parentRef, rowVirtualizer, rows, processedData.length, isDetached, toggleDetach]);
+
   if (!data || data.length === 0) {
     return (
       <Box p={6} textAlign="center">
@@ -292,124 +448,93 @@ const LazosTable = React.memo(({ data }) => {
   }
 
   return (
-    <Box mt={6}>
-      <HStack justify="space-between" align="center" mb={4}>
-        <Heading size="md" color="gray.700">
-          Loop Test Control - Precommissioning
-        </Heading>
-        <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
-          {processedData.length} LOOPS
-        </Badge>
-      </HStack>
-
-      <Box
-        border="1px solid"
-        borderColor="gray.200"
-        borderRadius="lg"
-        overflow="hidden"
-        bg="white"
-        boxShadow="sm"
-      >
-        {/* Table Header */}
-        <Box bg="gray.50" borderBottom="1px solid" borderColor="gray.200">
-          <Table size="sm" style={{ tableLayout: 'fixed' }}>
-            <Thead>
-              {headerGroups.map(headerGroup => (
-                <Tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <Th
-                      key={header.id}
-                      width={`${header.getSize()}px`}
-                      minWidth={`${header.getSize()}px`}
-                      maxWidth={`${header.getSize()}px`}
-                      cursor={header.column.getCanSort() ? 'pointer' : 'default'}
-                      onClick={header.column.getToggleSortingHandler()}
-                      bg="gray.50"
-                      borderColor="gray.200"
-                      fontSize="xs"
-                      fontWeight="bold"
-                      textTransform="uppercase"
-                      letterSpacing="wide"
-                      color="gray.600"
-                      py={2}
-                      px={2}
-                      textAlign="center"
-                    >
-                      {header.isPlaceholder ? null : (
-                        <HStack spacing={1} justify="center">
-                          <Text>
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                          </Text>
-                          {header.column.getIsSorted() && (
-                            <Text fontSize="xs">
-                              {header.column.getIsSorted() === 'desc' ? '↓' : '↑'}
-                            </Text>
-                          )}
-                        </HStack>
-                      )}
-                    </Th>
-                  ))}
-                </Tr>
-              ))}
-            </Thead>
-          </Table>
+    <>
+      {/* Inline table when not detached */}
+      {!isDetached && (
+        <Box mt={6}>
+          <HStack justify="space-between" align="center" mb={4}>
+            <Heading size="md" color="gray.700">
+              Loop Test Control - Precommissioning
+            </Heading>
+            <HStack spacing={3}>
+              <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
+                {processedData.length} LOOPS
+              </Badge>
+              <Button
+                leftIcon={<ExternalLinkIcon />}
+                size="sm"
+                colorScheme="blue"
+                variant="outline"
+                onClick={toggleDetach}
+              >
+                Detach Table
+              </Button>
+            </HStack>
+          </HStack>
+          {renderTableContent(false)}
         </Box>
+      )}
 
-        {/* Virtualized Table Body */}
-        <Box
-          ref={parentRef}
-          height="500px"
-          overflowY="auto"
-          overflowX="auto"
-        >
-          <Box
-            height={`${rowVirtualizer.getTotalSize()}px`}
-            position="relative"
+      {/* Detached table in portal */}
+      {isDetached && (
+        <Portal>
+          <Draggable
+            handle=".drag-handle"
+            defaultPosition={{ x: 100, y: 100 }}
+            bounds="body"
           >
-            {rowVirtualizer.getVirtualItems().map(virtualRow => {
-              const row = rows[virtualRow.index];
-              return (
-                <Box
-                  key={row.id}
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  width="100%"
-                  height={`${virtualRow.size}px`}
-                  transform={`translateY(${virtualRow.start}px)`}
-                >
-                  <Table size="sm" style={{ tableLayout: 'fixed' }}>
-                    <Tbody>
-                      <Tr
-                        _hover={{ bg: 'gray.50' }}
-                        borderBottom="1px solid"
-                        borderColor="gray.100"
-                      >
-                        {row.getVisibleCells().map(cell => (
-                          <Td
-                            key={cell.id}
-                            width={`${cell.column.getSize()}px`}
-                            minWidth={`${cell.column.getSize()}px`}
-                            maxWidth={`${cell.column.getSize()}px`}
-                            borderColor="gray.100"
-                            py={2}
-                            px={2}
-                            textAlign="center"
-                            verticalAlign="middle"
-                          >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </Td>
-                        ))}
-                      </Tr>
-                    </Tbody>
-                  </Table>
-                </Box>
-              );
-            })}
+            <Box
+              position="fixed"
+              zIndex={9999}
+              top="100px"
+              left="100px"
+            >
+              {renderTableContent(true)}
+            </Box>
+          </Draggable>
+        </Portal>
+      )}
+
+      {/* Placeholder when table is detached */}
+      {isDetached && (
+        <Box mt={6}>
+          <HStack justify="space-between" align="center" mb={4}>
+            <Heading size="md" color="gray.700">
+              Loop Test Control - Precommissioning
+            </Heading>
+            <HStack spacing={3}>
+              <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
+                {processedData.length} LOOPS
+              </Badge>
+              <Button
+                leftIcon={<AttachmentIcon />}
+                size="sm"
+                colorScheme="green"
+                variant="outline"
+                onClick={toggleDetach}
+              >
+                Attach Table
+              </Button>
+            </HStack>
+          </HStack>
+          <Box
+            border="2px dashed"
+            borderColor="gray.300"
+            borderRadius="lg"
+            p={8}
+            textAlign="center"
+            bg="gray.50"
+          >
+            <Text color="gray.500" fontSize="lg" mb={2}>
+              Table is currently detached
+            </Text>
+            <Text color="gray.400" fontSize="sm">
+              The table is now floating in a separate window. You can drag it around and use the attach button to bring it back.
+            </Text>
           </Box>
         </Box>
-      </Box>
-    </Box>
+      )}
+    </>
   );
 });
 
