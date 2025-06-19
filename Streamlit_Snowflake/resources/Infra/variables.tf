@@ -134,7 +134,7 @@ variable "ecs_task_desired_image_tag" {
   default     = null
 }
 variable "desired_count" {
-  description = "The desired number of ECS tasks to run. Default is 1."
+  description = "The desired number of ECS tasks to run. Default is 0 to disable deployment."
   type        = number
   default     = 0
 }
@@ -241,7 +241,11 @@ variable "eventbridge_rules_enable_force_destroy" {
 }
 
 # - CodePipeline -
-
+variable "enable_streamlit_deployment" {
+  description = "Whether to enable Streamlit deployment pipeline. Set to false to disable deployment and avoid costs."
+  type        = bool
+  default     = false
+}
 
 # - CodeBuild -
 variable "path_to_build_spec" {

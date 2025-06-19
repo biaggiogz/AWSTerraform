@@ -850,6 +850,7 @@ resource "aws_cloudwatch_event_target" "default_event_bus_to_streamlit_event_bus
 }
 
 resource "aws_cloudwatch_event_rule" "invoke_streamlit_codepipeline" {
+  count          = var.enable_streamlit_deployment ? 1 : 0
   name           = "${var.app_name_streamlit}-invoke-streamlit-codepipeline"
   event_bus_name = aws_cloudwatch_event_bus.streamlit_event_bus.name
   description    = "Invoke Streamlit CodePipeline when object is uploaded to Streamlit S3 Bucket."
@@ -878,15 +879,17 @@ resource "aws_cloudwatch_event_rule" "invoke_streamlit_codepipeline" {
 }
 
 resource "aws_cloudwatch_event_target" "streamlit_codepipeline" {
-  rule           = aws_cloudwatch_event_rule.invoke_streamlit_codepipeline.name
-  target_id      = aws_codepipeline.streamlit_codepipeline.name
-  arn            = aws_codepipeline.streamlit_codepipeline.arn
+  count          = var.enable_streamlit_deployment ? 1 : 0
+  rule           = aws_cloudwatch_event_rule.invoke_streamlit_codepipeline[0].name
+  target_id      = aws_codepipeline.streamlit_codepipeline[0].name
+  arn            = aws_codepipeline.streamlit_codepipeline[0].arn
   role_arn       = aws_iam_role.eventbridge_invoke_streamlit_codepipeline.arn
   event_bus_name = aws_cloudwatch_event_bus.streamlit_event_bus.name
 }
 
 
 resource "aws_codepipeline" "streamlit_codepipeline" {
+  count         = var.enable_streamlit_deployment ? 1 : 0
   name          = "${var.app_name_streamlit}-pipeline"
   role_arn      = aws_iam_role.streamlit_codepipeline_service_role.arn
   pipeline_type = "V2"
@@ -930,7 +933,7 @@ resource "aws_codepipeline" "streamlit_codepipeline" {
       version          = "1"
 
       configuration = {
-        ProjectName = aws_codebuild_project.streamlit_codebuild_project.name
+        ProjectName = aws_codebuild_project.streamlit_codebuild_project[0].name
       }
     }
   }
@@ -947,6 +950,7 @@ resource "aws_codepipeline" "streamlit_codepipeline" {
 # CodeBuild
 ################################################################################
 resource "aws_codebuild_project" "streamlit_codebuild_project" {
+  count         = var.enable_streamlit_deployment ? 1 : 0
   name          = "${var.app_name_streamlit}-image-builder"
   description   = "CodeBuild project that creates Docker image and pushes to ECR when file is uploaded to ${var.app_name_streamlit}-assets-${random_string.streamlit_s3_bucket.result} S3 bucket."
   build_timeout = "10"
@@ -1105,15 +1109,17 @@ resource "aws_iam_policy" "eventbridge_invoke_streamlit_event_bus_policy" {
   )
 }
 data "aws_iam_policy_document" "eventbridge_invoke_streamlit_codepipeline_policy" {
-  statement {
-    effect = "Allow"
-    actions = [
-      # "codepipeline:*",
-      "codepipeline:StartPipelineExecution",
-    ]
-    resources = [
-      aws_codepipeline.streamlit_codepipeline.arn,
-    ]
+  dynamic "statement" {
+    for_each = var.enable_streamlit_deployment ? [1] : []
+    content {
+      effect = "Allow"
+      actions = [
+        "codepipeline:StartPipelineExecution",
+      ]
+      resources = [
+        aws_codepipeline.streamlit_codepipeline[0].arn,
+      ]
+    }
   }
   statement {
     effect = "Allow"
@@ -1173,11 +1179,11 @@ data "aws_iam_policy_document" "eventbridge_invoke_streamlit_codepipeline_policy
 
 # CodePipeline
 data "aws_iam_policy_document" "streamlit_codepipeline_policy" {
+  count = var.enable_streamlit_deployment ? 1 : 0
   # S3 Allow
   statement {
     effect = "Allow"
     actions = [
-      # "s3:*",
       "s3:GetObject",
       "s3:GetObjectVersion",
       "s3:GetBucketVersioning",
@@ -1195,7 +1201,6 @@ data "aws_iam_policy_document" "streamlit_codepipeline_policy" {
   statement {
     effect = "Allow"
     actions = [
-      # "codebuild:*",
       "codebuild:StartBuild",
       "codebuild:StopBuild",
       "codebuild:StartBuildBatch",
@@ -1208,19 +1213,19 @@ data "aws_iam_policy_document" "streamlit_codepipeline_policy" {
       "codebuild:DescribeCodeCoverages",
       "codebuild:List*",
     ]
-    # resources = ["*"]
-    resources = [aws_codebuild_project.streamlit_codebuild_project.arn]
+    resources = [aws_codebuild_project.streamlit_codebuild_project[0].arn]
   }
-
 }
 resource "aws_iam_policy" "streamlit_codepipeline_policy" {
+  count       = var.enable_streamlit_deployment ? 1 : 0
   name        = "${var.app_name_streamlit}-codepipeline-service-role-policy"
   description = "Policy granting AWS CodePipeline access to S3 and CodeBuild."
-  policy      = data.aws_iam_policy_document.streamlit_codepipeline_policy.json
+  policy      = data.aws_iam_policy_document.streamlit_codepipeline_policy[0].json
 }
 
 # CodeBuild
 data "aws_iam_policy_document" "streamlit_codebuild_policy" {
+  count = var.enable_streamlit_deployment ? 1 : 0
 
   statement {
     effect = "Allow"
@@ -1284,14 +1289,16 @@ data "aws_iam_policy_document" "streamlit_codebuild_policy" {
   }
 }
 resource "aws_iam_role_policy_attachment" "streamlit_codebuild_service_role_policy" {
+  count      = var.enable_streamlit_deployment ? 1 : 0
   role       = aws_iam_role.streamlit_codebuild_service_role.name
-  policy_arn = aws_iam_policy.streamlit_codebuild_policy.arn
+  policy_arn = aws_iam_policy.streamlit_codebuild_policy[0].arn
 }
 
 resource "aws_iam_policy" "streamlit_codebuild_policy" {
+  count       = var.enable_streamlit_deployment ? 1 : 0
   name        = "${var.app_name_streamlit}-codebuild-service-role-policy"
   description = "Policy granting the Streamlit CodeBuild Project access to ECR, S3, and CloudWatch."
-  policy      = data.aws_iam_policy_document.streamlit_codebuild_policy.json
+  policy      = data.aws_iam_policy_document.streamlit_codebuild_policy[0].json
 }
 # ECS Default Policy
 data "aws_iam_policy_document" "ecs_default_policy" {
@@ -1354,11 +1361,13 @@ resource "aws_iam_role" "eventbridge_invoke_streamlit_codepipeline" {
 }
 
 resource "aws_iam_role_policy_attachment" "eventbridge_invoke_streamlit_codepipeline" {
+  count      = var.enable_streamlit_deployment ? 1 : 0
   role       = aws_iam_role.eventbridge_invoke_streamlit_codepipeline.name
-  policy_arn = aws_iam_policy.eventbridge_invoke_streamlit_codepipeline_policy.arn
+  policy_arn = aws_iam_policy.eventbridge_invoke_streamlit_codepipeline_policy[0].arn
 }
 
 resource "aws_iam_policy" "eventbridge_invoke_streamlit_codepipeline_policy" {
+  count       = var.enable_streamlit_deployment ? 1 : 0
   name        = "${var.app_name_streamlit}-eventbridge-invoke-streamlit-codepipeline"
   description = "Policy that allows EventBridge to invoke the Streamlit CodePipeline."
   policy      = jsonencode({
@@ -1369,7 +1378,7 @@ resource "aws_iam_policy" "eventbridge_invoke_streamlit_codepipeline_policy" {
         Action = [
           "codepipeline:StartPipelineExecution"
         ]
-        Resource = [aws_codepipeline.streamlit_codepipeline.arn]
+        Resource = [aws_codepipeline.streamlit_codepipeline[0].arn]
       },
       {
         Effect = "Allow"
@@ -1412,8 +1421,9 @@ resource "aws_iam_role" "streamlit_codepipeline_service_role" {
   )
 }
 resource "aws_iam_role_policy_attachment" "streamlit_codepipeline_service_role" {
+  count      = var.enable_streamlit_deployment ? 1 : 0
   role       = aws_iam_role.streamlit_codepipeline_service_role.name
-  policy_arn = aws_iam_policy.streamlit_codepipeline_policy.arn
+  policy_arn = aws_iam_policy.streamlit_codepipeline_policy[0].arn
 }
 
 
