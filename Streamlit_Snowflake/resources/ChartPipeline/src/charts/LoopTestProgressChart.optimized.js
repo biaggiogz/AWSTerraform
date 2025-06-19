@@ -150,39 +150,56 @@ const LoopTestProgressChart = ({ data, onProgressFilter, progressFilter }) => {
     return Math.max(200, count * heightPerBar);
   };
   
-  // Prepare chart data with memoization
+  // Prepare chart data with memoization and dynamic reordering based on sort field
   const chartData = useMemo(() => {
-    // Define all datasets in the new order (Visual Order 1-4)
-    const allDatasets = [
+    // Define all datasets with their mapping to sort fields
+    const datasetDefinitions = [
       {
         label: 'TOTAL LOOP (Signal)',
         data: sortedMetrics.map(item => item.totalLoops),
-        backgroundColor: '#FFB4A2', // Blue
+        backgroundColor: '#FFB4A2',
         borderColor: '#E5989B',
         borderWidth: 1,
+        sortField: 'totalLoops'
       },
       {
         label: 'LOOP (Signal) DONE',
         data: sortedMetrics.map(item => item.loopSignalDone),
-        backgroundColor: '#3B4CCA', // Blue
+        backgroundColor: '#3B4CCA',
         borderColor: '#2A3BB9',
         borderWidth: 1,
+        sortField: 'loopSignalDone'
       },
       {
         label: 'LOOP (Signal) PENDING',
         data: sortedMetrics.map(item => item.loopsSignalPending),
-        backgroundColor: '#AEE6F9', // Light Blue
+        backgroundColor: '#AEE6F9',
         borderColor: '#99D5E8',
         borderWidth: 1,
+        sortField: 'loopsSignalPending'
       },
       {
         label: 'DOSSIER COMPLETED',
         data: sortedMetrics.map(item => item.dossierCompleted),
-        backgroundColor: '#D7A0C3', // Pink
+        backgroundColor: '#D7A0C3',
         borderColor: '#C68FB2',
         borderWidth: 1,
+        sortField: 'dossierCompleted'
       }
     ];
+    
+    // Reorder datasets so the sorted metric appears first (leftmost)
+    const reorderedDatasets = [...datasetDefinitions];
+    const sortedDatasetIndex = reorderedDatasets.findIndex(dataset => dataset.sortField === sortField);
+    
+    if (sortedDatasetIndex > 0) {
+      // Move the sorted dataset to the front
+      const sortedDataset = reorderedDatasets.splice(sortedDatasetIndex, 1)[0];
+      reorderedDatasets.unshift(sortedDataset);
+    }
+    
+    // Remove sortField property before passing to chart
+    const allDatasets = reorderedDatasets.map(({ sortField, ...dataset }) => dataset);
     
     // If there's an active filter, only show that dataset
     const datasets = activeFilter 
@@ -193,7 +210,7 @@ const LoopTestProgressChart = ({ data, onProgressFilter, progressFilter }) => {
       labels: sortedMetrics.map(item => item.subsPre),
       datasets
     };
-  }, [sortedMetrics, activeFilter]);
+  }, [sortedMetrics, activeFilter, sortField]);
   
   // Chart options with memoization
   const options = useMemo(() => {
@@ -296,13 +313,26 @@ const LoopTestProgressChart = ({ data, onProgressFilter, progressFilter }) => {
     };
   }, [sortedMetrics, activeFilter]);
 
-  // Custom legend items - memoized to prevent unnecessary re-renders
-  const legendItems = useMemo(() => [
-    { label: 'TOTAL LOOP (Signal)', color: '#FFB4A2'},
-    { label: 'LOOP (Signal) DONE', color: '#3B4CCA' },
-    { label: 'LOOP (Signal) PENDING', color: '#AEE6F9' },
-    { label: 'DOSSIER COMPLETED', color: '#D7A0C3' }
-  ], []);
+  // Custom legend items - dynamically ordered based on sort field
+  const legendItems = useMemo(() => {
+    const items = [
+      { label: 'TOTAL LOOP (Signal)', color: '#FFB4A2', sortField: 'totalLoops'},
+      { label: 'LOOP (Signal) DONE', color: '#3B4CCA', sortField: 'loopSignalDone' },
+      { label: 'LOOP (Signal) PENDING', color: '#AEE6F9', sortField: 'loopsSignalPending' },
+      { label: 'DOSSIER COMPLETED', color: '#D7A0C3', sortField: 'dossierCompleted' }
+    ];
+    
+    // Reorder legend to match chart segment order
+    const reorderedItems = [...items];
+    const sortedItemIndex = reorderedItems.findIndex(item => item.sortField === sortField);
+    
+    if (sortedItemIndex > 0) {
+      const sortedItem = reorderedItems.splice(sortedItemIndex, 1)[0];
+      reorderedItems.unshift(sortedItem);
+    }
+    
+    return reorderedItems.map(({ sortField, ...item }) => item);
+  }, [sortField]);
   
   // Handle legend item click with debounce to prevent rapid state changes
   const handleLegendItemClick = (label) => {
