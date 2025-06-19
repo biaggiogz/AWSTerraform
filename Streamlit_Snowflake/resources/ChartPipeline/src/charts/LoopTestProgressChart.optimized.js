@@ -1,3 +1,4 @@
+import { Profiler } from 'react';
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { 
