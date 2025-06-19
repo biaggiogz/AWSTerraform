@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -275,13 +275,21 @@ const LazosTable = React.memo(({ data }) => {
   // Get table rows
   const { rows } = table.getRowModel();
 
-  // Create parent ref for virtualization
-  const parentRef = React.useRef();
+  // Create separate refs for attached and detached states
+  const attachedParentRef = React.useRef();
+  const detachedParentRef = React.useRef();
 
-  // Create virtualizer with fixed row height for consistent layout
-  const rowVirtualizer = useVirtualizer({
+  // Create separate virtualizers for attached and detached states
+  const attachedVirtualizer = useVirtualizer({
     count: rows.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => attachedParentRef.current,
+    estimateSize: () => 50,
+    overscan: 10,
+  });
+
+  const detachedVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => detachedParentRef.current,
     estimateSize: () => 50,
     overscan: 10,
   });
@@ -294,8 +302,25 @@ const LazosTable = React.memo(({ data }) => {
     setIsDetached(prev => !prev);
   }, []);
 
+  // Force virtualizer re-measurement when detaching/attaching
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isDetached && detachedVirtualizer) {
+        detachedVirtualizer.measure();
+      } else if (!isDetached && attachedVirtualizer) {
+        attachedVirtualizer.measure();
+      }
+    }, 0);
+    
+    return () => clearTimeout(timer);
+  }, [isDetached, detachedVirtualizer, attachedVirtualizer]);
+
   // Render table content (reusable for both inline and detached)
-  const renderTableContent = useCallback((showControls = false) => (
+  const renderTableContent = useCallback((showControls = false) => {
+    const currentParentRef = isDetached ? detachedParentRef : attachedParentRef;
+    const currentVirtualizer = isDetached ? detachedVirtualizer : attachedVirtualizer;
+    
+    return (
     <Box
       border="1px solid"
       borderColor="gray.200"
@@ -385,16 +410,16 @@ const LazosTable = React.memo(({ data }) => {
 
       {/* Virtualized Table Body */}
       <Box
-        ref={parentRef}
+        ref={currentParentRef}
         height={isDetached ? "70vh" : "500px"}
         overflowY="auto"
         overflowX="auto"
       >
         <Box
-          height={`${rowVirtualizer.getTotalSize()}px`}
+          height={`${currentVirtualizer.getTotalSize()}px`}
           position="relative"
         >
-          {rowVirtualizer.getVirtualItems().map(virtualRow => {
+          {currentVirtualizer.getVirtualItems().map(virtualRow => {
             const row = rows[virtualRow.index];
             return (
               <Box
@@ -437,7 +462,8 @@ const LazosTable = React.memo(({ data }) => {
         </Box>
       </Box>
     </Box>
-  ), [headerGroups, parentRef, rowVirtualizer, rows, processedData.length, isDetached, toggleDetach]);
+    );
+  }, [headerGroups, attachedParentRef, detachedParentRef, attachedVirtualizer, detachedVirtualizer, rows, processedData.length, isDetached, toggleDetach]);
 
   if (!data || data.length === 0) {
     return (
