@@ -50,14 +50,13 @@ const LoopTestProgressChart = ({ data }) => {
       if (!groupedData[subsPre]) {
         groupedData[subsPre] = {
           totalLoops: 0,
-          loopsConstructionDone: 0,
+          loopSignalDone: 0,
           dossierCompleted: 0,
-          loopsDone: 0,
-          loopsNotStartedConstruction: 0
+          loopsSignalPending: 0
         };
       }
       
-      // Count this loop
+      // Count this loop (TOTAL LOOP Signal)
       groupedData[subsPre].totalLoops++;
       
       // Process OK value once
@@ -65,20 +64,19 @@ const LoopTestProgressChart = ({ data }) => {
       const okPercent = parseFloat(okValue);
       
       // Check metrics in a single pass
+      // LOOP (Signal) DONE: OK=100%
       if (okPercent === 100) {
-        groupedData[subsPre].loopsConstructionDone++;
+        groupedData[subsPre].loopSignalDone++;
       }
       
+      // DOSSIER COMPLETED: non-null DOSSIER
       if (item['DOSSIER']) {
         groupedData[subsPre].dossierCompleted++;
       }
       
-      if (item['TEST LOOP']) {
-        groupedData[subsPre].loopsDone++;
-      }
-      
-      if (okPercent === 0) {
-        groupedData[subsPre].loopsNotStartedConstruction++;
+      // LOOP (Signal) PENDING: OK<100%
+      if (okPercent < 100) {
+        groupedData[subsPre].loopsSignalPending++;
       }
     });
     
@@ -96,14 +94,14 @@ const LoopTestProgressChart = ({ data }) => {
     
     return metrics.filter(item => {
       switch (activeFilter) {
-        case 'LOOPS NOT STARTED CONSTRUCTION':
-          return item.loopsNotStartedConstruction > 0;
-        case 'TEST LOOP DONE':
-          return item.loopsDone > 0;
+        case 'TOTAL LOOP (Signal)':
+          return item.totalLoops > 0;
+        case 'LOOP (Signal) PENDING':
+          return item.loopsSignalPending > 0;
+        case 'LOOP (Signal) DONE':
+          return item.loopSignalDone > 0;
         case 'DOSSIER COMPLETED':
           return item.dossierCompleted > 0;
-        case 'LOOP PHASE CONSTRUCTION DONE':
-          return item.loopsConstructionDone > 0;
         default:
           return true;
       }
@@ -146,20 +144,27 @@ const LoopTestProgressChart = ({ data }) => {
   
   // Prepare chart data with memoization
   const chartData = useMemo(() => {
-    // Define all datasets
+    // Define all datasets in the new order (Visual Order 1-4)
     const allDatasets = [
       {
-        label: 'LOOPS NOT STARTED CONSTRUCTION',
-        data: sortedMetrics.map(item => item.loopsNotStartedConstruction),
-        backgroundColor: '#AEE6F9', // Light Blue
-        borderColor: '#99D5E8',
+        label: 'TOTAL LOOP (Signal)',
+        data: sortedMetrics.map(item => item.totalLoops),
+        backgroundColor: '#FFB4A2', // Blue
+        borderColor: '#E5989B',
         borderWidth: 1,
       },
       {
-        label: 'TEST LOOP DONE',
-        data: sortedMetrics.map(item => item.loopsDone),
+        label: 'LOOP (Signal) DONE',
+        data: sortedMetrics.map(item => item.loopSignalDone),
         backgroundColor: '#3B4CCA', // Blue
         borderColor: '#2A3BB9',
+        borderWidth: 1,
+      },
+      {
+        label: 'LOOP (Signal) PENDING',
+        data: sortedMetrics.map(item => item.loopsSignalPending),
+        backgroundColor: '#AEE6F9', // Light Blue
+        borderColor: '#99D5E8',
         borderWidth: 1,
       },
       {
@@ -167,13 +172,6 @@ const LoopTestProgressChart = ({ data }) => {
         data: sortedMetrics.map(item => item.dossierCompleted),
         backgroundColor: '#D7A0C3', // Pink
         borderColor: '#C68FB2',
-        borderWidth: 1,
-      },
-      {
-        label: 'LOOP PHASE CONSTRUCTION DONE',
-        data: sortedMetrics.map(item => item.loopsConstructionDone),
-        backgroundColor: '#E7D1B0', // Beige
-        borderColor: '#D6C09F',
         borderWidth: 1,
       }
     ];
@@ -220,10 +218,10 @@ const LoopTestProgressChart = ({ data }) => {
               // If there's an active filter, show both the filtered value and total
               if (activeFilter) {
                 const filteredValue = tooltipItems[0].raw;
-                return `${activeFilter}: ${filteredValue} / TOTAL LOOPS: ${total}`;
+                return `${activeFilter}: ${filteredValue} / TOTAL LOOP (Signal): ${total}`;
               }
               
-              return `TOTAL LOOPS: ${total}`;
+              return `TOTAL LOOP (Signal): ${total}`;
             }
           },
           enabled: false,
@@ -264,7 +262,7 @@ const LoopTestProgressChart = ({ data }) => {
           stacked: true,
           title: {
             display: true,
-            text: 'Number of Loops'
+            text: 'TOTAL LOOPS'
           },
           ticks: {
             maxTicksLimit: 10 // Limit the number of ticks for better performance
@@ -280,7 +278,7 @@ const LoopTestProgressChart = ({ data }) => {
           stacked: true,
           title: {
             display: true,
-            text: 'SUBS_PRE'
+            text: 'SUBSYSTEM'
           },
           // Dynamic spacing based on number of bars
           barPercentage,
@@ -292,10 +290,10 @@ const LoopTestProgressChart = ({ data }) => {
 
   // Custom legend items - memoized to prevent unnecessary re-renders
   const legendItems = useMemo(() => [
-    { label: 'LOOPS NOT STARTED CONSTRUCTION', color: '#AEE6F9' },
-    { label: 'TEST LOOP DONE', color: '#3B4CCA' },
-    { label: 'DOSSIER COMPLETED', color: '#D7A0C3' },
-    { label: 'LOOP PHASE CONSTRUCTION DONE', color: '#E7D1B0' }
+    { label: 'TOTAL LOOP (Signal)', color: '#FFB4A2'},
+    { label: 'LOOP (Signal) DONE', color: '#3B4CCA' },
+    { label: 'LOOP (Signal) PENDING', color: '#AEE6F9' },
+    { label: 'DOSSIER COMPLETED', color: '#D7A0C3' }
   ], []);
   
   // Handle legend item click with debounce to prevent rapid state changes
@@ -332,9 +330,6 @@ const LoopTestProgressChart = ({ data }) => {
             <Badge ml={2} colorScheme="green">Filtered by: {activeFilter}</Badge>
           )}
         </Text>
-        <Text fontSize="sm">
-          <Badge colorScheme="blue" mr={2}>Total Loops:</Badge> {totalLoops}
-        </Text>
       </VStack>
       
       {/* Interactive legend - optimized with fewer re-renders */}
@@ -362,11 +357,10 @@ const LoopTestProgressChart = ({ data }) => {
         <Text fontSize="sm" fontWeight="bold" mr={2} alignSelf="center">Sort by:</Text>
         <HStack spacing={2} flexWrap="wrap" justifyContent="center">
           {useMemo(() => [
-            { id: 'totalLoops', label: 'TOTAL LOOPS' },
-            { id: 'loopsConstructionDone', label: 'LOOP PHASE CONSTRUCTION DONE' },
-            { id: 'dossierCompleted', label: 'DOSSIER COMPLETED' },
-            { id: 'loopsDone', label: 'TEST LOOP DONE' },
-            { id: 'loopsNotStartedConstruction', label: 'LOOPS NOT STARTED CONSTRUCTION' }
+            { id: 'totalLoops', label: 'TOTAL LOOP (Signal)' },
+            { id: 'loopSignalDone', label: 'LOOP (Signal) DONE' },
+            { id: 'loopsSignalPending', label: 'LOOP (Signal) PENDING' },
+            { id: 'dossierCompleted', label: 'DOSSIER COMPLETED' }
           ].map((sortOption) => (
             <Button
               key={sortOption.id}
