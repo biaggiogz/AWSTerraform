@@ -310,14 +310,14 @@ const LoopTestProgressChart = ({ data, onProgressFilter, progressFilter }) => {
       // If clicking the active filter, remove it
       setActiveFilter(null);
       // Also clear the table filter
-      if (onProgressFilter && (label === 'LOOP (Signal) DONE' || label === 'LOOP (Signal) PENDING')) {
+      if (onProgressFilter && (label === 'LOOP (Signal) DONE' || label === 'LOOP (Signal) PENDING' || label === 'DOSSIER COMPLETED')) {
         onProgressFilter(null);
       }
     } else {
       // Otherwise, set the new filter
       setActiveFilter(label);
       // Apply table filter for relevant metrics
-      if (onProgressFilter && (label === 'LOOP (Signal) DONE' || label === 'LOOP (Signal) PENDING')) {
+      if (onProgressFilter && (label === 'LOOP (Signal) DONE' || label === 'LOOP (Signal) PENDING' || label === 'DOSSIER COMPLETED')) {
         onProgressFilter(label);
       }
     }

@@ -75,6 +75,8 @@ function App() {
             return progress === 100;
           case 'LOOP (Signal) PENDING':
             return progress < 100;
+          case 'DOSSIER COMPLETED':
+            return item['DOSSIER'] && item['DOSSIER'].toString().trim() !== '';
           default:
             return true;
         }

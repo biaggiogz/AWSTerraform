@@ -22,26 +22,25 @@
 
 ### 🎯 Goal
 
-When the user clicks the **"LOOP (Signal) DONE"** metric bar (blue bar in dashboard), it should:
+When the user clicks the **"DOSSIER COMPLETED"** metric bar (pin bar in dashboard), it should:
 
 ✅ **Filter the table "Loop Test Control - Precommissioning"**  
-✅ **Only show rows where `PROGRESS == 100%` (OK=100%)**
+✅ **Only show rows where `DOSSIER != null` (DOSSIER)**
 
 ---
 
 ### 🔄 Filter Flow Logic
 
-| Trigger Element           | Filter Effect                                                                            | Target Component                      |
-|--------------------------|-------------------------------------------------------------------------------------------|----------------------------------------|
-| Click: "LOOP (Signal) DONE" metric (dashboard bar) | Filter the table by `PROGRESS == 100%`                                         | Table: Loop Test Control - Precommissioning |
-| Click: "LOOP (Signal) PENDING" metric             | Filter the table by `PROGRESS < 100%`                                          | Same table                             |
-| Reset Filters Button      | Clear this filter and show all rows again                                                | Both Dashboard + Table                 |
+| Trigger Element                                   | Filter Effect                            | Target Component                      |
+|---------------------------------------------------|------------------------------------------|----------------------------------------|
+| Click: "DOSSIER COMPLETED" metric (dashboard bar) | Filter the table by `DOSSIER != null`    | Table: Loop Test Control - Precommissioning |
+| Reset Filters Button                              | Clear this filter and show all rows again | Both Dashboard + Table                 |
 
 ---
 
 ### 🧠 Additional Notes
 
-- Column `"PROGRESS"` in the table is mapped from field `"OK=100%"` in the CSV file.
+- Column `"DOSSIER"` in the table is mapped from field `"DOSSIER"` in the CSV file.
 - Ensure this new filter works **in combination with existing filters** (Area and Subsystem), **not as a replacement**.
 - The visual state of the metric bar should update (e.g., highlight active filter) to indicate an active filter is applied.
 - Avoid full table re-renders — use `useMemo`, proper table state management, and ensure row virtualization remains active.
