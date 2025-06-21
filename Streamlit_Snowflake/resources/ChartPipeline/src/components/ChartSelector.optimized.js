@@ -1,10 +1,10 @@
 import React, { lazy, Suspense } from 'react';
-import { 
-  Box, 
-  Tabs, 
-  TabList, 
-  TabPanels, 
-  Tab, 
+import {
+  Box,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
   TabPanel,
   Center,
   Spinner,
@@ -13,7 +13,7 @@ import {
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../charts/LoopTestProgressChart.optimized'));
-const SubsystemComparisonChart = lazy(() => import('../charts/SubsystemComparisonChart.optimized'));
+const IsolationProgressChart = lazy(() => import('../charts/IsolationProgressChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart.optimized'));
 const LazosTable = lazy(() => import('./LazosTable.optimized'));
 
@@ -30,61 +30,61 @@ const LazosTable = lazy(() => import('./LazosTable.optimized'));
 const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onProgressFilter, progressFilter }) => {
   // Map tab index to dashboard name
   const dashboardNames = [
-    'LOOP TEST PROGRESS',
-    'Support vs Welding by Subsystem',
+    'LOOP TESTING PROGRESS REPORT',
+    'ISOLATION PROGRESS MONITORING',
     'Test Pack Progress'
   ];
-  
+
   // Find the index of the active dashboard
   const activeIndex = dashboardNames.indexOf(activeDashboard);
-  
+
   // Handle tab change
   const handleTabChange = (index) => {
     onDashboardChange(dashboardNames[index]);
   };
-  
+
   return (
-    <Box width="100%" mt="5px">
-      <Tabs 
-        isFitted 
-        variant="enclosed" 
-        colorScheme="blue" 
-        lazyBehavior="keepMounted"
-        index={activeIndex !== -1 ? activeIndex : 0} // Default to LOOP TEST PROGRESS if not found
-        onChange={handleTabChange}
-      >
-        <TabList mb="1em">
-          <Tab>LOOP TEST PROGRESS</Tab>
-          <Tab>Support vs Welding by Subsystem</Tab>
-          <Tab>Test Pack Progress</Tab>
-        </TabList>
-        <TabPanels>
-          <TabPanel p={0}>
-            <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-              <VStack spacing={0} align="stretch">
-                <LoopTestProgressChart 
-                  data={data} 
-                  rawData={rawData}
-                  onProgressFilter={onProgressFilter}
-                  progressFilter={progressFilter}
-                />
-                <LazosTable data={data} />
-              </VStack>
-            </Suspense>
-          </TabPanel>
-          <TabPanel p={0}>
-            <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-              <SubsystemComparisonChart data={data} />
-            </Suspense>
-          </TabPanel>
-          <TabPanel p={0}>
-            <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-              <TestPackProgressChart data={data} />
-            </Suspense>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-    </Box>
+      <Box width="100%" mt="5px">
+        <Tabs
+            isFitted
+            variant="enclosed"
+            colorScheme="blue"
+            lazyBehavior="keepMounted"
+            index={activeIndex !== -1 ? activeIndex : 0} // Default to LOOP TESTING PROGRESS REPORT if not found
+            onChange={handleTabChange}
+        >
+          <TabList mb="1em">
+            <Tab>LOOP TESTING PROGRESS REPORT</Tab>
+            <Tab>ISOLATION PROGRESS MONITORING</Tab>
+            <Tab>Test Pack Progress</Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel p={0}>
+              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
+                <VStack spacing={0} align="stretch">
+                  <LoopTestProgressChart
+                      data={data}
+                      rawData={rawData}
+                      onProgressFilter={onProgressFilter}
+                      progressFilter={progressFilter}
+                  />
+                  <LazosTable data={data} />
+                </VStack>
+              </Suspense>
+            </TabPanel>
+            <TabPanel p={0}>
+              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
+                <IsolationProgressChart data={rawData} />
+              </Suspense>
+            </TabPanel>
+            <TabPanel p={0}>
+              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
+                <TestPackProgressChart data={data} />
+              </Suspense>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      </Box>
   );
 };
 

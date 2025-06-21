@@ -8,11 +8,25 @@ import { useState, useEffect, useMemo } from 'react';
 const useDashboardConfig = (activeDashboard) => {
   // Memoize the dashboard configurations to avoid recreating objects on each render
   const dashboardConfigs = useMemo(() => ({
-    'LOOP TEST PROGRESS': {
+    'LOOP TESTING PROGRESS REPORT': {
       datasetPath: '/data/test_of_lazos_updated.csv',
       filterMappings: {
         area: 'Area',
         subsystem: 'SUBS_PRE'
+      }
+    },
+    'ISOLATION PROGRESS MONITORING': {
+      datasetPath: '/data/aislamientos.csv',
+      filterMappings: {
+        area: 'SUBSYTEM',
+        subsystem: 'SUBSYTEM'
+      }
+    },
+    'Test Pack Progress': {
+      datasetPath: '/data/pipelinedata.csv',
+      filterMappings: {
+        area: 'Design Area',
+        subsystem: 'SUBSYSTEM'
       }
     },
     'DEFAULT': {

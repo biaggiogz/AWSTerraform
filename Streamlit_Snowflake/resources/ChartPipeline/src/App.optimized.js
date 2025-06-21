@@ -22,7 +22,7 @@ const ChartSelector = lazy(() => import('./components/ChartSelector.optimized'))
 
 function App() {
   // State for active dashboard
-  const [activeDashboard, setActiveDashboard] = useState('LOOP TEST PROGRESS');
+  const [activeDashboard, setActiveDashboard] = useState('LOOP TESTING PROGRESS REPORT');
   
   // Get dashboard configuration based on active dashboard
   const { datasetPath, filterMappings } = useDashboardConfig(activeDashboard);
