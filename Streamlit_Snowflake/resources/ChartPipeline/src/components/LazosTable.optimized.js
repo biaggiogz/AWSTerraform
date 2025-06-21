@@ -15,7 +15,8 @@ import {
   VStack,
   Button,
   Portal,
-  IconButton
+  IconButton,
+  useBreakpointValue
 } from '@chakra-ui/react';
 import { ExternalLinkIcon, AttachmentIcon } from '@chakra-ui/icons';
 import {
@@ -28,6 +29,9 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import Draggable from 'react-draggable';
+import { Resizable } from 'react-resizable';
+import 'react-resizable/css/styles.css';
+import './ResizableTable.css';
 
 const columnHelper = createColumnHelper();
 
@@ -39,6 +43,25 @@ const columnHelper = createColumnHelper();
 const LazosTable = React.memo(({ data }) => {
   // State for detached table
   const [isDetached, setIsDetached] = useState(false);
+  
+  // State for resizable dimensions
+  const [tableSize, setTableSize] = useState({ width: 1200, height: 600 });
+  
+  // Responsive breakpoint values
+  const isMobile = useBreakpointValue({ base: true, md: false });
+  const isTablet = useBreakpointValue({ base: false, md: true, lg: false });
+  
+  // Responsive table dimensions
+  const responsiveWidth = useMemo(() => {
+    if (isMobile) return Math.min(tableSize.width, window.innerWidth - 40);
+    if (isTablet) return Math.min(tableSize.width, window.innerWidth - 80);
+    return tableSize.width;
+  }, [tableSize.width, isMobile, isTablet]);
+  
+  const responsiveHeight = useMemo(() => {
+    if (isMobile) return Math.min(tableSize.height, window.innerHeight - 200);
+    return tableSize.height;
+  }, [tableSize.height, isMobile]);
   // Memoize processed data to avoid recalculations
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -302,7 +325,15 @@ const LazosTable = React.memo(({ data }) => {
     setIsDetached(prev => !prev);
   }, []);
 
-  // Force virtualizer re-measurement when detaching/attaching
+  // Handle resize for detached table
+  const handleResize = useCallback((event, { size }) => {
+    setTableSize({
+      width: Math.max(800, Math.min(size.width, window.innerWidth - 100)),
+      height: Math.max(400, Math.min(size.height, window.innerHeight - 150))
+    });
+  }, []);
+
+  // Force virtualizer re-measurement when detaching/attaching or resizing
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isDetached && detachedVirtualizer) {
@@ -313,14 +344,14 @@ const LazosTable = React.memo(({ data }) => {
     }, 0);
     
     return () => clearTimeout(timer);
-  }, [isDetached, detachedVirtualizer, attachedVirtualizer]);
+  }, [isDetached, detachedVirtualizer, attachedVirtualizer, tableSize]);
 
   // Render table content (reusable for both inline and detached)
   const renderTableContent = useCallback((showControls = false) => {
     const currentParentRef = isDetached ? detachedParentRef : attachedParentRef;
     const currentVirtualizer = isDetached ? detachedVirtualizer : attachedVirtualizer;
     
-    return (
+    const tableContent = (
     <Box
       border="1px solid"
       borderColor="gray.200"
@@ -328,8 +359,10 @@ const LazosTable = React.memo(({ data }) => {
       overflow="hidden"
       bg="white"
       boxShadow={isDetached ? "2xl" : "sm"}
-      width={isDetached ? "90vw" : "100%"}
-      maxWidth={isDetached ? "1400px" : "100%"}
+      width={isDetached ? `${responsiveWidth}px` : "100%"}
+      height={isDetached ? `${responsiveHeight}px` : "auto"}
+      maxWidth={isDetached ? "none" : "100%"}
+      position="relative"
     >
       {/* Header with controls for detached mode */}
       {showControls && (
@@ -411,7 +444,7 @@ const LazosTable = React.memo(({ data }) => {
       {/* Virtualized Table Body */}
       <Box
         ref={currentParentRef}
-        height={isDetached ? "70vh" : "500px"}
+        height={isDetached ? `${responsiveHeight - 120}px` : "500px"}
         overflowY="auto"
         overflowX="auto"
       >
@@ -461,9 +494,63 @@ const LazosTable = React.memo(({ data }) => {
           })}
         </Box>
       </Box>
+      
+      {/* Resize handle indicator for detached mode */}
+      {isDetached && showControls && (
+        <Box
+          position="absolute"
+          bottom="2px"
+          right="2px"
+          width="12px"
+          height="12px"
+          cursor="se-resize"
+          opacity={0.6}
+          _hover={{ opacity: 1 }}
+          sx={{
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              right: '2px',
+              bottom: '2px',
+              width: '0',
+              height: '0',
+              borderLeft: '8px solid transparent',
+              borderBottom: '8px solid #CBD5E0'
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              right: '2px',
+              bottom: '6px',
+              width: '0',
+              height: '0',
+              borderLeft: '4px solid transparent',
+              borderBottom: '4px solid #A0AEC0'
+            }
+          }}
+        />
+      )}
     </Box>
     );
-  }, [headerGroups, attachedParentRef, detachedParentRef, attachedVirtualizer, detachedVirtualizer, rows, processedData.length, isDetached, toggleDetach]);
+    
+    // Wrap with Resizable component for detached mode
+    if (isDetached && showControls) {
+      return (
+        <Resizable
+          width={responsiveWidth}
+          height={responsiveHeight}
+          onResize={handleResize}
+          minConstraints={[800, 400]}
+          maxConstraints={[window.innerWidth - 100, window.innerHeight - 150]}
+          resizeHandles={['se']}
+        >
+          {tableContent}
+        </Resizable>
+      );
+    }
+    
+    return tableContent;
+  }, [headerGroups, attachedParentRef, detachedParentRef, attachedVirtualizer, detachedVirtualizer, rows, processedData.length, isDetached, toggleDetach, responsiveWidth, responsiveHeight, handleResize]);
 
   if (!data || data.length === 0) {
     return (

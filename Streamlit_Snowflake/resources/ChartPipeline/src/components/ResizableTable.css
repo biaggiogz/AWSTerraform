@@ -1,0 +1,83 @@
+/* Enhanced styles for resizable table */
+.react-resizable {
+  position: relative;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 0;
+  right: 0;
+  background: transparent;
+  padding: 0 3px 3px 0;
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  box-sizing: border-box;
+  cursor: se-resize;
+}
+
+.react-resizable-handle-se {
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+}
+
+.react-resizable-handle-se::before {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid #cbd5e0;
+  border-bottom: 2px solid #cbd5e0;
+}
+
+.react-resizable-handle-se::after {
+  content: '';
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  width: 3px;
+  height: 3px;
+  border-right: 2px solid #a0aec0;
+  border-bottom: 2px solid #a0aec0;
+}
+
+.react-resizable-handle:hover::before,
+.react-resizable-handle:hover::after {
+  border-color: #4299e1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .react-resizable-handle {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .react-resizable-handle-se::before {
+    right: 4px;
+    bottom: 4px;
+    width: 6px;
+    height: 6px;
+  }
+  
+  .react-resizable-handle-se::after {
+    right: 8px;
+    bottom: 8px;
+    width: 4px;
+    height: 4px;
+  }
+}
+
+/* Ensure table content doesn't interfere with resize handle */
+.resizable-table-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.resizable-table-container .react-resizable-handle {
+  z-index: 10;
+}
