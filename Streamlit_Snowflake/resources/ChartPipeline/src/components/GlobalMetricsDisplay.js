@@ -155,11 +155,11 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
                 size="sm"
                 variant={progressFilter === metric.label ? "solid" : "outline"}
                 borderColor={metric.color}
-                color={progressFilter === metric.label ? "white" : metric.color}
+                color={progressFilter === metric.label ? "white" : "black"}
                 bg={progressFilter === metric.label ? metric.color : metric.bgColor}
                 _hover={{
                   bg: metric.color,
-                  color: "white"
+                  color: "black"
                 }}
                 fontSize="xs"
                 fontWeight="medium"

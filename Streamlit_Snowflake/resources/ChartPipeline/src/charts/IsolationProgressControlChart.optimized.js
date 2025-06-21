@@ -1,116 +1,88 @@
 import React, { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { Box, Heading, Grid, GridItem, Text, VStack } from '@chakra-ui/react';
+import { Chart } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { Box, Heading, HStack, Text, VStack } from '@chakra-ui/react';
+
+// Register the datalabels plugin
+Chart.register(ChartDataLabels);
 
 /**
- * ISOLATION PROGRESS CONTROL Chart - displays progress across different isolation phases
+ * ISOLATION PROGRESS CONTROL Chart - Two-Category Vertical Stacked Bar Chart
  * @param {Object} props - Component props
  * @param {Array} props.data - Raw dataset from aislamientos.csv
  */
 const IsolationProgressChart = ({ data }) => {
-  // Calculate global isolation metrics with memoization
+  // Calculate isolation progress metrics with memoization
   const isolationMetrics = useMemo(() => {
     if (!data || data.length === 0) return {};
     
-    const metrics = {
-      distanciadores: 0,
-      aislamiento: 0,
-      chapa: 0,
-      cajas: 0,
-      rematar: 0,
-      totalRecords: data.length
+    const categories = {
+      'Spacer Advance': 'Avance Distanciadores',
+      'Insulation Advance': 'Avance Aislamiento', 
+      'Advance Sheet Metal': 'Avance Chapa',
+      'Advance Boxes': 'Avance Cajas',
+      'Advance to Finish': 'Avance Rematar'
     };
     
-    let validDistanciadores = 0;
-    let validAislamiento = 0;
-    let validChapa = 0;
-    let validCajas = 0;
-    let validRematar = 0;
+    const results = {};
     
-    data.forEach(item => {
-      // Parse progress values, handling different formats
-      const distanciadores = parseFloat(item['%Avance Distanciadores']) || 0;
-      const aislamiento = parseFloat(item['% Avance Aislamiento']) || 0;
-      const chapa = parseFloat(item['% Avance Chapa']) || 0;
-      const cajas = parseFloat(item['% Avance Cajas']) || 0;
-      const rematar = parseFloat(item['% Avance Rematar']) || 0;
+    Object.entries(categories).forEach(([displayName, columnName]) => {
+      let completed = 0;
+      let total = data.length; // Count all records
       
-      if (distanciadores > 0) {
-        metrics.distanciadores += distanciadores;
-        validDistanciadores++;
-      }
-      if (aislamiento > 0) {
-        metrics.aislamiento += aislamiento;
-        validAislamiento++;
-      }
-      if (chapa > 0) {
-        metrics.chapa += chapa;
-        validChapa++;
-      }
-      if (cajas > 0) {
-        metrics.cajas += cajas;
-        validCajas++;
-      }
-      if (rematar > 0) {
-        metrics.rematar += rematar;
-        validRematar++;
-      }
+      data.forEach(item => {
+        const value = item[columnName];
+        // Check if value exists and is 1 (completed)
+        if (value && (parseFloat(value) === 1 || value === '1')) {
+          completed++;
+        }
+      });
+      
+      const completedPercentage = total > 0 ? (completed / total) * 100 : 0;
+      const incompletePercentage = 100 - completedPercentage;
+      
+      results[displayName] = {
+        completed: completedPercentage,
+        incomplete: incompletePercentage,
+        total: total,
+        completedCount: completed
+      };
     });
     
-    // Calculate averages
-    return {
-      distanciadores: validDistanciadores > 0 ? (metrics.distanciadores / validDistanciadores) * 100 : 0,
-      aislamiento: validAislamiento > 0 ? (metrics.aislamiento / validAislamiento) * 100 : 0,
-      chapa: validChapa > 0 ? (metrics.chapa / validChapa) * 100 : 0,
-      cajas: validCajas > 0 ? (metrics.cajas / validCajas) * 100 : 0,
-      rematar: validRematar > 0 ? (metrics.rematar / validRematar) * 100 : 0,
-      totalRecords: data.length,
-      validCounts: {
-        distanciadores: validDistanciadores,
-        aislamiento: validAislamiento,
-        chapa: validChapa,
-        cajas: validCajas,
-        rematar: validRematar
-      }
-    };
+    return results;
   }, [data]);
   
-  // Prepare chart data
+  // Prepare chart data for vertical stacked bars
   const chartData = useMemo(() => {
-    const phases = ['Distanciadores', 'Aislamiento', 'Chapa', 'Cajas', 'Rematar'];
-    const values = [
-      isolationMetrics.distanciadores || 0,
-      isolationMetrics.aislamiento || 0,
-      isolationMetrics.chapa || 0,
-      isolationMetrics.cajas || 0,
-      isolationMetrics.rematar || 0
-    ];
+    const categories = Object.keys(isolationMetrics);
+    const completedData = categories.map(cat => isolationMetrics[cat]?.completed || 0);
+    const incompleteData = categories.map(cat => isolationMetrics[cat]?.incomplete || 0);
     
     return {
-      labels: phases,
-      datasets: [{
-        label: 'Progress (%)',
-        data: values,
-        backgroundColor: [
-          'rgba(54, 162, 235, 0.6)',   // Blue
-          'rgba(255, 99, 132, 0.6)',   // Red
-          'rgba(255, 205, 86, 0.6)',   // Yellow
-          'rgba(75, 192, 192, 0.6)',   // Teal
-          'rgba(153, 102, 255, 0.6)'   // Purple
-        ],
-        borderColor: [
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 99, 132, 1)',
-          'rgba(255, 205, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)'
-        ],
-        borderWidth: 2
-      }]
+      labels: categories,
+      datasets: [
+        {
+          label: 'Complete',
+          data: completedData,
+          backgroundColor: '#1DE9B6', // Green
+          borderColor: '#000',
+          borderWidth: 2,
+          stack: 'stack1'
+        },
+        {
+          label: 'Incomplete', 
+          data: incompleteData,
+          backgroundColor: '#FF168B', // Magenta
+          borderColor: '#000',
+          borderWidth: 2,
+          stack: 'stack1'
+        }
+      ]
     };
   }, [isolationMetrics]);
   
-  // Chart options
+  // Chart options with data labels
   const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
@@ -118,118 +90,153 @@ const IsolationProgressChart = ({ data }) => {
       duration: 300
     },
     plugins: {
+      datalabels: {
+        display: true,
+        color: '#000',
+        font: {
+          weight: 'bold',
+          size: 12
+        },
+        formatter: (value, context) => {
+          // Show percentage if it's greater than 8% to avoid clutter on small segments
+          return value > 8 ? `${Math.round(value)}%` : '';
+        },
+        anchor: 'center',
+        align: 'center'
+      },
       tooltip: {
         callbacks: {
           label: (context) => {
-            const phase = context.label;
+            const category = context.label;
+            const dataset = context.dataset.label;
             const value = context.raw.toFixed(1);
-            const validCount = isolationMetrics.validCounts?.[phase.toLowerCase()] || 0;
+            const metrics = isolationMetrics[category];
             return [
-              `${phase}: ${value}%`,
-              `Valid records: ${validCount}`
+              `${dataset}: ${value}%`,
+              `Total items: ${metrics?.total || 0}`,
+              `Completed: ${metrics?.completedCount || 0}`
             ];
           }
         }
       },
       legend: {
-        display: false
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 12,
+            weight: 'bold'
+          }
+        }
       },
       title: {
         display: false
       }
     },
     scales: {
-      y: {
-        beginAtZero: true,
-        max: 100,
+      x: {
+        stacked: true,
         title: {
           display: true,
-          text: 'Progress (%)'
+          text: 'Isolation Categories',
+          font: {
+            size: 14,
+            weight: 'bold'
+          }
         },
         ticks: {
-          callback: (value) => `${value}%`
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.1)'
-        }
-      },
-      x: {
-        title: {
-          display: true,
-          text: 'Isolation Phase'
+          font: {
+            size: 11
+          },
+          maxRotation: 45
         },
         grid: {
           display: false
         }
+      },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+        max: 100,
+        title: {
+          display: true,
+          text: 'Progress (%)',
+          font: {
+            size: 14,
+            weight: 'bold'
+          }
+        },
+        ticks: {
+          callback: (value) => `${value}%`,
+          font: {
+            size: 11
+          }
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)'
+        }
       }
+    },
+    interaction: {
+      intersect: false,
+      mode: 'index'
     }
-  }), [isolationMetrics.validCounts]);
+  }), [isolationMetrics]);
   
-  // Calculate overall progress
-  const overallProgress = useMemo(() => {
-    const values = [
-      isolationMetrics.distanciadores || 0,
-      isolationMetrics.aislamiento || 0,
-      isolationMetrics.chapa || 0,
-      isolationMetrics.cajas || 0,
-      isolationMetrics.rematar || 0
-    ];
-    const validValues = values.filter(v => v > 0);
-    return validValues.length > 0 ? validValues.reduce((a, b) => a + b, 0) / validValues.length : 0;
-  }, [isolationMetrics]);
+  // Calculate overall statistics
+  const overallStats = useMemo(() => {
+    const categories = Object.keys(isolationMetrics);
+    if (categories.length === 0) return { avgCompleted: 0, totalItems: 0 };
+    
+    const totalCompleted = categories.reduce((sum, cat) => sum + (isolationMetrics[cat]?.completed || 0), 0);
+    const avgCompleted = categories.length > 0 ? totalCompleted / categories.length : 0;
+    const totalItems = data?.length || 0;
+    
+    return { avgCompleted, totalItems };
+  }, [isolationMetrics, data]);
 
   return (
     <VStack spacing={4} align="stretch">
       {/* Header with overall metrics */}
-      <Box p={4} borderWidth="1px" borderRadius="lg" bg="blue.50">
-        <Heading size="md" mb={3} color="blue.700">
+      <Box p={4} borderWidth="1px" borderRadius="lg" bg="gray.50">
+        <Heading size="md" mb={3} textAlign="center">
           ISOLATION PROGRESS CONTROL
         </Heading>
-        <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={4}>
-          <GridItem>
-            <Text fontSize="sm" color="gray.600">Overall Progress</Text>
-            <Text fontSize="2xl" fontWeight="bold" color="blue.600">
-              {overallProgress.toFixed(1)}%
+        <HStack justify="center" spacing={8}>
+          <Box textAlign="center">
+            <Text fontSize="sm" color="gray.600">Average Completion</Text>
+            <Text fontSize="2xl" fontWeight="bold" color="green.600">
+              {overallStats.avgCompleted.toFixed(1)}%
             </Text>
-          </GridItem>
-          <GridItem>
-            <Text fontSize="sm" color="gray.600">Total Records</Text>
+          </Box>
+          <Box textAlign="center">
+            <Text fontSize="sm" color="gray.600">Total Items</Text>
             <Text fontSize="2xl" fontWeight="bold" color="gray.700">
-              {isolationMetrics.totalRecords || 0}
+              {overallStats.totalItems}
             </Text>
-          </GridItem>
-        </Grid>
+          </Box>
+        </HStack>
       </Box>
       
-      {/* Progress Chart */}
-      <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" height="400px">
+      {/* Vertical Stacked Bar Chart */}
+      <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" height="500px">
         <Bar data={chartData} options={options} />
       </Box>
       
-      {/* Detailed Metrics */}
-      <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={4}>
-        {[
-          { key: 'distanciadores', label: 'Distanciadores', color: 'blue' },
-          { key: 'aislamiento', label: 'Aislamiento', color: 'red' },
-          { key: 'chapa', label: 'Chapa', color: 'yellow' },
-          { key: 'cajas', label: 'Cajas', color: 'teal' },
-          { key: 'rematar', label: 'Rematar', color: 'purple' }
-        ].map(({ key, label, color }) => (
-          <GridItem key={key}>
-            <Box p={3} borderWidth="1px" borderRadius="md" bg={`${color}.50`}>
-              <Text fontSize="sm" color={`${color}.700`} fontWeight="medium">
-                {label}
-              </Text>
-              <Text fontSize="xl" fontWeight="bold" color={`${color}.600`}>
-                {(isolationMetrics[key] || 0).toFixed(1)}%
-              </Text>
-              <Text fontSize="xs" color="gray.600">
-                {isolationMetrics.validCounts?.[key] || 0} records
-              </Text>
-            </Box>
-          </GridItem>
-        ))}
-      </Grid>
+      {/* Legend explanation */}
+      <Box p={3} borderWidth="1px" borderRadius="md" bg="blue.50">
+        <HStack justify="center" spacing={6}>
+          <HStack>
+            <Box width="15px" height="15px" bg="#1DE9B6" borderColor="#000" borderWidth="1px" />
+            <Text fontSize="sm" fontWeight="medium">Complete</Text>
+          </HStack>
+          <HStack>
+            <Box width="15px" height="15px" bg="#FF168B" borderColor="#000" borderWidth="1px" />
+            <Text fontSize="sm" fontWeight="medium">Incomplete</Text>
+          </HStack>
+        </HStack>
+      </Box>
     </VStack>
   );
 };

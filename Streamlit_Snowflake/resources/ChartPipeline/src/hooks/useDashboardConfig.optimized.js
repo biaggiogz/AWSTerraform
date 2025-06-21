@@ -18,8 +18,8 @@ const useDashboardConfig = (activeDashboard) => {
     'ISOLATION PROGRESS CONTROL': {
       datasetPath: '/data/aislamientos.csv',
       filterMappings: {
-        area: 'SUBSYTEM',
-        subsystem: 'SUBSYTEM'
+        area: 'Area',
+        subsystem: 'SUBSYSTEM'
       }
     },
     'Test Pack Progress': {
