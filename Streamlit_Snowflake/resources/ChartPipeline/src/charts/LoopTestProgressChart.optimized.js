@@ -29,8 +29,6 @@ Chart.register(ChartDataLabels);
 const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter }) => {
   // State to track the active measure filter - sync with external progressFilter
   const [activeFilter, setActiveFilter] = useState(progressFilter);
-  // State to track selected metric for isolation
-  const [selectedMetric, setSelectedMetric] = useState(null);
   
   // State for sort field and direction
   const [sortField, setSortField] = useState('totalLoops');
@@ -51,11 +49,7 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
   // Sync activeFilter with external progressFilter
   useEffect(() => {
     setActiveFilter(progressFilter);
-    // Reset selected metric if external filter changes
-    if (progressFilter !== activeFilter) {
-      setSelectedMetric(progressFilter);
-    }
-  }, [progressFilter, activeFilter]);
+  }, [progressFilter]);
 
   // Resize handlers
   const handleMouseDown = useCallback((e) => {
@@ -160,7 +154,7 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
     if (chartRef.current) {
       setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
     }
-  }, [sortedCompleteMetrics.length, selectedMetric]);
+  }, [sortedCompleteMetrics.length]);
   
   // Calculate optimal spacing based on number of bars
   const getOptimalSpacing = (count) => {
@@ -183,38 +177,38 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
       {
         label: 'TOTAL LOOP (Signal)',
         data: sortedCompleteMetrics.map(item => item.totalLoops),
-        backgroundColor: selectedMetric && selectedMetric !== 'TOTAL LOOP (Signal)' ? 'rgba(255, 180, 162, 0.3)' : '#FFB4A2',
-        borderColor: selectedMetric && selectedMetric !== 'TOTAL LOOP (Signal)' ? 'rgba(229, 152, 155, 0.3)' : '#E5989B',
+        backgroundColor: progressFilter && progressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(255, 180, 162, 0.3)' : '#FFB4A2',
+        borderColor: progressFilter && progressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(229, 152, 155, 0.3)' : '#E5989B',
         borderWidth: 1,
         sortField: 'totalLoops',
-        hidden: selectedMetric && selectedMetric !== 'TOTAL LOOP (Signal)'
+        hidden: progressFilter && progressFilter !== 'TOTAL LOOP (Signal)'
       },
       {
         label: 'LOOP (Signal) DONE',
         data: sortedCompleteMetrics.map(item => item.loopSignalDone),
-        backgroundColor: selectedMetric && selectedMetric !== 'LOOP (Signal) DONE' ? 'rgba(59, 76, 202, 0.3)' : '#3B4CCA',
-        borderColor: selectedMetric && selectedMetric !== 'LOOP (Signal) DONE' ? 'rgba(42, 59, 185, 0.3)' : '#2A3BB9',
+        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(59, 76, 202, 0.3)' : '#3B4CCA',
+        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(42, 59, 185, 0.3)' : '#2A3BB9',
         borderWidth: 1,
         sortField: 'loopSignalDone',
-        hidden: selectedMetric && selectedMetric !== 'LOOP (Signal) DONE'
+        hidden: progressFilter && progressFilter !== 'LOOP (Signal) DONE'
       },
       {
         label: 'LOOP (Signal) PENDING',
         data: sortedCompleteMetrics.map(item => item.loopsSignalPending),
-        backgroundColor: selectedMetric && selectedMetric !== 'LOOP (Signal) PENDING' ? 'rgba(174, 230, 249, 0.3)' : '#AEE6F9',
-        borderColor: selectedMetric && selectedMetric !== 'LOOP (Signal) PENDING' ? 'rgba(153, 213, 232, 0.3)' : '#99D5E8',
+        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(174, 230, 249, 0.3)' : '#AEE6F9',
+        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(153, 213, 232, 0.3)' : '#99D5E8',
         borderWidth: 1,
         sortField: 'loopsSignalPending',
-        hidden: selectedMetric && selectedMetric !== 'LOOP (Signal) PENDING'
+        hidden: progressFilter && progressFilter !== 'LOOP (Signal) PENDING'
       },
       {
         label: 'DOSSIER COMPLETED',
         data: sortedCompleteMetrics.map(item => item.dossierCompleted),
-        backgroundColor: selectedMetric && selectedMetric !== 'DOSSIER COMPLETED' ? 'rgba(215, 160, 195, 0.3)' : '#D7A0C3',
-        borderColor: selectedMetric && selectedMetric !== 'DOSSIER COMPLETED' ? 'rgba(198, 143, 178, 0.3)' : '#C68FB2',
+        backgroundColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(215, 160, 195, 0.3)' : '#D7A0C3',
+        borderColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(198, 143, 178, 0.3)' : '#C68FB2',
         borderWidth: 1,
         sortField: 'dossierCompleted',
-        hidden: selectedMetric && selectedMetric !== 'DOSSIER COMPLETED'
+        hidden: progressFilter && progressFilter !== 'DOSSIER COMPLETED'
       }
     ];
     
@@ -235,7 +229,7 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
       labels: sortedCompleteMetrics.map(item => item.subsPre),
       datasets: allDatasets
     };
-  }, [sortedCompleteMetrics, selectedMetric, sortField]);
+  }, [sortedCompleteMetrics, sortField, progressFilter]);
   
   // Chart options with memoization
   const options = useMemo(() => {
@@ -263,18 +257,11 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
             footer: (tooltipItems) => {
               const index = tooltipItems[0].dataIndex;
               const total = sortedCompleteMetrics[index].totalLoops;
-              
-              // If there's a selected metric and it's not TOTAL LOOP (Signal), show both values
-              if (selectedMetric && selectedMetric !== 'TOTAL LOOP (Signal)') {
-                const selectedValue = tooltipItems[0].raw;
-                return `${selectedMetric}: ${selectedValue} / TOTAL LOOP (Signal): ${total}`;
-              }
-              
               return `TOTAL LOOP (Signal): ${total}`;
             }
           },
           enabled: false,
-          mode: selectedMetric ? 'nearest' : 'index',
+          mode: 'index',
           intersect: false
         },
         // Configure the datalabels plugin
@@ -335,58 +322,11 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
         }
       }
     };
-  }, [sortedCompleteMetrics, selectedMetric]);
+  }, [sortedCompleteMetrics]);
 
-  // Custom legend items - dynamically ordered based on sort field
-  const legendItems = useMemo(() => {
-    const items = [
-      { label: 'TOTAL LOOP (Signal)', color: '#FFB4A2', sortField: 'totalLoops'},
-      { label: 'LOOP (Signal) DONE', color: '#3B4CCA', sortField: 'loopSignalDone' },
-      { label: 'LOOP (Signal) PENDING', color: '#AEE6F9', sortField: 'loopsSignalPending' },
-      { label: 'DOSSIER COMPLETED', color: '#D7A0C3', sortField: 'dossierCompleted' }
-    ];
-    
-    // Reorder legend to match chart segment order
-    const reorderedItems = [...items];
-    const sortedItemIndex = reorderedItems.findIndex(item => item.sortField === sortField);
-    
-    if (sortedItemIndex > 0) {
-      const sortedItem = reorderedItems.splice(sortedItemIndex, 1)[0];
-      reorderedItems.unshift(sortedItem);
-    }
-    
-    return reorderedItems.map(({ sortField, ...item }) => item);
-  }, [sortField]);
+
   
-  // Handle legend item click for metric isolation
-  const handleLegendItemClick = useCallback((label) => {
-    if (selectedMetric === label) {
-      // If clicking the already selected metric, reset to show all
-      setSelectedMetric(null);
-      setActiveFilter(null);
-      if (onProgressFilter) {
-        onProgressFilter(null);
-      }
-    } else {
-      // Select the new metric for isolation
-      setSelectedMetric(label);
-      
-      // Handle table filtering based on metric type
-      if (label === 'TOTAL LOOP (Signal)') {
-        // For TOTAL LOOP, clear metric filter but keep area/subsystem filters
-        setActiveFilter(null);
-        if (onProgressFilter) {
-          onProgressFilter(null);
-        }
-      } else {
-        // For specific metrics, apply both chart isolation and table filtering
-        setActiveFilter(label);
-        if (onProgressFilter) {
-          onProgressFilter(label);
-        }
-      }
-    }
-  }, [selectedMetric, onProgressFilter]);
+
 
   // Calculate summary statistics once
   const totalSubsystems = sortedCompleteMetrics.length;
@@ -404,60 +344,23 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
       <VStack mb={4} align="flex-start">
         <Text fontSize="sm">
           <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
-          {!selectedMetric && (
+          {!progressFilter && (
             <Badge ml={2} colorScheme="green">Showing: All Metrics</Badge>
           )}
-          {selectedMetric && (
-            <Badge ml={2} colorScheme="orange">Isolated: {selectedMetric}</Badge>
+          {progressFilter && (
+            <Badge ml={2} colorScheme="orange">Isolated: {progressFilter}</Badge>
           )}
         </Text>
       </VStack>
       
       {/* Global Metrics Display - always shows unfiltered data */}
-      <GlobalMetricsDisplay data={rawData || data} />
+      <GlobalMetricsDisplay 
+        data={rawData || data} 
+        onProgressFilter={onProgressFilter}
+        progressFilter={progressFilter}
+      />
       
-      {/* Interactive legend - optimized with fewer re-renders */}
-      <Flex wrap="wrap" mb={4} justifyContent="center">
-        {legendItems.map((item, index) => {
-          const isSelected = selectedMetric === item.label;
-          const isDimmed = selectedMetric && selectedMetric !== item.label;
-          return (
-            <Button
-              key={index}
-              size="sm"
-              mx={1}
-              mb={2}
-              variant={isSelected ? "solid" : "outline"}
-              colorScheme={isSelected ? "blue" : isDimmed ? "gray" : "gray"}
-              opacity={isDimmed ? 0.5 : 1}
-              leftIcon={<Box w="12px" h="12px" bg={isDimmed ? `${item.color}80` : item.color} borderRadius="sm" />}
-              onClick={() => handleLegendItemClick(item.label)}
-              aria-pressed={isSelected}
-              _hover={{
-                opacity: 1,
-                transform: "scale(1.02)"
-              }}
-              transition="all 0.2s"
-            >
-              {item.label}
-            </Button>
-          );
-        })}
-      </Flex>
-      
-      {/* Show All / Reset button when a metric is selected */}
-      {selectedMetric && (
-        <Flex justify="center" mb={4}>
-          <Button
-            size="sm"
-            colorScheme="green"
-            variant="outline"
-            onClick={() => handleLegendItemClick(selectedMetric)}
-          >
-            Show All Metrics
-          </Button>
-        </Flex>
-      )}
+
       
       {/* Sort controls - optimized with fewer re-renders */}
       <Flex wrap="wrap" mb={4} justifyContent="center">

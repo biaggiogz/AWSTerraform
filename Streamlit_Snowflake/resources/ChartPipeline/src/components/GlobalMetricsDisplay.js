@@ -4,6 +4,8 @@ import {
   Text, 
   Tooltip,
   Flex,
+  VStack,
+  Button,
   useBreakpointValue
 } from '@chakra-ui/react';
 
@@ -11,8 +13,10 @@ import {
  * GlobalMetricsDisplay component shows unfiltered global metrics
  * @param {Object} props - Component props
  * @param {Array} props.data - Raw unfiltered dataset from CSV
+ * @param {Function} props.onProgressFilter - Function to handle progress filtering
+ * @param {string} props.progressFilter - Current progress filter
  */
-const GlobalMetricsDisplay = ({ data }) => {
+const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter }) => {
   // Calculate global metrics using the raw unfiltered data
   const globalMetrics = useMemo(() => {
     if (!data || data.length === 0) {
@@ -94,56 +98,88 @@ const GlobalMetricsDisplay = ({ data }) => {
     }
   ];
   
+  // Handle metric button click for filtering
+  const handleMetricClick = (metricLabel) => {
+    if (onProgressFilter) {
+      // Toggle filter: if same metric is clicked, clear filter; otherwise set new filter
+      const newFilter = progressFilter === metricLabel ? null : metricLabel;
+      onProgressFilter(newFilter);
+    }
+  };
+  
   return (
-      <Flex direction="row" align="flex-start" gap={4} mb={4}>
-        <Tooltip
-            label="Global Total - These values represent the entire dataset and are not affected by any filters"
-            placement="top"
-            hasArrow
-        >
-          <Text fontSize="xs" color="gray.600" cursor="help" whiteSpace="nowrap">
-            📊 Global Metrics
-          </Text>
-        </Tooltip>
+    <VStack spacing={2} mb={4} align="stretch">
+      <Tooltip
+        label="Global Total - These values represent the entire dataset and are not affected by any filters"
+        placement="top"
+        hasArrow
+      >
+        <Text fontSize="xs" color="gray.600" cursor="help" textAlign="center">
+          📊 Global Metrics
+        </Text>
+      </Tooltip>
       
       <Flex 
-        direction={direction} 
-        spacing={spacing} 
+        direction="row" 
         wrap="wrap" 
-        gap={spacing}
-        justify="flex-start"
+        gap={4}
+        justify="center"
         align="flex-start"
       >
         {metricItems.map((metric, index) => (
-          <Box
-            key={index}
-            bg={metric.bgColor}
-            border="1px solid"
-            borderColor={metric.color}
-            borderRadius="md"
-            px={1}
-            py={1}
-            minW="140px"
-            textAlign="left"
-          >
-            {/*<Text fontSize="xs" color="gray.600" fontWeight="medium">*/}
-            {/*  {metric.label}*/}
-            {/*</Text>*/}
-            {/*<Text */}
-            {/*  fontSize="lg" */}
-            {/*  fontWeight="bold" */}
-            {/*  color={metric.color}*/}
-            {/*  mt={1}*/}
-            {/*>*/}
-            {/*  {metric.value.toLocaleString()}*/}
-            {/*</Text>*/}
-            <Text fontSize="10px" color="gray.600" fontWeight="medium">
-              {metric.label} : <Text as="span" fontWeight="bold" color={metric.color}>{metric.value.toLocaleString()}</Text>
+          <VStack key={index} spacing={1} align="center" minW="140px">
+            {/* Metric Button */}
+            <Button
+              size="sm"
+              variant={progressFilter === metric.label ? "solid" : "outline"}
+              borderColor={metric.color}
+              color={progressFilter === metric.label ? "white" : metric.color}
+              bg={progressFilter === metric.label ? metric.color : metric.bgColor}
+              _hover={{
+                bg: metric.color,
+                color: "white"
+              }}
+              fontSize="xs"
+              fontWeight="medium"
+              px={2}
+              py={1}
+              height="auto"
+              whiteSpace="normal"
+              textAlign="center"
+              minH="32px"
+              onClick={() => handleMetricClick(metric.label)}
+              cursor="pointer"
+            >
+              {metric.label}
+            </Button>
+            
+            {/* Global Metric Value */}
+            <Text 
+              fontSize="lg" 
+              fontWeight="bold" 
+              color={metric.color}
+              textAlign="center"
+            >
+              {metric.value.toLocaleString()}
             </Text>
-          </Box>
+          </VStack>
         ))}
       </Flex>
-      </Flex>
+      
+      {/* Show All Metrics button when a filter is active */}
+      {progressFilter && (
+        <Flex justify="center" mt={2}>
+          <Button
+            size="sm"
+            colorScheme="green"
+            variant="outline"
+            onClick={() => handleMetricClick(progressFilter)}
+          >
+            Show All Metrics
+          </Button>
+        </Flex>
+      )}
+    </VStack>
   );
 };
 

@@ -13,7 +13,7 @@ import {
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../charts/LoopTestProgressChart.optimized'));
-const IsolationProgressChart = lazy(() => import('../charts/IsolationProgressChart.optimized'));
+const IsolationProgressChart = lazy(() => import('../charts/IsolationProgressControlChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart.optimized'));
 const LazosTable = lazy(() => import('./LazosTable.optimized'));
 
@@ -31,7 +31,7 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
   // Map tab index to dashboard name
   const dashboardNames = [
     'LOOP TESTING PROGRESS REPORT',
-    'ISOLATION PROGRESS MONITORING',
+    'ISOLATION PROGRESS CONTROL',
     'Test Pack Progress'
   ];
 
@@ -55,7 +55,7 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
         >
           <TabList mb="1em">
             <Tab>LOOP TESTING PROGRESS REPORT</Tab>
-            <Tab>ISOLATION PROGRESS MONITORING</Tab>
+            <Tab>ISOLATION PROGRESS CONTROL</Tab>
             <Tab>Test Pack Progress</Tab>
           </TabList>
           <TabPanels>

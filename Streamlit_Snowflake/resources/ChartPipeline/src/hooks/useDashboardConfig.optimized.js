@@ -15,7 +15,7 @@ const useDashboardConfig = (activeDashboard) => {
         subsystem: 'SUBS_PRE'
       }
     },
-    'ISOLATION PROGRESS MONITORING': {
+    'ISOLATION PROGRESS CONTROL': {
       datasetPath: '/data/aislamientos.csv',
       filterMappings: {
         area: 'SUBSYTEM',

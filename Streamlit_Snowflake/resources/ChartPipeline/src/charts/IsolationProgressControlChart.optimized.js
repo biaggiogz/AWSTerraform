@@ -3,7 +3,7 @@ import { Bar } from 'react-chartjs-2';
 import { Box, Heading, Grid, GridItem, Text, VStack } from '@chakra-ui/react';
 
 /**
- * Isolation Progress Monitoring Chart - displays progress across different isolation phases
+ * ISOLATION PROGRESS CONTROL Chart - displays progress across different isolation phases
  * @param {Object} props - Component props
  * @param {Array} props.data - Raw dataset from aislamientos.csv
  */
@@ -183,7 +183,7 @@ const IsolationProgressChart = ({ data }) => {
       {/* Header with overall metrics */}
       <Box p={4} borderWidth="1px" borderRadius="lg" bg="blue.50">
         <Heading size="md" mb={3} color="blue.700">
-          Isolation Progress Monitoring
+          ISOLATION PROGRESS CONTROL
         </Heading>
         <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={4}>
           <GridItem>
