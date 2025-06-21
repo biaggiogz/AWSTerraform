@@ -175,8 +175,7 @@ const FilterPanel = ({
 
       {progressFilter && (
         <Box mb={4} p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
-          <Text fontSize="sm" fontWeight="medium" color="blue.700">
-            Progress Filter Active: {progressFilter}
+          <Text fontSize="sm" fontWeight="medium" color="blue.700">Filter Active: {progressFilter}
           </Text>
         </Box>
       )}
