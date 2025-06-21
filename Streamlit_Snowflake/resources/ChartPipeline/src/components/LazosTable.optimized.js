@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import ReactDOM from 'react-dom/client';
 import {
   Box,
   Table,
@@ -16,7 +17,8 @@ import {
   Button,
   Portal,
   IconButton,
-  useBreakpointValue
+  useBreakpointValue,
+  ChakraProvider
 } from '@chakra-ui/react';
 import { ExternalLinkIcon, AttachmentIcon } from '@chakra-ui/icons';
 import {
@@ -43,6 +45,8 @@ const columnHelper = createColumnHelper();
 const LazosTable = React.memo(({ data }) => {
   // State for detached table
   const [isDetached, setIsDetached] = useState(false);
+  const [detachedWindow, setDetachedWindow] = useState(null);
+  const [detachedRoot, setDetachedRoot] = useState(null);
   
   // State for resizable dimensions
   const [tableSize, setTableSize] = useState({ width: 1200, height: 600 });
@@ -318,6 +322,156 @@ const LazosTable = React.memo(({ data }) => {
     estimateSize: () => 50,
     overscan: 10,
   });
+
+  // Handle detaching table to new window
+  const handleDetach = useCallback(() => {
+    const newWindow = window.open('', 'DetachedTable', 
+      `width=${tableSize.width + 50},height=${tableSize.height + 100},resizable=yes,scrollbars=yes`);
+    
+    if (newWindow) {
+      newWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Lazos Table - Detached</title>
+            <link rel="stylesheet" href="${window.location.origin}/static/css/main.css">
+          </head>
+          <body>
+            <div id="detached-table-root"></div>
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+      
+      const root = ReactDOM.createRoot(newWindow.document.getElementById('detached-table-root'));
+      setDetachedWindow(newWindow);
+      setDetachedRoot(root);
+      setIsDetached(true);
+      
+      newWindow.addEventListener('beforeunload', () => {
+        setIsDetached(false);
+        setDetachedWindow(null);
+        setDetachedRoot(null);
+      });
+    }
+  }, [tableSize]);
+
+  // Handle attaching table back to main window
+  const handleAttach = useCallback(() => {
+    if (detachedWindow) {
+      detachedWindow.close();
+    }
+    setIsDetached(false);
+    setDetachedWindow(null);
+    setDetachedRoot(null);
+  }, [detachedWindow]);
+
+  // Render table in detached window
+  useEffect(() => {
+    if (isDetached && detachedRoot && detachedWindow) {
+      const DetachedTableContent = () => (
+        <ChakraProvider>
+          <Box p={4}>
+            <HStack mb={4} justify="space-between">
+              <Heading size="md">Lazos Table - Detached</Heading>
+              <Button size="sm" onClick={handleAttach} leftIcon={<AttachmentIcon />}>
+                Attach
+              </Button>
+            </HStack>
+            <Resizable
+              width={tableSize.width}
+              height={tableSize.height}
+              onResize={(e, { size }) => setTableSize(size)}
+              minConstraints={[800, 400]}
+              maxConstraints={[2000, 1200]}
+            >
+              <Box
+                width={tableSize.width}
+                height={tableSize.height}
+                border="1px solid"
+                borderColor="gray.200"
+                borderRadius="md"
+                overflow="hidden"
+                bg="white"
+              >
+                <Box ref={detachedHeaderRef} position="sticky" top={0} zIndex={1} bg="white">
+                  <Table size="sm" variant="simple">
+                    <Thead bg="gray.50">
+                      {table.getHeaderGroups().map(headerGroup => (
+                        <Tr key={headerGroup.id}>
+                          {headerGroup.headers.map(header => (
+                            <Th
+                              key={header.id}
+                              width={header.getSize()}
+                              minWidth={header.column.columnDef.minSize}
+                              maxWidth={header.column.columnDef.maxSize}
+                              textAlign="center"
+                              fontSize="xs"
+                              fontWeight="bold"
+                              color="gray.700"
+                              borderBottom="2px solid"
+                              borderColor="gray.300"
+                              py={3}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                            </Th>
+                          ))}
+                        </Tr>
+                      ))}
+                    </Thead>
+                  </Table>
+                </Box>
+                <Box
+                  ref={detachedParentRef}
+                  height={tableSize.height - 60}
+                  overflow="auto"
+                >
+                  <Box height={detachedVirtualizer.getTotalSize()}>
+                    {detachedVirtualizer.getVirtualItems().map(virtualItem => {
+                      const row = rows[virtualItem.index];
+                      return (
+                        <Box
+                          key={row.id}
+                          position="absolute"
+                          top={0}
+                          left={0}
+                          width="100%"
+                          height={virtualItem.size}
+                          transform={`translateY(${virtualItem.start}px)`}
+                        >
+                          <Table size="sm" variant="simple">
+                            <Tbody>
+                              <Tr _hover={{ bg: 'gray.50' }}>
+                                {row.getVisibleCells().map(cell => (
+                                  <Td
+                                    key={cell.id}
+                                    width={cell.column.getSize()}
+                                    minWidth={cell.column.columnDef.minSize}
+                                    maxWidth={cell.column.columnDef.maxSize}
+                                    borderBottom="1px solid"
+                                    borderColor="gray.200"
+                                    py={2}
+                                  >
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                  </Td>
+                                ))}
+                              </Tr>
+                            </Tbody>
+                          </Table>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              </Box>
+            </Resizable>
+          </Box>
+        </ChakraProvider>
+      );
+      
+      detachedRoot.render(<DetachedTableContent />);
+    }
+  }, [isDetached, detachedRoot, detachedWindow, processedData, table, detachedVirtualizer, tableSize, handleAttach]);
 
   // Memoize header rendering
   const headerGroups = useMemo(() => table.getHeaderGroups(), [table]);
