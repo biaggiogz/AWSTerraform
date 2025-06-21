@@ -1,52 +1,84 @@
+## ⚙️ Request: Update Bar Chart Metric Selection and Display Behavior for "LOOP TEST PROGRESS" Dashboard
 
-## Project Structure
+---
 
-- ECS/Streamlit_Snowflake/resources/ChartPipeline/README.md
-- ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-guide.md
+### 🧭 Tab: `LOOP TEST PROGRESS`
 
-### Enhance visualization on "LOOP TEST PROGRESS" dashboard 
+---
 
-Configure "LOOP TEST PROGRESS" dashboard  bar chart 
-so that the numeric value of each measure appears inside its c
-corresponding colored segment within each bar
+### ⚠️ Implementation Principle
 
-### VERY IMPORTANT
+- ✅ Prioritize **accuracy and logic integrity** over implementation speed.
+- ❗ **Do not modify** any existing filter logic, table behavior, or dashboard state beyond the scope defined here.
+- Use a **separate aggregation** step to compute the global values.
+- Use `useMemo` to memoize global metric computation—trigger recalculation only when the raw dataset changes.
+- Avoid unnecessary re-renders by isolating this display from all filter state.
 
-1. Filter Design Area and Subsytem must be from dataset test_of_lazos_updated.csv when user is in Dashboard "LOOP TEST PROGRESS"
-   * Design Area = Column "Design Area" from test_of_lazos_updated.csv
-   * Subsystem = Column "Subsystem" from test_of_lazos_updated.csv
+---
 
-2. Don't touch the filter of the other presents dashboard
+### 📂 Dataset
 
-#### Functional Requirements
+- **Source File:** `data/test_of_lazos_updated.csv`
 
-Prompt for Implementation
+---
 
-    Show Values Inside Bar Segments:
+### 🏗️ Project Structure
 
-        For each bar (representing a SUBS_PRE), display the value of each measure (e.g., "LOOPS ≥ 100%", "LOOPS DONE", "DOSSIER COMPLETED", "LOOPS CONSTRUCTION DONE") inside its respective colored segment.
+- **Source Path:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/README.md`
+- **Optimization Guide:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-guide.md`
+- **Optimization Summary:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-summary.md`
 
-        The value must be centered or clearly positioned within the segment, ensuring it is legible and does not overlap with other segments or text
+---
 
-Color Consistency:
+### 🎯 Goal
 
-    Each value should use a text color that ensures high contrast and readability against the background color of its segment.
+Update the **bar chart metric selection and display logic** in the "LOOP TEST PROGRESS" dashboard to improve clarity and usability, as illustrated in the attached image (`Adjustements.jpg`).
 
+---
 
-Measure Association:
+### 📐 Key Requirements
 
-    Each value must be placed within the segment that represents its measure, not outside or overlapping other segments.
+| Requirement          | Details                                                                                  |
+|----------------------|------------------------------------------------------------------------------------------|
+| **Metric Selection** | Clicking a metric (e.g., "TOTAL LOOP (Signal)") displays **only that metric** in the chart. |
+| **Show All Metrics** | Provide a control labeled **"SHOWING: ALL METRICS"** to restore the multi-metric view.     |
+| **Visual Feedback**  | Highlight the selected metric or "ALL METRICS" button for clear visual indication.        |
+| **Legend + Summary** | Show only the legend/summary for the active metric(s) based on the current selection.     |
+| **Sorting Behavior** | When a metric is selected, sort bars based on that metric for clearer comparison.         |
+| **Responsiveness**   | Maintain responsive layout across devices and screen sizes.                               |
+| **No State Regression** | All Area and Subsystem filters and table interactions must remain unaffected.             |
 
-    The value should correspond exactly to the measure and SUBS_PRE item it represents
+---
 
-Chart.js Plugin Usage:
+### 📝 Implementation Notes
 
-    Use the Chart.js dataLabels plugin (or chartjs-plugin-datalabels) to render values inside the bars.
+#### UI/UX
 
-    Configure the plugin so that:
+- Follow the visual interaction model shown in the `"UPDATE"` section of the attached image.
+- When a metric is selected:
+   - Display only that metric in both the chart and the legend.
+   - Sort bars by the selected metric.
+   - Highlight the metric button as "active".
+- When `"SHOWING: ALL METRICS"` is active:
+   - Display all available metrics.
+   - Clear any single-metric selection highlight.
 
-        The label for each segment displays the value of that measure.
+#### Performance
 
-        The label is positioned inside the segment, centered vertically and horizontally.
+- Use `useMemo` or similar techniques to avoid unnecessary re-renders when switching metric views.
 
-        The label's font size and color are set for optimal readability against the segment's background
+#### Testing
+
+- Verify:
+   - All metric selection states.
+   - Sorting behavior.
+   - Filter integrity.
+   - No disruption to table logic or existing dashboard elements.
+
+---
+
+### 📌 Reminders
+
+- 🚫 **Do not duplicate** filtering logic—apply filters centrally and consistently.
+- 🔁 Maintain all current **dashboard logic**, including UI state and performance optimizations.
+- 🧪 **Test Live:** `http://localhost:3000/`

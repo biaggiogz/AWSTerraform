@@ -324,10 +324,30 @@ const LazosTable = React.memo(({ data }) => {
   });
 
   // Handle detaching table to new window
-  const handleDetach = useCallback(() => {
-    const newWindow = window.open('', 'DetachedTable', 
-      `width=${tableSize.width + 50},height=${tableSize.height + 100},resizable=yes,scrollbars=yes`);
-    
+  const handleDetach = useCallback(async () => {
+    // Get available screens (if supported)
+    const screenLeft = window.screenLeft || window.screenX;
+    const screenTop = window.screenTop || window.screenY;
+
+    // Position on secondary monitor (example)
+    const secondaryMonitorX = window.screen?.width || 1920; // Assumes secondary monitor to the right
+
+    const newWindow = window.open('', 'DetachedTable',
+        `width=${tableSize.width + 50},height=${tableSize.height + 100},` +
+        `left=${secondaryMonitorX + 100},top=100,` +
+        `resizable=yes,scrollbars=yes`
+    );
+    if ('getScreenDetails' in window) {
+      const screens = await window.getScreenDetails();
+      const externalScreen = screens.screens.find(screenItem => !screenItem.internal);
+      if (externalScreen) {
+        // Position window on external monitor
+        const left = externalScreen.left + 100;
+        const top = externalScreen.top + 100;
+        // Use left/top in window.open()
+      }
+    }
+
     if (newWindow) {
       newWindow.document.write(`
         <!DOCTYPE html>
@@ -342,12 +362,12 @@ const LazosTable = React.memo(({ data }) => {
         </html>
       `);
       newWindow.document.close();
-      
+
       const root = ReactDOM.createRoot(newWindow.document.getElementById('detached-table-root'));
       setDetachedWindow(newWindow);
       setDetachedRoot(root);
       setIsDetached(true);
-      
+
       newWindow.addEventListener('beforeunload', () => {
         setIsDetached(false);
         setDetachedWindow(null);
