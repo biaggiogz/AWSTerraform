@@ -301,6 +301,8 @@ const LazosTable = React.memo(({ data }) => {
   // Create separate refs for attached and detached states
   const attachedParentRef = React.useRef();
   const detachedParentRef = React.useRef();
+  const attachedHeaderRef = React.useRef();
+  const detachedHeaderRef = React.useRef();
 
   // Create separate virtualizers for attached and detached states
   const attachedVirtualizer = useVirtualizer({
@@ -397,7 +399,13 @@ const LazosTable = React.memo(({ data }) => {
       )}
       
       {/* Table Header */}
-      <Box bg="gray.50" borderBottom="1px solid" borderColor="gray.200">
+      <Box 
+        bg="gray.50" 
+        borderBottom="1px solid" 
+        borderColor="gray.200"
+        overflowX="hidden"
+        ref={isDetached ? detachedHeaderRef : attachedHeaderRef}
+      >
         <Table size="sm" style={{ tableLayout: 'fixed' }}>
           <Thead>
             {headerGroups.map(headerGroup => (
@@ -447,6 +455,12 @@ const LazosTable = React.memo(({ data }) => {
         height={isDetached ? `${responsiveHeight - 120}px` : "500px"}
         overflowY="auto"
         overflowX="auto"
+        onScroll={(e) => {
+          const headerRef = isDetached ? detachedHeaderRef : attachedHeaderRef;
+          if (headerRef.current) {
+            headerRef.current.scrollLeft = e.target.scrollLeft;
+          }
+        }}
       >
         <Box
           height={`${currentVirtualizer.getTotalSize()}px`}
