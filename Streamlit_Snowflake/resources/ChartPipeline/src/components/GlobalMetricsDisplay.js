@@ -5,6 +5,7 @@ import {
   Tooltip,
   Flex,
   VStack,
+  HStack,
   Button,
   useBreakpointValue
 } from '@chakra-ui/react';
@@ -15,8 +16,11 @@ import {
  * @param {Array} props.data - Raw unfiltered dataset from CSV
  * @param {Function} props.onProgressFilter - Function to handle progress filtering
  * @param {string} props.progressFilter - Current progress filter
+ * @param {string} props.sortField - Current sort field
+ * @param {string} props.sortDirection - Current sort direction
+ * @param {Function} props.onSortChange - Function to handle sort changes
  */
-const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter }) => {
+const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortField, sortDirection, onSortChange }) => {
   // Calculate global metrics using the raw unfiltered data
   const globalMetrics = useMemo(() => {
     if (!data || data.length === 0) {
@@ -76,25 +80,29 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter }) => {
       label: 'TOTAL LOOP (Signal)',
       value: globalMetrics.totalLoopSignal,
       color: '#FFB4A2',
-      bgColor: 'rgba(255, 180, 162, 0.1)'
+      bgColor: 'rgba(255, 180, 162, 0.1)',
+      sortField: 'totalLoops'
     },
     {
       label: 'LOOP (Signal) DONE',
       value: globalMetrics.loopSignalDone,
       color: '#3B4CCA',
-      bgColor: 'rgba(59, 76, 202, 0.1)'
+      bgColor: 'rgba(59, 76, 202, 0.1)',
+      sortField: 'loopSignalDone'
     },
     {
       label: 'LOOP (Signal) PENDING',
       value: globalMetrics.loopSignalPending,
       color: '#AEE6F9',
-      bgColor: 'rgba(174, 230, 249, 0.1)'
+      bgColor: 'rgba(174, 230, 249, 0.1)',
+      sortField: 'loopsSignalPending'
     },
     {
       label: 'DOSSIER COMPLETED',
       value: globalMetrics.dossierCompleted,
       color: '#D7A0C3',
-      bgColor: 'rgba(215, 160, 195, 0.1)'
+      bgColor: 'rgba(215, 160, 195, 0.1)',
+      sortField: 'dossierCompleted'
     }
   ];
   
@@ -104,6 +112,19 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter }) => {
       // Toggle filter: if same metric is clicked, clear filter; otherwise set new filter
       const newFilter = progressFilter === metricLabel ? null : metricLabel;
       onProgressFilter(newFilter);
+    }
+  };
+  
+  // Handle sort button click
+  const handleSortClick = (metricSortField) => {
+    if (onSortChange) {
+      if (sortField === metricSortField) {
+        // Toggle direction if clicking the same field
+        onSortChange(metricSortField, sortDirection === 'desc' ? 'asc' : 'desc');
+      } else {
+        // Set new field and default to descending
+        onSortChange(metricSortField, 'desc');
+      }
     }
   };
   
@@ -128,30 +149,46 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter }) => {
       >
         {metricItems.map((metric, index) => (
           <VStack key={index} spacing={1} align="center" minW="140px">
-            {/* Metric Button */}
-            <Button
-              size="sm"
-              variant={progressFilter === metric.label ? "solid" : "outline"}
-              borderColor={metric.color}
-              color={progressFilter === metric.label ? "white" : metric.color}
-              bg={progressFilter === metric.label ? metric.color : metric.bgColor}
-              _hover={{
-                bg: metric.color,
-                color: "white"
-              }}
-              fontSize="xs"
-              fontWeight="medium"
-              px={2}
-              py={1}
-              height="auto"
-              whiteSpace="normal"
-              textAlign="center"
-              minH="32px"
-              onClick={() => handleMetricClick(metric.label)}
-              cursor="pointer"
-            >
-              {metric.label}
-            </Button>
+            {/* Metric Button with Sort Button */}
+            <HStack spacing={1}>
+              <Button
+                size="sm"
+                variant={progressFilter === metric.label ? "solid" : "outline"}
+                borderColor={metric.color}
+                color={progressFilter === metric.label ? "white" : metric.color}
+                bg={progressFilter === metric.label ? metric.color : metric.bgColor}
+                _hover={{
+                  bg: metric.color,
+                  color: "white"
+                }}
+                fontSize="xs"
+                fontWeight="medium"
+                px={2}
+                py={1}
+                height="auto"
+                whiteSpace="normal"
+                textAlign="center"
+                minH="32px"
+                onClick={() => handleMetricClick(metric.label)}
+                cursor="pointer"
+              >
+                {metric.label}
+              </Button>
+              
+              {/* Sort Button */}
+              <Button
+                size="xs"
+                variant={sortField === metric.sortField ? "solid" : "outline"}
+                colorScheme={sortField === metric.sortField ? "blue" : "gray"}
+                onClick={() => handleSortClick(metric.sortField)}
+                minW="24px"
+                h="24px"
+                p={0}
+              >
+                {sortField === metric.sortField && (sortDirection === 'desc' ? '↓' : '↑')}
+                {sortField !== metric.sortField && '↓'}
+              </Button>
+            </HStack>
             
             {/* Global Metric Value */}
             <Text 

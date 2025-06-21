@@ -50,6 +50,12 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
   useEffect(() => {
     setActiveFilter(progressFilter);
   }, [progressFilter]);
+  
+  // Handle sort changes from GlobalMetricsDisplay
+  const handleSortChange = useCallback((field, direction) => {
+    setSortField(field);
+    setSortDirection(direction);
+  }, []);
 
   // Resize handlers
   const handleMouseDown = useCallback((e) => {
@@ -358,42 +364,14 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
         data={rawData || data} 
         onProgressFilter={onProgressFilter}
         progressFilter={progressFilter}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSortChange={handleSortChange}
       />
       
 
       
-      {/* Sort controls - optimized with fewer re-renders */}
-      <Flex wrap="wrap" mb={4} justifyContent="center">
-        <Text fontSize="sm" fontWeight="bold" mr={2} alignSelf="center">Sort by:</Text>
-        <HStack spacing={2} flexWrap="wrap" justifyContent="center">
-          {useMemo(() => [
-            { id: 'totalLoops', label: 'TOTAL LOOP' },
-            { id: 'loopSignalDone', label: 'LOOP DONE' },
-            { id: 'loopsSignalPending', label: 'LOOP PENDING' },
-            { id: 'dossierCompleted', label: 'DOSSIER COMPLETED' }
-          ].map((sortOption) => (
-            <Button
-              key={sortOption.id}
-              size="xs"
-              variant={sortField === sortOption.id ? "solid" : "outline"}
-              colorScheme={sortField === sortOption.id ? "blue" : "gray"}
-              onClick={() => {
-                if (sortField === sortOption.id) {
-                  // Toggle direction if clicking the same field
-                  setSortDirection(sortDirection === 'desc' ? 'asc' : 'desc');
-                } else {
-                  // Set new field and default to descending
-                  setSortField(sortOption.id);
-                  setSortDirection('desc');
-                }
-              }}
-              mb={2}
-            >
-              {sortOption.label} {sortField === sortOption.id && (sortDirection === 'desc' ? '↓' : '↑')}
-            </Button>
-          )), [sortField, sortDirection])}
-        </HStack>
-      </Flex>
+
       
       {/* Resizable Chart container */}
       <Box position="relative">
