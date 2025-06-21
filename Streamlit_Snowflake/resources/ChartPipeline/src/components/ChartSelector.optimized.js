@@ -21,12 +21,13 @@ const LazosTable = lazy(() => import('./LazosTable.optimized'));
  * ChartSelector component to switch between different charts
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset
+ * @param {Array} props.rawData - Raw unfiltered dataset for global metrics
  * @param {string} props.activeDashboard - Currently active dashboard
  * @param {Function} props.onDashboardChange - Function to call when dashboard changes
  * @param {Function} props.onProgressFilter - Function to handle progress filtering
  * @param {string} props.progressFilter - Current progress filter
  */
-const ChartSelector = ({ data, activeDashboard, onDashboardChange, onProgressFilter, progressFilter }) => {
+const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onProgressFilter, progressFilter }) => {
   // Map tab index to dashboard name
   const dashboardNames = [
     'LOOP TEST PROGRESS',
@@ -63,6 +64,7 @@ const ChartSelector = ({ data, activeDashboard, onDashboardChange, onProgressFil
               <VStack spacing={0} align="stretch">
                 <LoopTestProgressChart 
                   data={data} 
+                  rawData={rawData}
                   onProgressFilter={onProgressFilter}
                   progressFilter={progressFilter}
                 />

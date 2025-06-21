@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import GlobalMetricsDisplay from '../components/GlobalMetricsDisplay';
 
 // Register the plugin
 Chart.register(ChartDataLabels);
@@ -20,11 +21,12 @@ Chart.register(ChartDataLabels);
 /**
  * Optimized Stacked Bar Chart showing LOOP TEST PROGRESS by SUBS_PRE
  * @param {Object} props - Component props
- * @param {Array} props.data - Dataset from CSV
+ * @param {Array} props.data - Dataset from CSV (filtered)
+ * @param {Array} props.rawData - Raw unfiltered dataset for global metrics
  * @param {Function} props.onProgressFilter - Function to handle progress filtering
  * @param {string} props.progressFilter - Current progress filter
  */
-const LoopTestProgressChart = ({ data, onProgressFilter, progressFilter }) => {
+const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter }) => {
   // State to track the active measure filter - sync with external progressFilter
   const [activeFilter, setActiveFilter] = useState(progressFilter);
   // State to track selected metric for isolation
@@ -410,6 +412,9 @@ const LoopTestProgressChart = ({ data, onProgressFilter, progressFilter }) => {
           )}
         </Text>
       </VStack>
+      
+      {/* Global Metrics Display - always shows unfiltered data */}
+      <GlobalMetricsDisplay data={rawData || data} />
       
       {/* Interactive legend - optimized with fewer re-renders */}
       <Flex wrap="wrap" mb={4} justifyContent="center">

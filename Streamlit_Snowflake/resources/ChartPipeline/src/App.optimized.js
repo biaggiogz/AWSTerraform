@@ -145,6 +145,7 @@ function App() {
             <Suspense fallback={<Center p={4}><Spinner /></Center>}>
               <ChartSelector 
                 data={filteredData} 
+                rawData={data}
                 activeDashboard={activeDashboard}
                 onDashboardChange={handleDashboardChange}
                 onProgressFilter={handleProgressFilter}
