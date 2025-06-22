@@ -231,7 +231,7 @@ const IsolationProgressControlChart = ({ data }) => {
       <GridItem>
         <VStack spacing={4}>
           {/* Header with metric values */}
-          <Box bg="white" p={4} borderRadius="lg" borderWidth="1px" w="full">
+          <Box bg="white" p={0.5} borderRadius="lg" borderWidth="1px" w="full">
             <Heading size="10px" mb={4} textAlign="center">
               Advance
             </Heading>
@@ -276,7 +276,7 @@ const IsolationProgressControlChart = ({ data }) => {
         </VStack>
       </GridItem>
 
-      {/* Sidebar with area contribution by metric - right side */}
+      {/* Sidebar with area contribution by Advance - right side */}
       <GridItem>
         <SidebarProgressPanel data={data} />
       </GridItem>

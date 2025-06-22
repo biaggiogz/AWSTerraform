@@ -58,7 +58,7 @@ const SidebarProgressPanel = ({ data }) => {
       });
       
       // Sort by total Mleq (largest contribution first)
-      return areaContribs.sort((a, b) => b.totalMleq - a.totalMleq).slice(0, 5); // Show top 5 areas
+      return areaContribs.sort((a, b) => b.totalMleq - a.totalMleq);
     };
 
     return {
@@ -167,11 +167,11 @@ const SidebarProgressPanel = ({ data }) => {
       borderWidth="1px" 
       minW={{ base: "100%", lg: "280px" }} 
       maxW="320px"
-      maxH="600px"
+      maxH="622px"
       overflowY="auto"
     >
       <Text fontSize="md" fontWeight="bold" mb={4} textAlign="center" color="gray.700">
-        Area Contribution by Metric
+        Area Contribution by Advance
       </Text>
       <VStack spacing={0} align="stretch">
         <MetricBlock title="Spacer Advance" areaData={areaContributions.spacer} />
