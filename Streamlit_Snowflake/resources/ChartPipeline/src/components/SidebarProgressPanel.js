@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, VStack, Text, HStack } from '@chakra-ui/react';
+import { Box, VStack, Text, HStack, SimpleGrid } from '@chakra-ui/react';
 
 /**
  * SidebarProgressPanel component for displaying area contribution by metric
@@ -125,11 +125,11 @@ const SidebarProgressPanel = ({ data }) => {
     );
   };
 
-  // Metric block component
+  // Metric block component with three-column layout
   const MetricBlock = ({ title, areaData }) => {
     if (!areaData || areaData.length === 0) {
       return (
-        <Box mb={4}>
+        <Box mb={4} p={3} bg="gray.50" borderRadius="md">
           <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center" color="gray.700">
             {title}
           </Text>
@@ -141,11 +141,11 @@ const SidebarProgressPanel = ({ data }) => {
     }
 
     return (
-      <Box mb={4}>
-        <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center" color="gray.700">
+      <Box mb={2} p={1} bg="gray.50" borderRadius="md">
+        <Text fontSize="sm" fontWeight="bold" mb={3} textAlign="center" color="gray.700">
           {title}
         </Text>
-        <VStack spacing={1} align="stretch">
+        <SimpleGrid columns={3} spacing={1}>
           {areaData.map((item, index) => (
             <AreaContributionBar
               key={index}
@@ -154,7 +154,7 @@ const SidebarProgressPanel = ({ data }) => {
               incomplete={item.incomplete}
             />
           ))}
-        </VStack>
+        </SimpleGrid>
       </Box>
     );
   };
