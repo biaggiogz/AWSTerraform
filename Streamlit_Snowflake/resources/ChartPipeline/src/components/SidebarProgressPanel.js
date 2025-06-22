@@ -160,28 +160,14 @@ const SidebarProgressPanel = ({ data }) => {
   };
 
   return (
-    <Box 
-      bg="white" 
-      p={4} 
-      borderRadius="lg" 
-      borderWidth="1px" 
-      minW={{ base: "100%", lg: "280px" }} 
-      maxW="320px"
-      maxH="622px"
-      overflowY="auto"
-    >
-      <Text fontSize="md" fontWeight="bold" mb={4} textAlign="center" color="gray.700">
-        Area Contribution by Advance
-      </Text>
-      <VStack spacing={0} align="stretch">
-        <MetricBlock title="Spacer Advance" areaData={areaContributions.spacer} />
-        <MetricBlock title="Insulation Advance" areaData={areaContributions.insulation} />
-        <MetricBlock title="Sheet Metal Advance" areaData={areaContributions.sheetMetal} />
-        <MetricBlock title="Boxes Advance" areaData={areaContributions.boxes} />
-        <MetricBlock title="Finish Advance" areaData={areaContributions.finish} />
-        <MetricBlock title="Mleq Total Advance" areaData={areaContributions.mleqTotal} />
-      </VStack>
-    </Box>
+    <VStack spacing={0} align="stretch">
+      <MetricBlock title="Spacer Advance" areaData={areaContributions.spacer} />
+      <MetricBlock title="Insulation Advance" areaData={areaContributions.insulation} />
+      <MetricBlock title="Sheet Metal Advance" areaData={areaContributions.sheetMetal} />
+      <MetricBlock title="Boxes Advance" areaData={areaContributions.boxes} />
+      <MetricBlock title="Finish Advance" areaData={areaContributions.finish} />
+      <MetricBlock title="Mleq Total Advance" areaData={areaContributions.mleqTotal} />
+    </VStack>
   );
 };
 

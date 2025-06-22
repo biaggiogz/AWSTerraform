@@ -1,90 +1,84 @@
-## ⚙️ Request: Extend Chart Layout with Mini Stacked Bars Panel Showing Area Contribution by Metric (UI-Only Addition)
+## ⚙️ Request: Add a Second Right Panel Showing Subsystem Contribution by Metric (Matrix Layout with Mini Bars)
 
 ---
 
-### 📂 Project Structure
+### 🧠 CRITICAL LAYOUT RULE (PLEASE READ FIRST)
 
-- **Source Path:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/README.md`
-- **Optimization Guide:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-guide.md`
-- **Optimization Summary:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-summary.md`
+For each metric block (e.g., `"Spacer Advance"`), render a **matrix/grid layout** of subsystem mini bars:
 
----
-
-### 📁 Relevant Files
-
-- `IsolationProgressControlChart.optimized.js` (main chart: ✅ already implemented)
+- ⚠️ **NOT a single bar per metric**
+- ⚠️ **NOT a vertical list of bars**
+- ✅ **YES: Multiple subsystem bars per metric, arranged in 3 columns per row (grid layout)**
 
 ---
 
-### ⚠️ Implementation Principles
+### 📊 Visual Example (ASCII Grid Layout for One Metric Block)
 
-| Rule                     | Description                                                              |
-|--------------------------|---------------------------------------------------------------------------|
-| ✅ Reuse Logic            | Pull data from same source already used in `IsolationProgressControlChart` |
-| ❌ No Logic Modifications | Do NOT change chart logic, filtering, or data sources                    |
-| 🎨 Design Consistency     | Match app design system: colors, borders, layout, responsiveness          |
+Here’s how **Spacer Advance** block should look if there are 6 subsystems:
 
----
+**Spacer Advance**
 
-### 🎯 Objective
+┌────────────┬────────────┬────────────┐
+│ Subsystem1 │ Subsystem2 │ Subsystem3 │
+├────────────┼────────────┼────────────┤
+│ Subsystem4 │ Subsystem5 │ Subsystem6 │
+└────────────┴────────────┴────────────┘
 
-Add a new **right-hand panel** displaying **how much each area contributes to each overall metric**.
-
-Instead of summarizing per area like the main chart, this new panel flips the perspective:
-
-- Each **metric** (e.g. Spacer Advance, Insulation Advance, etc.) will show **multiple horizontal stacked bars** representing the **area-level contribution** to that metric (i.e. how much each area makes up that metric's total progress).
-- Each bar shows **Complete vs Incomplete** per area **within the context of that metric**.
+- Each box contains a mini stacked horizontal bar (Complete vs Incomplete)
+- Use this **same 3-column grid layout** inside each of the 6 metric blocks
 
 ---
 
-### 📦 Visual Structure
+### 🧩 Panel Structure Overview
 
-#### 🔹 Current (Keep As Is)
-
-> Large vertical stacked bar chart showing total % complete/incomplete for each metric  
-> (`IsolationProgressControlChart.optimized.js`)
-
-#### 🔸 New (Add This Panel on the Right)
-
-> For **each of the 6 metrics**:
-
-- Show a block titled with the metric name (e.g. `Spacer Advance`)
-- Inside each block, show **one horizontal bar per area** (e.g. Area 1, Area 2, Area 3...)
-- Each area bar shows % Complete (green) vs % Incomplete (magenta) **relative to that metric**
-- This layout shows **contribution of each area toward the metric**, with a breakdown of progress state.
-- The left side of group is for completed , the right of the group is for incompleted
+- Panel Title: `"Subsystem Contribution by Advance"`
+- Panel appears on the right side of the screen (toggle-able)
+- Toggle switch: allows user to switch between:
+    - `"Area Contribution by Advance"` (existing)
+    - `"Subsystem Contribution by Advance"` (this request)
 
 ---
 
-### 📊 Design & Display Specs
+### 📦 For Each Metric Block (6 blocks total):
 
-| Element         | Spec                                                                 |
-|------------------|----------------------------------------------------------------------|
-| 📋 Block Titles   | 6 total (one for each metric): Spacer, Insulation, Sheet Metal, Boxes, Finish, Mleq |
-| 📏 Mini Bars      | Horizontal stacked bars — one per **area**                          |
-| 🎨 Colors         | ✅ Green: `#1DE9B6` for Complete<br>❌ Magenta: `#FF168B` for Incomplete |
-| 💬 Labels         | Centered % labels inside each segment (readable, contrast adjusted) |
-| 🖼️ Border         | Each bar: black border `borderWidth: 1.5`, `borderColor: "#000"`    |
-| 📐 Layout         | Group each metric into a block; stack metrics vertically in panel   |
-| 📱 Responsive     | Ensure panel scrolls vertically if height exceeds view              |
-
----
-
-### 💡 Implementation Tips
-
-- Group all mini-bars in a single React component: `<SidebarMetricContributionPanel />`
-- Reuse bar rendering logic (e.g., from `Chart.js` config used in main chart)
-- You can extract metric-to-area mapping logic from wherever the full chart gets its grouped data
-- No new state or filtering logic should be introduced
+| Metric Name            | Example Subsystems            |
+|------------------------|-------------------------------|
+| Spacer Advance         | Sub1, Sub2, Sub3, Sub4...     |
+| Insulation Advance     | Sub1, Sub2, Sub3, ...         |
+| Sheet Metal Advance    | Sub1, Sub2, ...               |
+| Boxes Advance          | Sub1, Sub2, ...               |
+| Finish Advance         | Sub1, Sub2, ...               |
+| Mleq Advance           | Sub1, Sub2, ...               |
 
 ---
 
-### ✅ Output Summary
+### 📐 Layout Requirements
 
-- 📊 Main chart: untouched
-- 📦 New right-hand panel: metric blocks with area-level stacked bars
-- 🔄 Filter panel affects both main chart and new mini bars (reuse state)
-- 🔁 All values are reused — **no changes to data sources or computations**
+- ✅ Each metric block must contain **a grid with 3 columns**
+- ✅ Each cell is a **mini stacked bar**:
+    - Green = `% Complete` (`#1DE9B6`)
+    - Magenta = `% Incomplete` (`#FF168B`)
+    - Black border around each bar
+- ✅ % Labels must appear inside each bar, contrast adjusted
+- 🔁 Grid must be **responsive** and wrap rows if >3 items
+- 🧠 DO NOT show only one bar labeled `"Unknown"` — that is incorrect
 
 ---
 
+### 💡 Code Layout Hints
+
+- Use `<SidebarMetricContributionPanel />` as your base
+- Use `display: grid` and `gridTemplateColumns: repeat(3, 1fr)`
+- Reuse data from `IsolationProgressControlChart`
+- Do not modify data or logic — visual rendering only
+
+---
+
+### ✅ Deliverables Summary
+
+- 📦 One new panel on the right titled: `"Subsystem Contribution by Advance"`
+- 📊 Contains 6 metric blocks, each with a 3-column matrix of subsystem bars
+- 🔄 Toggle button to switch views
+- 🔁 All data reused from existing logic — no filters, no logic changes
+
+---

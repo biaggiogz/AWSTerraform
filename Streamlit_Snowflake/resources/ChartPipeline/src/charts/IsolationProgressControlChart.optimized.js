@@ -1,15 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import {
   Box,
   Heading,
-  SimpleGrid,
   Text,
   VStack,
   HStack,
   Badge,
   Grid,
-  GridItem
+  GridItem,
+  Switch,
+  FormControl,
+  FormLabel
 } from '@chakra-ui/react';
 import {
   Chart as ChartJS,
@@ -22,6 +24,7 @@ import {
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import SidebarProgressPanel from '../components/SidebarProgressPanel';
+import SidebarMetricContributionPanel from '../components/SidebarMetricContributionPanel';
 
 // Register Chart.js components
 ChartJS.register(
@@ -40,6 +43,8 @@ ChartJS.register(
  * @param {Array} props.data - Filtered dataset
  */
 const IsolationProgressControlChart = ({ data }) => {
+  // State for toggling between Area and Subsystem contribution panels
+  const [showSubsystemContribution, setShowSubsystemContribution] = useState(false);
   // Calculate metrics based on the requirements
   const metrics = useMemo(() => {
     if (!data || data.length === 0) {
@@ -276,9 +281,43 @@ const IsolationProgressControlChart = ({ data }) => {
         </VStack>
       </GridItem>
 
-      {/* Sidebar with area contribution by Advance - right side */}
+      {/* Sidebar with contribution panels - right side */}
       <GridItem>
-        <SidebarProgressPanel data={data} />
+        <Box 
+          bg="white" 
+          p={2}
+          borderRadius="lg" 
+          borderWidth="1px" 
+          minW={{ base: "100%", lg: "320px" }}
+          maxW="360px"
+          maxH="622px"
+          overflowY="auto"
+        >
+          {/* Toggle switch */}
+          <FormControl display="flex" alignItems="center" mb={4}>
+            <FormLabel htmlFor="contribution-toggle" mb="0" fontSize="sm" fontWeight="bold">
+              {showSubsystemContribution ? 'Subsystem' : 'Area'}
+            </FormLabel>
+            <Switch 
+              id="contribution-toggle"
+              isChecked={showSubsystemContribution}
+              onChange={(e) => setShowSubsystemContribution(e.target.checked)}
+              colorScheme="blue"
+            />
+          </FormControl>
+          
+          {/* Conditional panel rendering */}
+          {showSubsystemContribution ? (
+            <SidebarMetricContributionPanel data={data} />
+          ) : (
+            <Box>
+              <Text fontSize="md" fontWeight="bold" mb={4} textAlign="center" color="gray.700">
+                Area Contribution by Advance
+              </Text>
+              <SidebarProgressPanel data={data} />
+            </Box>
+          )}
+        </Box>
       </GridItem>
     </Grid>
   );
