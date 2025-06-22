@@ -2,18 +2,24 @@
 ---
 ➡️ Maintain Architecture • Optimize Performance • Ensure Filter Functionality
 
-### 📂 Dataset
+### 📂 Dataset Details
 
-- **Source File:** `data/aislamientos.csv`
-- **Mapping Columns [Dashboard:Dataset]**
-  - `Subsystem:SUBSYSTEM`
-  - `Design Area:Area`
-  - `Spacer Advance:Avance Distanciadores`
-  - `Insulation Advance:Avance Aislamiento`
-  - `Advance Sheet Metal:Avance Chapa`
-  - `Advance Boxes:Avance Cajas`
-  - `Advance to Finish:Avance Rematar`
-
+- **CSV Source**: `data/aislamientos.csv`
+- **Mapped Columns [Dashboard ↔ Dataset]**:
+  - `Isometric` ↔ `ISO`
+  - `Test Pack` ↔ `TP`
+  - `Design Area` ↔ `Area`
+  - `Subsystem` ↔ `SUBSYSTEM`
+  - `COD` ↔ `COD`
+  - `HAS_TRACING` ↔ `TRACING YES & NOT`
+  - `TRACING` ↔ `TAG TRACING`
+  - `Mleq` ↔ `Mleq`
+  - `Advance Spacer` ↔ `Avance Distanciadores`
+  - `Advance Insolation` ↔ `Avance Aislamiento`
+  - `Advance Sheet Metal` ↔ `Avance Chapa`
+  - `Advance Boxes` ↔ `Avance Cajas`
+  - `Advance to Finish` ↔ `Avance Rematar`
+  - `Advance Mleq totals` ↔  `Avance Mleq totales`
 
 ---
 
@@ -24,52 +30,30 @@
 - **Optimization Summary:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-summary.md`
 
 
---- Example Graph
+### Example Graph
 
-Spacer Advance
-----------------
-|    42%       |
-|              |
-|--------------|
-|    58%       |
-|              |
-----------------
+```
+✅ You may reorganize and group metrics visually as shown in the example
+✅ The design must align with the styling and layout rules of other dashboard components
+✅ EACH METRIC MUST SHOW ITS VALUE 
 
-Insulation Advance
-----------------
-|    70%       |
-|              |
-|--------------|
-|    30%       |
-|              |
-----------------
+-----------------------------------------------------------------------------------
+advance_spacer | advance_insolation | advance_sheet_metal | advance_boxes | advance_to_finish | m_advance_mleq_total
+-----------------------------------------------------------------------------------
 
-Sheet metal advance
-----------------
-|    30%       |
-|              |
-|--------------|
-|    70%       |
-|              |
-----------------
+ ------------  ------------  ------------  ------------  ------------  ------------
+|   42%     | |   42%     | |   42%     | |   42%     | |   42%     | |   42%     |
+|           | |           | |           | |           | |           | |           |
+|           | |           | |           | |           | |           | |           |
+|-----------| |-----------| |-----------| |-----------| |-----------| |-----------|
+|   58%     | |   58%     | |   58%     | |   58%     | |   58%     | |   58%     |
+|           | |           | |           | |           | |           | |           |
+|           | |           | |           | |           | |           | |           |
+|           | |           | |           | |           | |           | |           |
+ ------------  ------------  ------------  ------------  ------------  ------------
 
-Advance Boxes
-----------------
-|    90%       |
-|              |
-|--------------|
-|    10%       |
-|              |
-----------------
 
-Advance to Finish
-----------------
-|    22%       |
-|              |
-|--------------|
-|    88%       |
-|              |
-----------------
+```
 
 ### 🧭 Tab
 **[ISOLATION PROGRESS CONTROL]**
@@ -94,12 +78,46 @@ Replicate the **vertical stacked bar chart** as shown in example graph:
 - Each segment displays its **percentage label** centered within it
 - All bars have consistent **color mapping** and a **bold border**
 - The graph must align the bars horizontally 
+- The header sections where is located the metrics,  is necessary see the value of each metric
 
 ---
 
 ### Metrics
-  - The total items = df["ISO"].count()
-  - The Average completation is for example , df["Avance Distanciadores"].avg()
+
+#### Constants Metrics (THESE METRICS ARE NOT REPONSIVE, NOT FILTERED)
+
+- C_Mleq = df['Mleq'].sum()
+- C_Advance Spacer = 0
+- C_Advance Insolation= 25
+- C_Advance Sheet Metal= 40
+- C_Advance Boxes= 25
+- C_Advance to Finish= 10
+
+#### Weighted averages completation is calculated as wrote below. These metrics are percentage (THESE METRICS ARE RESPONSIVE, THE VALUE CHANGE EVERY TIME THE USER USE THE FILTER PANEL)
+
+$$
+\text{Advance Metric} = \frac{\sum (\text{Mleq} \times \text{Advance Column})}{C_{\text{Mleq}}}
+$$
+
+
+computing weighted averages:
+
+```python
+# Percentage-formatted metrics
+advance_spacer = (df['Mleq'] * df['Advance Spacer']).sum() / C_Mleq       # Format: Percentage
+advance_insolation = (df['Mleq'] * df['Advance Insolation']).sum() / C_Mleq  # Format: Percentage
+advance_sheet_metal = (df['Mleq'] * df['Advance Sheet Metal']).sum() / C_Mleq  # Format: Percentage
+advance_boxes = (df['Mleq'] * df['Advance Boxes']).sum() / C_Mleq         # Format: Percentage
+advance_to_finish = (df['Mleq'] * df['Advance to Finish']).sum() / C_Mleq  # Format: Percentage
+
+# Metric in custom "m" format: #,##0.00 "m"
+m_advance_mleq_total = df['Advance Mleq Totals'].sum()                      # Format: #,##0.00 "m"
+
+# Percentage of total
+a_advance_mleq_total= m_advance_mleq_total / C_Mleq                       # Format: Percentage
+
+```
+
 
 ### Filter Panel
 
@@ -117,7 +135,8 @@ Replicate the **vertical stacked bar chart** as shown in example graph:
 | Data Labels    | Percentage labels centered inside each segment, readable on all backgrounds        |
 | Responsiveness | Fully responsive layout and labels on all screen sizes                             |
 | Legend         | Optional: legend to clarify color-to-label mapping                                 |
-| Accessibility  | Adequate contrast and font size for readability                                    |                                                                                    |
+| Accessibility  | Adequate contrast and font size for readability                                    |                                                                        
+| Label Layout	  | Headers show only metric value, not the full name                                  |
 
 
 ---
@@ -140,4 +159,17 @@ Replicate the **vertical stacked bar chart** as shown in example graph:
   - Styling (colors, padding, spacing)
   - Responsiveness
   - Component hierarchy and structure
-- Test for **responsiveness**, visual alignment, and label clarity across screen sizes
+
+### Final Cleanup
+
+    🧹 Delete any existing charts in tab ISOLATION PROGRESS CONTROL
+
+    🧪 Test:
+
+        Filtering response
+
+        Label accuracy
+
+        Mobile layout and desktop spacing
+
+        UI style and alignment consistency

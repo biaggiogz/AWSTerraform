@@ -1,126 +1,176 @@
 import React, { useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
-import { Chart } from 'chart.js';
+import {
+  Box,
+  Heading,
+  SimpleGrid,
+  Text,
+  VStack,
+  HStack,
+  Badge
+} from '@chakra-ui/react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { Box, Heading, HStack, Text, VStack } from '@chakra-ui/react';
 
-// Register the datalabels plugin
-Chart.register(ChartDataLabels);
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartDataLabels
+);
 
 /**
- * ISOLATION PROGRESS CONTROL Chart - Two-Category Vertical Stacked Bar Chart
+ * IsolationProgressControlChart component for displaying isolation progress metrics
  * @param {Object} props - Component props
- * @param {Array} props.data - Raw dataset from aislamientos.csv
+ * @param {Array} props.data - Filtered dataset
  */
-const IsolationProgressChart = ({ data }) => {
-  // Calculate isolation progress metrics with memoization
-  const isolationMetrics = useMemo(() => {
-    if (!data || data.length === 0) return {};
-    
-    const categories = {
-      'Spacer Advance': 'Avance Distanciadores',
-      'Insulation Advance': 'Avance Aislamiento', 
-      'Advance Sheet Metal': 'Avance Chapa',
-      'Advance Boxes': 'Avance Cajas',
-      'Advance to Finish': 'Avance Rematar'
-    };
-    
-    const results = {};
-    
-    Object.entries(categories).forEach(([displayName, columnName]) => {
-      let completed = 0;
-      let total = data.length; // Count all records
-      
-      data.forEach(item => {
-        const value = item[columnName];
-        // Check if value exists and is 1 (completed)
-        if (value && (parseFloat(value) === 1 || value === '1')) {
-          completed++;
-        }
-      });
-      
-      const completedPercentage = total > 0 ? (completed / total) * 100 : 0;
-      const incompletePercentage = 100 - completedPercentage;
-      
-      results[displayName] = {
-        completed: completedPercentage,
-        incomplete: incompletePercentage,
-        total: total,
-        completedCount: completed
+const IsolationProgressControlChart = ({ data }) => {
+  // Calculate metrics based on the requirements
+  const metrics = useMemo(() => {
+    if (!data || data.length === 0) {
+      return {
+        C_Mleq: 0,
+        advance_spacer: 0,
+        advance_insolation: 25,
+        advance_sheet_metal: 40,
+        advance_boxes: 25,
+        advance_to_finish: 10,
+        m_advance_mleq_total: 0,
+        a_advance_mleq_total: 0
       };
-    });
+    }
+
+    // Constants (not responsive to filters)
+    const C_Mleq = data.reduce((sum, row) => sum + (parseFloat(row['Mleq']) || 0), 0);
+
+    // Weighted averages (responsive to filters)
+    const advance_spacer = C_Mleq > 0 ? 
+      data.reduce((sum, row) => sum + ((parseFloat(row['Mleq']) || 0) * (parseFloat(row['Avance Distanciadores']) || 0)), 0) / C_Mleq * 100 : 0;
     
-    return results;
+    const advance_insolation = C_Mleq > 0 ? 
+      data.reduce((sum, row) => sum + ((parseFloat(row['Mleq']) || 0) * (parseFloat(row['Avance Aislamiento']) || 0)), 0) / C_Mleq * 100 : 0;
+    
+    const advance_sheet_metal = C_Mleq > 0 ? 
+      data.reduce((sum, row) => sum + ((parseFloat(row['Mleq']) || 0) * (parseFloat(row['Avance Chapa']) || 0)), 0) / C_Mleq * 100 : 0;
+    
+    const advance_boxes = C_Mleq > 0 ? 
+      data.reduce((sum, row) => sum + ((parseFloat(row['Mleq']) || 0) * (parseFloat(row['Avance Cajas']) || 0)), 0) / C_Mleq * 100 : 0;
+    
+    const advance_to_finish = C_Mleq > 0 ? 
+      data.reduce((sum, row) => sum + ((parseFloat(row['Mleq']) || 0) * (parseFloat(row['Avance Rematar']) || 0)), 0) / C_Mleq * 100 : 0;
+
+    // Metric in custom "m" format
+    const m_advance_mleq_total = data.reduce((sum, row) => sum + (parseFloat(row['Avance Mleq totales']) || 0), 0);
+    
+    // Percentage of total
+    const a_advance_mleq_total = C_Mleq > 0 ? (m_advance_mleq_total / C_Mleq) * 100 : 0;
+
+    return {
+      C_Mleq,
+      advance_spacer,
+      advance_insolation,
+      advance_sheet_metal,
+      advance_boxes,
+      advance_to_finish,
+      m_advance_mleq_total,
+      a_advance_mleq_total
+    };
   }, [data]);
-  
-  // Prepare chart data for vertical stacked bars
+
+  // Prepare chart data
   const chartData = useMemo(() => {
-    const categories = Object.keys(isolationMetrics);
-    const completedData = categories.map(cat => isolationMetrics[cat]?.completed || 0);
-    const incompleteData = categories.map(cat => isolationMetrics[cat]?.incomplete || 0);
-    
+    const categories = [
+      'Spacer Advance',
+      'Insulation Advance', 
+      'Sheet Metal Advance',
+      'Boxes Advance',
+      'Finish Advance',
+      'Mleq Total Advance'
+    ];
+
+    const completedValues = [
+      metrics.advance_spacer,
+      metrics.advance_insolation,
+      metrics.advance_sheet_metal,
+      metrics.advance_boxes,
+      metrics.advance_to_finish,
+      metrics.a_advance_mleq_total
+    ];
+
+    const incompleteValues = completedValues.map(val => 100 - val);
+
     return {
       labels: categories,
       datasets: [
         {
           label: 'Complete',
-          data: completedData,
-          backgroundColor: '#1DE9B6', // Green
+          data: completedValues,
+          backgroundColor: '#1DE9B6',
           borderColor: '#000',
           borderWidth: 2,
           stack: 'stack1'
         },
         {
-          label: 'Incomplete', 
-          data: incompleteData,
-          backgroundColor: '#FF168B', // Magenta
+          label: 'Incomplete',
+          data: incompleteValues,
+          backgroundColor: '#FF168B',
           borderColor: '#000',
           borderWidth: 2,
           stack: 'stack1'
         }
       ]
     };
-  }, [isolationMetrics]);
-  
-  // Chart options with data labels
+  }, [metrics]);
+
+  // Chart options
   const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    animation: {
-      duration: 300
-    },
-    plugins: {
-      datalabels: {
-        display: true,
-        color: '#000',
-        font: {
-          weight: 'bold',
-          size: 12
+    indexAxis: 'x',
+    scales: {
+      x: {
+        stacked: true,
+        grid: {
+          display: false
         },
-        formatter: (value, context) => {
-          // Show percentage if it's greater than 8% to avoid clutter on small segments
-          return value > 8 ? `${Math.round(value)}%` : '';
-        },
-        anchor: 'center',
-        align: 'center'
-      },
-      tooltip: {
-        callbacks: {
-          label: (context) => {
-            const category = context.label;
-            const dataset = context.dataset.label;
-            const value = context.raw.toFixed(1);
-            const metrics = isolationMetrics[category];
-            return [
-              `${dataset}: ${value}%`,
-              `Total items: ${metrics?.total || 0}`,
-              `Completed: ${metrics?.completedCount || 0}`
-            ];
+        ticks: {
+          font: {
+            size: 11,
+            weight: 'bold'
           }
         }
       },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+        max: 100,
+        grid: {
+          display: true,
+          color: 'rgba(0, 0, 0, 0.1)'
+        },
+        ticks: {
+          callback: function(value) {
+            return value + '%';
+          }
+        }
+      }
+    },
+    plugins: {
       legend: {
-        position: 'top',
+        display: true,
+        position: 'bottom',
         labels: {
           usePointStyle: true,
           padding: 20,
@@ -130,115 +180,93 @@ const IsolationProgressChart = ({ data }) => {
           }
         }
       },
-      title: {
-        display: false
-      }
-    },
-    scales: {
-      x: {
-        stacked: true,
-        title: {
-          display: true,
-          text: 'Isolation Categories',
-          font: {
-            size: 14,
-            weight: 'bold'
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          label: function(context) {
+            return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
           }
-        },
-        ticks: {
-          font: {
-            size: 11
-          },
-          maxRotation: 45
-        },
-        grid: {
-          display: false
         }
       },
-      y: {
-        stacked: true,
-        beginAtZero: true,
-        max: 100,
-        title: {
-          display: true,
-          text: 'Progress (%)',
-          font: {
-            size: 14,
-            weight: 'bold'
-          }
+      datalabels: {
+        display: true,
+        color: '#000',
+        font: {
+          size: 12,
+          weight: 'bold'
         },
-        ticks: {
-          callback: (value) => `${value}%`,
-          font: {
-            size: 11
-          }
+        formatter: function(value, context) {
+          return value > 5 ? `${value.toFixed(0)}%` : '';
         },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.1)'
-        }
+        anchor: 'center',
+        align: 'center'
       }
     },
-    interaction: {
-      intersect: false,
-      mode: 'index'
+    layout: {
+      padding: {
+        top: 20,
+        bottom: 20,
+        left: 10,
+        right: 10
+      }
     }
-  }), [isolationMetrics]);
-  
-  // Calculate overall statistics
-  const overallStats = useMemo(() => {
-    const categories = Object.keys(isolationMetrics);
-    if (categories.length === 0) return { avgCompleted: 0, totalItems: 0 };
-    
-    const totalCompleted = categories.reduce((sum, cat) => sum + (isolationMetrics[cat]?.completed || 0), 0);
-    const avgCompleted = categories.length > 0 ? totalCompleted / categories.length : 0;
-    const totalItems = data?.length || 0;
-    
-    return { avgCompleted, totalItems };
-  }, [isolationMetrics, data]);
+  }), []);
+
+  // Metrics header display
+  const metricsHeader = useMemo(() => [
+    { label: 'Spacer', value: metrics.advance_spacer.toFixed(1) + '%' },
+    { label: 'Insulation', value: metrics.advance_insolation.toFixed(1) + '%' },
+    { label: 'Sheet Metal', value: metrics.advance_sheet_metal.toFixed(1) + '%' },
+    { label: 'Boxes', value: metrics.advance_boxes.toFixed(1) + '%' },
+    { label: 'Finish', value: metrics.advance_to_finish.toFixed(1) + '%' },
+    { label: 'Mleq Total', value: metrics.m_advance_mleq_total.toFixed(2) + ' m' }
+  ], [metrics]);
 
   return (
     <VStack spacing={4} align="stretch">
-      {/* Header with overall metrics */}
-      <Box p={4} borderWidth="1px" borderRadius="lg" bg="gray.50">
-        <Heading size="md" mb={3} textAlign="center">
-          ISOLATION PROGRESS CONTROL
+      {/* Header with metric values */}
+      <Box bg="white" p={4} borderRadius="lg" borderWidth="1px">
+        <Heading size="md" mb={4} textAlign="center">
+          Isolation Progress Control
         </Heading>
-        <HStack justify="center" spacing={8}>
-          <Box textAlign="center">
-            <Text fontSize="sm" color="gray.600">Average Completion</Text>
-            <Text fontSize="2xl" fontWeight="bold" color="green.600">
-              {overallStats.avgCompleted.toFixed(1)}%
-            </Text>
-          </Box>
-          <Box textAlign="center">
-            <Text fontSize="sm" color="gray.600">Total Items</Text>
-            <Text fontSize="2xl" fontWeight="bold" color="gray.700">
-              {overallStats.totalItems}
-            </Text>
-          </Box>
-        </HStack>
-      </Box>
-      
-      {/* Vertical Stacked Bar Chart */}
-      <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" height="500px">
-        <Bar data={chartData} options={options} />
-      </Box>
-      
-      {/* Legend explanation */}
-      <Box p={3} borderWidth="1px" borderRadius="md" bg="blue.50">
-        <HStack justify="center" spacing={6}>
-          <HStack>
-            <Box width="15px" height="15px" bg="#1DE9B6" borderColor="#000" borderWidth="1px" />
-            <Text fontSize="sm" fontWeight="medium">Complete</Text>
-          </HStack>
-          <HStack>
-            <Box width="15px" height="15px" bg="#FF168B" borderColor="#000" borderWidth="1px" />
-            <Text fontSize="sm" fontWeight="medium">Incomplete</Text>
-          </HStack>
+        
+        <SimpleGrid columns={6} spacing={4} mb={4}>
+          {metricsHeader.map((metric, index) => (
+            <VStack key={index} spacing={1}>
+              <Text fontSize="xs" fontWeight="bold" textAlign="center" color="gray.600">
+                {metric.label}
+              </Text>
+              <Badge 
+                colorScheme="blue" 
+                fontSize="sm" 
+                p={2} 
+                borderRadius="md"
+                textAlign="center"
+                minW="60px"
+              >
+                {metric.value}
+              </Badge>
+            </VStack>
+          ))}
+        </SimpleGrid>
+
+        {/* Chart container */}
+        <Box height="400px" position="relative">
+          <Bar data={chartData} options={options} />
+        </Box>
+
+        {/* Summary info */}
+        <HStack justify="space-between" mt={4} pt={4} borderTopWidth="1px">
+          <Text fontSize="sm" color="gray.600">
+            Total Mleq: {metrics.C_Mleq.toFixed(2)} m
+          </Text>
+          <Text fontSize="sm" color="gray.600">
+            Records: {data.length}
+          </Text>
         </HStack>
       </Box>
     </VStack>
   );
 };
 
-export default React.memo(IsolationProgressChart);
+export default React.memo(IsolationProgressControlChart);
