@@ -226,39 +226,39 @@ const IsolationProgressControlChart = ({ data }) => {
   ], [metrics]);
 
   return (
-    <VStack spacing={4} align="stretch">
-      {/* Header with metric values */}
-      <Box bg="white" p={4} borderRadius="lg" borderWidth="1px">
-        <Heading size="10px" mb={4} textAlign="center">
-          Advance
-        </Heading>
-        
-        <SimpleGrid columns={6} spacing={4} mb={4}>
-          {metricsHeader.map((metric, index) => (
-            <VStack key={index} spacing={1}>
-              <Text fontSize="xs" fontWeight="bold" textAlign="center" color="gray.600">
-                {metric.label}
-              </Text>
-              <Badge 
-                colorScheme="blue" 
-                fontSize="sm" 
-                p={2} 
-                borderRadius="md"
-                textAlign="center"
-                minW="60px"
-              >
-                {metric.value}
-              </Badge>
-            </VStack>
-          ))}
-        </SimpleGrid>
-      </Box>
+    <Grid templateColumns={{ base: "1fr", lg: "1fr 300px" }} gap={4}>
+      {/* Left column with header and chart */}
+      <GridItem>
+        <VStack spacing={4}>
+          {/* Header with metric values */}
+          <Box bg="white" p={4} borderRadius="lg" borderWidth="1px" w="full">
+            <Heading size="10px" mb={4} textAlign="center">
+              Advance
+            </Heading>
+            
+            <HStack spacing={0} justify="space-between" mb={4} px={10}>
+              {metricsHeader.map((metric, index) => (
+                <VStack key={index} spacing={1} flex={1}>
+                  <Text fontSize="xs" fontWeight="bold" textAlign="center" color="gray.600">
+                    {metric.label}
+                  </Text>
+                  <Badge 
+                    colorScheme="blue" 
+                    fontSize="sm" 
+                    p={2} 
+                    borderRadius="md"
+                    textAlign="center"
+                    minW="60px"
+                  >
+                    {metric.value}
+                  </Badge>
+                </VStack>
+              ))}
+            </HStack>
+          </Box>
 
-      {/* Main content with chart and sidebar */}
-      <Grid templateColumns={{ base: "1fr", lg: "1fr 300px" }} gap={4}>
-        {/* Main chart - left side */}
-        <GridItem>
-          <Box bg="white" p={4} borderRadius="lg" borderWidth="1px">
+          {/* Main chart */}
+          <Box bg="white" p={4} borderRadius="lg" borderWidth="1px" w="full">
             <Box height="400px" position="relative">
               <Bar data={chartData} options={options} />
             </Box>
@@ -273,14 +273,14 @@ const IsolationProgressControlChart = ({ data }) => {
               </Text>
             </HStack>
           </Box>
-        </GridItem>
+        </VStack>
+      </GridItem>
 
-        {/* Sidebar with area contribution by metric - right side */}
-        <GridItem>
-          <SidebarProgressPanel data={data} />
-        </GridItem>
-      </Grid>
-    </VStack>
+      {/* Sidebar with area contribution by metric - right side */}
+      <GridItem>
+        <SidebarProgressPanel data={data} />
+      </GridItem>
+    </Grid>
   );
 };
 
