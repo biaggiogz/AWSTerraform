@@ -7,7 +7,9 @@ import {
   Text,
   VStack,
   HStack,
-  Badge
+  Badge,
+  Grid,
+  GridItem
 } from '@chakra-ui/react';
 import {
   Chart as ChartJS,
@@ -19,6 +21,7 @@ import {
   Legend
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import SidebarProgressPanel from '../components/SidebarProgressPanel';
 
 // Register Chart.js components
 ChartJS.register(
@@ -223,7 +226,7 @@ const IsolationProgressControlChart = ({ data }) => {
   ], [metrics]);
 
   return (
-    <VStack spacing={2} align="stretch">
+    <VStack spacing={4} align="stretch">
       {/* Header with metric values */}
       <Box bg="white" p={4} borderRadius="lg" borderWidth="1px">
         <Heading size="10px" mb={4} textAlign="center">
@@ -249,22 +252,34 @@ const IsolationProgressControlChart = ({ data }) => {
             </VStack>
           ))}
         </SimpleGrid>
-
-        {/* Chart container */}
-        <Box height="400px" position="relative">
-          <Bar data={chartData} options={options} />
-        </Box>
-
-        {/* Summary info */}
-        <HStack justify="space-between" mt={4} pt={4} borderTopWidth="1px">
-          <Text fontSize="sm" color="gray.600">
-            Total Mleq: {metrics.C_Mleq.toFixed(2)} m
-          </Text>
-          <Text fontSize="sm" color="gray.600">
-            Records: {data.length}
-          </Text>
-        </HStack>
       </Box>
+
+      {/* Main content with chart and sidebar */}
+      <Grid templateColumns={{ base: "1fr", lg: "1fr 300px" }} gap={4}>
+        {/* Main chart - left side */}
+        <GridItem>
+          <Box bg="white" p={4} borderRadius="lg" borderWidth="1px">
+            <Box height="400px" position="relative">
+              <Bar data={chartData} options={options} />
+            </Box>
+            
+            {/* Summary info */}
+            <HStack justify="space-between" mt={4} pt={4} borderTopWidth="1px">
+              <Text fontSize="sm" color="gray.600">
+                Total Mleq: {metrics.C_Mleq.toFixed(2)} m
+              </Text>
+              <Text fontSize="sm" color="gray.600">
+                Records: {data.length}
+              </Text>
+            </HStack>
+          </Box>
+        </GridItem>
+
+        {/* Sidebar with area contribution by metric - right side */}
+        <GridItem>
+          <SidebarProgressPanel data={data} />
+        </GridItem>
+      </Grid>
     </VStack>
   );
 };
