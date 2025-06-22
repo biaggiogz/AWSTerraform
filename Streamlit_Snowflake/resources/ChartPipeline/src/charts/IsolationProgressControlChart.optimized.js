@@ -223,11 +223,11 @@ const IsolationProgressControlChart = ({ data }) => {
   ], [metrics]);
 
   return (
-    <VStack spacing={4} align="stretch">
+    <VStack spacing={2} align="stretch">
       {/* Header with metric values */}
       <Box bg="white" p={4} borderRadius="lg" borderWidth="1px">
-        <Heading size="md" mb={4} textAlign="center">
-          Isolation Progress Control
+        <Heading size="10px" mb={4} textAlign="center">
+          Advance
         </Heading>
         
         <SimpleGrid columns={6} spacing={4} mb={4}>
