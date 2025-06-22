@@ -16,6 +16,7 @@ const LoopTestProgressChart = lazy(() => import('../charts/LoopTestProgressChart
 const IsolationProgressControlChart = lazy(() => import('../charts/IsolationProgressControlChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart.optimized'));
 const LazosTable = lazy(() => import('./LazosTable.optimized'));
+const InsulationProgressTable = lazy(() => import('./InsulationProgressTable.optimized'));
 
 /**
  * ChartSelector component to switch between different charts
@@ -31,7 +32,7 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
   // Map tab index to dashboard name
   const dashboardNames = [
     'LOOP TESTING PROGRESS REPORT',
-    'ISOLATION PROGRESS CONTROL',
+    'INSULATION PROGRESS CONTROL',
     'Test Pack Progress'
   ];
 
@@ -55,7 +56,7 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
         >
           <TabList mb="1em">
             <Tab>LOOP TESTING PROGRESS REPORT</Tab>
-            <Tab>ISOLATION PROGRESS CONTROL</Tab>
+            <Tab>INSULATION PROGRESS CONTROL</Tab>
             <Tab>Test Pack Progress</Tab>
           </TabList>
           <TabPanels>
@@ -74,7 +75,10 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
             </TabPanel>
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <IsolationProgressControlChart data={data} />
+                <VStack spacing={0} align="stretch">
+                  <IsolationProgressControlChart data={data} />
+                  <InsulationProgressTable data={data} />
+                </VStack>
               </Suspense>
             </TabPanel>
             <TabPanel p={0}>

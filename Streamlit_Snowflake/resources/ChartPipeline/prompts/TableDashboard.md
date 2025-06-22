@@ -1,17 +1,18 @@
-## ⚙️ Request: Implement Table "Lazos" on Tab `"LOOP TEST PROGRESS"`
+## ⚙️ Request: Implement Table "Insulation Progress" on Tab `"INSULATION PROGRESS CONTROL"`
 ➡️ Maintain Architecture • Optimize Performance • Ensure Filter Functionality
 
 ---
 
 ### ⚠️ Implementation Principle
 
-> ✅ *Accuracy and verification of logic are more important than speed of implementation.*
-
+- ✅ Prioritize **accuracy and logic integrity** over speed of implementation.
+- ❗ **Do not modify** any existing chart behavior, filtering, or state.
+- ❗ **All table and chart filter logic must remain untouched**.
 ---
 
 ### 📂 Dataset
 
-- **Source File:** `data/test_of_lazos_updated.csv`
+- **Source File:** `data/aislamientos.csv`
 
 ---
 
@@ -19,15 +20,16 @@
 
 - **Source Path:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/README.md`
 - **Optimization Guide:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-guide.md`
+- **Optimization Summary:** `ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-summary.md`
 
 ---
 
-### 📐 Feature: Table "Lazos"
+### 📐 Feature: Table "Insulation Progress"
 
 | **Requirement**                 | **Value**                                                                 |
 |---------------------------------|---------------------------------------------------------------------------|
 | **Table Library**               | `@tanstack/react-virtual@3.31.9` + `@tanstack/react-table@8.x`           |
-| **Target Tab**                  | `"LOOP TEST PROGRESS"`                                                    |
+| **Target Tab**                  | `"INSULATION PROGRESS CONTROL"`                                                    |
 | **Position in Tab**             | Below the existing dashboard (not inside it)                              |
 | **Embedded Inside Dashboard?**  | ❌ No — it must remain a separate component                               |
 | **Vertical Scrolling Required** | ✅ Yes — enable with `overflowY: auto`                                    |

@@ -12,7 +12,7 @@ ChartPipeline/
 │   └── test_of_lazos_updated.csv # Loop test progress data
 ├── prompts/                # Development prompts and guides
 │   ├── Adjustments.md      # UI adjustment guidelines
-│   ├── DashboardBarProgress.md # Isolation Progress Control Chart specifications
+│   ├── DashboardBarProgress.md # INSULATION PROGRESS CONTROL Chart specifications
 │   ├── GlobalMetrics.md    # Global metrics implementation guide
 │   ├── ResponsiveTable.md  # Responsive table development guide
 │   └── TableDashboard.md   # Dashboard integration guide
@@ -36,6 +36,7 @@ ChartPipeline/
 │   │   ├── FilterPanel.optimized.js # Dynamic filter panel with cross-filtering
 │   │   ├── GlobalMetricsDisplay.js # Global metrics display component
 │   │   ├── LazosTable.optimized.js # Virtualized resizable data table
+│   │   ├── InsulationProgressTable.js # Table "Insulation Progress" for INSULATION PROGRESS CONTROL tab
 │   │   └── ResizableTable.css # Styling for resizable table features
 │   ├── hooks/              # Custom React hooks
 │   │   ├── useDashboardConfig.optimized.js # Dashboard configuration management
@@ -68,6 +69,7 @@ ChartPipeline/
 - **ChartSelector.optimized.js**: Configurable tab-based interface with code-splitting and lazy loading for efficient chart switching.
 - **LazosTable.optimized.js**: ✅ **Enhanced with Resizable & Responsive Features** - Virtualized data table component with drag-to-resize functionality, mobile/tablet/desktop optimization, and detachable window support.
 - **GlobalMetricsDisplay.js**: ✅ **New Component** - Displays unfiltered global statistics with color-coded metrics that remain constant regardless of applied filters.
+- **Table "Insulation Progress"**: ✅ **Production Component** - Virtualized table for INSULATION PROGRESS CONTROL tab using @tanstack/react-virtual and @tanstack/react-table, optimized for 1,500+ rows with Area/Subsystem filtering integration.
 
 ### Chart Components (Dynamic & Adaptive with Advanced Features)
 
@@ -86,15 +88,16 @@ ChartPipeline/
 1. **Metric Isolation**: One-click chart interactions with smooth transitions (< 80ms response)
 2. **Resizable Tables**: Drag-to-resize with mobile/tablet/desktop optimization (< 16ms performance)
 3. **Global Metrics**: Unfiltered statistics constant across all filter states (< 35ms calculation)
-4. **Isolation Progress Control**: Weighted average calculations with dual-segment visualization
+4. **INSULATION PROGRESS CONTROL**: Weighted average calculations with dual-segment visualization
 5. **Multi-Dataset Processing**: Optimized aislamientos.csv integration with cross-correlation
 6. **Visual Feedback**: Hardware-accelerated transitions with 60fps performance
 7. **Synchronized Filtering**: Real-time chart-table integration
 8. **Accessibility Excellence**: WCAG 2.1 compliance with full keyboard navigation
 9. **Performance Optimization**: Enterprise-grade response times across all features
 10. **Production Reliability**: Zero memory leaks with comprehensive error handling
+11. **Table "Insulation Progress"**: Virtualized table component for INSULATION PROGRESS CONTROL tab with optimized large dataset handling
 
-### ✅ Isolation Progress Control Chart - Technical Implementation
+### ✅ INSULATION PROGRESS CONTROL Chart - Technical Implementation
 
 #### Core Features
 - **Vertical Stacked Bar Chart**: Six metrics displayed as 100% stacked bars with dual segments (Complete/Incomplete)
@@ -102,6 +105,23 @@ ChartPipeline/
 - **Responsive Metrics Header**: Badge-style display showing current values for each metric with proper formatting
 - **Dynamic Filtering Integration**: Responds to Design Area and Subsystem filters while maintaining constant baseline values
 - **Professional Styling**: High-contrast colors (#1DE9B6 for Complete, #FF168B for Incomplete) with bold borders
+
+### ✅ Table "Insulation Progress" - Technical Implementation
+
+#### Core Features
+- **Target Location**: INSULATION PROGRESS CONTROL tab, positioned below existing dashboard
+- **Data Source**: aislamientos.csv (1,500+ rows, 17+ columns)
+- **Virtualization**: @tanstack/react-virtual@3.31.9 + @tanstack/react-table@8.x for optimal performance
+- **Vertical Scrolling**: Enabled with overflowY: auto for large dataset navigation
+- **Filter Integration**: Dynamically responds to Area and Subsystem filter selections
+- **Architecture**: Separate component (not embedded in dashboard) maintaining component hierarchy
+
+#### Technical Requirements
+- **Performance Optimization**: useMemo, useCallback, and React.memo for large dataset handling
+- **Filter Logic**: Maintains correct Area → Subsystem → TAG_LOOP relationships
+- **UI/UX Consistency**: Matches existing components (layout, styling, colors, padding, spacing)
+- **Responsive Design**: Mobile/tablet/desktop optimization with consistent performance
+- **Memory Efficiency**: Optimized rendering preventing excessive recalculations
 
 #### Metrics Implementation
 ```javascript
@@ -172,11 +192,12 @@ The application implements an enterprise-grade data processing pipeline that eff
    - Quality assurance integration
 
 4. **Isolation Dimension** (✅ Enhanced):
-   - Isolation Progress Control (vertical stacked bar chart with weighted averages)
+   - INSULATION PROGRESS CONTROL (vertical stacked bar chart with weighted averages)
    - Six key metrics: Spacer, Insulation, Sheet Metal, Boxes, Finish, and Mleq Total advances
    - Responsive calculations based on filtered data with constant baseline values
    - Dual-segment visualization (Complete/Incomplete) with centered percentage labels
    - Integration with Design Area and Subsystem filtering
+   - **Table "Insulation Progress"**: Virtualized table component displaying aislamientos.csv data with Area/Subsystem filtering
 
 ### Advanced Data Transformation Pipeline
 

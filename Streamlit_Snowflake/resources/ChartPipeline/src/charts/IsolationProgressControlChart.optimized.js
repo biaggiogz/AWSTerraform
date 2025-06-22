@@ -273,9 +273,9 @@ const IsolationProgressControlChart = ({ data }) => {
               <Text fontSize="sm" color="gray.600">
                 Total Mleq: {metrics.C_Mleq.toFixed(2)} m
               </Text>
-              <Text fontSize="sm" color="gray.600">
-                Records: {data.length}
-              </Text>
+              {/*<Text fontSize="sm" color="gray.600">*/}
+              {/*  Records: {data.length}*/}
+              {/*</Text>*/}
             </HStack>
           </Box>
         </VStack>

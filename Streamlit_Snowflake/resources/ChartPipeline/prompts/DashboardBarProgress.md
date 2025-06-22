@@ -56,7 +56,7 @@ advance_spacer | advance_insolation | advance_sheet_metal | advance_boxes | adva
 ```
 
 ### 🧭 Tab
-**[ISOLATION PROGRESS CONTROL]**
+**[INSULATION PROGRESS CONTROL]**
 
 ---
 
@@ -121,7 +121,7 @@ a_advance_mleq_total= m_advance_mleq_total / C_Mleq                       # Form
 
 ### Filter Panel
 
-- The current filter panel on tab "ISOLATION PROGRESS CONTROL" must use Design Area and Subsystem from the Dataset 
+- The current filter panel on tab "INSULATION PROGRESS CONTROL" must use Design Area and Subsystem from the Dataset 
 
 ### 📐 Key Requirements
 
@@ -153,7 +153,7 @@ a_advance_mleq_total= m_advance_mleq_total / C_Mleq                       # Form
 
 ### 📌 Reminders
 
-- Delete any   existing **dashboard ** present in TAB "ISOLATION PROGRESS CONTROL"
+- Delete any   existing **dashboard ** present in TAB "INSULATION PROGRESS CONTROL"
 - UI/UX must **exactly match existing components**:
   - Layout
   - Styling (colors, padding, spacing)
@@ -162,7 +162,7 @@ a_advance_mleq_total= m_advance_mleq_total / C_Mleq                       # Form
 
 ### Final Cleanup
 
-    🧹 Delete any existing charts in tab ISOLATION PROGRESS CONTROL
+    🧹 Delete any existing charts in tab INSULATION PROGRESS CONTROL
 
     🧪 Test:
 
