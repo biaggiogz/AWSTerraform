@@ -40,17 +40,31 @@ const SidebarProgressItemsPanel = ({ data }) => {
         // Total items for this subsystem
         const totalItems = subsystemData.length;
         
-        // Items done (where metric value equals 1)
-        const itemsDone = subsystemData.filter(row => {
-          const metricValue = parseFloat(row[metricField]) || 0;
-          return metricValue === 1;
-        }).length;
+        let itemsDone, itemsPending;
         
-        // Items pending (where metric value is less than 1 or empty)
-        const itemsPending = subsystemData.filter(row => {
-          const metricValue = parseFloat(row[metricField]) || 0;
-          return metricValue < 1;
-        }).length;
+        if (metricField === 'Avance Mleq totales') {
+          // For Mleq Total Advance, consider done if value > 0
+          itemsDone = subsystemData.filter(row => {
+            const metricValue = parseFloat(row[metricField]) || 0;
+            return metricValue > 0;
+          }).length;
+          
+          itemsPending = subsystemData.filter(row => {
+            const metricValue = parseFloat(row[metricField]) || 0;
+            return metricValue <= 0;
+          }).length;
+        } else {
+          // For other metrics, use the original logic (value equals 1 for done)
+          itemsDone = subsystemData.filter(row => {
+            const metricValue = parseFloat(row[metricField]) || 0;
+            return metricValue === 1;
+          }).length;
+          
+          itemsPending = subsystemData.filter(row => {
+            const metricValue = parseFloat(row[metricField]) || 0;
+            return metricValue < 1;
+          }).length;
+        }
         
         subsystemItems.push({
           subsystem,

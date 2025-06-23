@@ -176,7 +176,7 @@ const SidebarMetricContributionPanel = ({ data }) => {
   return (
     <>
       <Text fontSize="md" fontWeight="bold" mb={2} textAlign="center" color="gray.700">
-        Subsystem Contribution by Advance
+        Subsystem Progress by Advance
       </Text>
       <VStack spacing={0} align="stretch">
         <MetricBlock title="Spacer Advance" subsystemData={subsystemContributions.spacer} />
