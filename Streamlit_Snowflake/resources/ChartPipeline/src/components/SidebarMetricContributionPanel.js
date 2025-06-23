@@ -41,19 +41,19 @@ const SidebarMetricContributionPanel = ({ data }) => {
         const totalMleq = subsystemData.reduce((sum, row) => sum + (parseFloat(row['Mleq']) || 0), 0);
         
         if (totalMleq > 0) {
-          const completedMleq = subsystemData.reduce((sum, row) => {
+          const donedMleq = subsystemData.reduce((sum, row) => {
             const mleq = parseFloat(row['Mleq']) || 0;
             const progress = parseFloat(row[metricField]) || 0;
             return sum + (mleq * progress);
           }, 0);
           
-          const completedPercent = (completedMleq / totalMleq) * 100;
-          const incompletePercent = 100 - completedPercent;
+          const donedPercent = (donedMleq / totalMleq) * 100;
+          const pendingPercent = 100 - donedPercent;
           
           subsystemContribs.push({
             subsystem,
-            completed: completedPercent,
-            incomplete: incompletePercent,
+            doned: donedPercent,
+            pending: pendingPercent,
             totalMleq
           });
         } else if (subsystemData.length > 0) {
@@ -64,8 +64,8 @@ const SidebarMetricContributionPanel = ({ data }) => {
           
           subsystemContribs.push({
             subsystem,
-            completed: avgProgress * 100,
-            incomplete: (1 - avgProgress) * 100,
+            doned: avgProgress * 100,
+            pending: (1 - avgProgress) * 100,
             totalMleq: 0
           });
         }
@@ -86,9 +86,9 @@ const SidebarMetricContributionPanel = ({ data }) => {
   }, [data]);
 
   // Mini bar component for subsystem contribution
-  const SubsystemContributionBar = ({ subsystem, completed, incomplete }) => {
-    const safeCompleted = Math.max(0, Math.min(100, completed || 0));
-    const safeIncomplete = Math.max(0, Math.min(100, incomplete || 0));
+  const SubsystemContributionBar = ({ subsystem, doned, pending }) => {
+    const safedoned = Math.max(0, Math.min(100, doned || 0));
+    const safepending = Math.max(0, Math.min(100, pending || 0));
     
     return (
       <Box mb={1}>
@@ -97,38 +97,38 @@ const SidebarMetricContributionPanel = ({ data }) => {
         </Text>
         <Box position="relative" height="22px" width="100%">
           <HStack spacing={0} height="100%" border="1px solid #000" borderRadius="sm" overflow="hidden">
-            {/* Complete segment */}
-            {safeCompleted > 0 && (
+            {/* done segment */}
+            {safedoned > 0 && (
               <Box
                 bg="#1DE9B6"
                 height="100%"
-                width={`${safeCompleted}%`}
+                width={`${safedoned}%`}
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
                 position="relative"
               >
-                {safeCompleted > 25 && (
+                {safedoned > 25 && (
                   <Text fontSize="8px" fontWeight="bold" color="#000">
-                    {safeCompleted.toFixed(0)}%
+                    {safedoned.toFixed(0)}%
                   </Text>
                 )}
               </Box>
             )}
-            {/* Incomplete segment */}
-            {safeIncomplete > 0 && (
+            {/* pending segment */}
+            {safepending > 0 && (
               <Box
                 bg="#FF168B"
                 height="100%"
-                width={`${safeIncomplete}%`}
+                width={`${safepending}%`}
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
                 position="relative"
               >
-                {safeIncomplete > 25 && (
+                {safepending > 25 && (
                   <Text fontSize="8px" fontWeight="bold" color="#000">
-                    {safeIncomplete.toFixed(0)}%
+                    {safepending.toFixed(0)}%
                   </Text>
                 )}
               </Box>
@@ -164,8 +164,8 @@ const SidebarMetricContributionPanel = ({ data }) => {
             <SubsystemContributionBar
               key={index}
               subsystem={item.subsystem}
-              completed={item.completed}
-              incomplete={item.incomplete}
+              doned={item.doned}
+              pending={item.pending}
             />
           ))}
         </SimpleGrid>

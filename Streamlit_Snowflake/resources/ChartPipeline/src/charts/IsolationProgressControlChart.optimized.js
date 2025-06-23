@@ -54,7 +54,24 @@ const IsolationProgressControlChart = ({ data }) => {
         advance_boxes: 25,
         advance_to_finish: 10,
         m_advance_mleq_total: 0,
-        a_advance_mleq_total: 0
+        a_advance_mleq_total: 0,
+        // DONE and PENDING items for each category
+        done_items: {
+          spacer: 0,
+          insulation: 0,
+          sheet_metal: 0,
+          boxes: 0,
+          finish: 0,
+          mleq_total: 0
+        },
+        pending_items: {
+          spacer: 0,
+          insulation: 0,
+          sheet_metal: 0,
+          boxes: 0,
+          finish: 0,
+          mleq_total: 0
+        }
       };
     }
 
@@ -83,6 +100,43 @@ const IsolationProgressControlChart = ({ data }) => {
     // Percentage of total
     const a_advance_mleq_total = C_Mleq > 0 ? (m_advance_mleq_total / C_Mleq) * 100 : 0;
 
+    // Calculate DONE and PENDING items for each category
+    const categories = [
+      { key: 'spacer', column: 'Avance Distanciadores' },
+      { key: 'insulation', column: 'Avance Aislamiento' },
+      { key: 'sheet_metal', column: 'Avance Chapa' },
+      { key: 'boxes', column: 'Avance Cajas' },
+      { key: 'finish', column: 'Avance Rematar' }
+    ];
+
+    const done_items = {};
+    const pending_items = {};
+
+    // Standard categories (first 5) - count items
+    categories.forEach(({ key, column }) => {
+      done_items[key] = data.filter(row => {
+        const rawValue = row[column];
+        // Replace empty or null values with 0 as specified in requirements
+        const value = (rawValue === null || rawValue === undefined || rawValue === '' || rawValue === 0) ? 0 : parseFloat(rawValue);
+        return value === 1;
+      }).length;
+      
+      pending_items[key] = data.filter(row => {
+        const rawValue = row[column];
+        // Replace empty or null values with 0 as specified in requirements
+        const value = (rawValue === null || rawValue === undefined || rawValue === '' || rawValue === 0) ? 0 : parseFloat(rawValue);
+        return value < 1;
+      }).length;
+    });
+
+    // Special category: "Advance Mleq totals" - sum values
+    done_items.mleq_total = data.reduce((sum, row) => {
+      const rawValue = row['Avance Mleq totales'];
+      const value = (rawValue === null || rawValue === undefined || rawValue === '' || rawValue === 0) ? 0 : parseFloat(rawValue);
+      return sum + value;
+    }, 0);
+    pending_items.mleq_total = Math.max(0, C_Mleq - done_items.mleq_total);
+
     return {
       C_Mleq,
       advance_spacer,
@@ -91,7 +145,9 @@ const IsolationProgressControlChart = ({ data }) => {
       advance_boxes,
       advance_to_finish,
       m_advance_mleq_total,
-      a_advance_mleq_total
+      a_advance_mleq_total,
+      done_items,
+      pending_items
     };
   }, [data]);
 
@@ -106,7 +162,7 @@ const IsolationProgressControlChart = ({ data }) => {
       'Mleq Total Advance'
     ];
 
-    const completedValues = [
+    const donedValues = [
       metrics.advance_spacer,
       metrics.advance_insolation,
       metrics.advance_sheet_metal,
@@ -115,22 +171,22 @@ const IsolationProgressControlChart = ({ data }) => {
       metrics.a_advance_mleq_total
     ];
 
-    const incompleteValues = completedValues.map(val => 100 - val);
+    const pendingValues = donedValues.map(val => 100 - val);
 
     return {
       labels: categories,
       datasets: [
         {
-          label: 'Complete',
-          data: completedValues,
+          label: 'done',
+          data: donedValues,
           backgroundColor: '#1DE9B6',
           borderColor: '#000',
           borderWidth: 2,
           stack: 'stack1'
         },
         {
-          label: 'Incomplete',
-          data: incompleteValues,
+          label: 'pending',
+          data: pendingValues,
           backgroundColor: '#FF168B',
           borderColor: '#000',
           borderWidth: 2,
@@ -176,7 +232,7 @@ const IsolationProgressControlChart = ({ data }) => {
     plugins: {
       legend: {
         display: true,
-        position: 'bottom',
+        position: 'top',
         labels: {
           usePointStyle: true,
           padding: 20,
@@ -265,6 +321,123 @@ const IsolationProgressControlChart = ({ data }) => {
             <Box height="400px" position="relative">
               <Bar data={chartData} options={options} />
             </Box>
+            
+            {/* DONE ITEMS and PENDING ITEMS metrics */}
+            <VStack spacing={2} mt={4} pt={4} borderTopWidth="1px">
+              {/* DONE ITEMS Row */}
+              <Box w="full">
+                <Text fontSize="sm" fontWeight="bold" mb={2} color="green.600">
+                  DONE ITEMS
+                </Text>
+                <HStack spacing={4} justify="space-between" px={2}>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Spacer Advance
+                    </Text>
+                    <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.done_items.spacer.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Insulation Advance
+                    </Text>
+                    <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.done_items.insulation.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Sheet Metal Advance
+                    </Text>
+                    <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.done_items.sheet_metal.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Boxes Advance
+                    </Text>
+                    <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.done_items.boxes.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Finish Advance
+                    </Text>
+                    <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.done_items.finish.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Mleq Total Advance
+                    </Text>
+                    <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.done_items.mleq_total.toFixed(2)} m
+                    </Badge>
+                  </VStack>
+                </HStack>
+              </Box>
+
+              {/* PENDING ITEMS Row */}
+              <Box w="full">
+                <Text fontSize="sm" fontWeight="bold" mb={2} color="red.600">
+                  PENDING ITEMS
+                </Text>
+                <HStack spacing={4} justify="space-between" px={2}>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Spacer Advance
+                    </Text>
+                    <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.pending_items.spacer.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Insulation Advance
+                    </Text>
+                    <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.pending_items.insulation.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Sheet Metal Advance
+                    </Text>
+                    <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.pending_items.sheet_metal.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Boxes Advance
+                    </Text>
+                    <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.pending_items.boxes.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Finish Advance
+                    </Text>
+                    <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.pending_items.finish.toLocaleString()}
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} flex={1}>
+                    <Text fontSize="xs" color="gray.600" textAlign="center">
+                      Mleq Total Advance
+                    </Text>
+                    <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
+                      {metrics.pending_items.mleq_total.toFixed(2)} m
+                    </Badge>
+                  </VStack>
+                </HStack>
+              </Box>
+            </VStack>
             
             {/* Summary info */}
             <HStack justify="space-between" mt={4} pt={4} borderTopWidth="1px">
