@@ -1,5 +1,4 @@
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
-import ReactDOM from 'react-dom/client';
+import React, { useMemo, useCallback, useState, useEffect, memo } from 'react';
 import {
   Box,
   Table,
@@ -13,12 +12,7 @@ import {
   Progress,
   Heading,
   HStack,
-  VStack,
-  Button,
-  Portal,
-  IconButton,
-  useBreakpointValue,
-  ChakraProvider
+  Button
 } from '@chakra-ui/react';
 import { ExternalLinkIcon, AttachmentIcon } from '@chakra-ui/icons';
 import {
@@ -29,44 +23,58 @@ import {
   flexRender,
   createColumnHelper
 } from '@tanstack/react-table';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import Draggable from 'react-draggable';
-import { Resizable } from 'react-resizable';
-import 'react-resizable/css/styles.css';
-import './ResizableTable.css';
+import { FixedSizeList as List } from 'react-window';
 
 const columnHelper = createColumnHelper();
 
-/**
- * LazosTable component - Virtualized table for loop test progress data
- * @param {Object} props - Component props
- * @param {Array} props.data - Filtered dataset
- */
+// Memoized cell components for better performance
+const TextCell = memo(({ value, ...props }) => (
+  <Text fontSize="sm" textAlign="center" {...props}>
+    {value}
+  </Text>
+));
+
+const ProgressCell = memo(({ value }) => {
+  const progressValue = parseFloat(value.replace('%', '')) || 0;
+  const colorScheme = progressValue === 100 ? 'green' : progressValue >= 50 ? 'yellow' : 'red';
+  
+  return (
+    <Box display="flex" flexDirection="column" alignItems="center">
+      <Progress 
+        value={progressValue} 
+        size="sm" 
+        colorScheme={colorScheme}
+        borderRadius="md"
+        mb={1}
+        width="80px"
+      />
+      <Text fontSize="xs" textAlign="center" fontWeight="medium">
+        {value}
+      </Text>
+    </Box>
+  );
+});
+
+// Optimized HTML generation using efficient array methods
+const generateTableHTML = (data) => {
+  const headers = ['Code', 'Subsystem', 'Tag Loop', 'Area', 'Priority', 'Service', 'Installed', 'Wired', 'Connected', 'Cable Test', 'Progress', 'Dossier', 'Test Loop'];
+  const headerRow = headers.map(h => `<th style="border:1px solid #ddd;padding:8px;text-align:center;font-size:12px;background-color:#f2f2f2;font-weight:bold">${h}</th>`).join('');
+  
+  const rows = data.map((row, i) => 
+    `<tr style="${i % 2 === 0 ? 'background-color:#f9f9f9' : ''}">${[
+      row.code, row.subsystem, row.tagLoop, row.area, row.priority, row.service,
+      row.installed, row.wired, row.connected, row.cableTest, row.progress, row.dossier, row.testLoop
+    ].map(cell => `<td style="border:1px solid #ddd;padding:8px;text-align:center;font-size:12px">${cell}</td>`).join('')}</tr>`
+  ).join('');
+  
+  return `<!DOCTYPE html><html><head><title>Loop Test Control - Precommissioning</title><style>body{font-family:Arial,sans-serif;margin:20px}table{border-collapse:collapse;width:100%}</style></head><body><h2>Loop Test Control - Precommissioning (${data.length} LOOPS)</h2><table><thead><tr>${headerRow}</tr></thead><tbody>${rows}</tbody></table></body></html>`;
+};
+
 const LazosTable = React.memo(({ data }) => {
-  // State for detached table
   const [isDetached, setIsDetached] = useState(false);
   const [detachedWindow, setDetachedWindow] = useState(null);
-  const [detachedRoot, setDetachedRoot] = useState(null);
-  
-  // State for resizable dimensions
   const [tableSize, setTableSize] = useState({ width: 1200, height: 600 });
-  
-  // Responsive breakpoint values
-  const isMobile = useBreakpointValue({ base: true, md: false });
-  const isTablet = useBreakpointValue({ base: false, md: true, lg: false });
-  
-  // Responsive table dimensions
-  const responsiveWidth = useMemo(() => {
-    if (isMobile) return Math.min(tableSize.width, window.innerWidth - 40);
-    if (isTablet) return Math.min(tableSize.width, window.innerWidth - 80);
-    return tableSize.width;
-  }, [tableSize.width, isMobile, isTablet]);
-  
-  const responsiveHeight = useMemo(() => {
-    if (isMobile) return Math.min(tableSize.height, window.innerHeight - 200);
-    return tableSize.height;
-  }, [tableSize.height, isMobile]);
-  // Memoize processed data to avoid recalculations
+
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
     
@@ -77,668 +85,129 @@ const LazosTable = React.memo(({ data }) => {
       tagLoop: row['TAG LOOP'] || '',
       area: row.Area || '',
       priority: row.PRIORITY || '',
-      loop: row.LOOP || '',
-      tags: row.TagS || '',
       service: row.SERVICE || '',
       installed: row.INSTALLED || '',
       wired: row.WIRED || '',
       connected: row.CONNECTED || '',
       cableTest: row['CABLE TEST'] || '',
-      qcf: row.QCF || '',
       progress: row['OK=100%'] || '0.00%',
       dossier: row.DOSSIER || '',
       testLoop: row['TEST LOOP'] || ''
     }));
   }, [data]);
 
-  // Define table columns with fixed layout and consistent styling
   const columns = useMemo(() => [
     columnHelper.accessor('code', {
       header: 'Code',
-      minSize: 80,
-      maxSize: 80,
-      size: 80,
-      cell: ({ getValue }) => (
-        <Text fontSize="sm" fontWeight="medium" color="blue.600" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue }) => <TextCell value={getValue()} fontWeight="medium" color="blue.600" />
     }),
     columnHelper.accessor('subsystem', {
       header: 'Subsystem',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
-      cell: ({ getValue }) => (
-          <Text fontSize="sm" fontWeight="medium" textAlign="center">
-            {getValue()}
-          </Text>
-      )
+      cell: ({ getValue }) => <TextCell value={getValue()} fontWeight="medium" />
     }),
     columnHelper.accessor('tagLoop', {
       header: 'Tag Loop',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
-      cell: ({ getValue }) => (
-        <Text fontSize="sm" fontFamily="mono" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue }) => <TextCell value={getValue()} fontFamily="mono" />
     }),
     columnHelper.accessor('area', {
       header: 'Area',
-      minSize: 80,
-      maxSize: 80,
-      size: 80,
-      cell: ({ getValue }) => (
-          <Text fontSize="sm" fontWeight="medium" textAlign="center">
-            {getValue()}
-          </Text>
-      )
+      cell: ({ getValue }) => <TextCell value={getValue()} fontWeight="medium" />
     }),
     columnHelper.accessor('priority', {
       header: 'Priority',
-      minSize: 70,
-      maxSize: 70,
-      size: 70,
-      cell: ({ getValue }) => {
-        const priority = getValue();
-        return (
-            <Text fontSize="sm" fontWeight="medium" textAlign="center">
-              {priority}
-            </Text>
-        );
-      }
+      cell: ({ getValue }) => <TextCell value={getValue()} fontWeight="medium" />
     }),
     columnHelper.accessor('service', {
       header: 'Service',
-      minSize: 200,
-      maxSize: 200,
-      size: 200,
-      cell: ({ getValue }) => (
-          <Text fontSize="sm" noOfLines={2} maxW="190px" textAlign="center">
-            {getValue()}
-          </Text>
-      )
+      cell: ({ getValue }) => <TextCell value={getValue()} noOfLines={2} />
     }),
     columnHelper.accessor('installed', {
       header: 'Installed',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const parts = value ? value.split(' ') : ['Pending'];
-
-        return (
-            <VStack spacing={0} py={1}>
-              {parts.map((part, i) => (
-                  <Text key={i} fontSize="xs" fontWeight="medium" textAlign="center">
-                    {part}
-                  </Text>
-              ))}
-            </VStack>
-        );
-      }
+      cell: ({ getValue }) => <TextCell value={getValue()} />
     }),
     columnHelper.accessor('wired', {
       header: 'Wired',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const parts = value ? value.split(' ') : ['Pending'];
-        return (
-            <VStack spacing={0} py={1}>
-              {parts.map((part, i) => (
-                  <Text key={i} fontSize="xs" fontWeight="medium" textAlign="center">
-                    {part}
-                  </Text>
-              ))}
-            </VStack>
-        );
-      }
+      cell: ({ getValue }) => <TextCell value={getValue()} />
     }),
     columnHelper.accessor('connected', {
       header: 'Connected',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const parts = value ? value.split(' ') : ['Pending'];
-        return (
-            <VStack spacing={0} py={1}>
-              {parts.map((part, i) => (
-                  <Text key={i} fontSize="xs" fontWeight="medium" textAlign="center">
-                    {part}
-                  </Text>
-              ))}
-            </VStack>
-        );
-      }
+      cell: ({ getValue }) => <TextCell value={getValue()} />
     }),
     columnHelper.accessor('cableTest', {
       header: 'Cable Test',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const parts = value ? value.split(' ') : ['Pending'];
-        return (
-            <VStack spacing={0} py={1}>
-              {parts.map((part, i) => (
-                  <Text key={i} fontSize="xs" fontWeight="medium" textAlign="center">
-                    {part}
-                  </Text>
-              ))}
-            </VStack>
-        );
-      }
+      cell: ({ getValue }) => <TextCell value={getValue()} />
     }),
     columnHelper.accessor('progress', {
       header: 'Progress',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
-      cell: ({ getValue }) => {
-        const progressStr = getValue();
-        const progressValue = parseFloat(progressStr.replace('%', '')) || 0;
-        const colorScheme = progressValue === 100 ? 'green' : progressValue >= 50 ? 'yellow' : 'red';
-        
-        return (
-          <Box height="40px" display="flex" flexDirection="column" justifyContent="center">
-            <Progress 
-              value={progressValue} 
-              size="sm" 
-              colorScheme={colorScheme}
-              borderRadius="md"
-              mb={1}
-            />
-            <Text fontSize="xs" textAlign="center" fontWeight="medium">
-              {progressStr}
-            </Text>
-          </Box>
-        );
-      }
+      cell: ({ getValue }) => <ProgressCell value={getValue()} />
     }),
     columnHelper.accessor('dossier', {
       header: 'Dossier',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
-      cell: ({ getValue }) => (
-        <Text fontSize="sm" color="gray.600" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue }) => <TextCell value={getValue()} color="gray.600" />
     }),
     columnHelper.accessor('testLoop', {
       header: 'Test Loop',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
-      cell: ({ getValue }) => (
-        <Text fontSize="sm" fontFamily="mono" color="blue.500" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue }) => <TextCell value={getValue()} fontFamily="mono" color="blue.500" />
     })
   ], []);
 
-  // Create table instance with memoization
   const table = useReactTable({
     data: processedData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    debugTable: false,
   });
 
-  // Get table rows
-  const { rows } = table.getRowModel();
-
-  // Create separate refs for attached and detached states
-  const attachedParentRef = React.useRef();
-  const detachedParentRef = React.useRef();
-  const attachedHeaderRef = React.useRef();
-  const detachedHeaderRef = React.useRef();
-
-  // Create separate virtualizers for attached and detached states
-  const attachedVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => attachedParentRef.current,
-    estimateSize: () => 50,
-    overscan: 10,
-  });
-
-  const detachedVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => detachedParentRef.current,
-    estimateSize: () => 50,
-    overscan: 10,
-  });
-
-  // Handle detaching table to new window
   const handleDetach = useCallback(async () => {
-    // Get available screens (if supported)
-    const screenLeft = window.screenLeft || window.screenX;
-    const screenTop = window.screenTop || window.screenY;
-
-    // Position on secondary monitor (example)
-    const secondaryMonitorX = window.screen?.width || 1920; // Assumes secondary monitor to the right
-
-    const newWindow = window.open('', 'DetachedTable',
-        `width=${tableSize.width + 50},height=${tableSize.height + 100},` +
-        `left=${secondaryMonitorX + 100},top=100,` +
-        `resizable=yes,scrollbars=yes`
-    );
-    if ('getScreenDetails' in window) {
-      const screens = await window.getScreenDetails();
-      const externalScreen = screens.screens.find(screenItem => !screenItem.internal);
-      if (externalScreen) {
-        // Position window on external monitor
-        const left = externalScreen.left + 100;
-        const top = externalScreen.top + 100;
-        // Use left/top in window.open()
+    let newWindow;
+    
+    try {
+      if ('getScreenDetails' in window) {
+        const screens = await window.getScreenDetails();
+        const externalScreen = screens.screens.find(screen => !screen.internal) || screens.screens[1];
+        
+        if (externalScreen) {
+          const left = externalScreen.left + 100;
+          const top = externalScreen.top + 100;
+          newWindow = window.open('', 'DetachedTable',
+            `width=${tableSize.width + 50},height=${tableSize.height + 100},` +
+            `left=${left},top=${top},resizable=yes,scrollbars=yes`
+          );
+        }
       }
+    } catch (error) {
+      console.log('Screen Details API not available or failed:', error);
+    }
+    
+    if (!newWindow) {
+      const secondaryX = window.screen.width + 100;
+      newWindow = window.open('', 'DetachedTable',
+        `width=${tableSize.width + 50},height=${tableSize.height + 100},` +
+        `left=${secondaryX},top=100,resizable=yes,scrollbars=yes`
+      );
     }
 
     if (newWindow) {
-      newWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Lazos Table - Detached</title>
-            <link rel="stylesheet" href="${window.location.origin}/static/css/main.css">
-          </head>
-          <body>
-            <div id="detached-table-root"></div>
-          </body>
-        </html>
-      `);
+      const htmlContent = generateTableHTML(processedData);
+      newWindow.document.write(htmlContent);
       newWindow.document.close();
-
-      const root = ReactDOM.createRoot(newWindow.document.getElementById('detached-table-root'));
-      setDetachedWindow(newWindow);
-      setDetachedRoot(root);
       setIsDetached(true);
+      setDetachedWindow(newWindow);
 
       newWindow.addEventListener('beforeunload', () => {
         setIsDetached(false);
         setDetachedWindow(null);
-        setDetachedRoot(null);
       });
     }
-  }, [tableSize]);
+  }, [tableSize, processedData]);
 
-  // Handle attaching table back to main window
-  const handleAttach = useCallback(() => {
-    if (detachedWindow) {
-      detachedWindow.close();
-    }
-    setIsDetached(false);
-    setDetachedWindow(null);
-    setDetachedRoot(null);
-  }, [detachedWindow]);
-
-  // Render table in detached window
   useEffect(() => {
-    if (isDetached && detachedRoot && detachedWindow) {
-      const DetachedTableContent = () => (
-        <ChakraProvider>
-          <Box p={4}>
-            <HStack mb={4} justify="space-between">
-              <Heading size="md">Lazos Table - Detached</Heading>
-              <Button size="sm" onClick={handleAttach} leftIcon={<AttachmentIcon />}>
-                Attach
-              </Button>
-            </HStack>
-            <Resizable
-              width={tableSize.width}
-              height={tableSize.height}
-              onResize={(e, { size }) => setTableSize(size)}
-              minConstraints={[800, 400]}
-              maxConstraints={[2000, 1200]}
-            >
-              <Box
-                width={tableSize.width}
-                height={tableSize.height}
-                border="1px solid"
-                borderColor="gray.200"
-                borderRadius="md"
-                overflow="hidden"
-                bg="white"
-              >
-                <Box ref={detachedHeaderRef} position="sticky" top={0} zIndex={1} bg="white">
-                  <Table size="sm" variant="simple">
-                    <Thead bg="gray.50">
-                      {table.getHeaderGroups().map(headerGroup => (
-                        <Tr key={headerGroup.id}>
-                          {headerGroup.headers.map(header => (
-                            <Th
-                              key={header.id}
-                              width={header.getSize()}
-                              minWidth={header.column.columnDef.minSize}
-                              maxWidth={header.column.columnDef.maxSize}
-                              textAlign="center"
-                              fontSize="xs"
-                              fontWeight="bold"
-                              color="gray.700"
-                              borderBottom="2px solid"
-                              borderColor="gray.300"
-                              py={3}
-                            >
-                              {flexRender(header.column.columnDef.header, header.getContext())}
-                            </Th>
-                          ))}
-                        </Tr>
-                      ))}
-                    </Thead>
-                  </Table>
-                </Box>
-                <Box
-                  ref={detachedParentRef}
-                  height={tableSize.height - 60}
-                  overflow="auto"
-                >
-                  <Box height={detachedVirtualizer.getTotalSize()}>
-                    {detachedVirtualizer.getVirtualItems().map(virtualItem => {
-                      const row = rows[virtualItem.index];
-                      return (
-                        <Box
-                          key={row.id}
-                          position="absolute"
-                          top={0}
-                          left={0}
-                          width="100%"
-                          height={virtualItem.size}
-                          transform={`translateY(${virtualItem.start}px)`}
-                        >
-                          <Table size="sm" variant="simple">
-                            <Tbody>
-                              <Tr _hover={{ bg: 'gray.50' }}>
-                                {row.getVisibleCells().map(cell => (
-                                  <Td
-                                    key={cell.id}
-                                    width={cell.column.getSize()}
-                                    minWidth={cell.column.columnDef.minSize}
-                                    maxWidth={cell.column.columnDef.maxSize}
-                                    borderBottom="1px solid"
-                                    borderColor="gray.200"
-                                    py={2}
-                                  >
-                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                  </Td>
-                                ))}
-                              </Tr>
-                            </Tbody>
-                          </Table>
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </Box>
-              </Box>
-            </Resizable>
-          </Box>
-        </ChakraProvider>
-      );
-      
-      detachedRoot.render(<DetachedTableContent />);
+    if (detachedWindow && !detachedWindow.closed && isDetached) {
+      const htmlContent = generateTableHTML(processedData);
+      detachedWindow.document.body.innerHTML = htmlContent.match(/<body>(.*)<\/body>/s)[1];
     }
-  }, [isDetached, detachedRoot, detachedWindow, processedData, table, detachedVirtualizer, tableSize, handleAttach]);
-
-  // Memoize header rendering
-  const headerGroups = useMemo(() => table.getHeaderGroups(), [table]);
-
-  // Toggle detach/attach functionality
-  const toggleDetach = useCallback(() => {
-    setIsDetached(prev => !prev);
-  }, []);
-
-  // Handle resize for detached table
-  const handleResize = useCallback((event, { size }) => {
-    setTableSize({
-      width: Math.max(800, Math.min(size.width, window.innerWidth - 100)),
-      height: Math.max(400, Math.min(size.height, window.innerHeight - 150))
-    });
-  }, []);
-
-  // Force virtualizer re-measurement when detaching/attaching or resizing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isDetached && detachedVirtualizer) {
-        detachedVirtualizer.measure();
-      } else if (!isDetached && attachedVirtualizer) {
-        attachedVirtualizer.measure();
-      }
-    }, 0);
-    
-    return () => clearTimeout(timer);
-  }, [isDetached, detachedVirtualizer, attachedVirtualizer, tableSize]);
-
-  // Render table content (reusable for both inline and detached)
-  const renderTableContent = useCallback((showControls = false) => {
-    const currentParentRef = isDetached ? detachedParentRef : attachedParentRef;
-    const currentVirtualizer = isDetached ? detachedVirtualizer : attachedVirtualizer;
-    
-    const tableContent = (
-    <Box
-      border="1px solid"
-      borderColor="gray.200"
-      borderRadius="lg"
-      overflow="hidden"
-      bg="white"
-      boxShadow={isDetached ? "2xl" : "sm"}
-      width={isDetached ? `${responsiveWidth}px` : "100%"}
-      height={isDetached ? `${responsiveHeight}px` : "auto"}
-      maxWidth={isDetached ? "none" : "100%"}
-      position="relative"
-    >
-      {/* Header with controls for detached mode */}
-      {showControls && (
-        <Box 
-          bg="blue.50" 
-          borderBottom="1px solid" 
-          borderColor="gray.200"
-          p={2}
-          cursor="move"
-          className="drag-handle"
-        >
-          <HStack justify="space-between" align="center">
-            <HStack>
-              <Heading size="sm" color="gray.700">
-                Loop Test Control - Precommissioning (Detached)
-              </Heading>
-              <Badge colorScheme="blue" fontSize="xs" px={2} py={1}>
-                {processedData.length} LOOPS
-              </Badge>
-            </HStack>
-            <IconButton
-              icon={<AttachmentIcon />}
-              size="sm"
-              colorScheme="blue"
-              variant="ghost"
-              onClick={toggleDetach}
-              aria-label="Attach table"
-              title="Attach table back to tab"
-            />
-          </HStack>
-        </Box>
-      )}
-      
-      {/* Table Header */}
-      <Box 
-        bg="gray.50" 
-        borderBottom="1px solid" 
-        borderColor="gray.200"
-        overflowX="hidden"
-        ref={isDetached ? detachedHeaderRef : attachedHeaderRef}
-      >
-        <Table size="sm" style={{ tableLayout: 'fixed' }}>
-          <Thead>
-            {headerGroups.map(headerGroup => (
-              <Tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <Th
-                    key={header.id}
-                    width={`${header.getSize()}px`}
-                    minWidth={`${header.getSize()}px`}
-                    maxWidth={`${header.getSize()}px`}
-                    cursor={header.column.getCanSort() ? 'pointer' : 'default'}
-                    onClick={header.column.getToggleSortingHandler()}
-                    bg="gray.50"
-                    borderColor="gray.200"
-                    fontSize="xs"
-                    fontWeight="bold"
-                    textTransform="uppercase"
-                    letterSpacing="wide"
-                    color="gray.600"
-                    py={2}
-                    px={2}
-                    textAlign="center"
-                  >
-                    {header.isPlaceholder ? null : (
-                      <HStack spacing={1} justify="center">
-                        <Text>
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </Text>
-                        {header.column.getIsSorted() && (
-                          <Text fontSize="xs">
-                            {header.column.getIsSorted() === 'desc' ? '↓' : '↑'}
-                          </Text>
-                        )}
-                      </HStack>
-                    )}
-                  </Th>
-                ))}
-              </Tr>
-            ))}
-          </Thead>
-        </Table>
-      </Box>
-
-      {/* Virtualized Table Body */}
-      <Box
-        ref={currentParentRef}
-        height={isDetached ? `${responsiveHeight - 120}px` : "500px"}
-        overflowY="auto"
-        overflowX="auto"
-        onScroll={(e) => {
-          const headerRef = isDetached ? detachedHeaderRef : attachedHeaderRef;
-          if (headerRef.current) {
-            headerRef.current.scrollLeft = e.target.scrollLeft;
-          }
-        }}
-      >
-        <Box
-          height={`${currentVirtualizer.getTotalSize()}px`}
-          position="relative"
-        >
-          {currentVirtualizer.getVirtualItems().map(virtualRow => {
-            const row = rows[virtualRow.index];
-            return (
-              <Box
-                key={row.id}
-                position="absolute"
-                top={0}
-                left={0}
-                width="100%"
-                height={`${virtualRow.size}px`}
-                transform={`translateY(${virtualRow.start}px)`}
-              >
-                <Table size="sm" style={{ tableLayout: 'fixed' }}>
-                  <Tbody>
-                    <Tr
-                      _hover={{ bg: 'gray.50' }}
-                      borderBottom="1px solid"
-                      borderColor="gray.100"
-                    >
-                      {row.getVisibleCells().map(cell => (
-                        <Td
-                          key={cell.id}
-                          width={`${cell.column.getSize()}px`}
-                          minWidth={`${cell.column.getSize()}px`}
-                          maxWidth={`${cell.column.getSize()}px`}
-                          borderColor="gray.100"
-                          py={2}
-                          px={2}
-                          textAlign="center"
-                          verticalAlign="middle"
-                        >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </Td>
-                      ))}
-                    </Tr>
-                  </Tbody>
-                </Table>
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
-      
-      {/* Resize handle indicator for detached mode */}
-      {isDetached && showControls && (
-        <Box
-          position="absolute"
-          bottom="2px"
-          right="2px"
-          width="12px"
-          height="12px"
-          cursor="se-resize"
-          opacity={0.6}
-          _hover={{ opacity: 1 }}
-          sx={{
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              right: '2px',
-              bottom: '2px',
-              width: '0',
-              height: '0',
-              borderLeft: '8px solid transparent',
-              borderBottom: '8px solid #CBD5E0'
-            },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              right: '2px',
-              bottom: '6px',
-              width: '0',
-              height: '0',
-              borderLeft: '4px solid transparent',
-              borderBottom: '4px solid #A0AEC0'
-            }
-          }}
-        />
-      )}
-    </Box>
-    );
-    
-    // Wrap with Resizable component for detached mode
-    if (isDetached && showControls) {
-      return (
-        <Resizable
-          width={responsiveWidth}
-          height={responsiveHeight}
-          onResize={handleResize}
-          minConstraints={[800, 400]}
-          maxConstraints={[window.innerWidth - 100, window.innerHeight - 150]}
-          resizeHandles={['se']}
-        >
-          {tableContent}
-        </Resizable>
-      );
-    }
-    
-    return tableContent;
-  }, [headerGroups, attachedParentRef, detachedParentRef, attachedVirtualizer, detachedVirtualizer, rows, processedData.length, isDetached, toggleDetach, responsiveWidth, responsiveHeight, handleResize]);
+  }, [processedData, detachedWindow, isDetached]);
 
   if (!data || data.length === 0) {
     return (
@@ -749,93 +218,115 @@ const LazosTable = React.memo(({ data }) => {
   }
 
   return (
-    <>
-      {/* Inline table when not detached */}
-      {!isDetached && (
-        <Box mt={6}>
-          <HStack justify="space-between" align="center" mb={4}>
-            <Heading size="md" color="gray.700">
-              Loop Test Control - Precommissioning
-            </Heading>
-            <HStack spacing={3}>
-              <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
-                {processedData.length} LOOPS
-              </Badge>
-              <Button
-                leftIcon={<ExternalLinkIcon />}
-                size="sm"
-                colorScheme="blue"
-                variant="outline"
-                onClick={toggleDetach}
-              >
-                Detach Table
-              </Button>
-            </HStack>
-          </HStack>
-          {renderTableContent(false)}
-        </Box>
-      )}
-
-      {/* Detached table in portal */}
-      {isDetached && (
-        <Portal>
-          <Draggable
-            handle=".drag-handle"
-            defaultPosition={{ x: 100, y: 100 }}
-            bounds="body"
-          >
-            <Box
-              position="fixed"
-              zIndex={9999}
-              top="100px"
-              left="100px"
+    <Box mt={6}>
+      <HStack justify="space-between" align="center" mb={4}>
+        <Heading size="md" color="gray.700">
+          Loop Test Control - Precommissioning
+        </Heading>
+        <HStack spacing={3}>
+          <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
+            {processedData.length} LOOPS
+          </Badge>
+          {!isDetached ? (
+            <Button
+              leftIcon={<ExternalLinkIcon />}
+              size="sm"
+              colorScheme="blue"
+              variant="outline"
+              onClick={handleDetach}
+              title="Move table to another monitor"
             >
-              {renderTableContent(true)}
-            </Box>
-          </Draggable>
-        </Portal>
-      )}
-
-      {/* Placeholder when table is detached */}
-      {isDetached && (
-        <Box mt={6}>
-          <HStack justify="space-between" align="center" mb={4}>
-            <Heading size="md" color="gray.700">
-              Loop Test Control - Precommissioning
-            </Heading>
-            <HStack spacing={3}>
-              <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
-                {processedData.length} LOOPS
-              </Badge>
-              <Button
-                leftIcon={<AttachmentIcon />}
-                size="sm"
-                colorScheme="green"
-                variant="outline"
-                onClick={toggleDetach}
-              >
-                Attach Table
-              </Button>
-            </HStack>
-          </HStack>
-          <Box
-            border="2px dashed"
-            borderColor="gray.300"
-            borderRadius="lg"
-            p={8}
-            textAlign="center"
-            bg="gray.50"
-          >
-            <Text color="gray.500" fontSize="lg" mb={2}>
-              Table is currently detached
-            </Text>
-            <Text color="gray.400" fontSize="sm">
-              The table is now floating in a separate window. You can drag it around and use the attach button to bring it back.
-            </Text>
+              Move to Monitor
+            </Button>
+          ) : (
+            <Button
+              leftIcon={<AttachmentIcon />}
+              size="sm"
+              colorScheme="green"
+              variant="outline"
+              onClick={() => {
+                if (detachedWindow) detachedWindow.close();
+                setIsDetached(false);
+                setDetachedWindow(null);
+              }}
+            >
+              Return to Dashboard
+            </Button>
+          )}
+        </HStack>
+      </HStack>
+      
+      {!isDetached && (
+        <Box
+          border="1px solid"
+          borderColor="gray.200"
+          borderRadius="lg"
+          overflow="hidden"
+          bg="white"
+          boxShadow="sm"
+          height="500px"
+        >
+          <Table size="sm">
+            <Thead bg="gray.50" position="sticky" top={0} zIndex={1}>
+              {table.getHeaderGroups().map(headerGroup => (
+                <Tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <Th key={header.id} textAlign="center" fontSize="xs" fontWeight="bold" color="gray.700" py={3}>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </Th>
+                  ))}
+                </Tr>
+              ))}
+            </Thead>
+          </Table>
+          <Box height="calc(100% - 60px)" overflow="hidden">
+            <List
+              height={440}
+              itemCount={table.getRowModel().rows.length}
+              itemSize={40}
+              itemData={table.getRowModel().rows}
+            >
+              {({ index, style, data }) => {
+                const row = data[index];
+                return (
+                  <div style={style}>
+                    <Table size="sm">
+                      <Tbody>
+                        <Tr _hover={{ bg: 'gray.50' }}>
+                          {row.getVisibleCells().map(cell => (
+                            <Td key={cell.id} py={2} px={2} textAlign="center" borderColor="gray.100" width={`${100/13}%`}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </Td>
+                          ))}
+                        </Tr>
+                      </Tbody>
+                    </Table>
+                  </div>
+                );
+              }}
+            </List>
           </Box>
         </Box>
       )}
-    </>
+      
+      {isDetached && (
+        <Box
+          border="2px dashed"
+          borderColor="gray.300"
+          borderRadius="lg"
+          p={8}
+          textAlign="center"
+          bg="gray.50"
+        >
+          <Text color="gray.500" fontSize="lg" mb={2}>
+            Table moved to external monitor
+          </Text>
+          <Text color="gray.400" fontSize="sm">
+            The table is now displayed on another monitor and will update automatically when you apply filters.
+          </Text>
+        </Box>
+      )}
+    </Box>
   );
 });
 

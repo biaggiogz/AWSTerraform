@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Table,
@@ -11,8 +11,7 @@ import {
   Badge,
   Progress,
   Heading,
-  HStack,
-  VStack
+  HStack
 } from '@chakra-ui/react';
 import {
   useReactTable,

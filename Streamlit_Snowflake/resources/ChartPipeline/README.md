@@ -36,7 +36,7 @@ ChartPipeline/
 │   │   ├── FilterPanel.optimized.js # Dynamic filter panel with cross-filtering
 │   │   ├── GlobalMetricsDisplay.js # Global metrics display component
 │   │   ├── LazosTable.optimized.js # Virtualized resizable data table
-│   │   ├── InsulationProgressTable.js # Table "Insulation Progress" for INSULATION PROGRESS CONTROL tab
+│   │   ├── InsulationProgressTable.optimized.js # Table "Insulation Progress" for INSULATION PROGRESS CONTROL tab
 │   │   └── ResizableTable.css # Styling for resizable table features
 │   ├── hooks/              # Custom React hooks
 │   │   ├── useDashboardConfig.optimized.js # Dashboard configuration management
