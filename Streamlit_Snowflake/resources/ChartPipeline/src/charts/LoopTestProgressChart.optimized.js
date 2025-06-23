@@ -37,6 +37,15 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
   // Reference to chart container for layout recalculation
   const chartRef = useRef(null);
   
+  // Web worker reference
+  const workerRef = useRef();
+  
+  // Initialize web worker
+  useEffect(() => {
+    workerRef.current = new Worker('/workers/dataProcessor.worker.js');
+    return () => workerRef.current?.terminate();
+  }, []);
+  
   // Force chart re-render when filters change
   const [chartKey, setChartKey] = useState(0);
   
@@ -88,14 +97,35 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
     }
   }, [isResizing, handleMouseMove, handleMouseUp]);
   
-  // Calculate metrics with optimized processing
-  const metrics = useMemo(() => {
-    if (!data || data.length === 0) return [];
+  // Calculate metrics with web worker for large datasets
+  const [metrics, setMetrics] = useState([]);
+  
+  useEffect(() => {
+    if (!data || data.length === 0) {
+      setMetrics([]);
+      return;
+    }
     
-    // Pre-process data for faster lookups
+    // Use web worker for large datasets
+    if (data.length > 1000 && workerRef.current) {
+      workerRef.current.postMessage({ type: 'PROCESS_METRICS', data });
+      
+      workerRef.current.onmessage = (e) => {
+        if (e.data.type === 'METRICS_PROCESSED') {
+          setMetrics(e.data.result);
+        }
+      };
+    } else {
+      // Process synchronously for smaller datasets
+      const processedMetrics = processMetricsSync(data);
+      setMetrics(processedMetrics);
+    }
+  }, [data]);
+  
+  // Synchronous processing for small datasets
+  const processMetricsSync = (data) => {
     const groupedData = {};
     
-    // Single pass through data for all metrics
     data.forEach(item => {
       const subsPre = item['SUBS_PRE'];
       if (!subsPre) return;
@@ -109,40 +139,34 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
         };
       }
       
-      // Count this loop (TOTAL LOOP Signal)
       groupedData[subsPre].totalLoops++;
       
-      // Process OK value once
       const okValue = item['OK=100%']?.toString().replace('%', '').trim();
       const okPercent = parseFloat(okValue);
       
-      // Check metrics in a single pass
-      // LOOP (Signal) DONE: OK=100%
       if (okPercent === 100) {
         groupedData[subsPre].loopSignalDone++;
       }
       
-      // DOSSIER COMPLETED: non-null DOSSIER
       if (item['DOSSIER']) {
         groupedData[subsPre].dossierCompleted++;
       }
       
-      // LOOP (Signal) PENDING: OK<100%
       if (okPercent < 100) {
         groupedData[subsPre].loopsSignalPending++;
       }
     });
     
-    // Convert to array format for chart
     return Object.entries(groupedData)
       .map(([subsPre, values]) => ({
         subsPre,
         ...values
       }));
-  }, [data]);
+  };
   
   // Create complete sorted metrics for chart data (unaffected by filtering)
   const sortedCompleteMetrics = useMemo(() => {
+    if (!metrics || metrics.length === 0) return [];
     return [...metrics].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];

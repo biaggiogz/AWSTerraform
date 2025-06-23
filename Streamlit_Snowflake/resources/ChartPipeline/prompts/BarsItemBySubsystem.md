@@ -1,32 +1,35 @@
+## ⚙️ Request: Replace Panel "Area Contribution by Advance" by Stacked Bar Chart (Horizontal ) showing total items, done items and pending items by Subsystem
+
+
 ## Project Structure
 
 - ECS/Streamlit_Snowflake/resources/ChartPipeline/README.md
 - ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-guide.md
-- ECS/Streamlit_Snowflake/resources/ChartPipeline/implementation-plan.md
-- ECS/Streamlit_Snowflake/resources/ChartPipeline/implementation-notes.md
 
-
-## Dataset
-- Source: data/test_of_lazos_updated.csv or public/data/test_of_lazos_updated.csv
+### Dataset
+- Source: data/aislamientos.csv 
 
 ## Metrics
-| Metric | Condition                                                                                                                    | Meaning |
-| :-- |:-----------------------------------------------------------------------------------------------------------------------------| :-- |
-| **TOTAL LOOPS** | `df.groupby("SUBS_PRE")["TAG LOOP"].count()`                                                                                 | Number of TAG_LOOPs for each SUBS_PRE. |
-| **LOOPS CONSTRUCTION DONE** | `df[df["OK=100%"].astype(str).str.replace("%","").str.strip().astype(float) == 100].groupby("SUBS_PRE")["TAG LOOP"].count()` | Number of TAG_LOOPs with OK=100% for each SUBS_PRE (fully installed/verified). |
-| **DOSSIER COMPLETED** | `df.dropna(subset=["DOSSIER"]).groupby("SUBS_PRE")["TAG LOOP"].nunique()`                                                    | Number of TAG_LOOPs with a non-null DOSSIER for each SUBS_PRE. |
-| **LOOPS DONE** | `df.dropna(subset=["TEST LOOP"]).groupby("SUBS_PRE")["TAG LOOP"].nunique()`                                                  | Number of TAG_LOOPs with a non-null TEST LOOP for each SUBS_PRE. |
-| **LOOPS NOT STARTED CONSTRUCTION** | `df[df["OK=100%"].astype(str).str.replace("%","").str.strip().astype(float) == 0].groupby("SUBS_PRE")["TAG LOOP"].count()`   | Number of TAG_LOOPs with OK=0% for each SUBS_PRE (not started). |
+| Metric            | Condition                                                                      | Meaning                                 |
+|:------------------|:-------------------------------------------------------------------------------|:----------------------------------------|
+| **TOTAL ITEMS**   | `df.groupby("SUBSYSTEM")["ISO"].count()`                                       | Total Items for each Subsystem.         |
+| **ITEMS DONE**    | `df[df["NAME METRIC"].astype(float) == 1].groupby("SUBSYSTEM")["ISO"].count()` | Total Items DONE for each Subsystem.    |
+| **ITEMS PENDING** | `[df["NAME METRIC"].astype(float) < 1].groupby("SUBSYSTEM")["ISO"].count()`    | Total Items PENDING for each Subsystem. |
 
-## Stacked Bar Chart (Horizontal )
+## Configuration of Stacked Bar Chart (Horizontal )
 
-- Name Dashboard: "LOOP TEST PROGRESS"
+- Name Panel Dashboard: "Progress Items"
 
-- Design a stacked bar chart using React and the react-chartjs-2 library,
-where each bar represents a SUBS_PRE item. Each colored segment within a 
-bar corresponds to a specific measure, with colors and labels defined at the 
-top of the chart. The chart should remain visually clear and interactive, 
-even with a large number of items
+- The bars must be group by each "NAME METRIC" ( in total are 6 groups)
+- Design a stacked bar chart using current libraries,  
+- Each bar represents a SUBSYSTEM. 
+- Each colored with two segment [DONE, PENDING] 
+- Color "#1DE9B6" for DONE, Color ""#FF168B"" for PENDING
+- The chart should remain visually clear and interactive, even with a large number of subsystems
+- Dran how must be seeing the bars
+
+
+
 
 ### VERY IMPORTANT
 
