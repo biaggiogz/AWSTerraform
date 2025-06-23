@@ -96,7 +96,7 @@ const SidebarProgressItemsPanel = ({ data }) => {
     return (
       <Box mb={1}>
         <Text fontSize="10px" fontWeight="bold" mb={1} color="gray.600" noOfLines={1} title={`${subsystem}: ${totalItems} items`}>
-          {subsystem.length > 15 ? subsystem.substring(0, 15) + '...' : subsystem}: {totalItems}
+          {subsystem.length > 20 ? subsystem.substring(0, 20) + '...' : subsystem}: {totalItems}
         </Text>
         <Box position="relative" height="22px" width="100%">
           <HStack spacing={0} height="100%" border="1px solid #000" borderRadius="sm" overflow="hidden">

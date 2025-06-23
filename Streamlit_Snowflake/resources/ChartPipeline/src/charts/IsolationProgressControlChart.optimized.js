@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
+
+
 import {
   Box,
   Heading,
@@ -151,6 +153,43 @@ const IsolationProgressControlChart = ({ data }) => {
     };
   }, [data]);
 
+  const [positions, setPositions] = useState({
+    spacer: { x: 0, y: 0 },
+    insulation: { x: 120, y: 0 },
+    sheet_metal: { x: 240, y: 0 },
+    boxes: { x: 360, y: 0 },
+    finish: { x: 480, y: 0 },
+    mleq_total: { x: 600, y: 0 }
+  });
+  const [dragging, setDragging] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e, id) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+    setDragging(id);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!dragging) return;
+    const container = e.currentTarget.closest('[data-container]');
+    const containerRect = container.getBoundingClientRect();
+    setPositions(prev => ({
+      ...prev,
+      [dragging]: {
+        x: e.clientX - containerRect.left - dragOffset.x,
+        y: e.clientY - containerRect.top - dragOffset.y
+      }
+    }));
+  };
+
+  const handleMouseUp = () => {
+    setDragging(null);
+  };
+
   // Prepare chart data
   const chartData = useMemo(() => {
     const categories = [
@@ -281,7 +320,7 @@ const IsolationProgressControlChart = ({ data }) => {
     { label: 'Sheet Metal', value: metrics.advance_sheet_metal.toFixed(1) + '%' },
     { label: 'Boxes', value: metrics.advance_boxes.toFixed(1) + '%' },
     { label: 'Finish', value: metrics.advance_to_finish.toFixed(1) + '%' },
-    { label: 'Mleq Total', value: metrics.m_advance_mleq_total.toFixed(2) + ' m' }
+    { label: 'Mleq Total', value: metrics.a_advance_mleq_total.toFixed(1) + ' %' }
   ], [metrics]);
 
   return (
@@ -295,7 +334,7 @@ const IsolationProgressControlChart = ({ data }) => {
                 Advance
               </Heading>
 
-              <HStack spacing={0} justify="space-between" mb={4} px={10}>
+              <HStack spacing={0} justify="space-around" mb={4} px={10}>
                 {metricsHeader.map((metric, index) => (
                     <VStack key={index} spacing={1} flex={1}>
                       <Text fontSize="xs" fontWeight="bold" textAlign="center" color="gray.600">
@@ -322,122 +361,49 @@ const IsolationProgressControlChart = ({ data }) => {
                 <Bar data={chartData} options={options} />
               </Box>
 
-              {/* DONE ITEMS and PENDING ITEMS metrics */}
-              <VStack spacing={2} mt={4} pt={4} borderTopWidth="1px">
-                {/* DONE ITEMS Row */}
-                <Box w="full">
-                  <Text fontSize="sm" fontWeight="bold" mb={2} color="green.600">
-                    DONE ITEMS
-                  </Text>
-                  <HStack spacing={4} justify="space-between" px={2}>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Spacer Advance
-                      </Text>
-                      <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.done_items.spacer.toLocaleString()}
-                      </Badge>
-                    </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Insulation Advance
-                      </Text>
-                      <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.done_items.insulation.toLocaleString()}
-                      </Badge>
-                    </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Sheet Metal Advance
-                      </Text>
-                      <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.done_items.sheet_metal.toLocaleString()}
-                      </Badge>
-                    </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Boxes Advance
-                      </Text>
-                      <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.done_items.boxes.toLocaleString()}
-                      </Badge>
-                    </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Finish Advance
-                      </Text>
-                      <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.done_items.finish.toLocaleString()}
-                      </Badge>
-                    </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Mleq Total Advance
-                      </Text>
-                      <Badge colorScheme="green" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.done_items.mleq_total.toFixed(2)} m
-                      </Badge>
-                    </VStack>
-                  </HStack>
-                </Box>
 
-                {/* PENDING ITEMS Row */}
-                <Box w="full">
-                  <Text fontSize="sm" fontWeight="bold" mb={2} color="red.600">
-                    PENDING ITEMS
-                  </Text>
-                  <HStack spacing={4} justify="space-between" px={2}>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Spacer Advance
-                      </Text>
-                      <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.pending_items.spacer.toLocaleString()}
+              {/* Combined Done/Pending Items by Category */}
+              <Box
+                  position="relative"
+                  height="200px"
+                  width="100%"
+                  data-container
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+              >
+                {Object.entries(positions).map(([type, pos]) => (
+                    <VStack
+                        key={type}
+                        position="absolute"
+                        left={`${pos.x}px`}
+                        top={`${pos.y}px`}
+                        spacing={2}
+                        align="center"
+                        cursor="move"
+                        userSelect="none"
+                        onMouseDown={(e) => handleMouseDown(e, type)}
+                        bg={dragging === type ? 'gray.100' : 'white'}
+                        p={2}
+                        borderRadius="md"
+                        boxShadow="sm"
+                        zIndex={dragging === type ? 10 : 1}
+                    >
+                      <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
+                        {type === 'mleq_total'
+                            ? `${metrics.done_items[type].toFixed(2)} M`
+                            : metrics.done_items[type].toLocaleString()
+                        }
+                      </Badge>
+                      <Badge colorScheme="red" fontSize="sm" px={3} py={1}>
+                        {type === 'mleq_total'
+                            ? `${metrics.pending_items[type].toFixed(2)} M`
+                            : metrics.pending_items[type].toLocaleString()
+                        }
                       </Badge>
                     </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Insulation Advance
-                      </Text>
-                      <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.pending_items.insulation.toLocaleString()}
-                      </Badge>
-                    </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Sheet Metal Advance
-                      </Text>
-                      <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.pending_items.sheet_metal.toLocaleString()}
-                      </Badge>
-                    </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Boxes Advance
-                      </Text>
-                      <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.pending_items.boxes.toLocaleString()}
-                      </Badge>
-                    </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Finish Advance
-                      </Text>
-                      <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.pending_items.finish.toLocaleString()}
-                      </Badge>
-                    </VStack>
-                    <VStack spacing={1} flex={1}>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Mleq Total Advance
-                      </Text>
-                      <Badge colorScheme="red" fontSize="sm" p={2} borderRadius="md" minW="60px" textAlign="center">
-                        {metrics.pending_items.mleq_total.toFixed(2)} m
-                      </Badge>
-                    </VStack>
-                  </HStack>
-                </Box>
-              </VStack>
+                ))}
+              </Box>
 
               {/* Summary info */}
               <HStack justify="space-between" mt={4} pt={4} borderTopWidth="1px">
