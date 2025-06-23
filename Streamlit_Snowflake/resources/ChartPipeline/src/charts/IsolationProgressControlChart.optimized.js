@@ -9,9 +9,7 @@ import {
   Badge,
   Grid,
   GridItem,
-  Switch,
-  FormControl,
-  FormLabel
+
 } from '@chakra-ui/react';
 import {
   Chart as ChartJS,
@@ -23,8 +21,8 @@ import {
   Legend
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import SidebarProgressPanel from '../components/SidebarProgressPanel';
 import SidebarMetricContributionPanel from '../components/SidebarMetricContributionPanel';
+import SidebarProgressItemsPanel from '../components/SidebarProgressItemsPanel';
 
 // Register Chart.js components
 ChartJS.register(
@@ -43,8 +41,8 @@ ChartJS.register(
  * @param {Array} props.data - Filtered dataset
  */
 const IsolationProgressControlChart = ({ data }) => {
-  // State for toggling between Area and Subsystem contribution panels
-  const [showSubsystemContribution, setShowSubsystemContribution] = useState(false);
+  // State for toggling between different panel views (0: Subsystem, 1: Progress Items)
+  const [panelView, setPanelView] = useState(0);
   // Calculate metrics based on the requirements
   const metrics = useMemo(() => {
     if (!data || data.length === 0) {
@@ -293,29 +291,44 @@ const IsolationProgressControlChart = ({ data }) => {
           maxH="622px"
           overflowY="auto"
         >
-          {/* Toggle switch */}
-          <FormControl display="flex" alignItems="center" mb={4}>
-            <FormLabel htmlFor="contribution-toggle" mb="0" fontSize="sm" fontWeight="bold">
-              {showSubsystemContribution ? 'Subsystem' : 'Area'}
-            </FormLabel>
-            <Switch 
-              id="contribution-toggle"
-              isChecked={showSubsystemContribution}
-              onChange={(e) => setShowSubsystemContribution(e.target.checked)}
-              colorScheme="blue"
-            />
-          </FormControl>
+          {/* Panel selector buttons */}
+          <HStack spacing={1} mb={4} justify="center">
+            <Box
+              as="button"
+              px={2}
+              py={1}
+              fontSize="xs"
+              fontWeight="bold"
+              bg={panelView === 0 ? "blue.500" : "gray.200"}
+              color={panelView === 0 ? "white" : "gray.700"}
+              borderRadius="md"
+              onClick={() => setPanelView(0)}
+              _hover={{ bg: panelView === 0 ? "blue.600" : "gray.300" }}
+            >
+              Subsystem
+            </Box>
+            <Box
+              as="button"
+              px={2}
+              py={1}
+              fontSize="xs"
+              fontWeight="bold"
+              bg={panelView === 1 ? "blue.500" : "gray.200"}
+              color={panelView === 1 ? "white" : "gray.700"}
+              borderRadius="md"
+              onClick={() => setPanelView(1)}
+              _hover={{ bg: panelView === 1 ? "blue.600" : "gray.300" }}
+            >
+              Items
+            </Box>
+          </HStack>
           
           {/* Conditional panel rendering */}
-          {showSubsystemContribution ? (
+          {panelView === 0 && (
             <SidebarMetricContributionPanel data={data} />
-          ) : (
-            <Box>
-              <Text fontSize="md" fontWeight="bold" mb={4} textAlign="center" color="gray.700">
-                Area Contribution by Advance
-              </Text>
-              <SidebarProgressPanel data={data} />
-            </Box>
+          )}
+          {panelView === 1 && (
+            <SidebarProgressItemsPanel data={data} />
           )}
         </Box>
       </GridItem>
