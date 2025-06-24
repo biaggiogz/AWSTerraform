@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { processCSVData, getUniqueValues } from '../utils/dataProcessor.optimized';
 
 /**
@@ -11,13 +11,6 @@ const useDataLoader = (csvPath, filterMappings = {}) => {
   const [rawData, setRawData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const workerRef = useRef();
-  
-  // Initialize web worker
-  useEffect(() => {
-    workerRef.current = new Worker('/workers/dataProcessor.worker.js');
-    return () => workerRef.current?.terminate();
-  }, []);
 
   // Fetch data only once
   useEffect(() => {
@@ -47,21 +40,10 @@ const useDataLoader = (csvPath, filterMappings = {}) => {
     return () => controller.abort();
   }, [csvPath]);
 
-  // Process data with memoization and web worker for large datasets
+  // Process data with memoization to avoid unnecessary recalculations
   const processedData = useMemo(() => {
     if (!rawData) return [];
-    const csvData = processCSVData(rawData);
-    
-    // Use web worker for datasets > 5000 rows
-    if (csvData.length > 5000 && workerRef.current) {
-      workerRef.current.postMessage({ 
-        type: 'FILTER_DATA', 
-        data: csvData, 
-        options: { filters: {} } 
-      });
-    }
-    
-    return csvData;
+    return processCSVData(rawData);
   }, [rawData]);
 
   // Extract unique values with memoization using the provided mappings

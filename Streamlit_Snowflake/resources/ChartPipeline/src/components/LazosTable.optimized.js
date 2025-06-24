@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState, useEffect, memo, useRef } from 'react';
+import React, { useMemo, useCallback, useState, useEffect, memo } from 'react';
 import {
   Box,
   Table,
@@ -74,75 +74,26 @@ const LazosTable = React.memo(({ data }) => {
   const [isDetached, setIsDetached] = useState(false);
   const [detachedWindow, setDetachedWindow] = useState(null);
   const [tableSize, setTableSize] = useState({ width: 1200, height: 600 });
-  const workerRef = useRef();
-  
-  // Initialize web worker for large datasets
-  useEffect(() => {
-    if (data && data.length > 5000) {
-      workerRef.current = new Worker('/workers/dataProcessor.worker.js');
-      return () => workerRef.current?.terminate();
-    }
-  }, [data?.length]);
 
-  const [processedData, setProcessedData] = useState([]);
-  
-  // Process table data with web worker for large datasets
-  useEffect(() => {
-    if (!data || data.length === 0) {
-      setProcessedData([]);
-      return;
-    }
+  const processedData = useMemo(() => {
+    if (!data || data.length === 0) return [];
     
-    // Use web worker for large datasets
-    if (data.length > 5000 && workerRef.current) {
-      const tableData = data.map((row, index) => ({
-        id: index,
-        code: row.CODE || '',
-        subsystem: row.SUBS_PRE || '',
-        tagLoop: row['TAG LOOP'] || '',
-        area: row.Area || '',
-        priority: row.PRIORITY || '',
-        service: row.SERVICE || '',
-        installed: row.INSTALLED || '',
-        wired: row.WIRED || '',
-        connected: row.CONNECTED || '',
-        cableTest: row['CABLE TEST'] || '',
-        progress: row['OK=100%'] || '0.00%',
-        dossier: row.DOSSIER || '',
-        testLoop: row['TEST LOOP'] || ''
-      }));
-      
-      workerRef.current.postMessage({ 
-        type: 'FILTER_DATA', 
-        data: tableData, 
-        options: { filters: {} } 
-      });
-      
-      workerRef.current.onmessage = (e) => {
-        if (e.data.type === 'DATA_FILTERED') {
-          setProcessedData(e.data.result);
-        }
-      };
-    } else {
-      // Process synchronously for smaller datasets
-      const processed = data.map((row, index) => ({
-        id: index,
-        code: row.CODE || '',
-        subsystem: row.SUBS_PRE || '',
-        tagLoop: row['TAG LOOP'] || '',
-        area: row.Area || '',
-        priority: row.PRIORITY || '',
-        service: row.SERVICE || '',
-        installed: row.INSTALLED || '',
-        wired: row.WIRED || '',
-        connected: row.CONNECTED || '',
-        cableTest: row['CABLE TEST'] || '',
-        progress: row['OK=100%'] || '0.00%',
-        dossier: row.DOSSIER || '',
-        testLoop: row['TEST LOOP'] || ''
-      }));
-      setProcessedData(processed);
-    }
+    return data.map((row, index) => ({
+      id: index,
+      code: row.CODE || '',
+      subsystem: row.SUBS_PRE || '',
+      tagLoop: row['TAG LOOP'] || '',
+      area: row.Area || '',
+      priority: row.PRIORITY || '',
+      service: row.SERVICE || '',
+      installed: row.INSTALLED || '',
+      wired: row.WIRED || '',
+      connected: row.CONNECTED || '',
+      cableTest: row['CABLE TEST'] || '',
+      progress: row['OK=100%'] || '0.00%',
+      dossier: row.DOSSIER || '',
+      testLoop: row['TEST LOOP'] || ''
+    }));
   }, [data]);
 
   const columns = useMemo(() => [

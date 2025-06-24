@@ -2,12 +2,12 @@ import React, { useMemo } from 'react';
 import { Box, VStack, Text, HStack, SimpleGrid } from '@chakra-ui/react';
 
 /**
- * SidebarMetricContributionPanel component for displaying subsystem contribution by metric
+ * SidebarMetricContributionPanel component for displaying Subsystem Progress by metric
  * @param {Object} props - Component props
- * @param {Array} props.data - Filtered dataset to calculate subsystem contributions
+ * @param {Array} props.data - Filtered dataset to calculate Subsystem Progresss
  */
 const SidebarMetricContributionPanel = ({ data }) => {
-  // Calculate subsystem contributions for each metric
+  // Calculate Subsystem Progresss for each metric
   const subsystemContributions = useMemo(() => {
     if (!data || data.length === 0) {
       return {
@@ -85,7 +85,7 @@ const SidebarMetricContributionPanel = ({ data }) => {
     };
   }, [data]);
 
-  // Mini bar component for subsystem contribution
+  // Mini bar component for Subsystem Progress
   const SubsystemContributionBar = ({ subsystem, completed, incomplete }) => {
     const safeCompleted = Math.max(0, Math.min(100, completed || 0));
     const safeIncomplete = Math.max(0, Math.min(100, incomplete || 0));

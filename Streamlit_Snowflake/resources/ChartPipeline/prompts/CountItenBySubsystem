@@ -47,7 +47,7 @@ NAME METRIC =["Advance Spacer","Advance Insolation","Advance Sheet Metal","Advan
 - 6 metric sections stacked vertically (Spacer, Insulation, Sheet Metal, Boxes, Finish, Mleq Total)
 - Each section displays subsystem data in a 3-column grid
 - Individual bars show count items done, completed  progress with color-coded segments
-- Each colored with two segment [DONE, PENDING] 
+- Each colored with two segment [DONE, PENDING]
 - Color "#1DE9B6" for DONE, Color ""#FF168B"" for PENDING
 - The chart should remain visually clear and interactive, even with a large number of subsystems
 

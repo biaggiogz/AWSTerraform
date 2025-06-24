@@ -4,11 +4,11 @@ import { Box, VStack, Text, HStack, SimpleGrid } from '@chakra-ui/react';
 /**
  * SidebarProgressItemsPanel component for displaying progress items by subsystem
  * @param {Object} props - Component props
- * @param {Array} props.data - Filtered dataset to calculate subsystem progress items
+ * @param {Array} props.data - Filtered dataset to calculate progress items
  */
 const SidebarProgressItemsPanel = ({ data }) => {
-  // Calculate subsystem progress items for each metric
-  const subsystemProgressItems = useMemo(() => {
+  // Calculate progress items for each metric by subsystem
+  const progressItems = useMemo(() => {
     if (!data || data.length === 0) {
       return {
         spacer: [],
@@ -20,7 +20,7 @@ const SidebarProgressItemsPanel = ({ data }) => {
       };
     }
 
-    // Group data by subsystem
+    // Group data by subsystem - check all possible column names
     const subsystemGroups = data.reduce((acc, row) => {
       const subsystem = row['SUBSYSTEM'] || row['Subsistema'] || row['SUBS_PRE'] || row['subsystem'] || 'Unknown';
       if (!acc[subsystem]) {
@@ -31,8 +31,8 @@ const SidebarProgressItemsPanel = ({ data }) => {
     }, {});
 
     // Calculate progress items for each metric
-    const calculateSubsystemProgressItems = (metricField) => {
-      const subsystemItems = [];
+    const calculateProgressItems = (metricField) => {
+      const progressData = [];
       
       Object.keys(subsystemGroups).forEach(subsystem => {
         const subsystemData = subsystemGroups[subsystem];
@@ -40,78 +40,68 @@ const SidebarProgressItemsPanel = ({ data }) => {
         // Total items for this subsystem
         const totalItems = subsystemData.length;
         
-        let itemsDone, itemsPending;
+        // Items done (where metric value equals 1)
+        const itemsDone = subsystemData.filter(row => {
+          const metricValue = parseFloat(row[metricField]) || 0;
+          return metricValue === 1;
+        }).length;
         
-        if (metricField === 'Avance Mleq totales') {
-          // For Mleq Total Advance, consider done if value > 0
-          itemsDone = subsystemData.filter(row => {
-            const metricValue = parseFloat(row[metricField]) || 0;
-            return metricValue > 0;
-          }).length;
-          
-          itemsPending = subsystemData.filter(row => {
-            const metricValue = parseFloat(row[metricField]) || 0;
-            return metricValue <= 0;
-          }).length;
-        } else {
-          // For other metrics, use the original logic (value equals 1 for done)
-          itemsDone = subsystemData.filter(row => {
-            const metricValue = parseFloat(row[metricField]) || 0;
-            return metricValue === 1;
-          }).length;
-          
-          itemsPending = subsystemData.filter(row => {
-            const metricValue = parseFloat(row[metricField]) || 0;
-            return metricValue < 1;
-          }).length;
+        // Items pending (where metric value is less than 1)
+        const itemsPending = subsystemData.filter(row => {
+          const metricValue = parseFloat(row[metricField]) || 0;
+          return metricValue < 1;
+        }).length;
+        
+        if (totalItems > 0) {
+          progressData.push({
+            subsystem,
+            totalItems,
+            itemsDone,
+            itemsPending,
+            donePercentage: (itemsDone / totalItems) * 100,
+            pendingPercentage: (itemsPending / totalItems) * 100
+          });
         }
-        
-        subsystemItems.push({
-          subsystem,
-          totalItems,
-          itemsDone,
-          itemsPending
-        });
       });
       
       // Sort by total items (largest first)
-      return subsystemItems.sort((a, b) => b.totalItems - a.totalItems);
+      return progressData.sort((a, b) => b.totalItems - a.totalItems);
     };
 
     return {
-      spacer: calculateSubsystemProgressItems('Avance Distanciadores'),
-      insulation: calculateSubsystemProgressItems('Avance Aislamiento'),
-      sheetMetal: calculateSubsystemProgressItems('Avance Chapa'),
-      boxes: calculateSubsystemProgressItems('Avance Cajas'),
-      finish: calculateSubsystemProgressItems('Avance Rematar'),
-      mleqTotal: calculateSubsystemProgressItems('Avance Mleq totales')
+      spacer: calculateProgressItems('Avance Distanciadores'),
+      insulation: calculateProgressItems('Avance Aislamiento'),
+      sheetMetal: calculateProgressItems('Avance Chapa'),
+      boxes: calculateProgressItems('Avance Cajas'),
+      finish: calculateProgressItems('Avance Rematar'),
+      mleqTotal: calculateProgressItems('Avance Mleq totales')
     };
   }, [data]);
 
   // Mini bar component for subsystem progress items
-  const SubsystemProgressItemsBar = ({ subsystem, totalItems, itemsDone, itemsPending }) => {
-    const donePercent = totalItems > 0 ? (itemsDone / totalItems) * 100 : 0;
-    const pendingPercent = totalItems > 0 ? (itemsPending / totalItems) * 100 : 0;
+  const SubsystemProgressBar = ({ subsystem, totalItems, itemsDone, itemsPending, donePercentage, pendingPercentage }) => {
+    const safeDonePercentage = Math.max(0, Math.min(100, donePercentage || 0));
+    const safePendingPercentage = Math.max(0, Math.min(100, pendingPercentage || 0));
     
     return (
       <Box mb={1}>
-        <Text fontSize="10px" fontWeight="bold" mb={1} color="gray.600" noOfLines={1} title={`${subsystem}: ${totalItems} items`}>
-          {subsystem.length > 20 ? subsystem.substring(0, 20) + '...' : subsystem}: {totalItems}
+        <Text fontSize="10px" fontWeight="bold" mb={1} color="gray.600" noOfLines={1} title={`${subsystem}: ${totalItems} total items`}>
+          {subsystem.length > 12 ? subsystem.substring(0, 12) + '...' : subsystem}: {totalItems}
         </Text>
         <Box position="relative" height="22px" width="100%">
           <HStack spacing={0} height="100%" border="1px solid #000" borderRadius="sm" overflow="hidden">
             {/* Done segment */}
-            {donePercent > 0 && (
+            {safeDonePercentage > 0 && (
               <Box
                 bg="#1DE9B6"
                 height="100%"
-                width={`${donePercent}%`}
+                width={`${safeDonePercentage}%`}
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
                 position="relative"
               >
-                {donePercent > 20 && (
+                {safeDonePercentage > 20 && (
                   <Text fontSize="8px" fontWeight="bold" color="#000">
                     {itemsDone}
                   </Text>
@@ -119,17 +109,17 @@ const SidebarProgressItemsPanel = ({ data }) => {
               </Box>
             )}
             {/* Pending segment */}
-            {pendingPercent > 0 && (
+            {safePendingPercentage > 0 && (
               <Box
                 bg="#FF168B"
                 height="100%"
-                width={`${pendingPercent}%`}
+                width={`${safePendingPercentage}%`}
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
                 position="relative"
               >
-                {pendingPercent > 20 && (
+                {safePendingPercentage > 20 && (
                   <Text fontSize="8px" fontWeight="bold" color="#000">
                     {itemsPending}
                   </Text>
@@ -143,8 +133,8 @@ const SidebarProgressItemsPanel = ({ data }) => {
   };
 
   // Metric block component with three-column layout
-  const MetricBlock = ({ title, subsystemData }) => {
-    if (!subsystemData || subsystemData.length === 0) {
+  const MetricBlock = ({ title, progressData }) => {
+    if (!progressData || progressData.length === 0) {
       return (
         <Box mb={4} p={3} bg="gray.50" borderRadius="md">
           <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center" color="gray.700">
@@ -163,13 +153,15 @@ const SidebarProgressItemsPanel = ({ data }) => {
           {title}
         </Text>
         <SimpleGrid columns={3} spacing={1}>
-          {subsystemData.map((item, index) => (
-            <SubsystemProgressItemsBar
+          {progressData.map((item, index) => (
+            <SubsystemProgressBar
               key={index}
               subsystem={item.subsystem}
               totalItems={item.totalItems}
               itemsDone={item.itemsDone}
               itemsPending={item.itemsPending}
+              donePercentage={item.donePercentage}
+              pendingPercentage={item.pendingPercentage}
             />
           ))}
         </SimpleGrid>
@@ -183,12 +175,12 @@ const SidebarProgressItemsPanel = ({ data }) => {
         Progress Items
       </Text>
       <VStack spacing={0} align="stretch">
-        <MetricBlock title="Spacer Advance" subsystemData={subsystemProgressItems.spacer} />
-        <MetricBlock title="Insulation Advance" subsystemData={subsystemProgressItems.insulation} />
-        <MetricBlock title="Sheet Metal Advance" subsystemData={subsystemProgressItems.sheetMetal} />
-        <MetricBlock title="Boxes Advance" subsystemData={subsystemProgressItems.boxes} />
-        <MetricBlock title="Finish Advance" subsystemData={subsystemProgressItems.finish} />
-        <MetricBlock title="Mleq Total Advance" subsystemData={subsystemProgressItems.mleqTotal} />
+        <MetricBlock title="Spacer" progressData={progressItems.spacer} />
+        <MetricBlock title="Insulation" progressData={progressItems.insulation} />
+        <MetricBlock title="Sheet Metal" progressData={progressItems.sheetMetal} />
+        <MetricBlock title="Boxes" progressData={progressItems.boxes} />
+        <MetricBlock title="Finish" progressData={progressItems.finish} />
+        <MetricBlock title="Mleq Total" progressData={progressItems.mleqTotal} />
       </VStack>
     </>
   );
