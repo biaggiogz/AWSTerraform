@@ -134,7 +134,7 @@ const IsolationProgressControlChart = ({ data }) => {
       'Mleq Total Advance'
     ];
 
-    const completedValues = [
+    const DonedValues = [
       metrics.advance_spacer,
       metrics.advance_insolation,
       metrics.advance_sheet_metal,
@@ -143,22 +143,22 @@ const IsolationProgressControlChart = ({ data }) => {
       metrics.a_advance_mleq_total
     ];
 
-    const incompleteValues = completedValues.map(val => 100 - val);
+    const PendingValues = DonedValues.map(val => 100 - val);
 
     return {
       labels: categories,
       datasets: [
         {
-          label: 'Complete',
-          data: completedValues,
+          label: 'Done',
+          data: DonedValues,
           backgroundColor: '#1DE9B6',
           borderColor: '#000',
           borderWidth: 2,
           stack: 'stack1'
         },
         {
-          label: 'Incomplete',
-          data: incompleteValues,
+          label: 'Pending',
+          data: PendingValues,
           backgroundColor: '#FF168B',
           borderColor: '#000',
           borderWidth: 2,
@@ -204,7 +204,7 @@ const IsolationProgressControlChart = ({ data }) => {
     plugins: {
       legend: {
         display: true,
-        position: 'bottom',
+        position: 'top',
         labels: {
           usePointStyle: true,
           padding: 20,
@@ -257,7 +257,7 @@ const IsolationProgressControlChart = ({ data }) => {
   ], [metrics]);
 
   return (
-    <Grid templateColumns={{ base: "1fr", lg: "1fr 300px" }} gap={4}>
+    <Grid templateColumns={{ base: "1fr", lg: "1fr 350px" }} gap={4}>
       {/* Left column with header and chart */}
       <GridItem>
         <VStack spacing={4}>
@@ -296,10 +296,10 @@ const IsolationProgressControlChart = ({ data }) => {
             </Box>
             
             {/* DONE ITEMS and PENDING ITEMS metrics below chart */}
-            <VStack spacing={2} mt={4}>
+            <VStack spacing={2} mt={4} ml="auto">
               {/* DONE ITEMS Row */}
               <HStack spacing={0} w="full" justify="space-between">
-                <Text fontSize="xs" fontWeight="bold" minW="80px">DONE ITEMS</Text>
+                <Text fontSize="xs" fontWeight="bold" minW="80px">DONE</Text>
                 {metrics.doneItems.map((value, index) => (
                   <Box key={index} flex={1} textAlign="center">
                     <Box 
@@ -309,6 +309,7 @@ const IsolationProgressControlChart = ({ data }) => {
                       fontSize="xs" 
                       fontWeight="bold"
                       bg="gray.50"
+                      backgroundColor="#1DE9B6"
                     >
                       {index === 5 ? `${value.toFixed(2)}m` : value.toLocaleString()}
                     </Box>
@@ -318,7 +319,7 @@ const IsolationProgressControlChart = ({ data }) => {
               
               {/* PENDING ITEMS Row */}
               <HStack spacing={0} w="full" justify="space-between">
-                <Text fontSize="xs" fontWeight="bold" minW="80px">PENDING ITEMS</Text>
+                <Text fontSize="xs" fontWeight="bold" minW="80px">PENDING</Text>
                 {metrics.pendingItems.map((value, index) => (
                   <Box key={index} flex={1} textAlign="center">
                     <Box 
@@ -328,6 +329,7 @@ const IsolationProgressControlChart = ({ data }) => {
                       fontSize="xs" 
                       fontWeight="bold"
                       bg="gray.50"
+                      backgroundColor="#FF168B"
                     >
                       {index === 5 ? `${value.toFixed(2)}m` : value.toLocaleString()}
                     </Box>

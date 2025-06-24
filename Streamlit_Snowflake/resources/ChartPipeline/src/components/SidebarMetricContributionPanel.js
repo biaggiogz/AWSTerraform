@@ -41,19 +41,19 @@ const SidebarMetricContributionPanel = ({ data }) => {
         const totalMleq = subsystemData.reduce((sum, row) => sum + (parseFloat(row['Mleq']) || 0), 0);
         
         if (totalMleq > 0) {
-          const completedMleq = subsystemData.reduce((sum, row) => {
+          const DonedMleq = subsystemData.reduce((sum, row) => {
             const mleq = parseFloat(row['Mleq']) || 0;
             const progress = parseFloat(row[metricField]) || 0;
             return sum + (mleq * progress);
           }, 0);
           
-          const completedPercent = (completedMleq / totalMleq) * 100;
-          const incompletePercent = 100 - completedPercent;
+          const DonedPercent = (DonedMleq / totalMleq) * 100;
+          const PendingPercent = 100 - DonedPercent;
           
           subsystemContribs.push({
             subsystem,
-            completed: completedPercent,
-            incomplete: incompletePercent,
+            Doned: DonedPercent,
+            Pending: PendingPercent,
             totalMleq
           });
         } else if (subsystemData.length > 0) {
@@ -64,8 +64,8 @@ const SidebarMetricContributionPanel = ({ data }) => {
           
           subsystemContribs.push({
             subsystem,
-            completed: avgProgress * 100,
-            incomplete: (1 - avgProgress) * 100,
+            Doned: avgProgress * 100,
+            Pending: (1 - avgProgress) * 100,
             totalMleq: 0
           });
         }
@@ -86,49 +86,49 @@ const SidebarMetricContributionPanel = ({ data }) => {
   }, [data]);
 
   // Mini bar component for Subsystem Progress
-  const SubsystemContributionBar = ({ subsystem, completed, incomplete }) => {
-    const safeCompleted = Math.max(0, Math.min(100, completed || 0));
-    const safeIncomplete = Math.max(0, Math.min(100, incomplete || 0));
+  const SubsystemContributionBar = ({ subsystem, Doned, Pending }) => {
+    const safeDoned = Math.max(0, Math.min(100, Doned || 0));
+    const safePending = Math.max(0, Math.min(100, Pending || 0));
     
     return (
       <Box mb={1}>
         <Text fontSize="10px" fontWeight="bold" mb={1} color="gray.600" noOfLines={1} title={subsystem}>
-          {subsystem.length > 15 ? subsystem.substring(0, 15) + '...' : subsystem}
+          {subsystem.length > 18 ? subsystem.substring(0, 18) + '...' : subsystem}
         </Text>
         <Box position="relative" height="22px" width="100%">
           <HStack spacing={0} height="100%" border="1px solid #000" borderRadius="sm" overflow="hidden">
-            {/* Complete segment */}
-            {safeCompleted > 0 && (
+            {/* Done segment */}
+            {safeDoned > 0 && (
               <Box
                 bg="#1DE9B6"
                 height="100%"
-                width={`${safeCompleted}%`}
+                width={`${safeDoned}%`}
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
                 position="relative"
               >
-                {safeCompleted > 25 && (
+                {safeDoned > 25 && (
                   <Text fontSize="8px" fontWeight="bold" color="#000">
-                    {safeCompleted.toFixed(0)}%
+                    {safeDoned.toFixed(0)}%
                   </Text>
                 )}
               </Box>
             )}
-            {/* Incomplete segment */}
-            {safeIncomplete > 0 && (
+            {/* Pending segment */}
+            {safePending > 0 && (
               <Box
                 bg="#FF168B"
                 height="100%"
-                width={`${safeIncomplete}%`}
+                width={`${safePending}%`}
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
                 position="relative"
               >
-                {safeIncomplete > 25 && (
+                {safePending > 25 && (
                   <Text fontSize="8px" fontWeight="bold" color="#000">
-                    {safeIncomplete.toFixed(0)}%
+                    {safePending.toFixed(0)}%
                   </Text>
                 )}
               </Box>
@@ -164,8 +164,8 @@ const SidebarMetricContributionPanel = ({ data }) => {
             <SubsystemContributionBar
               key={index}
               subsystem={item.subsystem}
-              completed={item.completed}
-              incomplete={item.incomplete}
+              Doned={item.Doned}
+              Pending={item.Pending}
             />
           ))}
         </SimpleGrid>
