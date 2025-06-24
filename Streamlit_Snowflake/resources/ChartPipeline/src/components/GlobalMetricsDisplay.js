@@ -86,15 +86,15 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
     {
       label: 'LOOP (Signal) DONE',
       value: globalMetrics.loopSignalDone,
-      color: '#3B4CCA',
-      bgColor: 'rgba(59, 76, 202, 0.1)',
+      color: '#1DE9B6',
+      bgColor: 'rgba(29, 233, 182, 1)',
       sortField: 'loopSignalDone'
     },
     {
       label: 'LOOP (Signal) PENDING',
       value: globalMetrics.loopSignalPending,
-      color: '#AEE6F9',
-      bgColor: 'rgba(174, 230, 249, 0.1)',
+      color: '#FF168B',
+      bgColor: 'rgba(255, 22, 139, 1)',
       sortField: 'loopsSignalPending'
     },
     {

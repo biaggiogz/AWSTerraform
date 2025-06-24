@@ -192,8 +192,8 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
       {
         label: 'LOOP (Signal) DONE',
         data: sortedCompleteMetrics.map(item => item.loopSignalDone),
-        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(59, 76, 202, 0.3)' : '#3B4CCA',
-        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(42, 59, 185, 0.3)' : '#2A3BB9',
+        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
+        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
         borderWidth: 1,
         sortField: 'loopSignalDone',
         hidden: progressFilter && progressFilter !== 'LOOP (Signal) DONE'
@@ -201,8 +201,8 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
       {
         label: 'LOOP (Signal) PENDING',
         data: sortedCompleteMetrics.map(item => item.loopsSignalPending),
-        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(174, 230, 249, 0.3)' : '#AEE6F9',
-        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(153, 213, 232, 0.3)' : '#99D5E8',
+        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
+        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
         borderWidth: 1,
         sortField: 'loopsSignalPending',
         hidden: progressFilter && progressFilter !== 'LOOP (Signal) PENDING'

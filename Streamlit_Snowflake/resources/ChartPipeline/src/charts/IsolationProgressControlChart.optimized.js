@@ -23,7 +23,6 @@ import {
   Legend
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import SidebarProgressPanel from '../components/SidebarProgressPanel';
 import SidebarMetricContributionPanel from '../components/SidebarMetricContributionPanel';
 import SidebarProgressItemsPanel from '../components/SidebarProgressItemsPanel';
 
