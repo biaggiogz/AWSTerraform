@@ -17,7 +17,7 @@ const IsolationProgressControlChart = lazy(() => import('../charts/IsolationProg
 const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart.optimized'));
 const LazosTable = lazy(() => import('./LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('./InsulationProgressTable.optimized'));
-const SummarySubsystems = lazy(() => import('./SummarySubsystems'));
+const SubsystemPrecommissioning = lazy(() => import('./SubsystemPrecommissioning'));
 
 /**
  * ChartSelector component to switch between different charts
@@ -91,7 +91,7 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
             </TabPanel>
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <SummarySubsystems data={data} />
+                <SubsystemPrecommissioning data={data} />
               </Suspense>
             </TabPanel>
           </TabPanels>
