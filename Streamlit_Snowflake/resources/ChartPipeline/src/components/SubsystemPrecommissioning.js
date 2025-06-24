@@ -11,16 +11,17 @@ import {
   Heading,
   Text
 } from '@chakra-ui/react';
+import { calculateSubsystemTotalItems } from './SidebarProgressItemsPanel';
 
 /**
  * Subsystem Precommissioning component showing unique subsystems
  * @param {Array} data - Raw dataset from pipelinedata.csv
  */
 const SubsystemPrecommissioning = ({ data }) => {
-  // Get unique subsystems using memoization for performance
-  const uniqueSubsystems = useMemo(() => {
+  // Get unique subsystems and total items using memoization for performance
+  const { uniqueSubsystems, totalItemsBySubsystem } = useMemo(() => {
     if (!data || data.length === 0) {
-      return [];
+      return { uniqueSubsystems: [], totalItemsBySubsystem: {} };
     }
 
     const subsystemSet = new Set();
@@ -31,7 +32,10 @@ const SubsystemPrecommissioning = ({ data }) => {
       }
     });
 
-    return Array.from(subsystemSet).sort();
+    const uniqueSubsystems = Array.from(subsystemSet).sort();
+    const totalItemsBySubsystem = calculateSubsystemTotalItems(data);
+
+    return { uniqueSubsystems, totalItemsBySubsystem };
   }, [data]);
 
   return (
@@ -46,12 +50,14 @@ const SubsystemPrecommissioning = ({ data }) => {
           <Thead>
             <Tr>
               <Th>Subsystem</Th>
+              <Th>Total Items</Th>
             </Tr>
           </Thead>
           <Tbody>
             {uniqueSubsystems.map((subsystem, index) => (
               <Tr key={index}>
                 <Td>{subsystem}</Td>
+                <Td>{totalItemsBySubsystem[subsystem] || 0}</Td>
               </Tr>
             ))}
           </Tbody>

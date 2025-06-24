@@ -2,6 +2,28 @@ import React, { useMemo } from 'react';
 import { Box, VStack, Text, HStack, SimpleGrid } from '@chakra-ui/react';
 
 /**
+ * Calculate total items by subsystem from data
+ * @param {Array} data - Dataset to calculate from
+ * @returns {Object} Object with subsystem as key and total items as value
+ */
+export const calculateSubsystemTotalItems = (data) => {
+  if (!data || data.length === 0) {
+    return {};
+  }
+
+  const subsystemGroups = data.reduce((acc, row) => {
+    const subsystem = row['SUBSYSTEM'] || row['Subsistema'] || row['SUBS_PRE'] || row['subsystem'] || 'Unknown';
+    if (!acc[subsystem]) {
+      acc[subsystem] = 0;
+    }
+    acc[subsystem]++;
+    return acc;
+  }, {});
+
+  return subsystemGroups;
+};
+
+/**
  * SidebarProgressItemsPanel component for displaying progress items by subsystem
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset to calculate progress items
