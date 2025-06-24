@@ -102,7 +102,9 @@ const FilterPanel = ({
   // Get the appropriate labels for the filter fields based on the current mappings
   const getAreaLabel = () => {
     if (filterMappings && filterMappings.area) {
-      return filterMappings.area === 'Area' ? 'Area' : 'Design Area';
+      if (filterMappings.area === 'Area') return 'Area';
+      if (filterMappings.area === 'TEST PACK') return 'Test Pack';
+      return 'Design Area';
     }
     return 'Design Area';
   };

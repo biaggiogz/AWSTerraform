@@ -29,6 +29,13 @@ const useDashboardConfig = (activeDashboard) => {
         subsystem: 'SUBSYSTEM'
       }
     },
+    'SUMMARY SUBSYSTEMS': {
+      datasetPath: '/data/pipelinedata.csv',
+      filterMappings: {
+        area: 'TEST PACK',
+        subsystem: 'SUBSYSTEM'
+      }
+    },
     'DEFAULT': {
       datasetPath: '/data/pipelinedata.csv',
       filterMappings: {

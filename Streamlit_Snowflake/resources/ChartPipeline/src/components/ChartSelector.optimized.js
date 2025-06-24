@@ -17,6 +17,7 @@ const IsolationProgressControlChart = lazy(() => import('../charts/IsolationProg
 const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart.optimized'));
 const LazosTable = lazy(() => import('./LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('./InsulationProgressTable.optimized'));
+const SummarySubsystems = lazy(() => import('./SummarySubsystems'));
 
 /**
  * ChartSelector component to switch between different charts
@@ -33,7 +34,8 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
   const dashboardNames = [
     'LOOP TESTING PROGRESS REPORT',
     'INSULATION PROGRESS CONTROL',
-    'Test Pack Progress'
+    'Test Pack Progress',
+    'SUMMARY SUBSYSTEMS'
   ];
 
   // Find the index of the active dashboard
@@ -58,6 +60,7 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
             <Tab>LOOP TESTING PROGRESS REPORT</Tab>
             <Tab>INSULATION PROGRESS CONTROL</Tab>
             <Tab>Test Pack Progress</Tab>
+            <Tab>SUMMARY SUBSYSTEMS</Tab>
           </TabList>
           <TabPanels>
             <TabPanel p={0}>
@@ -84,6 +87,11 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
                 <TestPackProgressChart data={data} />
+              </Suspense>
+            </TabPanel>
+            <TabPanel p={0}>
+              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
+                <SummarySubsystems data={data} />
               </Suspense>
             </TabPanel>
           </TabPanels>
