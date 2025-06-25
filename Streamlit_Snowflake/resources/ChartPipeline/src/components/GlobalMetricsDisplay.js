@@ -79,8 +79,8 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
     {
       label: 'TOTAL LOOP (Signal)',
       value: globalMetrics.totalLoopSignal,
-      color: '#FFB4A2',
-      bgColor: 'rgba(255, 180, 162, 0.1)',
+      color: '#C4E1E6',
+      bgColor: 'rgba(196, 225, 230, 1)',
       sortField: 'totalLoops'
     },
     {
