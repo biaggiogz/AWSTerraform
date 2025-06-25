@@ -148,7 +148,14 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
         align="flex-start"
       >
         {metricItems.map((metric, index) => (
-          <VStack key={index} spacing={1} align="center" minW="140px">
+          <VStack 
+            key={index} 
+            spacing={1} 
+            align="center" 
+            minW="140px"
+            opacity={progressFilter && progressFilter !== metric.label ? 0.3 : 1}
+            transition="opacity 0.2s"
+          >
             {/* Metric Button with Sort Button */}
             <HStack spacing={1}>
               <Button
