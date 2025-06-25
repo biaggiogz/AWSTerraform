@@ -14,7 +14,6 @@ import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import GlobalMetricsDisplay from '../components/GlobalMetricsDisplay';
 import useMultiValueFilter from '../hooks/useMultiValueFilter';
-import MultiValueFilterPanel from '../components/MultiValueFilterPanel';
 
 // Register the plugin
 Chart.register(ChartDataLabels);
@@ -35,18 +34,8 @@ const LoopTestProgressChart = ({
   progressFilter,
   filterMappings = { area: 'Area', subsystem: 'SUBS_PRE' }
 }) => {
-  // Use the multi-value filter hook
-  const {
-    filteredData,
-    metadata,
-    filterOptions,
-    relationshipMaps,
-    multiFilters,
-    progressFilter: localProgressFilter,
-    handleFilterChange,
-    handleProgressFilter,
-    resetAllFilters
-  } = useMultiValueFilter(rawData || data, filterMappings);
+  // Use filtered data passed from parent
+  const filteredData = data;
   
   // State for sort field and direction
   const [sortField, setSortField] = useState('totalLoops');
@@ -64,19 +53,12 @@ const LoopTestProgressChart = ({
   const [startY, setStartY] = useState(0);
   const [startHeight, setStartHeight] = useState(400);
   
-  // Sync with external progress filter if provided
-  useEffect(() => {
-    if (progressFilter !== undefined && progressFilter !== localProgressFilter) {
-      handleProgressFilter(progressFilter);
+  // Handle progress filter changes
+  const handleProgressFilter = (filterType) => {
+    if (onProgressFilter) {
+      onProgressFilter(filterType);
     }
-  }, [progressFilter, localProgressFilter, handleProgressFilter]);
-  
-  // Notify parent component of progress filter changes
-  useEffect(() => {
-    if (onProgressFilter && localProgressFilter !== progressFilter) {
-      onProgressFilter(localProgressFilter);
-    }
-  }, [localProgressFilter, progressFilter, onProgressFilter]);
+  };
   
   // Handle sort changes from GlobalMetricsDisplay
   const handleSortChange = useCallback((field, direction) => {
@@ -208,38 +190,38 @@ const LoopTestProgressChart = ({
       {
         label: 'TOTAL LOOP (Signal)',
         data: sortedCompleteMetrics.map(item => item.totalLoops),
-        backgroundColor: localProgressFilter && localProgressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
-        borderColor: localProgressFilter && localProgressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
+        backgroundColor: progressFilter && progressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
+        borderColor: progressFilter && progressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
         borderWidth: 1,
         sortField: 'totalLoops',
-        hidden: localProgressFilter && localProgressFilter !== 'TOTAL LOOP (Signal)'
+        hidden: progressFilter && progressFilter !== 'TOTAL LOOP (Signal)'
       },
       {
         label: 'LOOP (Signal) DONE',
         data: sortedCompleteMetrics.map(item => item.loopSignalDone),
-        backgroundColor: localProgressFilter && localProgressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
-        borderColor: localProgressFilter && localProgressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
+        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
+        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
         borderWidth: 1,
         sortField: 'loopSignalDone',
-        hidden: localProgressFilter && localProgressFilter !== 'LOOP (Signal) DONE'
+        hidden: progressFilter && progressFilter !== 'LOOP (Signal) DONE'
       },
       {
         label: 'LOOP (Signal) PENDING',
         data: sortedCompleteMetrics.map(item => item.loopsSignalPending),
-        backgroundColor: localProgressFilter && localProgressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
-        borderColor: localProgressFilter && localProgressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
+        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
+        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
         borderWidth: 1,
         sortField: 'loopsSignalPending',
-        hidden: localProgressFilter && localProgressFilter !== 'LOOP (Signal) PENDING'
+        hidden: progressFilter && progressFilter !== 'LOOP (Signal) PENDING'
       },
       {
         label: 'DOSSIER COMPLETED',
         data: sortedCompleteMetrics.map(item => item.dossierCompleted),
-        backgroundColor: localProgressFilter && localProgressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#B9D4AA',
-        borderColor: localProgressFilter && localProgressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#B9D4AA',
+        backgroundColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#B9D4AA',
+        borderColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#B9D4AA',
         borderWidth: 1,
         sortField: 'dossierCompleted',
-        hidden: localProgressFilter && localProgressFilter !== 'DOSSIER COMPLETED'
+        hidden: progressFilter && progressFilter !== 'DOSSIER COMPLETED'
       }
     ];
     
@@ -260,7 +242,7 @@ const LoopTestProgressChart = ({
       labels: sortedCompleteMetrics.map(item => item.subsPre),
       datasets: allDatasets
     };
-  }, [sortedCompleteMetrics, sortField, localProgressFilter]);
+  }, [sortedCompleteMetrics, sortField, progressFilter]);
   
   // Chart options with memoization
   const options = useMemo(() => {
@@ -365,19 +347,6 @@ const LoopTestProgressChart = ({
 
   return (
     <Box>
-      {/* Multi-value filter panel */}
-      <MultiValueFilterPanel
-        areas={filterOptions[filterMappings.area] || []}
-        subsystems={filterOptions[filterMappings.subsystem] || []}
-        multiFilters={multiFilters}
-        onFilterChange={handleFilterChange}
-        filterMappings={filterMappings}
-        progressFilter={localProgressFilter}
-        onResetAll={resetAllFilters}
-        metadata={metadata}
-        relationshipMaps={relationshipMaps}
-      />
-      
       {/* Chart container */}
       <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" mt={4}>
         <Heading size="md" mb={2}>LOOP TEST PROGRESS</Heading>
@@ -386,11 +355,11 @@ const LoopTestProgressChart = ({
         <VStack mb={4} align="flex-start">
           <Text fontSize="sm">
             <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
-            {!localProgressFilter && (
+            {!progressFilter && (
               <Badge ml={2} colorScheme="green">Showing: All Metrics</Badge>
             )}
-            {localProgressFilter && (
-              <Badge ml={2} colorScheme="orange">Isolated: {localProgressFilter}</Badge>
+            {progressFilter && (
+              <Badge ml={2} colorScheme="orange">Isolated: {progressFilter}</Badge>
             )}
           </Text>
         </VStack>
@@ -399,7 +368,7 @@ const LoopTestProgressChart = ({
         <GlobalMetricsDisplay 
           data={filteredData} 
           onProgressFilter={handleProgressFilter}
-          progressFilter={localProgressFilter}
+          progressFilter={progressFilter}
           sortField={sortField}
           sortDirection={sortDirection}
           onSortChange={handleSortChange}

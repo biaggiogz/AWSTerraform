@@ -8,6 +8,7 @@ import {
   Button,
   HStack,
   Text,
+  Badge,
 } from '@chakra-ui/react';
 import { RepeatIcon } from '@chakra-ui/icons';
 import Select from 'react-select';
@@ -15,91 +16,14 @@ import Select from 'react-select';
 const FilterPanel = ({
   areas,
   subsystems,
-  filters,
+  multiFilters,
   onFilterChange,
-  data,
   filterMappings,
   progressFilter,
   onResetAll,
+  metadata,
+  relationshipMaps,
 }) => {
-  // Process data to create mappings using memoization
-  const { areaToSubsystems, subsystemToAreas } = useMemo(() => {
-    if (!data || data.length === 0 || !filterMappings) {
-      return { areaToSubsystems: {}, subsystemToAreas: {} };
-    }
-
-    const areaMap = {};
-    const subsystemMap = {};
-
-    // Single pass through data to build both maps
-    for (let i = 0; i < data.length; i++) {
-      const item = data[i];
-      const area = item[filterMappings.area];
-      const subsystem = item[filterMappings.subsystem];
-
-      if (area && subsystem) {
-        if (!areaMap[area]) areaMap[area] = new Set();
-        areaMap[area].add(subsystem);
-
-        if (!subsystemMap[subsystem]) subsystemMap[subsystem] = new Set();
-        subsystemMap[subsystem].add(area);
-      }
-    }
-
-    // Convert Sets to Arrays
-    const processedAreaMap = {};
-    Object.keys(areaMap).forEach(area => {
-      processedAreaMap[area] = Array.from(areaMap[area]);
-    });
-
-    const processedSubsystemMap = {};
-    Object.keys(subsystemMap).forEach(subsystem => {
-      processedSubsystemMap[subsystem] = Array.from(subsystemMap[subsystem]);
-    });
-
-    return {
-      areaToSubsystems: processedAreaMap,
-      subsystemToAreas: processedSubsystemMap
-    };
-  }, [data, filterMappings]);
-
-  const resetFilters = () => {
-    if (onResetAll) {
-      onResetAll();
-    } else {
-      onFilterChange('area', '');
-      onFilterChange('subsystem', '');
-    }
-  };
-
-  // Memoize options to prevent unnecessary recalculations
-  const areaOptions = useMemo(() => {
-    return areas.map(area => ({
-      label: area,
-      value: area,
-      isDisabled:
-        filters.subsystem &&
-        !subsystemToAreas[filters.subsystem]?.includes(area),
-      isHighlighted:
-        filters.subsystem &&
-        subsystemToAreas[filters.subsystem]?.includes(area),
-    }));
-  }, [areas, filters.subsystem, subsystemToAreas]);
-
-  const subsystemOptions = useMemo(() => {
-    return subsystems.map(subsystem => ({
-      label: subsystem,
-      value: subsystem,
-      isDisabled:
-        filters.area &&
-        !areaToSubsystems[filters.area]?.includes(subsystem),
-      isHighlighted:
-        filters.area &&
-        areaToSubsystems[filters.area]?.includes(subsystem),
-    }));
-  }, [subsystems, filters.area, areaToSubsystems]);
-  
-  // Get the appropriate labels for the filter fields based on the current mappings
   const getAreaLabel = () => {
     if (filterMappings && filterMappings.area) {
       if (filterMappings.area === 'Area') return 'Area';
@@ -116,33 +40,103 @@ const FilterPanel = ({
     return 'Subsystem';
   };
 
+  const areaValues = useMemo(() => {
+    const areaField = filterMappings?.area || 'Area';
+    return multiFilters[areaField] || [];
+  }, [multiFilters, filterMappings]);
+
+  const subsystemValues = useMemo(() => {
+    const subsystemField = filterMappings?.subsystem || 'SUBSYSTEM';
+    return multiFilters[subsystemField] || [];
+  }, [multiFilters, filterMappings]);
+
+  const areaOptions = useMemo(() => {
+    return areas.map(area => {
+      let isDisabled = false;
+      if (subsystemValues.length > 0 && relationshipMaps) {
+        const mapKey = `${filterMappings.subsystem}To${filterMappings.area}`;
+        const relatedAreas = new Set();
+        
+        subsystemValues.forEach(subsystem => {
+          if (relationshipMaps[mapKey] && relationshipMaps[mapKey][subsystem]) {
+            relationshipMaps[mapKey][subsystem].forEach(relatedArea => {
+              relatedAreas.add(relatedArea);
+            });
+          }
+        });
+        
+        isDisabled = !relatedAreas.has(area);
+      }
+      
+      return {
+        label: area,
+        value: area,
+        isDisabled,
+      };
+    });
+  }, [areas, subsystemValues, relationshipMaps, filterMappings]);
+
+  const subsystemOptions = useMemo(() => {
+    return subsystems.map(subsystem => {
+      let isDisabled = false;
+      if (areaValues.length > 0 && relationshipMaps) {
+        const mapKey = `${filterMappings.area}To${filterMappings.subsystem}`;
+        const relatedSubsystems = new Set();
+        
+        areaValues.forEach(area => {
+          if (relationshipMaps[mapKey] && relationshipMaps[mapKey][area]) {
+            relationshipMaps[mapKey][area].forEach(relatedSubsystem => {
+              relatedSubsystems.add(relatedSubsystem);
+            });
+          }
+        });
+        
+        isDisabled = !relatedSubsystems.has(subsystem);
+      }
+      
+      return {
+        label: subsystem,
+        value: subsystem,
+        isDisabled,
+      };
+    });
+  }, [subsystems, areaValues, relationshipMaps, filterMappings]);
+
   const customStyles = {
+    multiValue: (provided) => ({
+      ...provided,
+      backgroundColor: '#68D391',
+    }),
+    multiValueLabel: (provided) => ({
+      ...provided,
+      color: '#1A202C',
+    }),
+    multiValueRemove: (provided) => ({
+      ...provided,
+      color: '#1A202C',
+      ':hover': {
+        backgroundColor: '#38A169',
+        color: 'white',
+      },
+    }),
+    control: (provided) => ({
+      ...provided,
+      backgroundColor: '#EDF2F7',
+      borderColor: '#CBD5E0',
+      boxShadow: 'none',
+      ':hover': {
+        borderColor: '#319795',
+      },
+    }),
     option: (provided, state) => ({
       ...provided,
       backgroundColor: state.isSelected
-        ? '#68D391' // green.300
-        : state.data.isHighlighted
-        ? '#C6F6D5' // green.100
+        ? '#68D391'
+        : state.isFocused
+        ? '#C6F6D5'
         : undefined,
-      color: state.isDisabled ? '#A0AEC0' : '#1A202C', // gray.600 or default
+      color: state.isDisabled ? '#A0AEC0' : '#1A202C',
       cursor: state.isDisabled ? 'not-allowed' : 'default',
-    }),
-    control: (provided, state) => ({
-      ...provided,
-      backgroundColor:
-        state.selectProps.name === 'area'
-          ? filters.area
-            ? '#68D391'
-            : filters.subsystem
-            ? '#C6F6D5'
-            : '#EDF2F7'
-          : filters.subsystem
-          ? '#68D391'
-          : filters.area
-          ? '#C6F6D5'
-          : '#EDF2F7',
-      borderColor: state.isFocused ? '#319795' : '#CBD5E0',
-      boxShadow: state.isFocused ? '0 0 0 1px #319795' : undefined,
     }),
     menuPortal: (provided) => ({
       ...provided,
@@ -169,16 +163,22 @@ const FilterPanel = ({
           leftIcon={<RepeatIcon />}
           colorScheme="blue"
           variant="outline"
-          onClick={resetFilters}
+          onClick={onResetAll}
         >
           Reset
         </Button>
       </HStack>
 
-      {progressFilter && (
+      {metadata && (
         <Box mb={4} p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
-          <Text fontSize="sm" fontWeight="medium" color="blue.700">Filter Active: {progressFilter}
-          </Text>
+          <Stack spacing={1}>
+            <Text fontSize="sm" fontWeight="medium" color="blue.700">
+              Showing {metadata.filteredCount} of {metadata.totalCount} items
+            </Text>
+            {progressFilter && (
+              <Badge colorScheme="orange">Filter: {progressFilter}</Badge>
+            )}
+          </Stack>
         </Box>
       )}
 
@@ -186,26 +186,24 @@ const FilterPanel = ({
         <FormControl>
           <FormLabel>{getAreaLabel()}</FormLabel>
           <Select
+            isMulti
             name="area"
-            placeholder={filterMappings && filterMappings.area === 'TEST PACK' ? "All Test Packs" : "All Areas"}
-            value={
-              filters.area
-                ? { label: filters.area, value: filters.area }
-                : null
-            }
-            onChange={(option) =>
-              onFilterChange('area', option ? option.value : '')
-            }
+            placeholder={filterMappings && filterMappings.area === 'TEST PACK' ? "Select Test Packs" : "Select Areas"}
+            value={areaValues.map(value => ({ label: value, value }))}
+            onChange={(options) => {
+              const values = options ? options.map(option => option.value) : [];
+              onFilterChange('area', values);
+            }}
             options={areaOptions}
-            isClearable
             styles={customStyles}
             isSearchable
+            closeMenuOnSelect={false}
             menuPortalTarget={document.body}
           />
-          {filters.area && (
+          {areaValues.length > 0 && (
             <Text fontSize="xs" color="green.600" mt={1}>
-              Showing {areaToSubsystems[filters.area]?.length || 0} related
-              subsystems
+              Selected {areaValues.length} {getAreaLabel().toLowerCase()}
+              {areaValues.length !== 1 ? 's' : ''}
             </Text>
           )}
         </FormControl>
@@ -213,26 +211,24 @@ const FilterPanel = ({
         <FormControl>
           <FormLabel>{getSubsystemLabel()}</FormLabel>
           <Select
+            isMulti
             name="subsystem"
-            placeholder="All Subsystems"
-            value={
-              filters.subsystem
-                ? { label: filters.subsystem, value: filters.subsystem }
-                : null
-            }
-            onChange={(option) =>
-              onFilterChange('subsystem', option ? option.value : '')
-            }
+            placeholder="Select Subsystems"
+            value={subsystemValues.map(value => ({ label: value, value }))}
+            onChange={(options) => {
+              const values = options ? options.map(option => option.value) : [];
+              onFilterChange('subsystem', values);
+            }}
             options={subsystemOptions}
-            isClearable
             styles={customStyles}
             isSearchable
+            closeMenuOnSelect={false}
             menuPortalTarget={document.body}
           />
-          {filters.subsystem && (
+          {subsystemValues.length > 0 && (
             <Text fontSize="xs" color="green.600" mt={1}>
-              Showing {subsystemToAreas[filters.subsystem]?.length || 0}{' '}
-              related areas
+              Selected {subsystemValues.length} subsystem
+              {subsystemValues.length !== 1 ? 's' : ''}
             </Text>
           )}
         </FormControl>
