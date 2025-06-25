@@ -22,8 +22,7 @@ import {
   Td,
   TableContainer,
   Spinner,
-  Progress,
-  Button
+  Progress
 } from '@chakra-ui/react';
 import Papa from 'papaparse'; // You'll need to install this: npm install papaparse
 
@@ -41,39 +40,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Function to export table data to CSV
-  const exportTableToCSV = () => {
-    // Prepare data for export - create a flattened version without nested structures
-    const exportData = subsystemProgressData.map(row => ({
-      SUBSYSTEM: row.subsystem,
-      TOTAL_ITEMS: row.aislTotalItems,
-      DONE_ITEMS: row.aislDoneItems,
-      PENDING_ITEMS: row.aislPendingItems,
-      PROGRESS_ITEMS_PERCENT: row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0,
-      DESCRIPTION: row.description || '',
-      NUM_TEST_PACKS: row.numTestPacks,
-      TEST_PACK: row.testPack || '',
-      TEST_PACK_PROGRESS: Math.round(row.testPackProgress),
-      TOTAL_LOOPS: row.totalLoops,
-      DONE_LOOPS: row.doneLoops,
-      PENDING_LOOPS: row.pendingLoops,
-      PROGRESS_LOOPS_PERCENT: row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0
-    }));
-    
-    // Convert to CSV using Papa Parse
-    const csv = Papa.unparse(exportData);
-    
-    // Create download link
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'subsystem_progress_overview.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+
 
   // Load CSV data directly or use filtered data if provided
   useEffect(() => {
@@ -270,7 +237,29 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
     // Create expanded data with test pack rows
     const expandedData = [];
     
-    Object.entries(subsystemStats).forEach(([subsystem, stats]) => {
+    // First, collect all unique subsystems from both data sources
+    const allSubsystems = new Set();
+    
+    // Add subsystems from main pipeline data
+    Object.keys(subsystemStats).forEach(subsystem => {
+      allSubsystems.add(subsystem);
+    });
+    
+    // Add subsystems from loop data that might not be in main data
+    Object.keys(loopStats).forEach(subsystem => {
+      allSubsystems.add(subsystem);
+    });
+    
+    // Process all subsystems
+    Array.from(allSubsystems).forEach(subsystem => {
+      // Get stats from main data (might be empty if subsystem only exists in loop data)
+      const stats = subsystemStats[subsystem] || {
+        totalItems: 0,
+        doneItems: 0,
+        testPacks: new Set(),
+        testPackProgressValues: {}
+      };
+      
       // Get aislamientos stats for this subsystem
       const aislStat = aislStats[subsystem] || { totalItems: 0, doneItems: 0 };
       
@@ -368,6 +357,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
     const testPackCounts = {};
     const subsystemCounts = {};
 
+    // Process main data
     data.forEach(item => {
       if (item['TEST PACK']) {
         testPacks.add(item['TEST PACK']);
@@ -381,6 +371,19 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         designAreas.add(item['Design Area']);
       }
     });
+    
+    // Also include subsystems from loop data that might not be in main data
+    if (loopData && loopData.length > 0) {
+      loopData.forEach(item => {
+        if (item['SUBS_PRE']) {
+          subsystems.add(item['SUBS_PRE']);
+          // If this subsystem doesn't exist in main data, initialize its count
+          if (!subsystemCounts[item['SUBS_PRE']]) {
+            subsystemCounts[item['SUBS_PRE']] = 0;
+          }
+        }
+      });
+    }
 
     return {
       totalRecords: data.length,
@@ -666,17 +669,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         {/* Subsystem Progress Table */}
         <Card>
           <CardBody>
-            <HStack justify="space-between" mb={4}>
-              <Heading size="sm">Subsystem Progress Overview</Heading>
-              <Button
-                size="sm"
-                colorScheme="blue"
-                onClick={() => exportTableToCSV()}
-                leftIcon={<span>📊</span>}
-              >
-                Export CSV
-              </Button>
-            </HStack>
+            <Heading size="sm" mb={4}>Subsystem Progress Overview</Heading>
             <TableContainer>
               <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
                 <Thead bg="gray.50">
