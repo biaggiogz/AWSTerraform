@@ -32,6 +32,7 @@ import Papa from 'papaparse'; // You'll need to install this: npm install papapa
 const SummarySubsystems = () => {
   const [data, setData] = useState([]);
   const [testPackData, setTestPackData] = useState([]);
+  const [aislData, setAislData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -47,6 +48,10 @@ const SummarySubsystems = () => {
         const testPackResponse = await fetch('/data/test_pack_progress.csv');
         const testPackCsvText = await testPackResponse.text();
         
+        // Load aislamientos data
+        const aislResponse = await fetch('/data/aislamientos.csv');
+        const aislCsvText = await aislResponse.text();
+        
         Papa.parse(csvText, {
           header: true,
           complete: (results) => {
@@ -57,7 +62,19 @@ const SummarySubsystems = () => {
               header: true,
               complete: (testPackResults) => {
                 setTestPackData(testPackResults.data);
-                setLoading(false);
+                
+                // Parse aislamientos data
+                Papa.parse(aislCsvText, {
+                  header: true,
+                  complete: (aislResults) => {
+                    setAislData(aislResults.data);
+                    setLoading(false);
+                  },
+                  error: (error) => {
+                    setError(`Error parsing aislamientos CSV: ${error.message}`);
+                    setLoading(false);
+                  }
+                });
               },
               error: (error) => {
                 setError(`Error parsing test pack CSV: ${error.message}`);
@@ -80,9 +97,31 @@ const SummarySubsystems = () => {
   }, []);
   // Calculate subsystem progress statistics with TEST PACK data
   const subsystemProgressData = useMemo(() => {
-    if (!data || data.length === 0 || !testPackData || testPackData.length === 0) {
+    if (!data || data.length === 0 || !testPackData || testPackData.length === 0 || !aislData || aislData.length === 0) {
       return [];
     }
+    
+    // Process aislamientos data according to SQL transformation
+    const aislStats = {};
+    aislData.forEach(item => {
+      const subsystem = item['SUBSYSTEM'];
+      if (!subsystem) return;
+      
+      if (!aislStats[subsystem]) {
+        aislStats[subsystem] = {
+          totalItems: 0,
+          doneItems: 0
+        };
+      }
+      
+      // Count total items per subsystem
+      aislStats[subsystem].totalItems += 1;
+      
+      // Count done items where DONE = 'YES'
+      if (item['DONE'] === 'YES') {
+        aislStats[subsystem].doneItems += 1;
+      }
+    });
 
     const subsystemStats = {};
 
@@ -135,6 +174,8 @@ const SummarySubsystems = () => {
     const expandedData = [];
     
     Object.entries(subsystemStats).forEach(([subsystem, stats]) => {
+      // Get aislamientos stats for this subsystem
+      const aislStat = aislStats[subsystem] || { totalItems: 0, doneItems: 0 };
       const testPacksArray = Array.from(stats.testPacks);
       const numTestPacks = testPacksArray.length;
       
@@ -166,7 +207,10 @@ const SummarySubsystems = () => {
           testPack: null,
           testPackProgress: 0,
           isFirstRow: true,
-          rowSpan: 1
+          rowSpan: 1,
+          aislTotalItems: aislStat.totalItems,
+          aislDoneItems: aislStat.doneItems,
+          aislPendingItems: aislStat.totalItems - aislStat.doneItems
         });
       } else {
         // Create multiple rows for test packs
@@ -180,14 +224,17 @@ const SummarySubsystems = () => {
             testPack: tp.testPack,
             testPackProgress: tp.progress,
             isFirstRow: index === 0,
-            rowSpan: testPackProgress.length
+            rowSpan: testPackProgress.length,
+            aislTotalItems: aislStat.totalItems,
+            aislDoneItems: aislStat.doneItems,
+            aislPendingItems: aislStat.totalItems - aislStat.doneItems
           });
         });
       }
     });
 
     return expandedData.sort((a, b) => b.totalItems - a.totalItems);
-  }, [data, testPackData]);
+  }, [data, testPackData, aislData]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
@@ -268,7 +315,6 @@ const SummarySubsystems = () => {
       <VStack spacing={6} align="stretch">
         <Box textAlign="center">
           <Heading size="lg" mb={2}>Summary Subsystems</Heading>
-          <Text color="gray.600">Overview of pipeline data by Test Pack and Subsystem</Text>
         </Box>
 
         {/* Summary Statistics */}
@@ -381,7 +427,7 @@ const SummarySubsystems = () => {
                             }}
                           >
                             <Text fontSize="sm" fontWeight="semibold">
-                              {row.totalItems.toLocaleString()}
+                              {row.aislTotalItems.toLocaleString()}
                             </Text>
                           </Td>
                         )}
@@ -399,7 +445,7 @@ const SummarySubsystems = () => {
                             }}
                           >
                             <Badge colorScheme="green" variant="outline">
-                              {row.doneItems.toLocaleString()}
+                              {row.aislDoneItems.toLocaleString()}
                             </Badge>
                           </Td>
                         )}
@@ -417,7 +463,7 @@ const SummarySubsystems = () => {
                             }}
                           >
                             <Badge colorScheme="orange" variant="outline">
-                              {row.pendingItems.toLocaleString()}
+                              {row.aislPendingItems.toLocaleString()}
                             </Badge>
                           </Td>
                         )}
@@ -435,10 +481,12 @@ const SummarySubsystems = () => {
                             }}
                           >
                             <Badge 
-                              colorScheme={progressPercent === 100 ? "green" : progressPercent > 50 ? "yellow" : "red"}
+                              colorScheme={row.aislTotalItems > 0 ? 
+                                (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green" : 
+                                 row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "yellow" : "red") : "gray"}
                               variant="solid"
                             >
-                              {progressPercent}%
+                              {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
                             </Badge>
                           </Td>
                         )}
@@ -574,14 +622,7 @@ const SummarySubsystems = () => {
             </CardBody>
           </Card>
         </SimpleGrid>
-
-        {/* Data Source Information */}
-        <Box bg="gray.50" p={4} borderRadius="md">
-          <Text fontSize="sm" color="gray.600" textAlign="center">
-            <strong>Data Source:</strong> pipelinedata.csv, test_pack_progress.csv | 
-            <strong>SQL Logic:</strong> Implements unnest(string_to_array(TEST PACK, '|')) with row merging and vertical centering
-          </Text>
-        </Box>
+        
       </VStack>
     </Box>
   );

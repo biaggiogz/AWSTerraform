@@ -1,11 +1,10 @@
-# ADD TEST PACK COLUMNS TO EXISTING TABLE IN SUMMARY SUBSYSTEMS COMPONENT
+# ADD LOOP COLUMNS TO EXISTING TABLE IN SummarySubsystems.js
 
 ## TASK DESCRIPTION
-- Enhance the existing table in the SummarySubsystems.js component by adding TEST PACK data columns, ensuring proper row merging and centered values in merged cells.
-- FOR THIS TASK , IGNORE COLUMNS [TOTAL LOOP Signal), LOOP (Signal) DONE, LOOP (Signal) PENDING, SERVICE]
+- Enhance the existing table in the SummarySubsystems.js component by adding LOOP columns, ensuring proper row merging and centered values in merged cells.
 
 ## DATA SOURCE AND TRANSFORMATION
-- **Source File**: `data/pipelinedata.csv`
+- **DATA_3**: `data/test_of_lazos_updated.csv`
 - **SQL Transformation**:
 ```sql
 SELECT  
