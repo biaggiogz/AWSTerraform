@@ -28,62 +28,83 @@ import Papa from 'papaparse'; // You'll need to install this: npm install papapa
 
 /**
  * Summary Subsystems component showing aggregated data directly from CSV
+ * @param {Object} props - Component props
+ * @param {Array} props.data - Filtered dataset from parent component
  */
-const SummarySubsystems = () => {
+const SummarySubsystems = ({ data: filteredData = [] }) => {
   const [data, setData] = useState([]);
   const [testPackData, setTestPackData] = useState([]);
   const [aislData, setAislData] = useState([]);
+  const [loopData, setLoopData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load CSV data directly
+  // Load CSV data directly or use filtered data if provided
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Load main data
-        const response = await fetch('/data/pipelinedata.csv');
-        const csvText = await response.text();
+        // Use filtered data if available, otherwise fetch from CSV
+        if (filteredData && filteredData.length > 0) {
+          setData(filteredData);
+        } else {
+          // Load main data from CSV if no filtered data
+          const response = await fetch('/data/pipelinedata.csv');
+          const csvText = await response.text();
+          
+          Papa.parse(csvText, {
+            header: true,
+            complete: (results) => {
+              setData(results.data);
+            },
+            error: (error) => {
+              setError(`Error parsing CSV: ${error.message}`);
+            }
+          });
+        }
         
-        // Load test pack data
+        // Always load these supporting datasets
         const testPackResponse = await fetch('/data/test_pack_progress.csv');
         const testPackCsvText = await testPackResponse.text();
         
-        // Load aislamientos data
         const aislResponse = await fetch('/data/aislamientos.csv');
         const aislCsvText = await aislResponse.text();
         
-        Papa.parse(csvText, {
+        const loopResponse = await fetch('/data/test_of_lazos_updated.csv');
+        const loopCsvText = await loopResponse.text();
+        
+        // Parse test pack data
+        Papa.parse(testPackCsvText, {
           header: true,
-          complete: (results) => {
-            setData(results.data);
+          complete: (testPackResults) => {
+            setTestPackData(testPackResults.data);
             
-            // Parse test pack data
-            Papa.parse(testPackCsvText, {
+            // Parse aislamientos data
+            Papa.parse(aislCsvText, {
               header: true,
-              complete: (testPackResults) => {
-                setTestPackData(testPackResults.data);
+              complete: (aislResults) => {
+                setAislData(aislResults.data);
                 
-                // Parse aislamientos data
-                Papa.parse(aislCsvText, {
+                // Parse loop data
+                Papa.parse(loopCsvText, {
                   header: true,
-                  complete: (aislResults) => {
-                    setAislData(aislResults.data);
+                  complete: (loopResults) => {
+                    setLoopData(loopResults.data);
                     setLoading(false);
                   },
                   error: (error) => {
-                    setError(`Error parsing aislamientos CSV: ${error.message}`);
+                    setError(`Error parsing loop CSV: ${error.message}`);
                     setLoading(false);
                   }
                 });
               },
               error: (error) => {
-                setError(`Error parsing test pack CSV: ${error.message}`);
+                setError(`Error parsing aislamientos CSV: ${error.message}`);
                 setLoading(false);
               }
             });
           },
           error: (error) => {
-            setError(`Error parsing CSV: ${error.message}`);
+            setError(`Error parsing test pack CSV: ${error.message}`);
             setLoading(false);
           }
         });
@@ -94,10 +115,10 @@ const SummarySubsystems = () => {
     };
 
     fetchData();
-  }, []);
+  }, [filteredData]);
   // Calculate subsystem progress statistics with TEST PACK data
   const subsystemProgressData = useMemo(() => {
-    if (!data || data.length === 0 || !testPackData || testPackData.length === 0 || !aislData || aislData.length === 0) {
+    if (!data || data.length === 0 || !testPackData || testPackData.length === 0 || !aislData || aislData.length === 0 || !loopData || loopData.length === 0) {
       return [];
     }
     
@@ -120,6 +141,31 @@ const SummarySubsystems = () => {
       // Count done items where DONE = 'YES'
       if (item['DONE'] === 'YES') {
         aislStats[subsystem].doneItems += 1;
+      }
+    });
+    
+    // Process loop data according to SQL transformation
+    const loopStats = {};
+    loopData.forEach(item => {
+      const subsystem = item['SUBS_PRE'];
+      if (!subsystem) return;
+      
+      if (!loopStats[subsystem]) {
+        loopStats[subsystem] = {
+          totalLoops: 0,
+          doneLoops: 0,
+          pendingLoops: 0
+        };
+      }
+      
+      // Count total loops per subsystem
+      loopStats[subsystem].totalLoops += 1;
+      
+      // Count done loops where OK=100% = '100.00%'
+      if (item['OK=100%'] === '100.00%') {
+        loopStats[subsystem].doneLoops += 1;
+      } else {
+        loopStats[subsystem].pendingLoops += 1;
       }
     });
 
@@ -176,6 +222,9 @@ const SummarySubsystems = () => {
     Object.entries(subsystemStats).forEach(([subsystem, stats]) => {
       // Get aislamientos stats for this subsystem
       const aislStat = aislStats[subsystem] || { totalItems: 0, doneItems: 0 };
+      
+      // Get loop stats for this subsystem
+      const loopStat = loopStats[subsystem] || { totalLoops: 0, doneLoops: 0, pendingLoops: 0 };
       const testPacksArray = Array.from(stats.testPacks);
       const numTestPacks = testPacksArray.length;
       
@@ -210,7 +259,10 @@ const SummarySubsystems = () => {
           rowSpan: 1,
           aislTotalItems: aislStat.totalItems,
           aislDoneItems: aislStat.doneItems,
-          aislPendingItems: aislStat.totalItems - aislStat.doneItems
+          aislPendingItems: aislStat.totalItems - aislStat.doneItems,
+          totalLoops: loopStat.totalLoops,
+          doneLoops: loopStat.doneLoops,
+          pendingLoops: loopStat.pendingLoops
         });
       } else {
         // Create multiple rows for test packs
@@ -227,14 +279,17 @@ const SummarySubsystems = () => {
             rowSpan: testPackProgress.length,
             aislTotalItems: aislStat.totalItems,
             aislDoneItems: aislStat.doneItems,
-            aislPendingItems: aislStat.totalItems - aislStat.doneItems
+            aislPendingItems: aislStat.totalItems - aislStat.doneItems,
+            totalLoops: loopStat.totalLoops,
+            doneLoops: loopStat.doneLoops,
+            pendingLoops: loopStat.pendingLoops
           });
         });
       }
     });
 
     return expandedData.sort((a, b) => b.totalItems - a.totalItems);
-  }, [data, testPackData, aislData]);
+  }, [data, testPackData, aislData, loopData]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
@@ -382,9 +437,29 @@ const SummarySubsystems = () => {
                         TP's<br />INCLUDE
                       </Text>
                     </Th>
-                    <Th>
+                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
                       <Text align="center">
                         PROGRESS<br />TEST PACK
+                      </Text>
+                    </Th>
+                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
+                      <Text align="center">
+                        TOTAL LOOP<br />(Signal)
+                      </Text>
+                    </Th>
+                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
+                      <Text align="center">
+                        LOOP (Signal)<br />DONE
+                      </Text>
+                    </Th>
+                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
+                      <Text align="center">
+                        LOOP (Signal)<br />PENDING
+                      </Text>
+                    </Th>
+                    <Th isNumeric>
+                      <Text align="center">
+                        PROGRESS<br />LOOPS%
                       </Text>
                     </Th>
                   </Tr>
@@ -521,7 +596,7 @@ const SummarySubsystems = () => {
                         </Td>
                         
                         {/* PROGRESS TEST PACK - Individual cell per row */}
-                        <Td style={{ padding: '8px', textAlign: 'center' }}>
+                        <Td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #e2e8f0' }}>
                           {row.testPack && (
                             <Box position="relative" width="100px" margin="0 auto">
                               <Progress 
@@ -546,6 +621,82 @@ const SummarySubsystems = () => {
                             </Box>
                           )}
                         </Td>
+                        
+                        {/* TOTAL LOOP (Signal) - Merged cell */}
+                        {row.isFirstRow && (
+                          <Td 
+                            isNumeric 
+                            rowSpan={row.rowSpan}
+                            style={{ 
+                              verticalAlign: 'middle',
+                              textAlign: 'center',
+                              backgroundColor: '#f7fafc',
+                              borderRight: '1px solid #e2e8f0'
+                            }}
+                          >
+                            <Text fontSize="sm" fontWeight="semibold">
+                              {row.totalLoops.toLocaleString()}
+                            </Text>
+                          </Td>
+                        )}
+                        
+                        {/* LOOP (Signal) DONE - Merged cell */}
+                        {row.isFirstRow && (
+                          <Td 
+                            isNumeric 
+                            rowSpan={row.rowSpan}
+                            style={{ 
+                              verticalAlign: 'middle',
+                              textAlign: 'center',
+                              backgroundColor: '#f7fafc',
+                              borderRight: '1px solid #e2e8f0'
+                            }}
+                          >
+                            <Badge colorScheme="green" variant="outline">
+                              {row.doneLoops.toLocaleString()}
+                            </Badge>
+                          </Td>
+                        )}
+                        
+                        {/* LOOP (Signal) PENDING - Merged cell */}
+                        {row.isFirstRow && (
+                          <Td 
+                            isNumeric 
+                            rowSpan={row.rowSpan}
+                            style={{ 
+                              verticalAlign: 'middle',
+                              textAlign: 'center',
+                              backgroundColor: '#f7fafc',
+                              borderRight: '1px solid #e2e8f0'
+                            }}
+                          >
+                            <Badge colorScheme="orange" variant="outline">
+                              {row.pendingLoops.toLocaleString()}
+                            </Badge>
+                          </Td>
+                        )}
+                        
+                        {/* PROGRESS LOOPS% - Merged cell */}
+                        {row.isFirstRow && (
+                          <Td 
+                            isNumeric 
+                            rowSpan={row.rowSpan}
+                            style={{ 
+                              verticalAlign: 'middle',
+                              textAlign: 'center',
+                              backgroundColor: '#f7fafc'
+                            }}
+                          >
+                            <Badge 
+                              colorScheme={row.totalLoops > 0 ? 
+                                (row.doneLoops / row.totalLoops * 100 === 100 ? "green" : 
+                                 row.doneLoops / row.totalLoops * 100 > 50 ? "yellow" : "red") : "gray"}
+                              variant="solid"
+                            >
+                              {row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%
+                            </Badge>
+                          </Td>
+                        )}
                         
 
                       </Tr>
@@ -622,6 +773,14 @@ const SummarySubsystems = () => {
             </CardBody>
           </Card>
         </SimpleGrid>
+
+        {/* Data Source Information */}
+        <Box bg="gray.50" p={4} borderRadius="md">
+          <Text fontSize="sm" color="gray.600" textAlign="center">
+            <strong>Data Source:</strong> pipelinedata.csv, test_pack_progress.csv, aislamientos.csv, test_of_lazos_updated.csv | 
+            <strong>SQL Logic:</strong> Implements unnest(string_to_array(TEST PACK, '|')) with row merging and vertical centering, SQL transformations for aislamientos and loop data
+          </Text>
+        </Box>
         
       </VStack>
     </Box>

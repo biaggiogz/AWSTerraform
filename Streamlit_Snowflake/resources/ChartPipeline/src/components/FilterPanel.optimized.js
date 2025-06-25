@@ -187,7 +187,7 @@ const FilterPanel = ({
           <FormLabel>{getAreaLabel()}</FormLabel>
           <Select
             name="area"
-            placeholder="All Areas"
+            placeholder={filterMappings && filterMappings.area === 'TEST PACK' ? "All Test Packs" : "All Areas"}
             value={
               filters.area
                 ? { label: filters.area, value: filters.area }
