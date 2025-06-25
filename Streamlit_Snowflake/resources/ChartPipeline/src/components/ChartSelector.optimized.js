@@ -34,7 +34,6 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
   const dashboardNames = [
     'LOOP TESTING PROGRESS REPORT',
     'INSULATION PROGRESS CONTROL',
-    'Test Pack Progress',
     'SUMMARY SUBSYSTEMS'
   ];
 
@@ -59,7 +58,6 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
           <TabList mb="1em">
             <Tab>LOOP TESTING PROGRESS REPORT</Tab>
             <Tab>INSULATION PROGRESS CONTROL</Tab>
-            <Tab>Test Pack Progress</Tab>
             <Tab>SUMMARY SUBSYSTEMS</Tab>
           </TabList>
           <TabPanels>
@@ -84,11 +82,7 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
                 </VStack>
               </Suspense>
             </TabPanel>
-            <TabPanel p={0}>
-              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <TestPackProgressChart data={data} />
-              </Suspense>
-            </TabPanel>
+
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
                 <SummarySubsystems data={data} />

@@ -399,6 +399,147 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
     return totalDoneSum;
   }, [subsystemProgressData]);
 
+  // Calculate total pending items from subsystem progress data
+  const totalPendingItemsSum = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    // Create a Set to store unique subsystems to avoid double counting
+    const processedSubsystems = new Set();
+    let totalPendingSum = 0;
+    
+    subsystemProgressData.forEach(row => {
+      // Only count each subsystem once
+      if (!processedSubsystems.has(row.subsystem)) {
+        totalPendingSum += row.aislPendingItems;
+        processedSubsystems.add(row.subsystem);
+      }
+    });
+    
+    return totalPendingSum;
+  }, [subsystemProgressData]);
+
+  // Calculate average progress items percentage
+  const avgProgressItemsPercent = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    const processedSubsystems = new Set();
+    let totalProgress = 0;
+    let count = 0;
+    
+    subsystemProgressData.forEach(row => {
+      if (!processedSubsystems.has(row.subsystem)) {
+        const progress = row.aislTotalItems > 0 ? (row.aislDoneItems / row.aislTotalItems) * 100 : 0;
+        totalProgress += progress;
+        count++;
+        processedSubsystems.add(row.subsystem);
+      }
+    });
+    
+    return count > 0 ? Math.round(totalProgress / count) : 0;
+  }, [subsystemProgressData]);
+
+  // Calculate average test pack progress percentage
+  const avgTestPackProgress = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    let totalProgress = 0;
+    let count = 0;
+    
+    subsystemProgressData.forEach(row => {
+      if (row.testPack && row.testPackProgress > 0) {
+        totalProgress += row.testPackProgress;
+        count++;
+      }
+    });
+    
+    return count > 0 ? Math.round(totalProgress / count) : 0;
+  }, [subsystemProgressData]);
+
+  // Calculate total loops sum
+  const totalLoopsSum = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    const processedSubsystems = new Set();
+    let totalSum = 0;
+    
+    subsystemProgressData.forEach(row => {
+      if (!processedSubsystems.has(row.subsystem)) {
+        totalSum += row.totalLoops;
+        processedSubsystems.add(row.subsystem);
+      }
+    });
+    
+    return totalSum;
+  }, [subsystemProgressData]);
+
+  // Calculate total done loops sum
+  const totalDoneLoopsSum = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    const processedSubsystems = new Set();
+    let totalSum = 0;
+    
+    subsystemProgressData.forEach(row => {
+      if (!processedSubsystems.has(row.subsystem)) {
+        totalSum += row.doneLoops;
+        processedSubsystems.add(row.subsystem);
+      }
+    });
+    
+    return totalSum;
+  }, [subsystemProgressData]);
+
+  // Calculate total pending loops sum
+  const totalPendingLoopsSum = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    const processedSubsystems = new Set();
+    let totalSum = 0;
+    
+    subsystemProgressData.forEach(row => {
+      if (!processedSubsystems.has(row.subsystem)) {
+        totalSum += row.pendingLoops;
+        processedSubsystems.add(row.subsystem);
+      }
+    });
+    
+    return totalSum;
+  }, [subsystemProgressData]);
+
+  // Calculate average loops progress percentage
+  const avgLoopsProgressPercent = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    const processedSubsystems = new Set();
+    let totalProgress = 0;
+    let count = 0;
+    
+    subsystemProgressData.forEach(row => {
+      if (!processedSubsystems.has(row.subsystem)) {
+        const progress = row.totalLoops > 0 ? (row.doneLoops / row.totalLoops) * 100 : 0;
+        totalProgress += progress;
+        count++;
+        processedSubsystems.add(row.subsystem);
+      }
+    });
+    
+    return count > 0 ? Math.round(totalProgress / count) : 0;
+  }, [subsystemProgressData]);
+
   // Get top 5 test packs and subsystems by count
   const topTestPacks = useMemo(() => {
     return Object.entries(summaryStats.testPackBreakdown)
@@ -438,7 +579,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         </Box>
 
         {/* Summary Statistics */}
-        <SimpleGrid columns={{ base: 2, md: 5 }} spacing={4}>
+        <SimpleGrid columns={{ base: 2, md: 11 }} spacing={4}>
           <Stat>
             <StatLabel>Subsystems</StatLabel>
             <StatNumber>{summaryStats.uniqueSubsystems}</StatNumber>
@@ -452,8 +593,36 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
             <StatNumber>{totalDoneItemsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
+            <StatLabel>Total Pending Items</StatLabel>
+            <StatNumber color="orange.500">{totalPendingItemsSum.toLocaleString()}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Avg Progress Items%</StatLabel>
+            <StatNumber color="blue.500">{avgProgressItemsPercent}%</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Avg Test Pack Progress%</StatLabel>
+            <StatNumber color="purple.500">{avgTestPackProgress}%</StatNumber>
+          </Stat>
+          <Stat>
             <StatLabel>Total Test Packs</StatLabel>
             <StatNumber>{summaryStats.uniqueTestPacks}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Total Loops</StatLabel>
+            <StatNumber color="teal.500">{totalLoopsSum.toLocaleString()}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Total Loops Done</StatLabel>
+            <StatNumber color="green.500">{totalDoneLoopsSum.toLocaleString()}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Total Loops Pending</StatLabel>
+            <StatNumber color="orange.500">{totalPendingLoopsSum.toLocaleString()}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Avg Loops Progress%</StatLabel>
+            <StatNumber color="cyan.500">{avgLoopsProgressPercent}%</StatNumber>
           </Stat>
         </SimpleGrid>
 
