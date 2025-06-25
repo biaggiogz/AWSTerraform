@@ -22,7 +22,8 @@ import {
   Td,
   TableContainer,
   Spinner,
-  Progress
+  Progress,
+  Button
 } from '@chakra-ui/react';
 import Papa from 'papaparse'; // You'll need to install this: npm install papaparse
 
@@ -39,6 +40,40 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   const [subsystemsInfoData, setSubsystemsInfoData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Function to export table data to CSV
+  const exportTableToCSV = () => {
+    // Prepare data for export - create a flattened version without nested structures
+    const exportData = subsystemProgressData.map(row => ({
+      SUBSYSTEM: row.subsystem,
+      TOTAL_ITEMS: row.aislTotalItems,
+      DONE_ITEMS: row.aislDoneItems,
+      PENDING_ITEMS: row.aislPendingItems,
+      PROGRESS_ITEMS_PERCENT: row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0,
+      DESCRIPTION: row.description || '',
+      NUM_TEST_PACKS: row.numTestPacks,
+      TEST_PACK: row.testPack || '',
+      TEST_PACK_PROGRESS: Math.round(row.testPackProgress),
+      TOTAL_LOOPS: row.totalLoops,
+      DONE_LOOPS: row.doneLoops,
+      PENDING_LOOPS: row.pendingLoops,
+      PROGRESS_LOOPS_PERCENT: row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0
+    }));
+    
+    // Convert to CSV using Papa Parse
+    const csv = Papa.unparse(exportData);
+    
+    // Create download link
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'subsystem_progress_overview.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Load CSV data directly or use filtered data if provided
   useEffect(() => {
@@ -631,7 +666,17 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         {/* Subsystem Progress Table */}
         <Card>
           <CardBody>
-            <Heading size="sm" mb={4}>Subsystem Progress Overview</Heading>
+            <HStack justify="space-between" mb={4}>
+              <Heading size="sm">Subsystem Progress Overview</Heading>
+              <Button
+                size="sm"
+                colorScheme="blue"
+                onClick={() => exportTableToCSV()}
+                leftIcon={<span>📊</span>}
+              >
+                Export CSV
+              </Button>
+            </HStack>
             <TableContainer>
               <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
                 <Thead bg="gray.50">
