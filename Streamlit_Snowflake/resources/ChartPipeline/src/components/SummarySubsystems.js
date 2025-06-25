@@ -39,8 +39,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   const [subsystemsInfoData, setSubsystemsInfoData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-
 
   // Load CSV data directly or use filtered data if provided
   useEffect(() => {
@@ -237,29 +235,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
     // Create expanded data with test pack rows
     const expandedData = [];
     
-    // First, collect all unique subsystems from both data sources
-    const allSubsystems = new Set();
-    
-    // Add subsystems from main pipeline data
-    Object.keys(subsystemStats).forEach(subsystem => {
-      allSubsystems.add(subsystem);
-    });
-    
-    // Add subsystems from loop data that might not be in main data
-    Object.keys(loopStats).forEach(subsystem => {
-      allSubsystems.add(subsystem);
-    });
-    
-    // Process all subsystems
-    Array.from(allSubsystems).forEach(subsystem => {
-      // Get stats from main data (might be empty if subsystem only exists in loop data)
-      const stats = subsystemStats[subsystem] || {
-        totalItems: 0,
-        doneItems: 0,
-        testPacks: new Set(),
-        testPackProgressValues: {}
-      };
-      
+    Object.entries(subsystemStats).forEach(([subsystem, stats]) => {
       // Get aislamientos stats for this subsystem
       const aislStat = aislStats[subsystem] || { totalItems: 0, doneItems: 0 };
       
@@ -357,7 +333,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
     const testPackCounts = {};
     const subsystemCounts = {};
 
-    // Process main data
     data.forEach(item => {
       if (item['TEST PACK']) {
         testPacks.add(item['TEST PACK']);
@@ -371,19 +346,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         designAreas.add(item['Design Area']);
       }
     });
-    
-    // Also include subsystems from loop data that might not be in main data
-    if (loopData && loopData.length > 0) {
-      loopData.forEach(item => {
-        if (item['SUBS_PRE']) {
-          subsystems.add(item['SUBS_PRE']);
-          // If this subsystem doesn't exist in main data, initialize its count
-          if (!subsystemCounts[item['SUBS_PRE']]) {
-            subsystemCounts[item['SUBS_PRE']] = 0;
-          }
-        }
-      });
-    }
 
     return {
       totalRecords: data.length,

@@ -100,8 +100,8 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
     {
       label: 'DOSSIER COMPLETED',
       value: globalMetrics.dossierCompleted,
-      color: '#D7A0C3',
-      bgColor: 'rgba(215, 160, 195, 0.1)',
+      color: '#B9D4AA',
+      bgColor: 'rgba(185, 212, 170, 1)',
       sortField: 'dossierCompleted'
     }
   ];
