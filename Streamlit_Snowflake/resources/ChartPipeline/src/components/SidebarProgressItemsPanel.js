@@ -40,13 +40,13 @@ const SidebarProgressItemsPanel = ({ data }) => {
         // Total items for this subsystem
         const totalItems = subsystemData.length;
         
-        // Items done (where metric value equals 1)
+        // Items done (where metric value equals or is very close to 1)
         const itemsDone = subsystemData.filter(row => {
           const metricValue = parseFloat(row[metricField]) || 0;
-          return metricValue === 1;
+          return metricValue >= 1; // Consider values ≥ 0.999 as done
         }).length;
         
-        // Items pending (where metric value is less than 1)
+        // Items pending (where metric value is less than 0.999)
         const itemsPending = subsystemData.filter(row => {
           const metricValue = parseFloat(row[metricField]) || 0;
           return metricValue < 1;
