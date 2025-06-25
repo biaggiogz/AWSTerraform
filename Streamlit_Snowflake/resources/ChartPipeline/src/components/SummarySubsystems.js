@@ -632,15 +632,15 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           </Stat>
           <Stat>
             <StatLabel>Total Pending Items</StatLabel>
-            <StatNumber color="orange.500">{totalPendingItemsSum.toLocaleString()}</StatNumber>
+            <StatNumber>{totalPendingItemsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Avg Progress Items%</StatLabel>
-            <StatNumber color="blue.500">{avgProgressItemsPercent}%</StatNumber>
+            <StatNumber>{avgProgressItemsPercent}%</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Avg Test Pack Progress%</StatLabel>
-            <StatNumber color="purple.500">{avgTestPackProgress}%</StatNumber>
+            <StatNumber>{avgTestPackProgress}%</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Total Test Packs</StatLabel>
@@ -648,19 +648,19 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           </Stat>
           <Stat>
             <StatLabel>Total Loops</StatLabel>
-            <StatNumber color="teal.500">{totalLoopsSum.toLocaleString()}</StatNumber>
+            <StatNumber>{totalLoopsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Total Loops Done</StatLabel>
-            <StatNumber color="green.500">{totalDoneLoopsSum.toLocaleString()}</StatNumber>
+            <StatNumber>{totalDoneLoopsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Total Loops Pending</StatLabel>
-            <StatNumber color="orange.500">{totalPendingLoopsSum.toLocaleString()}</StatNumber>
+            <StatNumber>{totalPendingLoopsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
             <StatLabel>Avg Loops Progress%</StatLabel>
-            <StatNumber color="cyan.500">{avgLoopsProgressPercent}%</StatNumber>
+            <StatNumber>{avgLoopsProgressPercent}%</StatNumber>
           </Stat>
         </SimpleGrid>
 
