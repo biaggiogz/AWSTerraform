@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { 
@@ -14,6 +13,8 @@ import {
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import GlobalMetricsDisplay from '../components/GlobalMetricsDisplay';
+import useMultiValueFilter from '../hooks/useMultiValueFilter';
+import MultiValueFilterPanel from '../components/MultiValueFilterPanel';
 
 // Register the plugin
 Chart.register(ChartDataLabels);
@@ -25,10 +26,27 @@ Chart.register(ChartDataLabels);
  * @param {Array} props.rawData - Raw unfiltered dataset for global metrics
  * @param {Function} props.onProgressFilter - Function to handle progress filtering
  * @param {string} props.progressFilter - Current progress filter
+ * @param {Object} props.filterMappings - Mappings for filter fields
  */
-const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter }) => {
-  // State to track the active measure filter - sync with external progressFilter
-  const [activeFilter, setActiveFilter] = useState(progressFilter);
+const LoopTestProgressChart = ({ 
+  data, 
+  rawData, 
+  onProgressFilter, 
+  progressFilter,
+  filterMappings = { area: 'Area', subsystem: 'SUBS_PRE' }
+}) => {
+  // Use the multi-value filter hook
+  const {
+    filteredData,
+    metadata,
+    filterOptions,
+    relationshipMaps,
+    multiFilters,
+    progressFilter: localProgressFilter,
+    handleFilterChange,
+    handleProgressFilter,
+    resetAllFilters
+  } = useMultiValueFilter(rawData || data, filterMappings);
   
   // State for sort field and direction
   const [sortField, setSortField] = useState('totalLoops');
@@ -46,10 +64,19 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
   const [startY, setStartY] = useState(0);
   const [startHeight, setStartHeight] = useState(400);
   
-  // Sync activeFilter with external progressFilter
+  // Sync with external progress filter if provided
   useEffect(() => {
-    setActiveFilter(progressFilter);
-  }, [progressFilter]);
+    if (progressFilter !== undefined && progressFilter !== localProgressFilter) {
+      handleProgressFilter(progressFilter);
+    }
+  }, [progressFilter, localProgressFilter, handleProgressFilter]);
+  
+  // Notify parent component of progress filter changes
+  useEffect(() => {
+    if (onProgressFilter && localProgressFilter !== progressFilter) {
+      onProgressFilter(localProgressFilter);
+    }
+  }, [localProgressFilter, progressFilter, onProgressFilter]);
   
   // Handle sort changes from GlobalMetricsDisplay
   const handleSortChange = useCallback((field, direction) => {
@@ -90,13 +117,13 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
   
   // Calculate metrics with optimized processing
   const metrics = useMemo(() => {
-    if (!data || data.length === 0) return [];
+    if (!filteredData || filteredData.length === 0) return [];
     
     // Pre-process data for faster lookups
     const groupedData = {};
     
     // Single pass through data for all metrics
-    data.forEach(item => {
+    filteredData.forEach(item => {
       const subsPre = item['SUBS_PRE'];
       if (!subsPre) return;
       
@@ -139,7 +166,7 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
         subsPre,
         ...values
       }));
-  }, [data]);
+  }, [filteredData]);
   
   // Create complete sorted metrics for chart data (unaffected by filtering)
   const sortedCompleteMetrics = useMemo(() => {
@@ -149,8 +176,6 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
       return sortDirection === 'desc' ? bValue - aValue : aValue - bValue;
     });
   }, [metrics, sortField, sortDirection]);
-  
-
   
   // Update chart when filters change
   useEffect(() => {
@@ -183,38 +208,38 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
       {
         label: 'TOTAL LOOP (Signal)',
         data: sortedCompleteMetrics.map(item => item.totalLoops),
-        backgroundColor: progressFilter && progressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
-        borderColor: progressFilter && progressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
+        backgroundColor: localProgressFilter && localProgressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
+        borderColor: localProgressFilter && localProgressFilter !== 'TOTAL LOOP (Signal)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
         borderWidth: 1,
         sortField: 'totalLoops',
-        hidden: progressFilter && progressFilter !== 'TOTAL LOOP (Signal)'
+        hidden: localProgressFilter && localProgressFilter !== 'TOTAL LOOP (Signal)'
       },
       {
         label: 'LOOP (Signal) DONE',
         data: sortedCompleteMetrics.map(item => item.loopSignalDone),
-        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
-        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
+        backgroundColor: localProgressFilter && localProgressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
+        borderColor: localProgressFilter && localProgressFilter !== 'LOOP (Signal) DONE' ? 'rgba(29, 233, 182, 1)' : '#1DE9B6',
         borderWidth: 1,
         sortField: 'loopSignalDone',
-        hidden: progressFilter && progressFilter !== 'LOOP (Signal) DONE'
+        hidden: localProgressFilter && localProgressFilter !== 'LOOP (Signal) DONE'
       },
       {
         label: 'LOOP (Signal) PENDING',
         data: sortedCompleteMetrics.map(item => item.loopsSignalPending),
-        backgroundColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
-        borderColor: progressFilter && progressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
+        backgroundColor: localProgressFilter && localProgressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
+        borderColor: localProgressFilter && localProgressFilter !== 'LOOP (Signal) PENDING' ? 'rgba(255, 22, 139, 1)' : '#FF168B',
         borderWidth: 1,
         sortField: 'loopsSignalPending',
-        hidden: progressFilter && progressFilter !== 'LOOP (Signal) PENDING'
+        hidden: localProgressFilter && localProgressFilter !== 'LOOP (Signal) PENDING'
       },
       {
         label: 'DOSSIER COMPLETED',
         data: sortedCompleteMetrics.map(item => item.dossierCompleted),
-        backgroundColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#B9D4AA',
-        borderColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#B9D4AA',
+        backgroundColor: localProgressFilter && localProgressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#B9D4AA',
+        borderColor: localProgressFilter && localProgressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#B9D4AA',
         borderWidth: 1,
         sortField: 'dossierCompleted',
-        hidden: progressFilter && progressFilter !== 'DOSSIER COMPLETED'
+        hidden: localProgressFilter && localProgressFilter !== 'DOSSIER COMPLETED'
       }
     ];
     
@@ -235,7 +260,7 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
       labels: sortedCompleteMetrics.map(item => item.subsPre),
       datasets: allDatasets
     };
-  }, [sortedCompleteMetrics, sortField, progressFilter]);
+  }, [sortedCompleteMetrics, sortField, localProgressFilter]);
   
   // Chart options with memoization
   const options = useMemo(() => {
@@ -330,10 +355,6 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
     };
   }, [sortedCompleteMetrics]);
 
-
-  
-
-
   // Calculate summary statistics once
   const totalSubsystems = sortedCompleteMetrics.length;
 
@@ -343,80 +364,92 @@ const LoopTestProgressChart = ({ data, rawData, onProgressFilter, progressFilter
   [sortedCompleteMetrics.length]);
 
   return (
-    <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
-      <Heading size="md" mb={2}>LOOP TEST PROGRESS</Heading>
-      
-      {/* Summary statistics */}
-      <VStack mb={4} align="flex-start">
-        <Text fontSize="sm">
-          <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
-          {!progressFilter && (
-            <Badge ml={2} colorScheme="green">Showing: All Metrics</Badge>
-          )}
-          {progressFilter && (
-            <Badge ml={2} colorScheme="orange">Isolated: {progressFilter}</Badge>
-          )}
-        </Text>
-      </VStack>
-      
-      {/* Global Metrics Display - always shows unfiltered data */}
-      <GlobalMetricsDisplay 
-        data={rawData || data} 
-        onProgressFilter={onProgressFilter}
-        progressFilter={progressFilter}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSortChange={handleSortChange}
+    <Box>
+      {/* Multi-value filter panel */}
+      <MultiValueFilterPanel
+        areas={filterOptions[filterMappings.area] || []}
+        subsystems={filterOptions[filterMappings.subsystem] || []}
+        multiFilters={multiFilters}
+        onFilterChange={handleFilterChange}
+        filterMappings={filterMappings}
+        progressFilter={localProgressFilter}
+        onResetAll={resetAllFilters}
+        metadata={metadata}
+        relationshipMaps={relationshipMaps}
       />
       
-
-      
-
-      
-      {/* Resizable Chart container */}
-      <Box position="relative">
-        <Box 
-          ref={chartRef}
-          height={`${chartContainerHeight}px`}
-          overflowY="auto"
-          border="1px solid"
-          borderColor="gray.200"
-          borderRadius="md"
-          position="relative"
-        >
-          <Box 
-            key={chartKey} 
-            height={`${Math.max(chartContainerHeight, chartHeight)}px`}
-            minHeight={`${Math.max(200, sortedCompleteMetrics.length * 30)}px`}
-          >
-            <Bar data={chartData} options={options} />
-          </Box>
-        </Box>
+      {/* Chart container */}
+      <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" mt={4}>
+        <Heading size="md" mb={2}>LOOP TEST PROGRESS</Heading>
         
-        {/* Custom resize handle */}
-        <Box
-          position="absolute"
-          bottom="-5px"
-          left="50%"
-          transform="translateX(-50%)"
-          width="40px"
-          height="10px"
-          bg="gray.300"
-          borderRadius="md"
-          cursor="ns-resize"
-          onMouseDown={handleMouseDown}
-          _hover={{ bg: "gray.400" }}
-          _active={{ bg: "gray.500" }}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
+        {/* Summary statistics */}
+        <VStack mb={4} align="flex-start">
+          <Text fontSize="sm">
+            <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
+            {!localProgressFilter && (
+              <Badge ml={2} colorScheme="green">Showing: All Metrics</Badge>
+            )}
+            {localProgressFilter && (
+              <Badge ml={2} colorScheme="orange">Isolated: {localProgressFilter}</Badge>
+            )}
+          </Text>
+        </VStack>
+        
+        {/* Global Metrics Display - always shows unfiltered data */}
+        <GlobalMetricsDisplay 
+          data={filteredData} 
+          onProgressFilter={handleProgressFilter}
+          progressFilter={localProgressFilter}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
+        />
+        
+        {/* Resizable Chart container */}
+        <Box position="relative">
+          <Box 
+            ref={chartRef}
+            height={`${chartContainerHeight}px`}
+            overflowY="auto"
+            border="1px solid"
+            borderColor="gray.200"
+            borderRadius="md"
+            position="relative"
+          >
+            <Box 
+              key={chartKey} 
+              height={`${Math.max(chartContainerHeight, chartHeight)}px`}
+              minHeight={`${Math.max(200, sortedCompleteMetrics.length * 30)}px`}
+            >
+              <Bar data={chartData} options={options} />
+            </Box>
+          </Box>
+          
+          {/* Custom resize handle */}
           <Box
-            width="20px"
-            height="2px"
-            bg="gray.600"
-            borderRadius="sm"
-          />
+            position="absolute"
+            bottom="-5px"
+            left="50%"
+            transform="translateX(-50%)"
+            width="40px"
+            height="10px"
+            bg="gray.300"
+            borderRadius="md"
+            cursor="ns-resize"
+            onMouseDown={handleMouseDown}
+            _hover={{ bg: "gray.400" }}
+            _active={{ bg: "gray.500" }}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Box
+              width="20px"
+              height="2px"
+              bg="gray.600"
+              borderRadius="sm"
+            />
+          </Box>
         </Box>
       </Box>
     </Box>
