@@ -322,7 +322,8 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         uniqueSubsystems: 0,
         uniqueDesignAreas: 0,
         testPackBreakdown: {},
-        subsystemBreakdown: {}
+        subsystemBreakdown: {},
+        totalItems: 0
       };
     }
 
@@ -355,6 +356,48 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       subsystemBreakdown: subsystemCounts
     };
   }, [data]);
+  
+  // Calculate total items from subsystem progress data
+  const totalItemsSum = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    // Create a Set to store unique subsystems to avoid double counting
+    const processedSubsystems = new Set();
+    let totalSum = 0;
+    
+    subsystemProgressData.forEach(row => {
+      // Only count each subsystem once
+      if (!processedSubsystems.has(row.subsystem)) {
+        totalSum += row.aislTotalItems;
+        processedSubsystems.add(row.subsystem);
+      }
+    });
+    
+    return totalSum;
+  }, [subsystemProgressData]);
+  
+  // Calculate total done items from subsystem progress data
+  const totalDoneItemsSum = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    // Create a Set to store unique subsystems to avoid double counting
+    const processedSubsystems = new Set();
+    let totalDoneSum = 0;
+    
+    subsystemProgressData.forEach(row => {
+      // Only count each subsystem once
+      if (!processedSubsystems.has(row.subsystem)) {
+        totalDoneSum += row.aislDoneItems;
+        processedSubsystems.add(row.subsystem);
+      }
+    });
+    
+    return totalDoneSum;
+  }, [subsystemProgressData]);
 
   // Get top 5 test packs and subsystems by count
   const topTestPacks = useMemo(() => {
@@ -389,32 +432,28 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
 
   return (
     <Box p={6}>
-      <VStack spacing={6} align="stretch">
+      <VStack spacing={2} align="stretch">
         <Box textAlign="center">
-          <Heading size="lg" mb={2}>Summary Subsystems</Heading>
+          <Heading size="sm" mb={2}>Summary</Heading>
         </Box>
 
         {/* Summary Statistics */}
-        <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
-          <Stat>
-            <StatLabel>Total Records</StatLabel>
-            <StatNumber>{summaryStats.totalRecords.toLocaleString()}</StatNumber>
-            <StatHelpText>Pipeline items</StatHelpText>
-          </Stat>
-          <Stat>
-            <StatLabel>Test Packs</StatLabel>
-            <StatNumber>{summaryStats.uniqueTestPacks}</StatNumber>
-            <StatHelpText>Unique test packs</StatHelpText>
-          </Stat>
+        <SimpleGrid columns={{ base: 2, md: 5 }} spacing={4}>
           <Stat>
             <StatLabel>Subsystems</StatLabel>
             <StatNumber>{summaryStats.uniqueSubsystems}</StatNumber>
-            <StatHelpText>Unique subsystems</StatHelpText>
           </Stat>
           <Stat>
-            <StatLabel>Design Areas</StatLabel>
-            <StatNumber>{summaryStats.uniqueDesignAreas}</StatNumber>
-            <StatHelpText>Unique areas</StatHelpText>
+            <StatLabel>Total Items</StatLabel>
+            <StatNumber>{totalItemsSum.toLocaleString()}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Total Done Items</StatLabel>
+            <StatNumber>{totalDoneItemsSum.toLocaleString()}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Total Test Packs</StatLabel>
+            <StatNumber>{summaryStats.uniqueTestPacks}</StatNumber>
           </Stat>
         </SimpleGrid>
 
@@ -423,7 +462,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         {/* Subsystem Progress Table */}
         <Card>
           <CardBody>
-            <Heading size="md" mb={4}>Subsystem Progress with Test Packs</Heading>
+            <Heading size="sm" mb={4}>Subsystem Progress Overview</Heading>
             <TableContainer>
               <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
                 <Thead bg="gray.50">
