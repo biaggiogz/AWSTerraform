@@ -36,6 +36,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   const [testPackData, setTestPackData] = useState([]);
   const [aislData, setAislData] = useState([]);
   const [loopData, setLoopData] = useState([]);
+  const [subsystemsInfoData, setSubsystemsInfoData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -72,6 +73,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         const loopResponse = await fetch('/data/test_of_lazos_updated.csv');
         const loopCsvText = await loopResponse.text();
         
+        const subsystemsInfoResponse = await fetch('/data/subsystems_info.csv');
+        const subsystemsInfoCsvText = await subsystemsInfoResponse.text();
+        
         // Parse test pack data
         Papa.parse(testPackCsvText, {
           header: true,
@@ -89,7 +93,19 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                   header: true,
                   complete: (loopResults) => {
                     setLoopData(loopResults.data);
-                    setLoading(false);
+                    
+                    // Parse subsystems info data
+                    Papa.parse(subsystemsInfoCsvText, {
+                      header: true,
+                      complete: (subsystemsInfoResults) => {
+                        setSubsystemsInfoData(subsystemsInfoResults.data);
+                        setLoading(false);
+                      },
+                      error: (error) => {
+                        setError(`Error parsing subsystems info CSV: ${error.message}`);
+                        setLoading(false);
+                      }
+                    });
                   },
                   error: (error) => {
                     setError(`Error parsing loop CSV: ${error.message}`);
@@ -118,7 +134,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   }, [filteredData]);
   // Calculate subsystem progress statistics with TEST PACK data
   const subsystemProgressData = useMemo(() => {
-    if (!data || data.length === 0 || !testPackData || testPackData.length === 0 || !aislData || aislData.length === 0 || !loopData || loopData.length === 0) {
+    if (!data || data.length === 0 || !testPackData || testPackData.length === 0 || !aislData || aislData.length === 0 || !loopData || loopData.length === 0 || !subsystemsInfoData || subsystemsInfoData.length === 0) {
       return [];
     }
     
@@ -225,6 +241,10 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       
       // Get loop stats for this subsystem
       const loopStat = loopStats[subsystem] || { totalLoops: 0, doneLoops: 0, pendingLoops: 0 };
+      
+      // Get description for this subsystem
+      const subsystemInfo = subsystemsInfoData.find(info => info.SUBSYSTEM === subsystem);
+      const description = subsystemInfo ? subsystemInfo.DESCRIPTION : '';
       const testPacksArray = Array.from(stats.testPacks);
       const numTestPacks = testPacksArray.length;
       
@@ -262,7 +282,8 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           aislPendingItems: aislStat.totalItems - aislStat.doneItems,
           totalLoops: loopStat.totalLoops,
           doneLoops: loopStat.doneLoops,
-          pendingLoops: loopStat.pendingLoops
+          pendingLoops: loopStat.pendingLoops,
+          description: description
         });
       } else {
         // Create multiple rows for test packs
@@ -282,14 +303,15 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
             aislPendingItems: aislStat.totalItems - aislStat.doneItems,
             totalLoops: loopStat.totalLoops,
             doneLoops: loopStat.doneLoops,
-            pendingLoops: loopStat.pendingLoops
+            pendingLoops: loopStat.pendingLoops,
+            description: description
           });
         });
       }
     });
 
     return expandedData.sort((a, b) => b.totalItems - a.totalItems);
-  }, [data, testPackData, aislData, loopData]);
+  }, [data, testPackData, aislData, loopData, subsystemsInfoData]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
@@ -427,6 +449,11 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                         Progress<br />Items%
                       </Text>
                     </Th>
+                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
+                      <Text align="center">
+                        DESCRIPTION
+                      </Text>
+                    </Th>
                     <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
                       <Text align="center">
                         N°TP
@@ -555,18 +582,49 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
-                            <Badge 
-                              colorScheme={row.aislTotalItems > 0 ? 
-                                (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green" : 
-                                 row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "yellow" : "red") : "gray"}
-                              variant="solid"
-                            >
-                              {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
-                            </Badge>
+                            <Box position="relative" width="100px" margin="0 auto">
+                              <Progress 
+                                value={row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0} 
+                                size="md" 
+                                colorScheme={row.aislTotalItems > 0 ? 
+                                  (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green" : 
+                                   row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue" : "red") : "gray"}
+                                width="100px"
+                                borderRadius="md"
+                                backgroundColor="#0E2148"
+                              />
+                              <Text 
+                                position="absolute" 
+                                top="50%" 
+                                left="50%" 
+                                transform="translate(-50%, -50%)" 
+                                fontSize="xs" 
+                                fontWeight="bold" 
+                                color="white"
+                                textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+                              >
+                                {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
+                              </Text>
+                            </Box>
                           </Td>
                         )}
                         
-
+                        {/* DESCRIPTION - Merged cell */}
+                        {row.isFirstRow && (
+                          <Td 
+                            rowSpan={row.rowSpan}
+                            style={{ 
+                              verticalAlign: 'middle',
+                              textAlign: 'center',
+                              backgroundColor: '#f7fafc',
+                              borderRight: '1px solid #e2e8f0'
+                            }}
+                          >
+                            <Text fontSize="sm">
+                              {row.description || ''}
+                            </Text>
+                          </Td>
+                        )}
                         
                         {/* N°TP - Merged cell */}
                         {row.isFirstRow && (
@@ -605,6 +663,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                                 colorScheme={row.testPackProgress === 100 ? "green" : row.testPackProgress > 50 ? "blue" : "red"}
                                 width="100px"
                                 borderRadius="md"
+                                backgroundColor="#0E2148"
                               />
                               <Text 
                                 position="absolute" 
@@ -687,14 +746,30 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               backgroundColor: '#f7fafc'
                             }}
                           >
-                            <Badge 
-                              colorScheme={row.totalLoops > 0 ? 
-                                (row.doneLoops / row.totalLoops * 100 === 100 ? "green" : 
-                                 row.doneLoops / row.totalLoops * 100 > 50 ? "yellow" : "red") : "gray"}
-                              variant="solid"
-                            >
-                              {row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%
-                            </Badge>
+                            <Box position="relative" width="100px" margin="0 auto">
+                              <Progress 
+                                value={row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0} 
+                                size="md" 
+                                colorScheme={row.totalLoops > 0 ? 
+                                  (row.doneLoops / row.totalLoops * 100 === 100 ? "green" : 
+                                   row.doneLoops / row.totalLoops * 100 > 50 ? "blue" : "red") : "gray"}
+                                width="100px"
+                                borderRadius="md"
+                                backgroundColor="#0E2148"
+                              />
+                              <Text 
+                                position="absolute" 
+                                top="50%" 
+                                left="50%" 
+                                transform="translate(-50%, -50%)" 
+                                fontSize="xs" 
+                                fontWeight="bold" 
+                                color="white"
+                                textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+                              >
+                                {row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%
+                              </Text>
+                            </Box>
                           </Td>
                         )}
                         
@@ -774,13 +849,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           </Card>
         </SimpleGrid>
 
-        {/* Data Source Information */}
-        <Box bg="gray.50" p={4} borderRadius="md">
-          <Text fontSize="sm" color="gray.600" textAlign="center">
-            <strong>Data Source:</strong> pipelinedata.csv, test_pack_progress.csv, aislamientos.csv, test_of_lazos_updated.csv | 
-            <strong>SQL Logic:</strong> Implements unnest(string_to_array(TEST PACK, '|')) with row merging and vertical centering, SQL transformations for aislamientos and loop data
-          </Text>
-        </Box>
+
         
       </VStack>
     </Box>

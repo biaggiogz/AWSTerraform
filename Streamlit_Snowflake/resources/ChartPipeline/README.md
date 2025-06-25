@@ -15,7 +15,9 @@ ChartPipeline/
 │   ├── DashboardBarProgress.md # INSULATION PROGRESS CONTROL Chart specifications
 │   ├── GlobalMetrics.md    # Global metrics implementation guide
 │   ├── ResponsiveTable.md  # Responsive table development guide
-│   └── TableDashboard.md   # Dashboard integration guide
+│   ├── TableDashboard.md   # Dashboard integration guide
+│   └── Table/              # Table generation prompts
+│       └── Step_1.md       # Table creation from SQL for SummarySubsystems.js
 ├── public/                 # Static files
 │   ├── data/               # Public data files
 │   │   ├── aislamientos.csv
@@ -37,6 +39,7 @@ ChartPipeline/
 │   │   ├── GlobalMetricsDisplay.js # Global metrics display component
 │   │   ├── LazosTable.optimized.js # Virtualized resizable data table
 │   │   ├── InsulationProgressTable.optimized.js # Table "Insulation Progress" for INSULATION PROGRESS CONTROL tab
+│   │   ├── SummarySubsystems.js    # Table component for subsystem summary data
 │   │   └── ResizableTable.css # Styling for resizable table features
 │   ├── hooks/              # Custom React hooks
 │   │   ├── useDashboardConfig.optimized.js # Dashboard configuration management
@@ -70,6 +73,7 @@ ChartPipeline/
 - **LazosTable.optimized.js**: ✅ **Enhanced with Resizable & Responsive Features** - Virtualized data table component with drag-to-resize functionality, mobile/tablet/desktop optimization, and detachable window support.
 - **GlobalMetricsDisplay.js**: ✅ **New Component** - Displays unfiltered global statistics with color-coded metrics that remain constant regardless of applied filters.
 - **Table "Insulation Progress"**: ✅ **Production Component** - Virtualized table for INSULATION PROGRESS CONTROL tab using @tanstack/react-virtual and @tanstack/react-table, optimized for 1,500+ rows with Area/Subsystem filtering integration.
+- **SummarySubsystems.js**: ✅ **SQL-Generated Component** - Tabular component displaying subsystem progress metrics including total items, completed items, and pending items, generated from SQL queries against the aislamientos.csv dataset.
 
 ### Chart Components (Dynamic & Adaptive with Advanced Features)
 
@@ -96,6 +100,7 @@ ChartPipeline/
 9. **Performance Optimization**: Enterprise-grade response times across all features
 10. **Production Reliability**: Zero memory leaks with comprehensive error handling
 11. **Table "Insulation Progress"**: Virtualized table component for INSULATION PROGRESS CONTROL tab with optimized large dataset handling
+12. **SQL-to-Table Generation**: Automated transformation of SQL queries into optimized React table components with proper typing and formatting
 
 ### ✅ INSULATION PROGRESS CONTROL Chart - Technical Implementation
 
@@ -140,6 +145,49 @@ m_advance_mleq_total = df['Avance Mleq totales'].sum() // Format: #,##0.00 "m"
 - **Chakra UI Components**: Professional layout with VStack, SimpleGrid, and Badge components
 - **Responsive Design**: Adapts to different screen sizes with consistent spacing and readability
 - **Performance**: < 50ms calculation time for all metrics with optimized data processing
+
+### ✅ SQL-to-Table Generation System
+
+#### Core Features
+- **SQL Query Transformation**: Converts SQL-like queries into optimized React table components
+- **CTE Support**: Handles Common Table Expressions (CTEs) for complex data transformations
+- **Aggregation Functions**: Supports COUNT, SUM, AVG and other SQL aggregation functions
+- **Conditional Logic**: Processes CASE statements for complex conditional calculations
+- **Type Inference**: Automatically determines appropriate column types for proper formatting
+- **Responsive Design**: Generated tables inherit the application's responsive design system
+
+#### Implementation Example
+```sql
+-- SQL Query for Subsystem Progress
+WITH ss AS (
+SELECT
+  SUBSYSTEM,
+  COUNT(ISO) AS TOTAL_ITEMS,
+  COUNT(CASE
+    WHEN [Avance Distanciadores] = 1 AND
+         [Avance Aislamiento] = 1 AND
+         [Avance Chapa] = 1 AND
+         [Avance Cajas] = 1 AND
+         [Avance Rematar] = 1
+    THEN 1 ELSE NULL
+  END) AS DONEITEMS
+FROM DATA_1
+GROUP BY SUBSYSTEM
+)
+SELECT
+  ss.SUBSYSTEM,
+  ss.TOTAL_ITEMS,
+  ss.DONEITEMS,
+  (ss.TOTAL_ITEMS - ss.DONEITEMS) AS PENDINGITEMS
+FROM ss
+```
+
+#### Technical Implementation
+- **Query Parser**: Parses SQL syntax into an abstract syntax tree (AST)
+- **Data Processor**: Executes the query logic against the specified dataset
+- **Component Generator**: Creates optimized React components with proper typing
+- **Memoization Strategy**: Implements strategic memoization for performance optimization
+- **Integration System**: Seamlessly integrates with the application's filtering and state management
 
 ### Enterprise-Grade Architecture
 
@@ -207,7 +255,32 @@ The application implements an enterprise-grade data processing pipeline that eff
 4. **Real-Time Enrichment**: Dynamic metric calculation and status determination
 5. **Optimized Aggregation**: Single-pass algorithms for complex weighted average calculations
 6. **Visualization Preparation**: Chart-ready data structures with minimal transformation overhead
-7. **Isolation Data Processing**: Specialized handling for aislamientos.csv with column mapping:
+7. **SQL-Based Data Processing**: Transformation of raw data using SQL-like queries for advanced aggregation and filtering:
+   ```sql
+   -- Example: Subsystem Progress Metrics from aislamientos.csv
+   WITH ss AS (
+   SELECT
+     SUBSYSTEM,
+     COUNT(ISO) AS TOTAL_ITEMS,
+     COUNT(CASE
+       WHEN [Avance Distanciadores] = 1 AND
+            [Avance Aislamiento] = 1 AND
+            [Avance Chapa] = 1 AND
+            [Avance Cajas] = 1 AND
+            [Avance Rematar] = 1
+       THEN 1 ELSE NULL
+     END) AS DONEITEMS
+   FROM DATA_1
+   GROUP BY SUBSYSTEM
+   )
+   SELECT
+     ss.SUBSYSTEM,
+     ss.TOTAL_ITEMS,
+     ss.DONEITEMS,
+     (ss.TOTAL_ITEMS - ss.DONEITEMS) AS PENDINGITEMS
+   FROM ss
+   ```
+8. **Isolation Data Processing**: Specialized handling for aislamientos.csv with column mapping:
    - `ISO` → `Isometric`, `TP` → `Test Pack`, `Area` → `Design Area`
    - `SUBSYSTEM` → `Subsystem`, `Avance Distanciadores` → `Advance Spacer`
    - `Avance Aislamiento` → `Advance Insolation`, `Avance Chapa` → `Advance Sheet Metal`
