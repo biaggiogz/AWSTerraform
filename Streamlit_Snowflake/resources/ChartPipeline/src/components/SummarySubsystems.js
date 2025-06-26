@@ -618,9 +618,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         `}
       />
       <VStack spacing={2} align="stretch">
-        <Box textAlign="center" width="100%">
-          <Heading size="sm" mb={2}>Summary</Heading>
-        </Box>
 
         {/* Summary Statistics */}
         <Box width="100%" overflowX="auto">
