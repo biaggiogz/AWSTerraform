@@ -891,22 +891,20 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                                   bottom="0"
                                   left="0"
                                   width="30px"
-                                  height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`}
-                                  bg={row.aislTotalItems > 0 ?
-                                    (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" :
-                                     row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
-                                  borderRadius="md"
-                                  zIndex="2"
+                                  height="60px"
+                                  border="1px solid #e2e8f0"
+                                  bg="#0E2148"
                                 />
                                 <Box
                                   position="absolute"
                                   bottom="0"
                                   left="0"
                                   width="30px"
-                                  height="60px"
-                                  border="1px solid #e2e8f0"
-                                  borderRadius="md"
-                                  bg="#0E2148"
+                                  height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`}
+                                  bg={row.aislTotalItems > 0 ? 
+                                    (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" : 
+                                     row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
+                                  zIndex="2"
                                 />
                               </Box>
                               <Text
@@ -1082,22 +1080,20 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                                   bottom="0"
                                   left="0"
                                   width="30px"
+                                  height="60px" 
+                                  border="1px solid #e2e8f0" 
+                                  bg="#0E2148"
+                                />
+                                <Box 
+                                  position="absolute"
+                                  bottom="0"
+                                  left="0"
+                                  width="30px"
                                   height={`${row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%`} 
                                   bg={row.totalLoops > 0 ? 
                                     (row.doneLoops / row.totalLoops * 100 === 100 ? "green.500" : 
                                      row.doneLoops / row.totalLoops * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
-                                  borderRadius="md"
                                   zIndex="2"
-                                />
-                                <Box 
-                                  position="absolute" 
-                                  bottom="0" 
-                                  left="0" 
-                                  width="30px"
-                                  height="60px" 
-                                  border="1px solid #e2e8f0" 
-                                  borderRadius="md" 
-                                  bg="#0E2148"
                                 />
                               </Box>
                               <Text 
