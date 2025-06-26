@@ -169,18 +169,7 @@ const FilterPanel = ({
         </Button>
       </HStack>
 
-      {metadata && (
-        <Box mb={4} p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
-          <Stack spacing={1}>
-            <Text fontSize="sm" fontWeight="medium" color="blue.700">
-              Showing {metadata.filteredCount} of {metadata.totalCount} items
-            </Text>
-            {progressFilter && (
-              <Badge colorScheme="orange">Filter: {progressFilter}</Badge>
-            )}
-          </Stack>
-        </Box>
-      )}
+
 
       <Stack spacing={4}>
         <FormControl>

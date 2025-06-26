@@ -597,14 +597,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
             <StatNumber>{totalPendingItemsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Avg Progress Items%</StatLabel>
-            <StatNumber>{avgProgressItemsPercent}%</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Avg Test Pack Progress%</StatLabel>
-            <StatNumber>{avgTestPackProgress}%</StatNumber>
-          </Stat>
-          <Stat>
             <StatLabel>Total Test Packs</StatLabel>
             <StatNumber>{summaryStats.uniqueTestPacks}</StatNumber>
           </Stat>
@@ -619,10 +611,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           <Stat>
             <StatLabel>Total Loops Pending</StatLabel>
             <StatNumber>{totalPendingLoopsSum.toLocaleString()}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Avg Loops Progress%</StatLabel>
-            <StatNumber>{avgLoopsProgressPercent}%</StatNumber>
           </Stat>
         </SimpleGrid>
 
