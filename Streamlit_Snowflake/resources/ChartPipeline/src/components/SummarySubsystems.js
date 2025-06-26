@@ -552,6 +552,28 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
     return count > 0 ? Math.round(totalProgress / count) : 0;
   }, [subsystemProgressData]);
 
+  // Calculate done test packs (PROGRESS TEST PACK = 100%)
+  const doneTestPacks = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    return subsystemProgressData.filter(row => 
+      row.testPack && row.testPackProgress === 100
+    ).length;
+  }, [subsystemProgressData]);
+
+  // Calculate pending test packs (PROGRESS TEST PACK < 100%)
+  const pendingTestPacks = useMemo(() => {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
+      return 0;
+    }
+    
+    return subsystemProgressData.filter(row => 
+      row.testPack && row.testPackProgress < 100
+    ).length;
+  }, [subsystemProgressData]);
+
   // Get top 5 test packs and subsystems by count
   const topTestPacks = useMemo(() => {
     return Object.entries(summaryStats.testPackBreakdown)
@@ -591,7 +613,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         </Box>
 
         {/* Summary Statistics */}
-        <SimpleGrid columns={{ base: 2, md: 11 }} spacing={4}>
+        <SimpleGrid columns={{ base: 2, md: 13 }} spacing={4}>
           <Stat>
             <StatLabel>Subsystems</StatLabel>
             <StatNumber>{summaryStats.uniqueSubsystems}</StatNumber>
@@ -613,6 +635,14 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
             <StatNumber>{summaryStats.uniqueTestPacks}</StatNumber>
           </Stat>
           <Stat>
+            <StatLabel>Done Test Pack</StatLabel>
+            <StatNumber>{doneTestPacks}</StatNumber>
+          </Stat>
+          <Stat>
+            <StatLabel>Pending Test Pack</StatLabel>
+            <StatNumber>{pendingTestPacks}</StatNumber>
+          </Stat>
+          <Stat>
             <StatLabel>Total Loops</StatLabel>
             <StatNumber>{totalLoopsSum.toLocaleString()}</StatNumber>
           </Stat>
@@ -632,83 +662,83 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         <Card>
           <CardBody>
             <Heading size="sm" mb={4}>Subsystem Progress Overview</Heading>
-            <TableContainer>
-              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
+            <TableContainer overflowX="auto">
+              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '1500px' }}>
                 <Thead bg="gray.50">
                   <Tr>
-                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '60px', textAlign: 'center' }}>
+                      <Text>
                         S/N
                       </Text>
                     </Th>
-                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', width: '60px', textAlign: 'center' }}>
+                      <Text>
                         FLUID
                       </Text>
                     </Th>
-                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>SUBSYSTEM</Th>
-                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', width: '140px', textAlign: 'center' }}>SUBSYSTEM</Th>
+                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0',  textAlign: 'center' }}>
+                      <Text>
                         TOTAL<br />ITEMS
                       </Text>
                     </Th>
-                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th isNumeric style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
+                      <Text>
                         DONE<br />ITEMS
                       </Text>
                     </Th>
-                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th isNumeric style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
+                      <Text>
                         PENDING<br />ITEMS
                       </Text>
                     </Th>
-                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
+                      <Text>
                         Progress<br />Items%
                       </Text>
                     </Th>
-                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '140px',textAlign: 'center' }}>
+                      <Text>
                         DESCRIPTION
                       </Text>
                     </Th>
-                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th isNumeric style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
+                      <Text>
                         N°TP
                       </Text>
                     </Th>
-                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
+                      <Text>
                         TP's<br />INCLUDE
                       </Text>
                     </Th>
-                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0',width:'140px', textAlign: 'center' }}>
+                      <Text>
                         PROGRESS<br />TEST PACK
                       </Text>
                     </Th>
-                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
+                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'140px', textAlign: 'center' }}>
+                      <Text>
                         INSULATION
                       </Text>
                     </Th>
-                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
-                        TOTAL LOOP<br />(Signal)
+                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width:'80px', textAlign: 'center' }}>
+                      <Text>
+                        TOTAL<br />LOOP<br />(Signal)
                       </Text>
                     </Th>
-                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
-                        LOOP (Signal)<br />DONE
+                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width:'80px',textAlign: 'center' }}>
+                      <Text>
+                        LOOP<br />(Signal)<br />DONE
                       </Text>
                     </Th>
-                    <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
-                      <Text align="center">
-                        LOOP (Signal)<br />PENDING
+                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0',width:'80px', textAlign: 'center' }}>
+                      <Text>
+                        LOOP<br />(Signal)<br />PENDING
                       </Text>
                     </Th>
-                    <Th isNumeric>
-                      <Text align="center">
+                    <Th isNumeric style={{ fontSize:'9px' , textAlign: 'center'}}>
+                      <Text>
                         PROGRESS<br />LOOPS%
                       </Text>
                     </Th>
@@ -766,10 +796,13 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               verticalAlign: 'middle',
                               textAlign: 'center',
                               backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
+                              borderRight: '1px solid #e2e8f0',
+                              width: '150px',
+                              maxWidth: '150px',
+                              overflow: 'hidden'
                             }}
                           >
-                            <Text fontSize="sm" fontWeight="bold">
+                            <Text fontSize="sm" fontWeight="bold" isTruncated title={row.subsystem}>
                               {row.subsystem}
                             </Text>
                           </Td>
@@ -841,26 +874,35 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
-                            <Box position="relative" width="100px" margin="0 auto">
-                              <Progress 
-                                value={row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0} 
-                                size="md" 
-                                colorScheme={row.aislTotalItems > 0 ? 
-                                  (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green" : 
-                                   row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue" : "red") : "gray"}
-                                width="100px"
-                                borderRadius="md"
-                                backgroundColor="#0E2148"
-                              />
+                            <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
+                              <Box position="relative" width="30px" height="60px" mb="2">
+                                <Box 
+                                  position="absolute"
+                                  bottom="0"
+                                  left="0"
+                                  width="30px"
+                                  height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`} 
+                                  bg={row.aislTotalItems > 0 ? 
+                                    (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" : 
+                                     row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
+                                  borderRadius="md"
+                                  zIndex="2"
+                                />
+                                <Box 
+                                  position="absolute" 
+                                  bottom="0" 
+                                  left="0" 
+                                  width="30px"
+                                  height="60px" 
+                                  border="1px solid #e2e8f0" 
+                                  borderRadius="md" 
+                                  bg="#0E2148"
+                                />
+                              </Box>
                               <Text 
-                                position="absolute" 
-                                top="50%" 
-                                left="50%" 
-                                transform="translate(-50%, -50%)" 
                                 fontSize="xs" 
-                                fontWeight="bold" 
-                                color="white"
-                                textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+                                fontWeight="bold"
+                                color="black"
                               >
                                 {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
                               </Text>
@@ -875,13 +917,23 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                             rowSpan={row.rowSpan}
                             style={{ 
                               verticalAlign: 'middle',
-                              textAlign: 'center',
+                              textAlign: 'left',
                               backgroundColor: '#f7fafc',
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
                             <Text fontSize="sm" fontWeight="bold">
-                              {row.description}
+                              {row.description && row.description.length > 15 ? 
+                                row.description.split(' ').map((word, i, arr) => {
+                                  // Add a line break between words
+                                  return (
+                                    <React.Fragment key={i}>
+                                      {i > 0 && <br />}
+                                      {word}
+                                    </React.Fragment>
+                                  );
+                                }) : 
+                                row.description}
                             </Text>
                           </Td>
                         )}
@@ -1013,26 +1065,35 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               backgroundColor: '#f7fafc'
                             }}
                           >
-                            <Box position="relative" width="100px" margin="0 auto">
-                              <Progress 
-                                value={row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0} 
-                                size="md" 
-                                colorScheme={row.totalLoops > 0 ? 
-                                  (row.doneLoops / row.totalLoops * 100 === 100 ? "green" : 
-                                   row.doneLoops / row.totalLoops * 100 > 50 ? "blue" : "red") : "gray"}
-                                width="100px"
-                                borderRadius="md"
-                                backgroundColor="#0E2148"
-                              />
+                            <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
+                              <Box position="relative" width="30px" height="60px" mb="2">
+                                <Box 
+                                  position="absolute"
+                                  bottom="0"
+                                  left="0"
+                                  width="30px"
+                                  height={`${row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%`} 
+                                  bg={row.totalLoops > 0 ? 
+                                    (row.doneLoops / row.totalLoops * 100 === 100 ? "green.500" : 
+                                     row.doneLoops / row.totalLoops * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
+                                  borderRadius="md"
+                                  zIndex="2"
+                                />
+                                <Box 
+                                  position="absolute" 
+                                  bottom="0" 
+                                  left="0" 
+                                  width="30px"
+                                  height="60px" 
+                                  border="1px solid #e2e8f0" 
+                                  borderRadius="md" 
+                                  bg="#0E2148"
+                                />
+                              </Box>
                               <Text 
-                                position="absolute" 
-                                top="50%" 
-                                left="50%" 
-                                transform="translate(-50%, -50%)" 
                                 fontSize="xs" 
-                                fontWeight="bold" 
-                                color="white"
-                                textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+                                fontWeight="bold"
+                                color="black"
                               >
                                 {row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%
                               </Text>
