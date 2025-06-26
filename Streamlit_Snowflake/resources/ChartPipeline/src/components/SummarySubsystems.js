@@ -1,40 +1,264 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { css, Global } from '@emotion/react';
 import {
-  Box,
-  VStack,
-  HStack,
-  Text,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  SimpleGrid,
-  Card,
-  CardBody,
-  Heading,
-  Badge,
-  Divider,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
-  Spinner,
-  Progress
+  Box, VStack, HStack, Text, SimpleGrid, Card, CardBody, Heading, Badge, Divider,
+  Table, Thead, Tbody, Tr, Th, Td, TableContainer, Spinner, Progress
 } from '@chakra-ui/react';
-import Papa from 'papaparse'; // You'll need to install this: npm install papaparse
+import Papa from 'papaparse';
+import { FixedSizeList as List } from 'react-window';
 
-/**
- * Summary Subsystems component showing aggregated data directly from CSV
- * @param {Object} props - Component props
- * @param {Array} props.data - Filtered dataset from parent component
- */
+// Web Worker for data processing
+const createDataWorker = () => {
+  const workerCode = `
+    self.onmessage = function(e) {
+      const { type, data, testPackData, aislData, loopData, batchSize = 500 } = e.data;
+      
+      if (type === 'processSubsystemData') {
+        const aislStats = new Map();
+        const loopStats = new Map();
+        const subsystemStats = new Map();
+        
+        // Process in batches to prevent memory spikes
+        const processBatch = (items, processor) => {
+          for (let i = 0; i < items.length; i += batchSize) {
+            const batch = items.slice(i, i + batchSize);
+            processor(batch);
+          }
+        };
+        
+        // Process aislamientos data
+        processBatch(aislData, (batch) => {
+          batch.forEach(item => {
+            const subsystem = item['SUBSYSTEM'];
+            if (!subsystem) return;
+            if (!aislStats.has(subsystem)) {
+              aislStats.set(subsystem, { totalItems: 0, doneItems: 0 });
+            }
+            const stats = aislStats.get(subsystem);
+            stats.totalItems += 1;
+            if (item['DONE'] === 'YES') stats.doneItems += 1;
+          });
+        });
+        
+        // Process loop data
+        processBatch(loopData, (batch) => {
+          batch.forEach(item => {
+            const subsystem = item['SUBS_PRE'];
+            if (!subsystem) return;
+            if (!loopStats.has(subsystem)) {
+              loopStats.set(subsystem, { totalLoops: 0, doneLoops: 0, pendingLoops: 0 });
+            }
+            const stats = loopStats.get(subsystem);
+            stats.totalLoops += 1;
+            if (item['OK=100%'] === '100.00%') {
+              stats.doneLoops += 1;
+            } else {
+              stats.pendingLoops += 1;
+            }
+          });
+        });
+        
+        // Process main data
+        processBatch(data, (batch) => {
+          batch.forEach(item => {
+            const subsystem = item['SUBSYSTEM'];
+            if (!subsystem) return;
+            if (!subsystemStats.has(subsystem)) {
+              subsystemStats.set(subsystem, {
+                totalItems: 0, doneItems: 0, testPacks: new Set(),
+                testPackProgressValues: new Map(), serialNumber: item['S/N'] || '',
+                fluid: item['FLUID_SUBSYSTEM'] || '', description: item['DESCRIPTION'] || '',
+                insulation: item['INSULATION'] || ''
+              });
+            }
+            const stats = subsystemStats.get(subsystem);
+            stats.totalItems += 1;
+            const progress = parseFloat(item['CONSTRUC COORD PROGRESS']) || 0;
+            if (progress >= 90) stats.doneItems += 1;
+            if (item['TEST PACK']) {
+              item['TEST PACK'].split('|').forEach(tp => {
+                const trimmedTp = tp.trim();
+                if (trimmedTp) {
+                  stats.testPacks.add(trimmedTp);
+                  stats.testPackProgressValues.set(trimmedTp, progress);
+                }
+              });
+            }
+          });
+        });
+        
+        // Create expanded data
+        const expandedData = [];
+        subsystemStats.forEach((stats, subsystem) => {
+          const aislStat = aislStats.get(subsystem) || { totalItems: 0, doneItems: 0 };
+          const loopStat = loopStats.get(subsystem) || { totalLoops: 0, doneLoops: 0, pendingLoops: 0 };
+          const testPacksArray = Array.from(stats.testPacks);
+          
+          const testPackProgress = testPacksArray.map(tp => {
+            const progressData = testPackData.find(tpd => 
+              tpd.TestPack === tp && tpd.SUBSYSTEM === subsystem
+            );
+            const progress = progressData ? 
+              parseFloat(progressData.Progress.replace('%', '')) : 
+              stats.testPackProgressValues.get(tp) || 0;
+            return { testPack: tp, progress };
+          });
+          
+          if (testPackProgress.length === 0) {
+            expandedData.push({
+              serialNumber: stats.serialNumber, fluid: stats.fluid, subsystem,
+              totalItems: stats.totalItems, doneItems: stats.doneItems,
+              pendingItems: stats.totalItems - stats.doneItems,
+              description: stats.description, numTestPacks: 0, testPack: null,
+              testPackProgress: 0, insulation: stats.insulation, isFirstRow: true, rowSpan: 1,
+              aislTotalItems: aislStat.totalItems, aislDoneItems: aislStat.doneItems,
+              aislPendingItems: aislStat.totalItems - aislStat.doneItems,
+              totalLoops: loopStat.totalLoops, doneLoops: loopStat.doneLoops,
+              pendingLoops: loopStat.pendingLoops
+            });
+          } else {
+            testPackProgress.forEach((tp, index) => {
+              expandedData.push({
+                serialNumber: stats.serialNumber, fluid: stats.fluid, subsystem,
+                totalItems: stats.totalItems, doneItems: stats.doneItems,
+                pendingItems: stats.totalItems - stats.doneItems,
+                description: stats.description, numTestPacks: testPacksArray.length,
+                testPack: tp.testPack, testPackProgress: tp.progress,
+                insulation: stats.insulation, isFirstRow: index === 0,
+                rowSpan: testPackProgress.length,
+                aislTotalItems: aislStat.totalItems, aislDoneItems: aislStat.doneItems,
+                aislPendingItems: aislStat.totalItems - aislStat.doneItems,
+                totalLoops: loopStat.totalLoops, doneLoops: loopStat.doneLoops,
+                pendingLoops: loopStat.pendingLoops
+              });
+            });
+          }
+        });
+        
+        const sortedData = expandedData.sort((a, b) => b.totalItems - a.totalItems);
+        
+        // Calculate summary stats
+        const processedSubsystems = new Set();
+        let totalItemsSum = 0, totalDoneItemsSum = 0, totalPendingItemsSum = 0;
+        let totalLoopsSum = 0, totalDoneLoopsSum = 0, totalPendingLoopsSum = 0;
+        let totalProgressPercent = 0, totalLoopsProgressPercent = 0, subsystemCount = 0;
+        
+        sortedData.forEach(row => {
+          if (!processedSubsystems.has(row.subsystem)) {
+            totalItemsSum += row.aislTotalItems;
+            totalDoneItemsSum += row.aislDoneItems;
+            totalPendingItemsSum += row.aislPendingItems;
+            totalLoopsSum += row.totalLoops;
+            totalDoneLoopsSum += row.doneLoops;
+            totalPendingLoopsSum += row.pendingLoops;
+            
+            const progress = row.aislTotalItems > 0 ? (row.aislDoneItems / row.aislTotalItems) * 100 : 0;
+            totalProgressPercent += progress;
+            const loopsProgress = row.totalLoops > 0 ? (row.doneLoops / row.totalLoops) * 100 : 0;
+            totalLoopsProgressPercent += loopsProgress;
+            subsystemCount++;
+            processedSubsystems.add(row.subsystem);
+          }
+        });
+        
+        const doneTestPacks = sortedData.filter(row => row.testPack && row.testPackProgress === 100).length;
+        const pendingTestPacks = sortedData.filter(row => row.testPack && row.testPackProgress < 100).length;
+        const uniqueTestPacks = new Set(sortedData.filter(row => row.testPack).map(row => row.testPack)).size;
+        
+        const summaryStats = {
+          uniqueSubsystems: processedSubsystems.size, uniqueTestPacks,
+          totalItemsSum, totalDoneItemsSum, totalPendingItemsSum,
+          doneTestPacks, pendingTestPacks, totalLoopsSum, totalDoneLoopsSum, totalPendingLoopsSum,
+          avgProgressItemsPercent: subsystemCount > 0 ? Math.round(totalProgressPercent / subsystemCount) : 0,
+          avgLoopsProgressPercent: subsystemCount > 0 ? Math.round(totalLoopsProgressPercent / subsystemCount) : 0
+        };
+        
+        self.postMessage({ type: 'result', data: sortedData, summaryStats });
+      }
+    };
+  `;
+  const blob = new Blob([workerCode], { type: 'application/javascript' });
+  return new Worker(URL.createObjectURL(blob));
+};
+
+// Virtualized Row Component
+const Row = React.memo(({ data, index, style }) => {
+  const row = data[index];
+  return (
+    <div style={style}>
+      <Table variant="simple" size="sm">
+        <Tbody>
+          <Tr>
+            {row.isFirstRow && (
+              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
+                <Text fontSize="sm" fontWeight="bold">{row.serialNumber}</Text>
+              </Td>
+            )}
+            {row.isFirstRow && (
+              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
+                <Text fontSize="sm" fontWeight="bold">{row.fluid}</Text>
+              </Td>
+            )}
+            {row.isFirstRow && (
+              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
+                <Text fontSize="sm" fontWeight="bold" isTruncated title={row.subsystem}>{row.subsystem}</Text>
+              </Td>
+            )}
+            {row.isFirstRow && (
+              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
+                <Text fontSize="sm" fontWeight="semibold">{row.aislTotalItems.toLocaleString()}</Text>
+              </Td>
+            )}
+            {row.isFirstRow && (
+              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
+                <Text fontSize="sm" fontWeight="semibold">{row.aislDoneItems.toLocaleString()}</Text>
+              </Td>
+            )}
+            {row.isFirstRow && (
+              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
+                <Text fontSize="sm" fontWeight="semibold">{row.aislPendingItems.toLocaleString()}</Text>
+              </Td>
+            )}
+            {row.isFirstRow && (
+              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
+                <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
+                  <Box position="relative" width="30px" height="60px" mb="2">
+                    <Box position="absolute" bottom="0" left="0" width="30px" height="60px" border="1px solid #e2e8f0" bg="#0E2148" />
+                    <Box position="absolute" bottom="0" left="0" width="30px" 
+                         height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`}
+                         bg={row.aislTotalItems > 0 ? (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" : 
+                             row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"} zIndex="2" />
+                  </Box>
+                  <Text fontSize="xs" fontWeight="bold" color="black">
+                    {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
+                  </Text>
+                </Box>
+              </Td>
+            )}
+            <Td style={{ textAlign: 'center', padding: '8px' }}>
+              {row.testPack && <Text fontSize="sm" fontWeight="medium">{row.testPack}</Text>}
+            </Td>
+            <Td style={{ padding: '8px', textAlign: 'center' }}>
+              {row.testPack && (
+                <Box position="relative" width="100px" margin="0 auto">
+                  <Progress value={Math.round(row.testPackProgress)} size="md" 
+                           colorScheme={row.testPackProgress === 100 ? "green" : row.testPackProgress > 50 ? "blue" : "red"}
+                           width="100px" borderRadius="md" backgroundColor="#0E2148" />
+                  <Text position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" 
+                        fontSize="xs" fontWeight="bold" color="white" textShadow="0px 0px 2px rgba(0,0,0,0.7)">
+                    {Math.round(row.testPackProgress)}%
+                  </Text>
+                </Box>
+              )}
+            </Td>
+          </Tr>
+        </Tbody>
+      </Table>
+    </div>
+  );
+});
+
 const SummarySubsystems = ({ data: filteredData = [] }) => {
-  // Define table border color - change this to modify all table borders
-  const tableBorderColor = '#3182ce'; // Changed from #e2e8f0 to blue.500 color
   const [data, setData] = useState([]);
   const [testPackData, setTestPackData] = useState([]);
   const [aislData, setAislData] = useState([]);
@@ -42,6 +266,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   const [subsystemsInfoData, setSubsystemsInfoData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [worker, setWorker] = useState(null);
+  const abortControllerRef = useRef(null);
+  const dataCache = useRef(new Map());
 
   // Load CSV data directly or use filtered data if provided
   useEffect(() => {
@@ -135,6 +362,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
 
     fetchData();
   }, [filteredData]);
+  
   // Calculate subsystem progress statistics with TEST PACK data
   const subsystemProgressData = useMemo(() => {
     if (!data || data.length === 0 || !testPackData || testPackData.length === 0 || !aislData || aislData.length === 0 || !loopData || loopData.length === 0 || !subsystemsInfoData || subsystemsInfoData.length === 0) {
@@ -330,7 +558,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
-    if (!data || data.length === 0) {
+    if (!subsystemProgressData || subsystemProgressData.length === 0) {
       return {
         totalRecords: 0,
         uniqueTestPacks: 0,
@@ -344,33 +572,29 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
 
     const testPacks = new Set();
     const subsystems = new Set();
-    const designAreas = new Set();
     const testPackCounts = {};
     const subsystemCounts = {};
 
-    data.forEach(item => {
-      if (item['TEST PACK']) {
-        testPacks.add(item['TEST PACK']);
-        testPackCounts[item['TEST PACK']] = (testPackCounts[item['TEST PACK']] || 0) + 1;
+    subsystemProgressData.forEach(item => {
+      if (item.testPack) {
+        testPacks.add(item.testPack);
+        testPackCounts[item.testPack] = (testPackCounts[item.testPack] || 0) + 1;
       }
-      if (item['SUBSYSTEM']) {
-        subsystems.add(item['SUBSYSTEM']);
-        subsystemCounts[item['SUBSYSTEM']] = (subsystemCounts[item['SUBSYSTEM']] || 0) + 1;
-      }
-      if (item['Design Area']) {
-        designAreas.add(item['Design Area']);
+      if (item.subsystem) {
+        subsystems.add(item.subsystem);
+        subsystemCounts[item.subsystem] = (subsystemCounts[item.subsystem] || 0) + 1;
       }
     });
 
     return {
-      totalRecords: data.length,
+      totalRecords: subsystemProgressData.length,
       uniqueTestPacks: testPacks.size,
       uniqueSubsystems: subsystems.size,
-      uniqueDesignAreas: designAreas.size,
+      uniqueDesignAreas: 0,
       testPackBreakdown: testPackCounts,
       subsystemBreakdown: subsystemCounts
     };
-  }, [data]);
+  }, [subsystemProgressData]);
   
   // Calculate total items from subsystem progress data
   const totalItemsSum = useMemo(() => {
