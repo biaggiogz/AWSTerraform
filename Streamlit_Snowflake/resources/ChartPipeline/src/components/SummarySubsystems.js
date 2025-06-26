@@ -242,11 +242,17 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       // Get loop stats for this subsystem
       const loopStat = loopStats[subsystem] || { totalLoops: 0, doneLoops: 0, pendingLoops: 0 };
       
-      // Get description for this subsystem
+      // Get subsystem info
       const subsystemInfo = subsystemsInfoData.find(info => info.SUBSYSTEM === subsystem);
-      const description = subsystemInfo ? subsystemInfo.DESCRIPTION : '';
       const testPacksArray = Array.from(stats.testPacks);
       const numTestPacks = testPacksArray.length;
+      
+      // Get additional data from the first item for this subsystem
+      const firstItem = data.find(item => item['SUBSYSTEM'] === subsystem) || {};
+      const serialNumber = firstItem['S/N'] || '';
+      const fluid = firstItem['FLUID_SUBSYSTEM'] || '';
+      const description = firstItem['DESCRIPTION'] || '';
+      const insulation = firstItem['INSULATION'] || '';
       
       // Get test pack progress data
       const testPackProgress = testPacksArray.map(tp => {
@@ -268,13 +274,17 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       // If no test packs, create single row
       if (testPackProgress.length === 0) {
         expandedData.push({
+          serialNumber,
+          fluid,
           subsystem,
           totalItems: stats.totalItems,
           doneItems: stats.doneItems,
           pendingItems: stats.totalItems - stats.doneItems,
+          description,
           numTestPacks: 0,
           testPack: null,
           testPackProgress: 0,
+          insulation,
           isFirstRow: true,
           rowSpan: 1,
           aislTotalItems: aislStat.totalItems,
@@ -282,20 +292,23 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           aislPendingItems: aislStat.totalItems - aislStat.doneItems,
           totalLoops: loopStat.totalLoops,
           doneLoops: loopStat.doneLoops,
-          pendingLoops: loopStat.pendingLoops,
-          description: description
+          pendingLoops: loopStat.pendingLoops
         });
       } else {
         // Create multiple rows for test packs
         testPackProgress.forEach((tp, index) => {
           expandedData.push({
+            serialNumber,
+            fluid,
             subsystem,
             totalItems: stats.totalItems,
             doneItems: stats.doneItems,
             pendingItems: stats.totalItems - stats.doneItems,
+            description,
             numTestPacks: numTestPacks,
             testPack: tp.testPack,
             testPackProgress: tp.progress,
+            insulation,
             isFirstRow: index === 0,
             rowSpan: testPackProgress.length,
             aislTotalItems: aislStat.totalItems,
@@ -303,8 +316,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
             aislPendingItems: aislStat.totalItems - aislStat.doneItems,
             totalLoops: loopStat.totalLoops,
             doneLoops: loopStat.doneLoops,
-            pendingLoops: loopStat.pendingLoops,
-            description: description
+            pendingLoops: loopStat.pendingLoops
           });
         });
       }
@@ -624,6 +636,16 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
               <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
                 <Thead bg="gray.50">
                   <Tr>
+                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
+                      <Text align="center">
+                        S/N
+                      </Text>
+                    </Th>
+                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
+                      <Text align="center">
+                        FLUID
+                      </Text>
+                    </Th>
                     <Th style={{ borderRight: '1px solid #e2e8f0' }}>SUBSYSTEM</Th>
                     <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
                       <Text align="center">
@@ -665,6 +687,11 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                         PROGRESS<br />TEST PACK
                       </Text>
                     </Th>
+                    <Th style={{ borderRight: '1px solid #e2e8f0' }}>
+                      <Text align="center">
+                        INSULATION
+                      </Text>
+                    </Th>
                     <Th isNumeric style={{ borderRight: '1px solid #e2e8f0' }}>
                       <Text align="center">
                         TOTAL LOOP<br />(Signal)
@@ -694,6 +721,42 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                     
                     return (
                       <Tr key={key}>
+                        {/* S/N - Merged cell */}
+                        {row.isFirstRow && (
+                          <Td 
+                            fontWeight="medium" 
+                            rowSpan={row.rowSpan}
+                            style={{ 
+                              verticalAlign: 'middle',
+                              textAlign: 'center',
+                              backgroundColor: '#f7fafc',
+                              borderRight: '1px solid #e2e8f0'
+                            }}
+                          >
+                            <Text fontSize="sm" fontWeight="bold">
+                              {row.serialNumber}
+                            </Text>
+                          </Td>
+                        )}
+                        
+                        {/* FLUID - Merged cell */}
+                        {row.isFirstRow && (
+                          <Td 
+                            fontWeight="medium" 
+                            rowSpan={row.rowSpan}
+                            style={{ 
+                              verticalAlign: 'middle',
+                              textAlign: 'center',
+                              backgroundColor: '#f7fafc',
+                              borderRight: '1px solid #e2e8f0'
+                            }}
+                          >
+                            <Text fontSize="sm" fontWeight="bold">
+                              {row.fluid}
+                            </Text>
+                          </Td>
+                        )}
+                        
                         {/* SUBSYSTEM - Merged cell */}
                         {row.isFirstRow && (
                           <Td 
@@ -808,6 +871,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                         {/* DESCRIPTION - Merged cell */}
                         {row.isFirstRow && (
                           <Td 
+                            fontWeight="medium" 
                             rowSpan={row.rowSpan}
                             style={{ 
                               verticalAlign: 'middle',
@@ -816,8 +880,8 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
-                            <Text fontSize="sm">
-                              {row.description || ''}
+                            <Text fontSize="sm" fontWeight="bold">
+                              {row.description}
                             </Text>
                           </Td>
                         )}
@@ -875,6 +939,13 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               </Text>
                             </Box>
                           )}
+                        </Td>
+                        
+                        {/* INSULATION - Individual cell per row */}
+                        <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {row.insulation}
+                          </Text>
                         </Td>
                         
                         {/* TOTAL LOOP (Signal) - Merged cell */}
