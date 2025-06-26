@@ -7,7 +7,6 @@ Accuracy and browser performance are CRITICAL requirements - prioritize these ov
 
 ### 1. ANALYZE OPTIMIZATION GUIDE
 First, thoroughly review:
-- Suggestion: SummarySubsystems.optimized.js
 - ECS/Streamlit_Snowflake/resources/ChartPipeline/README.md
 - ECS/Streamlit_Snowflake/resources/ChartPipeline/optimization-guide.md
   Pay special attention to:
