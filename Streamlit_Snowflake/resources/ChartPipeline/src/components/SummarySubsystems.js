@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { css, Global } from '@emotion/react';
 import {
   Box,
   VStack,
@@ -32,6 +33,8 @@ import Papa from 'papaparse'; // You'll need to install this: npm install papapa
  * @param {Array} props.data - Filtered dataset from parent component
  */
 const SummarySubsystems = ({ data: filteredData = [] }) => {
+  // Define table border color - change this to modify all table borders
+  const tableBorderColor = '#3182ce'; // Changed from #e2e8f0 to blue.500 color
   const [data, setData] = useState([]);
   const [testPackData, setTestPackData] = useState([]);
   const [aislData, setAislData] = useState([]);
@@ -607,6 +610,13 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
 
   return (
     <Box p={6}>
+      <Global
+        styles={css`
+          table th, table td {
+            border-color: #555879 !important;
+          }
+        `}
+      />
       <VStack spacing={2} align="stretch">
         <Box textAlign="center">
           <Heading size="sm" mb={2}>Summary</Heading>
@@ -619,39 +629,39 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
             <StatNumber>{summaryStats.uniqueSubsystems}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Total Items</StatLabel>
+            <StatLabel>Total<br />Items</StatLabel>
             <StatNumber>{totalItemsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Total Done Items</StatLabel>
+            <StatLabel>Total<br />Done<br />Items</StatLabel>
             <StatNumber>{totalDoneItemsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Total Pending Items</StatLabel>
+            <StatLabel>Total<br />Pending<br />Items</StatLabel>
             <StatNumber>{totalPendingItemsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Total Test Packs</StatLabel>
+            <StatLabel>Total<br />Test Packs</StatLabel>
             <StatNumber>{summaryStats.uniqueTestPacks}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Done Test Pack</StatLabel>
+            <StatLabel>Done<br />Test Pack</StatLabel>
             <StatNumber>{doneTestPacks}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Pending Test Pack</StatLabel>
+            <StatLabel>Pending<br />Test Pack</StatLabel>
             <StatNumber>{pendingTestPacks}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Total Loops</StatLabel>
+            <StatLabel>Total<br />Loops</StatLabel>
             <StatNumber>{totalLoopsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Total Loops Done</StatLabel>
+            <StatLabel>Total<br />Loops<br />Done</StatLabel>
             <StatNumber>{totalDoneLoopsSum.toLocaleString()}</StatNumber>
           </Stat>
           <Stat>
-            <StatLabel>Total Loops Pending</StatLabel>
+            <StatLabel>Total<br />Loops<br />Pending</StatLabel>
             <StatNumber>{totalPendingLoopsSum.toLocaleString()}</StatNumber>
           </Stat>
         </SimpleGrid>
@@ -663,7 +673,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           <CardBody>
             <Heading size="sm" mb={4}>Subsystem Progress Overview</Heading>
             <TableContainer overflowX="auto">
-              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '1500px' }}>
+              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '1500px', borderColor: '#3182ce' }}>
                 <Thead bg="gray.50">
                   <Tr>
                     <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '60px', textAlign: 'center' }}>
@@ -864,10 +874,10 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                         
                         {/* Progress Items% - Merged cell */}
                         {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
+                          <Td
+                            isNumeric
                             rowSpan={row.rowSpan}
-                            style={{ 
+                            style={{
                               verticalAlign: 'middle',
                               textAlign: 'center',
                               backgroundColor: '#f7fafc',
@@ -876,31 +886,31 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                           >
                             <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
                               <Box position="relative" width="30px" height="60px" mb="2">
-                                <Box 
+                                <Box
                                   position="absolute"
                                   bottom="0"
                                   left="0"
                                   width="30px"
-                                  height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`} 
-                                  bg={row.aislTotalItems > 0 ? 
-                                    (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" : 
+                                  height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`}
+                                  bg={row.aislTotalItems > 0 ?
+                                    (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" :
                                      row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
                                   borderRadius="md"
                                   zIndex="2"
                                 />
-                                <Box 
-                                  position="absolute" 
-                                  bottom="0" 
-                                  left="0" 
+                                <Box
+                                  position="absolute"
+                                  bottom="0"
+                                  left="0"
                                   width="30px"
-                                  height="60px" 
-                                  border="1px solid #e2e8f0" 
-                                  borderRadius="md" 
+                                  height="60px"
+                                  border="1px solid #e2e8f0"
+                                  borderRadius="md"
                                   bg="#0E2148"
                                 />
                               </Box>
-                              <Text 
-                                fontSize="xs" 
+                              <Text
+                                fontSize="xs"
                                 fontWeight="bold"
                                 color="black"
                               >
