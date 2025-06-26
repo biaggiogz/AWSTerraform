@@ -269,6 +269,17 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   const [worker, setWorker] = useState(null);
   const abortControllerRef = useRef(null);
   const dataCache = useRef(new Map());
+  const workerRef = useRef(null);
+
+  // Initialize worker
+  useEffect(() => {
+    workerRef.current = createDataWorker();
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+      }
+    };
+  }, []);
 
   // Load CSV data directly or use filtered data if provided
   useEffect(() => {
