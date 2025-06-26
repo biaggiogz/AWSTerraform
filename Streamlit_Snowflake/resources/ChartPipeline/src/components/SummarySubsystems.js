@@ -1,33 +1,25 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { css, Global } from '@emotion/react';
 import {
-  Box, VStack, HStack, Text, SimpleGrid, Card, CardBody, Heading, Badge, Divider,
-  Table, Thead, Tbody, Tr, Th, Td, TableContainer, Spinner, Progress
+  Box, VStack, HStack, Text, Badge, Divider, Table, Thead, Tbody, Tr, Th, Td,
+  TableContainer, Spinner, Progress, Card, CardBody, Heading, SimpleGrid
 } from '@chakra-ui/react';
 import Papa from 'papaparse';
 import { FixedSizeList as List } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
-// Web Worker for data processing
 const createDataWorker = () => {
   const workerCode = `
+    const createOptimizedMap = () => new Map();
+    const createOptimizedSet = () => new Set();
+    
     self.onmessage = function(e) {
-      const { type, data, testPackData, aislData, loopData, batchSize = 500 } = e.data;
+      const { type, data, testPackData, aislData, loopData, batchSize = 1000 } = e.data;
       
       if (type === 'processSubsystemData') {
-        const aislStats = new Map();
-        const loopStats = new Map();
-        const subsystemStats = new Map();
-        
-        // Process in batches to prevent memory spikes
-        const processBatch = (items, processor) => {
-          for (let i = 0; i < items.length; i += batchSize) {
-            const batch = items.slice(i, i + batchSize);
-            processor(batch);
-          }
-        };
-        
-        // Process aislamientos data
-        processBatch(aislData, (batch) => {
+        const aislStats = createOptimizedMap();
+        for (let i = 0; i < aislData.length; i += batchSize) {
+          const batch = aislData.slice(i, i + batchSize);
           batch.forEach(item => {
             const subsystem = item['SUBSYSTEM'];
             if (!subsystem) return;
@@ -38,10 +30,11 @@ const createDataWorker = () => {
             stats.totalItems += 1;
             if (item['DONE'] === 'YES') stats.doneItems += 1;
           });
-        });
+        }
         
-        // Process loop data
-        processBatch(loopData, (batch) => {
+        const loopStats = createOptimizedMap();
+        for (let i = 0; i < loopData.length; i += batchSize) {
+          const batch = loopData.slice(i, i + batchSize);
           batch.forEach(item => {
             const subsystem = item['SUBS_PRE'];
             if (!subsystem) return;
@@ -56,25 +49,39 @@ const createDataWorker = () => {
               stats.pendingLoops += 1;
             }
           });
-        });
+        }
+
+        const subsystemStats = createOptimizedMap();
+        const subsystemCache = createOptimizedMap();
         
-        // Process main data
-        processBatch(data, (batch) => {
+        for (let i = 0; i < data.length; i += batchSize) {
+          const batch = data.slice(i, i + batchSize);
           batch.forEach(item => {
             const subsystem = item['SUBSYSTEM'];
             if (!subsystem) return;
+
             if (!subsystemStats.has(subsystem)) {
               subsystemStats.set(subsystem, {
-                totalItems: 0, doneItems: 0, testPacks: new Set(),
-                testPackProgressValues: new Map(), serialNumber: item['S/N'] || '',
-                fluid: item['FLUID_SUBSYSTEM'] || '', description: item['DESCRIPTION'] || '',
+                totalItems: 0, doneItems: 0, testPacks: createOptimizedSet(),
+                testPackProgressValues: createOptimizedMap()
+              });
+            }
+
+            if (!subsystemCache.has(subsystem)) {
+              subsystemCache.set(subsystem, {
+                serialNumber: item['S/N'] || '',
+                fluid: item['FLUID_SUBSYSTEM'] || '',
+                description: item['DESCRIPTION'] || '',
                 insulation: item['INSULATION'] || ''
               });
             }
+
             const stats = subsystemStats.get(subsystem);
             stats.totalItems += 1;
+
             const progress = parseFloat(item['CONSTRUC COORD PROGRESS']) || 0;
             if (progress >= 90) stats.doneItems += 1;
+
             if (item['TEST PACK']) {
               item['TEST PACK'].split('|').forEach(tp => {
                 const trimmedTp = tp.trim();
@@ -85,14 +92,14 @@ const createDataWorker = () => {
               });
             }
           });
-        });
-        
-        // Create expanded data
+        }
+
         const expandedData = [];
         subsystemStats.forEach((stats, subsystem) => {
           const aislStat = aislStats.get(subsystem) || { totalItems: 0, doneItems: 0 };
           const loopStat = loopStats.get(subsystem) || { totalLoops: 0, doneLoops: 0, pendingLoops: 0 };
           const testPacksArray = Array.from(stats.testPacks);
+          const cachedItem = subsystemCache.get(subsystem) || {};
           
           const testPackProgress = testPacksArray.map(tp => {
             const progressData = testPackData.find(tpd => 
@@ -103,14 +110,14 @@ const createDataWorker = () => {
               stats.testPackProgressValues.get(tp) || 0;
             return { testPack: tp, progress };
           });
-          
+
           if (testPackProgress.length === 0) {
             expandedData.push({
-              serialNumber: stats.serialNumber, fluid: stats.fluid, subsystem,
+              serialNumber: cachedItem.serialNumber, fluid: cachedItem.fluid, subsystem,
               totalItems: stats.totalItems, doneItems: stats.doneItems,
               pendingItems: stats.totalItems - stats.doneItems,
-              description: stats.description, numTestPacks: 0, testPack: null,
-              testPackProgress: 0, insulation: stats.insulation, isFirstRow: true, rowSpan: 1,
+              description: cachedItem.description, numTestPacks: 0, testPack: null,
+              testPackProgress: 0, insulation: cachedItem.insulation, isFirstRow: true, rowSpan: 1,
               aislTotalItems: aislStat.totalItems, aislDoneItems: aislStat.doneItems,
               aislPendingItems: aislStat.totalItems - aislStat.doneItems,
               totalLoops: loopStat.totalLoops, doneLoops: loopStat.doneLoops,
@@ -119,12 +126,12 @@ const createDataWorker = () => {
           } else {
             testPackProgress.forEach((tp, index) => {
               expandedData.push({
-                serialNumber: stats.serialNumber, fluid: stats.fluid, subsystem,
+                serialNumber: cachedItem.serialNumber, fluid: cachedItem.fluid, subsystem,
                 totalItems: stats.totalItems, doneItems: stats.doneItems,
                 pendingItems: stats.totalItems - stats.doneItems,
-                description: stats.description, numTestPacks: testPacksArray.length,
+                description: cachedItem.description, numTestPacks: testPacksArray.length,
                 testPack: tp.testPack, testPackProgress: tp.progress,
-                insulation: stats.insulation, isFirstRow: index === 0,
+                insulation: cachedItem.insulation, isFirstRow: index === 0,
                 rowSpan: testPackProgress.length,
                 aislTotalItems: aislStat.totalItems, aislDoneItems: aislStat.doneItems,
                 aislPendingItems: aislStat.totalItems - aislStat.doneItems,
@@ -134,11 +141,10 @@ const createDataWorker = () => {
             });
           }
         });
-        
+
         const sortedData = expandedData.sort((a, b) => b.totalItems - a.totalItems);
         
-        // Calculate summary stats
-        const processedSubsystems = new Set();
+        const processedSubsystems = createOptimizedSet();
         let totalItemsSum = 0, totalDoneItemsSum = 0, totalPendingItemsSum = 0;
         let totalLoopsSum = 0, totalDoneLoopsSum = 0, totalPendingLoopsSum = 0;
         let totalProgressPercent = 0, totalLoopsProgressPercent = 0, subsystemCount = 0;
@@ -156,6 +162,7 @@ const createDataWorker = () => {
             totalProgressPercent += progress;
             const loopsProgress = row.totalLoops > 0 ? (row.doneLoops / row.totalLoops) * 100 : 0;
             totalLoopsProgressPercent += loopsProgress;
+            
             subsystemCount++;
             processedSubsystems.add(row.subsystem);
           }
@@ -173,646 +180,344 @@ const createDataWorker = () => {
           avgLoopsProgressPercent: subsystemCount > 0 ? Math.round(totalLoopsProgressPercent / subsystemCount) : 0
         };
         
+        aislStats.clear(); loopStats.clear(); subsystemStats.clear();
+        subsystemCache.clear(); processedSubsystems.clear();
+        
         self.postMessage({ type: 'result', data: sortedData, summaryStats });
       }
     };
   `;
+  
   const blob = new Blob([workerCode], { type: 'application/javascript' });
   return new Worker(URL.createObjectURL(blob));
 };
 
-// Virtualized Row Component
 const Row = React.memo(({ data, index, style }) => {
   const row = data[index];
+  
   return (
-    <div style={style}>
-      <Table variant="simple" size="sm">
-        <Tbody>
-          <Tr>
-            {row.isFirstRow && (
-              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
-                <Text fontSize="sm" fontWeight="bold">{row.serialNumber}</Text>
-              </Td>
-            )}
-            {row.isFirstRow && (
-              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
-                <Text fontSize="sm" fontWeight="bold">{row.fluid}</Text>
-              </Td>
-            )}
-            {row.isFirstRow && (
-              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
-                <Text fontSize="sm" fontWeight="bold" isTruncated title={row.subsystem}>{row.subsystem}</Text>
-              </Td>
-            )}
-            {row.isFirstRow && (
-              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
-                <Text fontSize="sm" fontWeight="semibold">{row.aislTotalItems.toLocaleString()}</Text>
-              </Td>
-            )}
-            {row.isFirstRow && (
-              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
-                <Text fontSize="sm" fontWeight="semibold">{row.aislDoneItems.toLocaleString()}</Text>
-              </Td>
-            )}
-            {row.isFirstRow && (
-              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
-                <Text fontSize="sm" fontWeight="semibold">{row.aislPendingItems.toLocaleString()}</Text>
-              </Td>
-            )}
-            {row.isFirstRow && (
-              <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
-                <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
-                  <Box position="relative" width="30px" height="60px" mb="2">
-                    <Box position="absolute" bottom="0" left="0" width="30px" height="60px" border="1px solid #e2e8f0" bg="#0E2148" />
-                    <Box position="absolute" bottom="0" left="0" width="30px" 
-                         height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`}
-                         bg={row.aislTotalItems > 0 ? (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" : 
-                             row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"} zIndex="2" />
-                  </Box>
-                  <Text fontSize="xs" fontWeight="bold" color="black">
-                    {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
-                  </Text>
-                </Box>
-              </Td>
-            )}
-            <Td style={{ textAlign: 'center', padding: '8px' }}>
-              {row.testPack && <Text fontSize="sm" fontWeight="medium">{row.testPack}</Text>}
-            </Td>
-            <Td style={{ padding: '8px', textAlign: 'center' }}>
-              {row.testPack && (
-                <Box position="relative" width="100px" margin="0 auto">
-                  <Progress value={Math.round(row.testPackProgress)} size="md" 
-                           colorScheme={row.testPackProgress === 100 ? "green" : row.testPackProgress > 50 ? "blue" : "red"}
-                           width="100px" borderRadius="md" backgroundColor="#0E2148" />
-                  <Text position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" 
-                        fontSize="xs" fontWeight="bold" color="white" textShadow="0px 0px 2px rgba(0,0,0,0.7)">
-                    {Math.round(row.testPackProgress)}%
-                  </Text>
-                </Box>
-              )}
-            </Td>
-          </Tr>
-        </Tbody>
-      </Table>
-    </div>
+    <Tr key={`${row.subsystem}-${row.testPack || 'no-tp'}-${index}`} style={style}>
+      {row.isFirstRow && (
+        <Td 
+          fontWeight="medium" rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="bold">{row.serialNumber}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          fontWeight="medium" rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="bold">{row.fluid}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          fontWeight="medium" rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="bold" isTruncated title={row.subsystem}>{row.subsystem}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          isNumeric rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="semibold">{row.aislTotalItems.toLocaleString()}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          isNumeric rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="semibold">{row.aislDoneItems.toLocaleString()}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          isNumeric rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="semibold">{row.aislPendingItems.toLocaleString()}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td
+          isNumeric rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
+            <Box position="relative" width="30px" height="60px" mb="2">
+              <Box position="absolute" bottom="0" left="0" width="30px" height="60px" border="1px solid #e2e8f0" bg="#0E2148" />
+              <Box
+                position="absolute" bottom="0" left="0" width="30px"
+                height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`}
+                bg={row.aislTotalItems > 0 ? 
+                  (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" : 
+                   row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
+                zIndex="2"
+              />
+            </Box>
+            <Text fontSize="xs" fontWeight="bold" color="black">
+              {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
+            </Text>
+          </Box>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          fontWeight="medium" rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'left', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="bold">{row.description}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          isNumeric rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="bold">{row.numTestPacks}</Text>
+        </Td>
+      )}
+      
+      <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
+        {row.testPack && <Text fontSize="sm" fontWeight="medium">{row.testPack}</Text>}
+      </Td>
+      
+      <Td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #e2e8f0' }}>
+        {row.testPack && (
+          <Box position="relative" width="100px" margin="0 auto">
+            <Progress 
+              value={Math.round(row.testPackProgress)} size="md" 
+              colorScheme={row.testPackProgress === 100 ? "green" : row.testPackProgress > 50 ? "blue" : "red"}
+              width="100px" borderRadius="md" backgroundColor="#0E2148"
+            />
+            <Text 
+              position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" 
+              fontSize="xs" fontWeight="bold" color="white" textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+            >
+              {Math.round(row.testPackProgress)}%
+            </Text>
+          </Box>
+        )}
+      </Td>
+      
+      <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
+        <Text fontSize="sm" fontWeight="medium">{row.insulation}</Text>
+      </Td>
+      
+      {row.isFirstRow && (
+        <Td 
+          isNumeric rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="semibold">{row.totalLoops.toLocaleString()}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          isNumeric rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="semibold">{row.doneLoops.toLocaleString()}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          isNumeric rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc', borderRight: '1px solid #e2e8f0' }}
+        >
+          <Text fontSize="sm" fontWeight="semibold">{row.pendingLoops.toLocaleString()}</Text>
+        </Td>
+      )}
+      
+      {row.isFirstRow && (
+        <Td 
+          isNumeric rowSpan={row.rowSpan}
+          style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}
+        >
+          <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
+            <Box position="relative" width="30px" height="60px" mb="2">
+              <Box position="absolute" bottom="0" left="0" width="30px" height="60px" border="1px solid #e2e8f0" bg="#0E2148" />
+              <Box 
+                position="absolute" bottom="0" left="0" width="30px"
+                height={`${row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%`} 
+                bg={row.totalLoops > 0 ? 
+                  (row.doneLoops / row.totalLoops * 100 === 100 ? "green.500" : 
+                   row.doneLoops / row.totalLoops * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
+                zIndex="2"
+              />
+            </Box>
+            <Text fontSize="xs" fontWeight="bold" color="black">
+              {row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%
+            </Text>
+          </Box>
+        </Td>
+      )}
+    </Tr>
   );
 });
 
 const SummarySubsystems = ({ data: filteredData = [] }) => {
-  const [data, setData] = useState([]);
-  const [testPackData, setTestPackData] = useState([]);
-  const [aislData, setAislData] = useState([]);
-  const [loopData, setLoopData] = useState([]);
-  const [subsystemsInfoData, setSubsystemsInfoData] = useState([]);
+  const [subsystemProgressData, setSubsystemProgressData] = useState([]);
+  const [summaryStats, setSummaryStats] = useState({
+    uniqueSubsystems: 0, uniqueTestPacks: 0, totalItemsSum: 0, totalDoneItemsSum: 0,
+    totalPendingItemsSum: 0, doneTestPacks: 0, pendingTestPacks: 0, totalLoopsSum: 0,
+    totalDoneLoopsSum: 0, totalPendingLoopsSum: 0, avgProgressItemsPercent: 0, avgLoopsProgressPercent: 0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [worker, setWorker] = useState(null);
   const abortControllerRef = useRef(null);
   const dataCache = useRef(new Map());
 
-  // Load CSV data directly or use filtered data if provided
+  useEffect(() => {
+    const newWorker = createDataWorker();
+    setWorker(newWorker);
+    
+    return () => {
+      if (newWorker) newWorker.terminate();
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+      dataCache.current.clear();
+    };
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Use filtered data if available, otherwise fetch from CSV
-        if (filteredData && filteredData.length > 0) {
-          setData(filteredData);
-        } else {
-          // Load main data from CSV if no filtered data
-          const response = await fetch('/data/pipelinedata.csv');
-          const csvText = await response.text();
-          
-          Papa.parse(csvText, {
-            header: true,
-            complete: (results) => {
-              setData(results.data);
-            },
-            error: (error) => {
-              setError(`Error parsing CSV: ${error.message}`);
-            }
-          });
+        setLoading(true);
+        setError(null);
+        
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+        abortControllerRef.current = new AbortController();
+        const { signal } = abortControllerRef.current;
+        
+        const cacheKey = JSON.stringify(filteredData?.slice(0, 10) || 'default');
+        
+        if (dataCache.current.has(cacheKey)) {
+          const cachedResult = dataCache.current.get(cacheKey);
+          setSubsystemProgressData(cachedResult.data);
+          setSummaryStats(cachedResult.summaryStats);
+          setLoading(false);
+          return;
         }
         
-        // Always load these supporting datasets
-        const testPackResponse = await fetch('/data/test_pack_progress.csv');
-        const testPackCsvText = await testPackResponse.text();
+        const dataSources = [
+          { url: '/data/test_pack_progress.csv', name: 'testPackData' },
+          { url: '/data/aislamientos.csv', name: 'aislData' },
+          { url: '/data/test_of_lazos_updated.csv', name: 'loopData' }
+        ];
         
-        const aislResponse = await fetch('/data/aislamientos.csv');
-        const aislCsvText = await aislResponse.text();
+        if (!filteredData || filteredData.length === 0) {
+          dataSources.unshift({ url: '/data/pipelinedata.csv', name: 'mainData' });
+        }
         
-        const loopResponse = await fetch('/data/test_of_lazos_updated.csv');
-        const loopCsvText = await loopResponse.text();
-        
-        const subsystemsInfoResponse = await fetch('/data/subsystems_info.csv');
-        const subsystemsInfoCsvText = await subsystemsInfoResponse.text();
-        
-        // Parse test pack data
-        Papa.parse(testPackCsvText, {
-          header: true,
-          complete: (testPackResults) => {
-            setTestPackData(testPackResults.data);
-            
-            // Parse aislamientos data
-            Papa.parse(aislCsvText, {
-              header: true,
-              complete: (aislResults) => {
-                setAislData(aislResults.data);
-                
-                // Parse loop data
-                Papa.parse(loopCsvText, {
-                  header: true,
-                  complete: (loopResults) => {
-                    setLoopData(loopResults.data);
-                    
-                    // Parse subsystems info data
-                    Papa.parse(subsystemsInfoCsvText, {
-                      header: true,
-                      complete: (subsystemsInfoResults) => {
-                        setSubsystemsInfoData(subsystemsInfoResults.data);
-                        setLoading(false);
-                      },
-                      error: (error) => {
-                        setError(`Error parsing subsystems info CSV: ${error.message}`);
-                        setLoading(false);
-                      }
-                    });
-                  },
-                  error: (error) => {
-                    setError(`Error parsing loop CSV: ${error.message}`);
-                    setLoading(false);
-                  }
-                });
-              },
-              error: (error) => {
-                setError(`Error parsing aislamientos CSV: ${error.message}`);
-                setLoading(false);
-              }
-            });
-          },
-          error: (error) => {
-            setError(`Error parsing test pack CSV: ${error.message}`);
-            setLoading(false);
-          }
-        });
-      } catch (error) {
-        setError(`Error fetching CSV: ${error.message}`);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [filteredData]);
-  
-  // Calculate subsystem progress statistics with TEST PACK data
-  const subsystemProgressData = useMemo(() => {
-    if (!data || data.length === 0 || !testPackData || testPackData.length === 0 || !aislData || aislData.length === 0 || !loopData || loopData.length === 0 || !subsystemsInfoData || subsystemsInfoData.length === 0) {
-      return [];
-    }
-    
-    // Process aislamientos data according to SQL transformation
-    const aislStats = {};
-    aislData.forEach(item => {
-      const subsystem = item['SUBSYSTEM'];
-      if (!subsystem) return;
-      
-      if (!aislStats[subsystem]) {
-        aislStats[subsystem] = {
-          totalItems: 0,
-          doneItems: 0
-        };
-      }
-      
-      // Count total items per subsystem
-      aislStats[subsystem].totalItems += 1;
-      
-      // Count done items where DONE = 'YES'
-      if (item['DONE'] === 'YES') {
-        aislStats[subsystem].doneItems += 1;
-      }
-    });
-    
-    // Process loop data according to SQL transformation
-    const loopStats = {};
-    loopData.forEach(item => {
-      const subsystem = item['SUBS_PRE'];
-      if (!subsystem) return;
-      
-      if (!loopStats[subsystem]) {
-        loopStats[subsystem] = {
-          totalLoops: 0,
-          doneLoops: 0,
-          pendingLoops: 0
-        };
-      }
-      
-      // Count total loops per subsystem
-      loopStats[subsystem].totalLoops += 1;
-      
-      // Count done loops where OK=100% = '100.00%'
-      if (item['OK=100%'] === '100.00%') {
-        loopStats[subsystem].doneLoops += 1;
-      } else {
-        loopStats[subsystem].pendingLoops += 1;
-      }
-    });
-
-    const subsystemStats = {};
-
-    // Process main pipeline data
-    data.forEach(item => {
-      const subsystem = item['SUBSYSTEM'];
-      if (!subsystem) return;
-
-      if (!subsystemStats[subsystem]) {
-        subsystemStats[subsystem] = {
-          totalItems: 0,
-          doneItems: 0,
-          testPacks: new Set(),
-          testPackProgressValues: {} // Store progress values for each test pack
-        };
-      }
-
-      subsystemStats[subsystem].totalItems += 1;
-
-      // Check completion based on CONSTRUC COORD PROGRESS
-      const progress = parseFloat(item['CONSTRUC COORD PROGRESS']) || 0;
-      if (progress >= 90) {
-        subsystemStats[subsystem].doneItems += 1;
-      }
-
-      // Progress calculation based on CONSTRUC COORD PROGRESS
-      const overallProgress = parseFloat(item['PROGRESS SW+FW (%)']) || 0;
-
-      // Add test pack if available
-      if (item['TEST PACK']) {
-        const testPacks = item['TEST PACK'].split('|');
-        testPacks.forEach(tp => {
-          if (tp.trim()) {
-            subsystemStats[subsystem].testPacks.add(tp.trim());
-            
-            // Store progress for this test pack
-            if (!subsystemStats[subsystem].testPackProgressValues[tp.trim()]) {
-              subsystemStats[subsystem].testPackProgressValues[tp.trim()] = progress;
-            } else {
-              // If we have multiple entries for the same test pack, average the progress
-              subsystemStats[subsystem].testPackProgressValues[tp.trim()] = 
-                (subsystemStats[subsystem].testPackProgressValues[tp.trim()] + progress) / 2;
-            }
-          }
-        });
-      }
-    });
-
-    // Create expanded data with test pack rows
-    const expandedData = [];
-    
-    Object.entries(subsystemStats).forEach(([subsystem, stats]) => {
-      // Get aislamientos stats for this subsystem
-      const aislStat = aislStats[subsystem] || { totalItems: 0, doneItems: 0 };
-      
-      // Get loop stats for this subsystem
-      const loopStat = loopStats[subsystem] || { totalLoops: 0, doneLoops: 0, pendingLoops: 0 };
-      
-      // Get subsystem info
-      const subsystemInfo = subsystemsInfoData.find(info => info.SUBSYSTEM === subsystem);
-      const testPacksArray = Array.from(stats.testPacks);
-      const numTestPacks = testPacksArray.length;
-      
-      // Get additional data from the first item for this subsystem
-      const firstItem = data.find(item => item['SUBSYSTEM'] === subsystem) || {};
-      const serialNumber = firstItem['S/N'] || '';
-      const fluid = firstItem['FLUID_SUBSYSTEM'] || '';
-      const description = firstItem['DESCRIPTION'] || '';
-      const insulation = firstItem['INSULATION'] || '';
-      
-      // Get test pack progress data
-      const testPackProgress = testPacksArray.map(tp => {
-        const progressData = testPackData.find(tpd => 
-          tpd.TestPack === tp && tpd.SUBSYSTEM === subsystem
+        const responses = await Promise.all(
+          dataSources.map(source => 
+            fetch(source.url, { signal })
+              .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response;
+              })
+          )
         );
         
-        // Use the progress from testPackData if available, otherwise use the calculated progress
-        const progress = progressData ? 
-          parseFloat(progressData.Progress.replace('%', '')) : 
-          stats.testPackProgressValues[tp] || 0;
+        if (signal.aborted) return;
         
-        return {
-          testPack: tp,
-          progress: progress
-        };
-      });
-
-      // If no test packs, create single row
-      if (testPackProgress.length === 0) {
-        expandedData.push({
-          serialNumber,
-          fluid,
-          subsystem,
-          totalItems: stats.totalItems,
-          doneItems: stats.doneItems,
-          pendingItems: stats.totalItems - stats.doneItems,
-          description,
-          numTestPacks: 0,
-          testPack: null,
-          testPackProgress: 0,
-          insulation,
-          isFirstRow: true,
-          rowSpan: 1,
-          aislTotalItems: aislStat.totalItems,
-          aislDoneItems: aislStat.doneItems,
-          aislPendingItems: aislStat.totalItems - aislStat.doneItems,
-          totalLoops: loopStat.totalLoops,
-          doneLoops: loopStat.doneLoops,
-          pendingLoops: loopStat.pendingLoops
-        });
-      } else {
-        // Create multiple rows for test packs
-        testPackProgress.forEach((tp, index) => {
-          expandedData.push({
-            serialNumber,
-            fluid,
-            subsystem,
-            totalItems: stats.totalItems,
-            doneItems: stats.doneItems,
-            pendingItems: stats.totalItems - stats.doneItems,
-            description,
-            numTestPacks: numTestPacks,
-            testPack: tp.testPack,
-            testPackProgress: tp.progress,
-            insulation,
-            isFirstRow: index === 0,
-            rowSpan: testPackProgress.length,
-            aislTotalItems: aislStat.totalItems,
-            aislDoneItems: aislStat.doneItems,
-            aislPendingItems: aislStat.totalItems - aislStat.doneItems,
-            totalLoops: loopStat.totalLoops,
-            doneLoops: loopStat.doneLoops,
-            pendingLoops: loopStat.pendingLoops
+        const csvTexts = await Promise.all(responses.map(response => response.text()));
+        if (signal.aborted) return;
+        
+        const parsedData = {};
+        const parsePromises = csvTexts.map((csvText, index) => {
+          return new Promise((resolve, reject) => {
+            if (signal.aborted) {
+              reject(new Error('Request aborted'));
+              return;
+            }
+            
+            Papa.parse(csvText, {
+              header: true,
+              complete: (results) => {
+                if (signal.aborted) {
+                  reject(new Error('Request aborted'));
+                  return;
+                }
+                resolve({ name: dataSources[index].name, data: results.data });
+              },
+              error: (error) => {
+                reject(new Error(`Error parsing ${dataSources[index].name}: ${error.message}`));
+              }
+            });
           });
         });
+        
+        const parsedResults = await Promise.all(parsePromises);
+        if (signal.aborted) return;
+        
+        parsedResults.forEach(result => {
+          parsedData[result.name] = result.data;
+        });
+        
+        const mainData = filteredData && filteredData.length > 0 ? filteredData : parsedData.mainData;
+        
+        if (worker && !signal.aborted) {
+          worker.onmessage = (e) => {
+            if (e.data.type === 'result' && !signal.aborted) {
+              const result = { data: e.data.data, summaryStats: e.data.summaryStats };
+              
+              if (dataCache.current.size > 5) {
+                const firstKey = dataCache.current.keys().next().value;
+                dataCache.current.delete(firstKey);
+              }
+              dataCache.current.set(cacheKey, result);
+              
+              setSubsystemProgressData(result.data);
+              setSummaryStats(result.summaryStats);
+              setLoading(false);
+            }
+          };
+          
+          worker.postMessage({
+            type: 'processSubsystemData', data: mainData,
+            testPackData: parsedData.testPackData, aislData: parsedData.aislData,
+            loopData: parsedData.loopData,
+            batchSize: Math.min(1000, Math.max(100, Math.floor(mainData.length / 10)))
+          });
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          setError(`Error fetching data: ${error.message}`);
+          setLoading(false);
+        }
       }
-    });
-
-    return expandedData.sort((a, b) => b.totalItems - a.totalItems);
-  }, [data, testPackData, aislData, loopData, subsystemsInfoData]);
-
-  // Calculate summary statistics
-  const summaryStats = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return {
-        totalRecords: 0,
-        uniqueTestPacks: 0,
-        uniqueSubsystems: 0,
-        uniqueDesignAreas: 0,
-        testPackBreakdown: {},
-        subsystemBreakdown: {},
-        totalItems: 0
-      };
-    }
-
-    const testPacks = new Set();
-    const subsystems = new Set();
-    const testPackCounts = {};
-    const subsystemCounts = {};
-
-    subsystemProgressData.forEach(item => {
-      if (item.testPack) {
-        testPacks.add(item.testPack);
-        testPackCounts[item.testPack] = (testPackCounts[item.testPack] || 0) + 1;
-      }
-      if (item.subsystem) {
-        subsystems.add(item.subsystem);
-        subsystemCounts[item.subsystem] = (subsystemCounts[item.subsystem] || 0) + 1;
-      }
-    });
-
-    return {
-      totalRecords: subsystemProgressData.length,
-      uniqueTestPacks: testPacks.size,
-      uniqueSubsystems: subsystems.size,
-      uniqueDesignAreas: 0,
-      testPackBreakdown: testPackCounts,
-      subsystemBreakdown: subsystemCounts
     };
+
+    if (worker) fetchData();
+  }, [filteredData, worker]);
+
+  const rowRenderer = useCallback(({ index, style }) => {
+    return <Row data={subsystemProgressData} index={index} style={style} />;
   }, [subsystemProgressData]);
   
-  // Calculate total items from subsystem progress data
-  const totalItemsSum = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    // Create a Set to store unique subsystems to avoid double counting
-    const processedSubsystems = new Set();
-    let totalSum = 0;
-    
-    subsystemProgressData.forEach(row => {
-      // Only count each subsystem once
-      if (!processedSubsystems.has(row.subsystem)) {
-        totalSum += row.aislTotalItems;
-        processedSubsystems.add(row.subsystem);
-      }
-    });
-    
-    return totalSum;
+  const memoizedSummaryStats = useMemo(() => summaryStats, [summaryStats]);
+  const memoizedProgressData = useMemo(() => {
+    return subsystemProgressData.slice(0, Math.min(subsystemProgressData.length, 1000));
   }, [subsystemProgressData]);
-  
-  // Calculate total done items from subsystem progress data
-  const totalDoneItemsSum = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    // Create a Set to store unique subsystems to avoid double counting
-    const processedSubsystems = new Set();
-    let totalDoneSum = 0;
-    
-    subsystemProgressData.forEach(row => {
-      // Only count each subsystem once
-      if (!processedSubsystems.has(row.subsystem)) {
-        totalDoneSum += row.aislDoneItems;
-        processedSubsystems.add(row.subsystem);
-      }
-    });
-    
-    return totalDoneSum;
-  }, [subsystemProgressData]);
-
-  // Calculate total pending items from subsystem progress data
-  const totalPendingItemsSum = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    // Create a Set to store unique subsystems to avoid double counting
-    const processedSubsystems = new Set();
-    let totalPendingSum = 0;
-    
-    subsystemProgressData.forEach(row => {
-      // Only count each subsystem once
-      if (!processedSubsystems.has(row.subsystem)) {
-        totalPendingSum += row.aislPendingItems;
-        processedSubsystems.add(row.subsystem);
-      }
-    });
-    
-    return totalPendingSum;
-  }, [subsystemProgressData]);
-
-  // Calculate average progress items percentage
-  const avgProgressItemsPercent = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    const processedSubsystems = new Set();
-    let totalProgress = 0;
-    let count = 0;
-    
-    subsystemProgressData.forEach(row => {
-      if (!processedSubsystems.has(row.subsystem)) {
-        const progress = row.aislTotalItems > 0 ? (row.aislDoneItems / row.aislTotalItems) * 100 : 0;
-        totalProgress += progress;
-        count++;
-        processedSubsystems.add(row.subsystem);
-      }
-    });
-    
-    return count > 0 ? Math.round(totalProgress / count) : 0;
-  }, [subsystemProgressData]);
-
-  // Calculate average test pack progress percentage
-  const avgTestPackProgress = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    let totalProgress = 0;
-    let count = 0;
-    
-    subsystemProgressData.forEach(row => {
-      if (row.testPack && row.testPackProgress > 0) {
-        totalProgress += row.testPackProgress;
-        count++;
-      }
-    });
-    
-    return count > 0 ? Math.round(totalProgress / count) : 0;
-  }, [subsystemProgressData]);
-
-  // Calculate total loops sum
-  const totalLoopsSum = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    const processedSubsystems = new Set();
-    let totalSum = 0;
-    
-    subsystemProgressData.forEach(row => {
-      if (!processedSubsystems.has(row.subsystem)) {
-        totalSum += row.totalLoops;
-        processedSubsystems.add(row.subsystem);
-      }
-    });
-    
-    return totalSum;
-  }, [subsystemProgressData]);
-
-  // Calculate total done loops sum
-  const totalDoneLoopsSum = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    const processedSubsystems = new Set();
-    let totalSum = 0;
-    
-    subsystemProgressData.forEach(row => {
-      if (!processedSubsystems.has(row.subsystem)) {
-        totalSum += row.doneLoops;
-        processedSubsystems.add(row.subsystem);
-      }
-    });
-    
-    return totalSum;
-  }, [subsystemProgressData]);
-
-  // Calculate total pending loops sum
-  const totalPendingLoopsSum = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    const processedSubsystems = new Set();
-    let totalSum = 0;
-    
-    subsystemProgressData.forEach(row => {
-      if (!processedSubsystems.has(row.subsystem)) {
-        totalSum += row.pendingLoops;
-        processedSubsystems.add(row.subsystem);
-      }
-    });
-    
-    return totalSum;
-  }, [subsystemProgressData]);
-
-  // Calculate average loops progress percentage
-  const avgLoopsProgressPercent = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    const processedSubsystems = new Set();
-    let totalProgress = 0;
-    let count = 0;
-    
-    subsystemProgressData.forEach(row => {
-      if (!processedSubsystems.has(row.subsystem)) {
-        const progress = row.totalLoops > 0 ? (row.doneLoops / row.totalLoops) * 100 : 0;
-        totalProgress += progress;
-        count++;
-        processedSubsystems.add(row.subsystem);
-      }
-    });
-    
-    return count > 0 ? Math.round(totalProgress / count) : 0;
-  }, [subsystemProgressData]);
-
-  // Calculate done test packs (PROGRESS TEST PACK = 100%)
-  const doneTestPacks = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    return subsystemProgressData.filter(row => 
-      row.testPack && row.testPackProgress === 100
-    ).length;
-  }, [subsystemProgressData]);
-
-  // Calculate pending test packs (PROGRESS TEST PACK < 100%)
-  const pendingTestPacks = useMemo(() => {
-    if (!subsystemProgressData || subsystemProgressData.length === 0) {
-      return 0;
-    }
-    
-    return subsystemProgressData.filter(row => 
-      row.testPack && row.testPackProgress < 100
-    ).length;
-  }, [subsystemProgressData]);
-
-  // Get top 5 test packs and subsystems by count
-  const topTestPacks = useMemo(() => {
-    return Object.entries(summaryStats.testPackBreakdown)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5);
-  }, [summaryStats.testPackBreakdown]);
-
-  const topSubsystems = useMemo(() => {
-    return Object.entries(summaryStats.subsystemBreakdown)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5);
-  }, [summaryStats.subsystemBreakdown]);
 
   if (loading) {
     return (
@@ -834,16 +539,8 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
 
   return (
     <Box p={6}>
-      <Global
-        styles={css`
-          table th, table td {
-            border-color: #555879 !important;
-          }
-        `}
-      />
+      <Global styles={css`table th, table td { border-color: #555879 !important; }`} />
       <VStack spacing={2} align="stretch">
-
-        {/* Summary Statistics */}
         <Box width="100%" overflowX="auto">
           <TableContainer>
             <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', width: '100%', borderColor: '#3182ce' }}>
@@ -862,15 +559,15 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
               </Thead>
               <Tbody>
                 <Tr>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{summaryStats.uniqueSubsystems}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalItemsSum.toLocaleString()}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalDoneItemsSum.toLocaleString()}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalPendingItemsSum.toLocaleString()}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{summaryStats.uniqueTestPacks}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{doneTestPacks}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{pendingTestPacks}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalLoopsSum.toLocaleString()}</Td>
-                  <Td style={{ textAlign: 'center', fontWeight: 'bold' }}>{totalPendingLoopsSum.toLocaleString()}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{memoizedSummaryStats.uniqueSubsystems}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{memoizedSummaryStats.totalItemsSum.toLocaleString()}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{memoizedSummaryStats.totalDoneItemsSum.toLocaleString()}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{memoizedSummaryStats.totalPendingItemsSum.toLocaleString()}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{memoizedSummaryStats.uniqueTestPacks}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{memoizedSummaryStats.doneTestPacks}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{memoizedSummaryStats.pendingTestPacks}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{memoizedSummaryStats.totalLoopsSum.toLocaleString()}</Td>
+                  <Td style={{ textAlign: 'center', fontWeight: 'bold' }}>{memoizedSummaryStats.totalPendingLoopsSum.toLocaleString()}</Td>
                 </Tr>
               </Tbody>
             </Table>
@@ -879,526 +576,31 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
 
         <Divider />
 
-        {/* Subsystem Progress Table */}
         <Card>
           <CardBody>
             <Heading size="sm" mb={4}>Subsystem Progress Overview</Heading>
-            <TableContainer overflowX="auto">
-              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '1500px', borderColor: '#3182ce' }}>
-                <Thead bg="gray.50">
-                  <Tr>
-                    <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '60px', textAlign: 'center' }}>
-                      <Text>
-                        S/N
-                      </Text>
-                    </Th>
-                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', width: '60px', textAlign: 'center' }}>
-                      <Text>
-                        FLUID
-                      </Text>
-                    </Th>
-                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', width: '140px', textAlign: 'center' }}>SUBSYSTEM</Th>
-                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0',  textAlign: 'center' }}>
-                      <Text>
-                        TOTAL<br />ITEMS
-                      </Text>
-                    </Th>
-                    <Th isNumeric style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
-                      <Text>
-                        DONE<br />ITEMS
-                      </Text>
-                    </Th>
-                    <Th isNumeric style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
-                      <Text>
-                        PENDING<br />ITEMS
-                      </Text>
-                    </Th>
-                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
-                      <Text>
-                        Progress<br />Items%
-                      </Text>
-                    </Th>
-                    <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '140px',textAlign: 'center' }}>
-                      <Text>
-                        DESCRIPTION
-                      </Text>
-                    </Th>
-                    <Th isNumeric style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
-                      <Text>
-                        N°TP
-                      </Text>
-                    </Th>
-                    <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
-                      <Text>
-                        TP's<br />INCLUDE
-                      </Text>
-                    </Th>
-                    <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0',width:'140px', textAlign: 'center' }}>
-                      <Text>
-                        PROGRESS<br />TEST PACK
-                      </Text>
-                    </Th>
-                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'140px', textAlign: 'center' }}>
-                      <Text>
-                        INSULATION
-                      </Text>
-                    </Th>
-                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width:'80px', textAlign: 'center' }}>
-                      <Text>
-                        TOTAL<br />LOOP<br />(Signal)
-                      </Text>
-                    </Th>
-                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width:'80px',textAlign: 'center' }}>
-                      <Text>
-                        LOOP<br />(Signal)<br />DONE
-                      </Text>
-                    </Th>
-                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0',width:'80px', textAlign: 'center' }}>
-                      <Text>
-                        LOOP<br />(Signal)<br />PENDING
-                      </Text>
-                    </Th>
-                    <Th isNumeric style={{ fontSize:'9px' , textAlign: 'center'}}>
-                      <Text>
-                        PROGRESS<br />LOOPS%
-                      </Text>
-                    </Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {subsystemProgressData.map((row, index) => {
-                    const progressPercent = row.totalItems > 0 ? Math.round((row.doneItems / row.totalItems) * 100) : 0;
-                    const key = `${row.subsystem}-${row.testPack || 'no-tp'}-${index}`;
-                    
-                    return (
-                      <Tr key={key}>
-                        {/* S/N - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            fontWeight="medium" 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="bold">
-                              {row.serialNumber}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* FLUID - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            fontWeight="medium" 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="bold">
-                              {row.fluid}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* SUBSYSTEM - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            fontWeight="medium" 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0',
-                              width: '150px',
-                              maxWidth: '150px',
-                              overflow: 'hidden'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="bold" isTruncated title={row.subsystem}>
-                              {row.subsystem}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* TOTAL ITEMS - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="semibold">
-                              {row.aislTotalItems.toLocaleString()}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* DONE ITEMS - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="semibold">
-                              {row.aislDoneItems.toLocaleString()}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* PENDING ITEMS - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="semibold">
-                              {row.aislPendingItems.toLocaleString()}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* Progress Items% - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td
-                            isNumeric
-                            rowSpan={row.rowSpan}
-                            style={{
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
-                              <Box position="relative" width="30px" height="60px" mb="2">
-                                <Box
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="30px"
-                                  height="60px"
-                                  border="1px solid #e2e8f0"
-                                  bg="#0E2148"
-                                />
-                                <Box
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="30px"
-                                  height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`}
-                                  bg={row.aislTotalItems > 0 ? 
-                                    (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" : 
-                                     row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
-                                  zIndex="2"
-                                />
-                              </Box>
-                              <Text
-                                fontSize="xs"
-                                fontWeight="bold"
-                                color="black"
-                              >
-                                {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
-                              </Text>
-                            </Box>
-                          </Td>
-                        )}
-                        
-                        {/* DESCRIPTION - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            fontWeight="medium" 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'left',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="bold">
-                              {row.description && row.description.length > 15 ? 
-                                row.description.split(' ').map((word, i, arr) => {
-                                  // Add a line break between words
-                                  return (
-                                    <React.Fragment key={i}>
-                                      {i > 0 && <br />}
-                                      {word}
-                                    </React.Fragment>
-                                  );
-                                }) : 
-                                row.description}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* N°TP - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="bold">
-                              {row.numTestPacks}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* TP's INCLUDE - Individual cell per row */}
-                        <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
-                          {row.testPack && (
-                            <Text fontSize="sm" fontWeight="medium">
-                              {row.testPack}
-                            </Text>
-                          )}
-                        </Td>
-                        
-                        {/* PROGRESS TEST PACK - Individual cell per row */}
-                        <Td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #e2e8f0' }}>
-                          {row.testPack && (
-                            <Box position="relative" width="100px" margin="0 auto">
-                              <Progress 
-                                value={Math.round(row.testPackProgress)} 
-                                size="md" 
-                                colorScheme={row.testPackProgress === 100 ? "green" : row.testPackProgress > 50 ? "blue" : "red"}
-                                width="100px"
-                                borderRadius="md"
-                                backgroundColor="#0E2148"
-                              />
-                              <Text 
-                                position="absolute" 
-                                top="50%" 
-                                left="50%" 
-                                transform="translate(-50%, -50%)" 
-                                fontSize="xs" 
-                                fontWeight="bold" 
-                                color="white"
-                                textShadow="0px 0px 2px rgba(0,0,0,0.7)"
-                              >
-                                {Math.round(row.testPackProgress)}%
-                              </Text>
-                            </Box>
-                          )}
-                        </Td>
-                        
-                        {/* INSULATION - Individual cell per row */}
-                        <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
-                          <Text fontSize="sm" fontWeight="medium">
-                            {row.insulation}
-                          </Text>
-                        </Td>
-                        
-                        {/* TOTAL LOOP (Signal) - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="semibold">
-                              {row.totalLoops.toLocaleString()}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* LOOP (Signal) DONE - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="semibold">
-                              {row.doneLoops.toLocaleString()}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* LOOP (Signal) PENDING - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Text fontSize="sm" fontWeight="semibold">
-                              {row.pendingLoops.toLocaleString()}
-                            </Text>
-                          </Td>
-                        )}
-                        
-                        {/* PROGRESS LOOPS% - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc'
-                            }}
-                          >
-                            <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
-                              <Box position="relative" width="30px" height="60px" mb="2">
-                                <Box 
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="30px"
-                                  height="60px" 
-                                  border="1px solid #e2e8f0" 
-                                  bg="#0E2148"
-                                />
-                                <Box 
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="30px"
-                                  height={`${row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%`} 
-                                  bg={row.totalLoops > 0 ? 
-                                    (row.doneLoops / row.totalLoops * 100 === 100 ? "green.500" : 
-                                     row.doneLoops / row.totalLoops * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
-                                  zIndex="2"
-                                />
-                              </Box>
-                              <Text 
-                                fontSize="xs" 
-                                fontWeight="bold"
-                                color="black"
-                              >
-                                {row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%
-                              </Text>
-                            </Box>
-                          </Td>
-                        )}
-                        
-
-                      </Tr>
-                    );
-                  })}
-                </Tbody>
-              </Table>
-            </TableContainer>
-            {subsystemProgressData.length === 0 && (
+            <Box height="600px" width="100%">
+              <AutoSizer>
+                {({ height, width }) => (
+                  <List
+                    height={height} itemCount={memoizedProgressData.length} itemSize={80} width={width}
+                    itemData={memoizedProgressData} overscanCount={5}
+                  >
+                    {rowRenderer}
+                  </List>
+                )}
+              </AutoSizer>
+            </Box>
+            {memoizedProgressData.length === 0 && (
               <Text color="gray.500" fontSize="sm" textAlign="center" py={4}>
                 No subsystem progress data available
               </Text>
             )}
           </CardBody>
         </Card>
-
-        <Divider />
-
-        {/* Top Test Packs and Subsystems */}
-        <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
-          <Card>
-            <CardBody>
-              <Heading size="md" mb={4}>Top Test Packs</Heading>
-              <VStack spacing={3} align="stretch">
-                {topTestPacks.map(([testPack, count], index) => (
-                  <HStack key={testPack} justify="space-between">
-                    <HStack>
-                      <Badge colorScheme="blue" variant="solid">
-                        #{index + 1}
-                      </Badge>
-                      <Text fontSize="sm" fontWeight="medium">
-                        {testPack}
-                      </Text>
-                    </HStack>
-                    <Badge colorScheme="green" variant="outline">
-                      {count} items
-                    </Badge>
-                  </HStack>
-                ))}
-                {topTestPacks.length === 0 && (
-                  <Text color="gray.500" fontSize="sm">
-                    No test pack data available
-                  </Text>
-                )}
-              </VStack>
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardBody>
-              <Heading size="md" mb={4}>Top Subsystems</Heading>
-              <VStack spacing={3} align="stretch">
-                {topSubsystems.map(([subsystem, count], index) => (
-                  <HStack key={subsystem} justify="space-between">
-                    <HStack>
-                      <Badge colorScheme="purple" variant="solid">
-                        #{index + 1}
-                      </Badge>
-                      <Text fontSize="sm" fontWeight="medium">
-                        {subsystem}
-                      </Text>
-                    </HStack>
-                    <Badge colorScheme="orange" variant="outline">
-                      {count} items
-                    </Badge>
-                  </HStack>
-                ))}
-                {topSubsystems.length === 0 && (
-                  <Text color="gray.500" fontSize="sm">
-                    No subsystem data available
-                  </Text>
-                )}
-              </VStack>
-            </CardBody>
-          </Card>
-        </SimpleGrid>
-
-
-        
       </VStack>
     </Box>
   );
 };
 
-export default SummarySubsystems;
+export default React.memo(SummarySubsystems);
