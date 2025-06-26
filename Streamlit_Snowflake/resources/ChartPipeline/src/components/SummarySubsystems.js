@@ -835,9 +835,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
-                            <Badge colorScheme="green" variant="outline">
+                            <Text fontSize="sm" fontWeight="semibold">
                               {row.aislDoneItems.toLocaleString()}
-                            </Badge>
+                            </Text>
                           </Td>
                         )}
                         
@@ -853,9 +853,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
-                            <Badge colorScheme="orange" variant="outline">
+                            <Text fontSize="sm" fontWeight="semibold">
                               {row.aislPendingItems.toLocaleString()}
-                            </Badge>
+                            </Text>
                           </Td>
                         )}
                         
@@ -1025,9 +1025,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
-                            <Badge colorScheme="green" variant="outline">
+                            <Text fontSize="sm" fontWeight="semibold">
                               {row.doneLoops.toLocaleString()}
-                            </Badge>
+                            </Text>
                           </Td>
                         )}
                         
@@ -1043,9 +1043,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
-                            <Badge colorScheme="orange" variant="outline">
+                            <Text fontSize="sm" fontWeight="semibold">
                               {row.pendingLoops.toLocaleString()}
-                            </Badge>
+                            </Text>
                           </Td>
                         )}
                         
