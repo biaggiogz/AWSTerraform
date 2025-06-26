@@ -618,53 +618,43 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         `}
       />
       <VStack spacing={2} align="stretch">
-        <Box textAlign="center">
+        <Box textAlign="center" width="100%">
           <Heading size="sm" mb={2}>Summary</Heading>
         </Box>
 
         {/* Summary Statistics */}
-        <SimpleGrid columns={{ base: 2, md: 13 }} spacing={4}>
-          <Stat>
-            <StatLabel>Subsystems</StatLabel>
-            <StatNumber>{summaryStats.uniqueSubsystems}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total<br />Items</StatLabel>
-            <StatNumber>{totalItemsSum.toLocaleString()}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total<br />Done<br />Items</StatLabel>
-            <StatNumber>{totalDoneItemsSum.toLocaleString()}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total<br />Pending<br />Items</StatLabel>
-            <StatNumber>{totalPendingItemsSum.toLocaleString()}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total<br />Test Packs</StatLabel>
-            <StatNumber>{summaryStats.uniqueTestPacks}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Done<br />Test Pack</StatLabel>
-            <StatNumber>{doneTestPacks}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Pending<br />Test Pack</StatLabel>
-            <StatNumber>{pendingTestPacks}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total<br />Loops</StatLabel>
-            <StatNumber>{totalLoopsSum.toLocaleString()}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total<br />Loops<br />Done</StatLabel>
-            <StatNumber>{totalDoneLoopsSum.toLocaleString()}</StatNumber>
-          </Stat>
-          <Stat>
-            <StatLabel>Total<br />Loops<br />Pending</StatLabel>
-            <StatNumber>{totalPendingLoopsSum.toLocaleString()}</StatNumber>
-          </Stat>
-        </SimpleGrid>
+        <Box width="100%" overflowX="auto">
+          <TableContainer>
+            <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', width: '100%', borderColor: '#3182ce' }}>
+              <Thead bg="gray.50">
+                <Tr>
+                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Subsystems</Th>
+                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Total Items</Th>
+                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Done Items</Th>
+                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Pending Items</Th>
+                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Total Test Packs</Th>
+                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Done Test Packs</Th>
+                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Pending Test Packs</Th>
+                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Total Loops</Th>
+                  <Th style={{ textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Loops Pending</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                <Tr>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{summaryStats.uniqueSubsystems}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalItemsSum.toLocaleString()}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalDoneItemsSum.toLocaleString()}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalPendingItemsSum.toLocaleString()}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{summaryStats.uniqueTestPacks}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{doneTestPacks}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{pendingTestPacks}</Td>
+                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalLoopsSum.toLocaleString()}</Td>
+                  <Td style={{ textAlign: 'center', fontWeight: 'bold' }}>{totalPendingLoopsSum.toLocaleString()}</Td>
+                </Tr>
+              </Tbody>
+            </Table>
+          </TableContainer>
+        </Box>
 
         <Divider />
 
