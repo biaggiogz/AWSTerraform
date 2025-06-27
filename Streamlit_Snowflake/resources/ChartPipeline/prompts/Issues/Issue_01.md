@@ -7,7 +7,7 @@
 
 **FIX ONLY**: LAYOUT VISUALIZATION OF TABLE  Insulation Progress:
 
-#### CURRENLTY LAYOUT (WRONG)
+#### CURRENTLY LAYOUT (OVERLAPPING BOUNDARIES BETWEEN ROWS)
 
 
 ┌─────────────┬───────────────────────┬─────────────────┬───────┬─────────┬───────────────┬──────────┐  
@@ -31,7 +31,7 @@
 └─────────────┴───────────────────────┴─────────────────┴───────┴─────────┴───────────────┴──────────┘
 
 
-#### EXAMPLE OF EXPECTED LAYOUT OUTCOME
+#### EXAMPLE OF EXPECTED LAYOUT OUTCOME (NOT OVERLAPPING BOUNDARIES BETWEEN ROWS)
 
 ┌─────────────┬───────────────────────┬─────────────────┬───────┬─────────┬───────────────┬──────────┐    
 │             │                       │                 │       │         │               │          │    

@@ -426,6 +426,7 @@ const InsulationProgressTable = React.memo(({ data }) => {
               headerRef.current.scrollLeft = e.target.scrollLeft;
             }
           }}
+          borderTop="none"
         >
           <Box
             height={`${virtualizer.getTotalSize()}px`}
@@ -443,31 +444,34 @@ const InsulationProgressTable = React.memo(({ data }) => {
                   height={`${virtualRow.size}px`}
                   transform={`translateY(${virtualRow.start}px)`}
                 >
-                  <Table size="sm" style={{ tableLayout: 'fixed' }}>
-                    <Tbody>
-                      <Tr
-                        _hover={{ bg: 'gray.50' }}
-                        borderBottom="1px solid"
+                  <Box
+                    as="div"
+                    display="flex"
+                    width="100%"
+                    height="100%"
+                    _hover={{ bg: 'gray.50' }}
+                    borderBottom="1px solid"
+                    borderColor="gray.100"
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <Box
+                        key={cell.id}
+                        width={`${cell.column.getSize()}px`}
+                        minWidth={`${cell.column.getSize()}px`}
+                        maxWidth={`${cell.column.getSize()}px`}
+                        borderRight="1px solid"
                         borderColor="gray.100"
+                        py={2}
+                        px={2}
+                        textAlign="center"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
                       >
-                        {row.getVisibleCells().map(cell => (
-                          <Td
-                            key={cell.id}
-                            width={`${cell.column.getSize()}px`}
-                            minWidth={`${cell.column.getSize()}px`}
-                            maxWidth={`${cell.column.getSize()}px`}
-                            borderColor="gray.100"
-                            py={2}
-                            px={2}
-                            textAlign="center"
-                            verticalAlign="middle"
-                          >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </Td>
-                        ))}
-                      </Tr>
-                    </Tbody>
-                  </Table>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </Box>
+                    ))}
+                  </Box>
                 </Box>
               );
             })}
