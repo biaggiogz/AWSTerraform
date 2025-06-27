@@ -57,22 +57,31 @@ const LazosTable = React.memo(({ data }) => {
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
     
-    return data.map((row, index) => ({
-      id: index,
-      code: row.CODE || '',
-      subsystem: row.SUBS_PRE || '',
-      tagLoop: row['TAG LOOP'] || '',
-      area: row.Area || '',
-      priority: row.PRIORITY || '',
-      service: row.SERVICE || '',
-      installed: row.INSTALLED || '',
-      wired: row.WIRED || '',
-      connected: row.CONNECTED || '',
-      cableTest: row['CABLE TEST'] || '',
-      progress: row['OK=100%'] || '0.00%',
-      dossier: row.DOSSIER || '',
-      testLoop: row['TEST LOOP'] || ''
-    }));
+    // Debug: Log the first row to see all available keys
+    if (data.length > 0) {
+      console.log('Available data keys:', Object.keys(data[0]));
+    }
+    
+    return data.map((row, index) => {
+      // Only return the exact fields we want to display
+      const processedRow = {
+        id: index,
+        code: row.CODE || '',
+        subsystem: row.SUBS_PRE || '',
+        tagLoop: row['TAG LOOP'] || '',
+        area: row.Area || '',
+        priority: row.PRIORITY || '',
+        service: row.SERVICE || '',
+        installed: row.INSTALLED || '',
+        wired: row.WIRED || '',
+        connected: row.CONNECTED || '',
+        cableTest: row['CABLE TEST'] || '',
+        progress: row['OK=100%'] || '0.00%',
+        dossier: row.DOSSIER || '',
+        testLoop: row['TEST LOOP'] || ''
+      };
+      return processedRow;
+    });
   }, [data]);
 
   const columns = useMemo(() => [
@@ -258,6 +267,12 @@ const LazosTable = React.memo(({ data }) => {
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
     debugTable: false,
+    // Ensure only defined columns are used
+    defaultColumn: {
+      minSize: 60,
+      size: 100,
+      maxSize: 400,
+    },
   });
   
   const { rows } = table.getRowModel();
