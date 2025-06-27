@@ -60,8 +60,8 @@ const InsulationProgressTable = React.memo(({ data }) => {
     columnHelper.accessor('cod', {
       header: 'COD',
       minSize: 120,
-      maxSize: 120,
-      size: 120,
+      maxSize: 100,
+      size: 100,
       cell: ({ getValue }) => (
         <Text fontSize="sm" fontWeight="medium" color="blue.600" textAlign="center">
           {getValue()}
@@ -365,54 +365,44 @@ const InsulationProgressTable = React.memo(({ data }) => {
         position="relative"
       >
         {/* Table Header */}
-        <Box 
-          bg="gray.50" 
-          borderBottom="1px solid" 
-          borderColor="gray.200"
-          overflowX="hidden"
-          ref={headerRef}
+        <Box
+            display="flex"
+            width="100%"
+            borderBottom="1px solid"
+            borderColor="gray.200"
+            bg="gray.50"
+            ref={headerRef}
         >
-          <Table size="sm" style={{ tableLayout: 'fixed' }}>
-            <Thead>
-              {headerGroups.map(headerGroup => (
-                <Tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <Th
-                      key={header.id}
-                      width={`${header.getSize()}px`}
-                      minWidth={`${header.getSize()}px`}
-                      maxWidth={`${header.getSize()}px`}
-                      cursor={header.column.getCanSort() ? 'pointer' : 'default'}
-                      onClick={header.column.getToggleSortingHandler()}
-                      bg="gray.50"
-                      borderColor="gray.200"
-                      fontSize="xs"
-                      fontWeight="bold"
-                      textTransform="uppercase"
-                      letterSpacing="wide"
-                      color="gray.600"
-                      py={2}
-                      px={2}
-                      textAlign="center"
-                    >
-                      {header.isPlaceholder ? null : (
-                        <HStack spacing={1} justify="center">
-                          <Text>
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                          </Text>
-                          {header.column.getIsSorted() && (
-                            <Text fontSize="xs">
-                              {header.column.getIsSorted() === 'desc' ? '↓' : '↑'}
-                            </Text>
-                          )}
-                        </HStack>
-                      )}
-                    </Th>
-                  ))}
-                </Tr>
-              ))}
-            </Thead>
-          </Table>
+          {headerGroups[0].headers.map(header => (
+              <Box
+                  key={header.id}
+                  width={`${header.getSize()}px`}
+                  minWidth={`${header.getSize()}px`}
+                  maxWidth={`${header.getSize()}px`}
+                  textAlign="center"
+                  fontSize="xs"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                  letterSpacing="wide"
+                  color="gray.600"
+                  py={2}
+                  px={2}
+                  borderRight="1px solid"
+                  borderColor="gray.100"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  cursor={header.column.getCanSort() ? 'pointer' : 'default'}
+                  onClick={header.column.getToggleSortingHandler()}
+              >
+                <HStack spacing={1}>
+                  <Text>{flexRender(header.column.columnDef.header, header.getContext())}</Text>
+                  {header.column.getIsSorted() && (
+                      <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
+                  )}
+                </HStack>
+              </Box>
+          ))}
         </Box>
 
         {/* Virtualized Table Body */}
