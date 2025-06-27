@@ -154,15 +154,15 @@ const TestPackProgressChart = ({ data }) => {
           data: filteredValues.map(testPack => testPack.avgConstructionProgress),
           backgroundColor: filteredValues.map(testPack => {
             const progress = testPack.avgConstructionProgress;
-            if (progress > 90) return 'rgb(0, 112, 116)'; // Green for Above 90%
+            if (progress > 90) return 'rgb(29, 233, 182)'; // Green for Above 90%
             if (progress >= 70 && progress <= 90) return 'rgba(255, 206, 86, 0.6)'; // Yellow for 70-90%
-            return 'rgba(255, 99, 132, 0.6)'; // Red for Below 70%
+            return 'rgba(255, 22, 139, 1)'; // Red for Below 70%
           }),
           borderColor: filteredValues.map(testPack => {
             const progress = testPack.avgConstructionProgress;
-            if (progress > 90) return 'rgb(0, 112, 116)'; // Green for Above 90%
+            if (progress > 90) return 'rgb(29, 233, 182)'; // Green for Above 90%
             if (progress >= 70 && progress <= 90) return 'rgba(255, 206, 86, 1)'; // Yellow for 70-90%
-            return 'rgba(255, 99, 132, 1)'; // Red for Below 70%
+            return 'rgba(255, 22, 139, 1)'; // Red for Below 70%
           }),
           borderWidth: 1,
           barThickness: BAR_HEIGHT - 10, // Set fixed bar thickness
@@ -306,7 +306,7 @@ const TestPackProgressChart = ({ data }) => {
           borderColor={exclusiveFilter === 'above90' ? "blue.300" : "transparent"}
           _hover={{ bg: "gray.100" }}
         >
-          <Box width="15px" height="15px" bg="rgb(0, 112, 116)" borderColor="rgb(0, 112, 116)" borderWidth="1px" />
+          <Box width="15px" height="15px" bg="rgb(29, 233, 182)" borderColor="rgb(0, 112, 116)" borderWidth="1px" />
           <Text fontWeight={exclusiveFilter === 'above90' ? "bold" : "normal"}>Above 90%</Text>
           {exclusiveFilter === 'above90' && <Text fontSize="xs" color="blue.500" ml={1}>(active)</Text>}
         </HStack>
@@ -340,7 +340,7 @@ const TestPackProgressChart = ({ data }) => {
           borderColor={exclusiveFilter === 'below70' ? "blue.300" : "transparent"}
           _hover={{ bg: "gray.100" }}
         >
-          <Box width="15px" height="15px" bg="rgba(255, 99, 132, 0.6)" borderColor="rgba(255, 99, 132, 1)" borderWidth="1px" />
+          <Box width="15px" height="15px" bg="rgba(255, 22, 139, 1)" borderColor="rgba(255, 99, 132, 1)" borderWidth="1px" />
           <Text fontWeight={exclusiveFilter === 'below70' ? "bold" : "normal"}>Below 70%</Text>
           {exclusiveFilter === 'below70' && <Text fontSize="xs" color="blue.500" ml={1}>(active)</Text>}
         </HStack>

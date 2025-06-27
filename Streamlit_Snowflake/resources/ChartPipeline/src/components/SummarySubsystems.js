@@ -1187,10 +1187,14 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                               <Progress 
                                 value={Math.round(row.testPackProgress)} 
                                 size="md" 
-                                colorScheme="green"
                                 width="100px"
                                 borderRadius="md"
                                 backgroundColor="#0E2148"
+                                sx={{
+                                  '& > div': {
+                                    backgroundColor: '#1DE9B6'
+                                  }
+                                }}
                               />
                               <Text 
                                 position="absolute" 
