@@ -287,6 +287,12 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   const abortControllerRef = useRef(null);
   const dataCache = useRef(new Map());
   const workerRef = useRef(null);
+  
+  // State for resizable height (matching LoopTestProgressChart dimensions)
+  const [tableContainerHeight, setTableContainerHeight] = useState(400);
+  const [isResizing, setIsResizing] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [startHeight, setStartHeight] = useState(400);
 
   // Initialize worker
   useEffect(() => {
@@ -297,6 +303,37 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       }
     };
   }, []);
+  
+  // Resize handlers (matching LoopTestProgressChart)
+  const handleMouseDown = useCallback((e) => {
+    setIsResizing(true);
+    setStartY(e.clientY);
+    setStartHeight(tableContainerHeight);
+    e.preventDefault();
+  }, [tableContainerHeight]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isResizing) return;
+    const deltaY = e.clientY - startY;
+    const newHeight = Math.max(200, Math.min(800, startHeight + deltaY));
+    setTableContainerHeight(newHeight);
+  }, [isResizing, startY, startHeight]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  // Add global mouse event listeners
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isResizing, handleMouseMove, handleMouseUp]);
 
   // Load CSV data directly or use filtered data if provided
   useEffect(() => {
@@ -910,7 +947,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   }
 
   return (
-    <Box p={6}>
+    <Box p={6} width="100%" maxWidth="100vw" overflow="hidden">
       <Global
         styles={css`
           table {
@@ -926,55 +963,65 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       <VStack spacing={2} align="stretch">
 
         {/* Summary Statistics */}
-        <Box width="100%" overflowX="auto" maxWidth="100vw">
-          <Table variant="simple" size="sm" style={{ tableLayout: 'auto', minWidth: '800px' }}>
-              <Thead bg="gray.50">
-                <Tr>
-                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Subsystems</Th>
-                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Total Items</Th>
-                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Done Items</Th>
-                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Pending Items</Th>
-                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Total Test Packs</Th>
-                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Done Test Packs</Th>
-                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Pending Test Packs</Th>
-                  <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Total Loops</Th>
-                  <Th style={{ textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Loops Pending</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                <Tr>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{summaryStats.uniqueSubsystems}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalItemsSum.toLocaleString()}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalDoneItemsSum.toLocaleString()}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalPendingItemsSum.toLocaleString()}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{summaryStats.uniqueTestPacks}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{doneTestPacks}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{pendingTestPacks}</Td>
-                  <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalLoopsSum.toLocaleString()}</Td>
-                  <Td style={{ textAlign: 'center', fontWeight: 'bold' }}>{totalPendingLoopsSum.toLocaleString()}</Td>
-                </Tr>
-              </Tbody>
-            </Table>
+        <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" maxWidth="1597px">
+          <Box 
+            overflowX="auto"
+            border="1px solid"
+            borderColor="gray.200"
+            borderRadius="md"
+          >
+            <Table variant="simple" size="sm" style={{ tableLayout: 'auto', width: '100%' }}>
+                <Thead bg="gray.50">
+                  <Tr>
+                    <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Subsystems</Th>
+                    <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Total Items</Th>
+                    <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Done Items</Th>
+                    <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Pending Items</Th>
+                    <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Total Test Packs</Th>
+                    <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Done Test Packs</Th>
+                    <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Pending Test Packs</Th>
+                    <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Total Loops</Th>
+                    <Th style={{ textAlign: 'center', borderBottom: '1px solid #e2e8f0' }}>Loops Pending</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  <Tr>
+                    <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{summaryStats.uniqueSubsystems}</Td>
+                    <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalItemsSum.toLocaleString()}</Td>
+                    <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalDoneItemsSum.toLocaleString()}</Td>
+                    <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalPendingItemsSum.toLocaleString()}</Td>
+                    <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{summaryStats.uniqueTestPacks}</Td>
+                    <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{doneTestPacks}</Td>
+                    <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{pendingTestPacks}</Td>
+                    <Td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', fontWeight: 'bold' }}>{totalLoopsSum.toLocaleString()}</Td>
+                    <Td style={{ textAlign: 'center', fontWeight: 'bold' }}>{totalPendingLoopsSum.toLocaleString()}</Td>
+                  </Tr>
+                </Tbody>
+              </Table>
+          </Box>
         </Box>
 
         <Divider />
 
         {/* Subsystem Progress Table */}
-        <Card>
-          <CardBody>
-            <HStack justify="space-between" mb={4}>
-              <Heading size="sm">Subsystem Progress Overview</Heading>
-              <HStack spacing={2}>
-                <Button colorScheme="blue" size="sm" onClick={exportToCSV}>
-                  Export CSV
-                </Button>
-                <Button colorScheme="green" size="sm" onClick={exportToExcel}>
-                  Export Excel
-                </Button>
-              </HStack>
+        <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" position="relative" maxWidth="1597px">
+          <HStack justify="space-between" mb={4}>
+            <Heading size="sm">Subsystem Progress Overview</Heading>
+            <HStack spacing={2}>
+              <Button colorScheme="green" size="sm" onClick={exportToExcel}>
+                Export Excel
+              </Button>
             </HStack>
-            <Box width="100%" overflowX="auto" maxWidth="100vw">
-              <Table variant="simple" size="sm" style={{ tableLayout: 'auto', minWidth: '2000px' }}>
+          </HStack>
+          <Box 
+            height={`${tableContainerHeight}px`}
+            overflowY="auto"
+            overflowX="auto"
+            border="1px solid"
+            borderColor="gray.200"
+            borderRadius="md"
+          >
+              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', width: '2000px' }}>
                 <Thead bg="gray.50">
                   <Tr>
                     <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '60px', textAlign: 'center' }}>
@@ -1386,8 +1433,33 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                 No subsystem progress data available
               </Text>
             )}
-          </CardBody>
-        </Card>
+            
+            {/* Custom resize handle */}
+            <Box
+              position="absolute"
+              bottom="-5px"
+              left="50%"
+              transform="translateX(-50%)"
+              width="40px"
+              height="10px"
+              bg="gray.300"
+              borderRadius="md"
+              cursor="ns-resize"
+              onMouseDown={handleMouseDown}
+              _hover={{ bg: "gray.400" }}
+              _active={{ bg: "gray.500" }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Box
+                width="20px"
+                height="2px"
+                bg="gray.600"
+                borderRadius="sm"
+              />
+            </Box>
+        </Box>
 
         <Divider />
 
