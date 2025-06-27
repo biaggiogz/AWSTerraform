@@ -10,14 +10,6 @@ ChartPipeline/
 │   ├── aislamientos.csv    # Isolation progress data
 │   ├── pipelinedata.csv    # Pipeline construction data
 │   └── test_of_lazos_updated.csv # Loop test progress data
-├── prompts/                # Development prompts and guides
-│   ├── Adjustments.md      # UI adjustment guidelines
-│   ├── DashboardBarProgress.md # INSULATION PROGRESS CONTROL Chart specifications
-│   ├── GlobalMetrics.md    # Global metrics implementation guide
-│   ├── ResponsiveTable.md  # Responsive table development guide
-│   ├── TableDashboard.md   # Dashboard integration guide
-│   └── Table/              # Table generation prompts
-│       └── Step_1.md       # Table creation from SQL for SummarySubsystems.js
 ├── public/                 # Static files
 │   ├── data/               # Public data files
 │   │   ├── aislamientos.csv

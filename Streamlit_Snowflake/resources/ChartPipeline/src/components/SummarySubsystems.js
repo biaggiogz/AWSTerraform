@@ -68,7 +68,11 @@ const createDataWorker = () => {
                 totalItems: 0, doneItems: 0, testPacks: new Set(),
                 testPackProgressValues: new Map(), serialNumber: item['S/N'] || '',
                 fluid: item['FLUID_SUBSYSTEM'] || '', description: item['DESCRIPTION'] || '',
-                insulation: item['INSULATION'] || ''
+                insulation: item['INSULATION'] || '', traceados: item['TRACEADOS'] || '',
+                priority: item['PRIORITY'] || '', hito: item['HITO'] || '',
+                teigaReinstatement: item['TEIGA REINSTATEMENT'] || '',
+                teigaInsulation: item['TEIGA INSULATION'] || '',
+                siemsa: item['SIEMSA'] || '', technip: item['TECHNIP'] || ''
               });
             }
             const stats = subsystemStats.get(subsystem);
@@ -114,7 +118,11 @@ const createDataWorker = () => {
               aislTotalItems: aislStat.totalItems, aislDoneItems: aislStat.doneItems,
               aislPendingItems: aislStat.totalItems - aislStat.doneItems,
               totalLoops: loopStat.totalLoops, doneLoops: loopStat.doneLoops,
-              pendingLoops: loopStat.pendingLoops
+              pendingLoops: loopStat.pendingLoops, traceados: stats.traceados,
+              priority: stats.priority, hito: stats.hito,
+              teigaReinstatement: stats.teigaReinstatement,
+              teigaInsulation: stats.teigaInsulation, siemsa: stats.siemsa,
+              technip: stats.technip
             });
           } else {
             testPackProgress.forEach((tp, index) => {
@@ -129,7 +137,11 @@ const createDataWorker = () => {
                 aislTotalItems: aislStat.totalItems, aislDoneItems: aislStat.doneItems,
                 aislPendingItems: aislStat.totalItems - aislStat.doneItems,
                 totalLoops: loopStat.totalLoops, doneLoops: loopStat.doneLoops,
-                pendingLoops: loopStat.pendingLoops
+                pendingLoops: loopStat.pendingLoops, traceados: stats.traceados,
+                priority: stats.priority, hito: stats.hito,
+                teigaReinstatement: stats.teigaReinstatement,
+                teigaInsulation: stats.teigaInsulation, siemsa: stats.siemsa,
+                technip: stats.technip
               });
             });
           }
@@ -439,7 +451,14 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           totalItems: 0,
           doneItems: 0,
           testPacks: new Set(),
-          testPackProgressValues: {} // Store progress values for each test pack
+          testPackProgressValues: {}, // Store progress values for each test pack
+          traceados: item['TRACEADOS'] || '',
+          priority: item['PRIORITY'] || '',
+          hito: item['HITO'] || '',
+          teigaReinstatement: item['TEIGA REINSTATEMENT'] || '',
+          teigaInsulation: item['TEIGA INSULATION'] || '',
+          siemsa: item['SIEMSA'] || '',
+          technip: item['TECHNIP'] || ''
         };
       }
 
@@ -534,7 +553,14 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           aislPendingItems: aislStat.totalItems - aislStat.doneItems,
           totalLoops: loopStat.totalLoops,
           doneLoops: loopStat.doneLoops,
-          pendingLoops: loopStat.pendingLoops
+          pendingLoops: loopStat.pendingLoops,
+          traceados: stats.traceados,
+          priority: stats.priority,
+          hito: stats.hito,
+          teigaReinstatement: stats.teigaReinstatement,
+          teigaInsulation: stats.teigaInsulation,
+          siemsa: stats.siemsa,
+          technip: stats.technip
         });
       } else {
         // Create multiple rows for test packs
@@ -558,7 +584,14 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
             aislPendingItems: aislStat.totalItems - aislStat.doneItems,
             totalLoops: loopStat.totalLoops,
             doneLoops: loopStat.doneLoops,
-            pendingLoops: loopStat.pendingLoops
+            pendingLoops: loopStat.pendingLoops,
+            traceados: stats.traceados,
+            priority: stats.priority,
+            hito: stats.hito,
+            teigaReinstatement: stats.teigaReinstatement,
+            teigaInsulation: stats.teigaInsulation,
+            siemsa: stats.siemsa,
+            technip: stats.technip
           });
         });
       }
@@ -895,7 +928,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
           <CardBody>
             <Heading size="sm" mb={4}>Subsystem Progress Overview</Heading>
             <TableContainer overflowX="auto">
-              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '1500px', borderColor: '#3182ce' }}>
+              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '2200px', borderColor: '#3182ce' }}>
                 <Thead bg="gray.50">
                   <Tr>
                     <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '60px', textAlign: 'center' }}>
@@ -924,11 +957,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                         PENDING<br />ITEMS
                       </Text>
                     </Th>
-                    <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
-                      <Text>
-                        Progress<br />Items%
-                      </Text>
-                    </Th>
                     <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '140px',textAlign: 'center' }}>
                       <Text>
                         DESCRIPTION
@@ -949,9 +977,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                         PROGRESS<br />TEST PACK
                       </Text>
                     </Th>
-                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'140px', textAlign: 'center' }}>
+                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'100px', textAlign: 'center' }}>
                       <Text>
-                        INSULATION
+                        TRACEADOS
                       </Text>
                     </Th>
                     <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width:'80px', textAlign: 'center' }}>
@@ -969,9 +997,34 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                         LOOP<br />(Signal)<br />PENDING
                       </Text>
                     </Th>
-                    <Th isNumeric style={{ fontSize:'9px' , textAlign: 'center'}}>
+                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'80px', textAlign: 'center' }}>
                       <Text>
-                        PROGRESS<br />LOOPS%
+                        PRIORITY
+                      </Text>
+                    </Th>
+                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'80px', textAlign: 'center' }}>
+                      <Text>
+                        HITO
+                      </Text>
+                    </Th>
+                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'120px', textAlign: 'center' }}>
+                      <Text>
+                        TEIGA<br />REINSTATEMENT
+                      </Text>
+                    </Th>
+                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'120px', textAlign: 'center' }}>
+                      <Text>
+                        TEIGA<br />INSULATION
+                      </Text>
+                    </Th>
+                    <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'80px', textAlign: 'center' }}>
+                      <Text>
+                        SIEMSA
+                      </Text>
+                    </Th>
+                    <Th style={{ fontSize:'9px' , textAlign: 'center'}}>
+                      <Text>
+                        TECHNIP
                       </Text>
                     </Th>
                   </Tr>
@@ -1094,52 +1147,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                           </Td>
                         )}
                         
-                        {/* Progress Items% - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td
-                            isNumeric
-                            rowSpan={row.rowSpan}
-                            style={{
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
-                              <Box position="relative" width="30px" height="60px" mb="2">
-                                <Box
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="30px"
-                                  height="60px"
-                                  border="1px solid #e2e8f0"
-                                  bg="#0E2148"
-                                />
-                                <Box
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="30px"
-                                  height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`}
-                                  bg={row.aislTotalItems > 0 ? 
-                                    (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" : 
-                                     row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
-                                  zIndex="2"
-                                />
-                              </Box>
-                              <Text
-                                fontSize="xs"
-                                fontWeight="bold"
-                                color="black"
-                              >
-                                {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
-                              </Text>
-                            </Box>
-                          </Td>
-                        )}
-                        
                         {/* DESCRIPTION - Merged cell */}
                         {row.isFirstRow && (
                           <Td 
@@ -1223,10 +1230,10 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                           )}
                         </Td>
                         
-                        {/* INSULATION - Individual cell per row */}
+                        {/* TRACEADOS - Individual cell per row */}
                         <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
                           <Text fontSize="sm" fontWeight="medium">
-                            {row.insulation}
+                            {row.traceados}
                           </Text>
                         </Td>
                         
@@ -1284,50 +1291,47 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                           </Td>
                         )}
                         
-                        {/* PROGRESS LOOPS% - Merged cell */}
-                        {row.isFirstRow && (
-                          <Td 
-                            isNumeric 
-                            rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc'
-                            }}
-                          >
-                            <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
-                              <Box position="relative" width="30px" height="60px" mb="2">
-                                <Box 
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="30px"
-                                  height="60px" 
-                                  border="1px solid #e2e8f0" 
-                                  bg="#0E2148"
-                                />
-                                <Box 
-                                  position="absolute"
-                                  bottom="0"
-                                  left="0"
-                                  width="30px"
-                                  height={`${row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%`} 
-                                  bg={row.totalLoops > 0 ? 
-                                    (row.doneLoops / row.totalLoops * 100 === 100 ? "green.500" : 
-                                     row.doneLoops / row.totalLoops * 100 > 50 ? "blue.500" : "red.500") : "gray.500"}
-                                  zIndex="2"
-                                />
-                              </Box>
-                              <Text 
-                                fontSize="xs" 
-                                fontWeight="bold"
-                                color="black"
-                              >
-                                {row.totalLoops > 0 ? Math.round((row.doneLoops / row.totalLoops) * 100) : 0}%
-                              </Text>
-                            </Box>
-                          </Td>
-                        )}
+                        {/* PRIORITY - Individual cell per row */}
+                        <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {row.priority}
+                          </Text>
+                        </Td>
+                        
+                        {/* HITO - Individual cell per row */}
+                        <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {row.hito}
+                          </Text>
+                        </Td>
+                        
+                        {/* TEIGA REINSTATEMENT - Individual cell per row */}
+                        <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {row.teigaReinstatement}
+                          </Text>
+                        </Td>
+                        
+                        {/* TEIGA INSULATION - Individual cell per row */}
+                        <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {row.teigaInsulation}
+                          </Text>
+                        </Td>
+                        
+                        {/* SIEMSA - Individual cell per row */}
+                        <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {row.siemsa}
+                          </Text>
+                        </Td>
+                        
+                        {/* TECHNIP - Individual cell per row */}
+                        <Td style={{ textAlign: 'center', padding: '8px' }}>
+                          <Text fontSize="sm" fontWeight="medium">
+                            {row.technip}
+                          </Text>
+                        </Td>
                         
 
                       </Tr>
