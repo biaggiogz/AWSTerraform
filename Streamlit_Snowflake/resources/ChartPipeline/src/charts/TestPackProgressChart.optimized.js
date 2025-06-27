@@ -13,7 +13,7 @@ import {
   Badge,
   Divider
 } from '@chakra-ui/react';
-import { calculateMetricsByGroup } from '../utils/dataProcessor.optimized';
+
 
 /**
  * Chart C: Progress Bars with Status Icons for Test Packs
@@ -42,7 +42,38 @@ const TestPackProgressChart = ({ data }) => {
   // Calculate metrics by test pack with memoization
   const testPackMetrics = useMemo(() => {
     if (!data || data.length === 0) return {};
-    return calculateMetricsByGroup(data, 'TEST PACK');
+    
+    // Group data by test pack (handle pipe-separated IDs), calculate average CONSTRUC COORD PROGRESS per test pack
+    const testPackGroups = {};
+    data.forEach(row => {
+        if (row['TEST PACK'] && row['CONSTRUC COORD PROGRESS'] > 0) {
+            // Split pipe-separated test packs (e.g., "1245|382" becomes ["1245", "382"])
+            const testPacks = row['TEST PACK'].split('|');
+
+            testPacks.forEach(testPackId => {
+                const trimmedId = testPackId.trim();
+                if (trimmedId) {
+                    if (!testPackGroups[trimmedId]) {
+                        testPackGroups[trimmedId] = { total: 0, count: 0 };
+                    }
+                    // Add CONSTRUC COORD PROGRESS value to this test pack group
+                    testPackGroups[trimmedId].total += row['CONSTRUC COORD PROGRESS'];
+                    testPackGroups[trimmedId].count++;
+                }
+            });
+        }
+    });
+
+    // Calculate final averages for each test pack
+    const testPackAverages = {};
+    Object.keys(testPackGroups).forEach(testPackId => {
+        const group = testPackGroups[testPackId];
+        testPackAverages[testPackId] = {
+            avgConstructionProgress: Math.round(group.total / group.count)
+        };
+    });
+    
+    return testPackAverages;
   }, [data]);
 
   // Sort test packs for better visualization with memoization
@@ -195,12 +226,8 @@ const TestPackProgressChart = ({ data }) => {
             text: 'Test Pack'
           },
           ticks: {
-            autoSkip: filteredCount > 30, // Only skip labels if there are many
-            maxTicksLimit: 30, // Limit the number of ticks for better performance
-            callback: function(value) {
-              // Ensure all labels are displayed by returning the original value
-              return this.getLabelForValue(value);
-            },
+            autoSkip: false, // Never skip labels to show all test pack IDs
+            maxTicksLimit: false, // Remove tick limit to show all labels
             font: {
               size: 11 // Slightly smaller font for labels
             }
