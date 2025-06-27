@@ -914,7 +914,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       <Global
         styles={css`
           table {
-            border-collapse: separate !important;
+            border-collapse: collapse !important;
             border-spacing: 0 !important;
           }
           table th, table td {
@@ -926,9 +926,8 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       <VStack spacing={2} align="stretch">
 
         {/* Summary Statistics */}
-        <Box width="100%" overflowX="auto">
-          <TableContainer>
-            <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', width: '100%' }}>
+        <Box width="100%" overflowX="auto" maxWidth="100vw">
+          <Table variant="simple" size="sm" style={{ tableLayout: 'auto', minWidth: '800px' }}>
               <Thead bg="gray.50">
                 <Tr>
                   <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Subsystems</Th>
@@ -956,7 +955,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                 </Tr>
               </Tbody>
             </Table>
-          </TableContainer>
         </Box>
 
         <Divider />
@@ -975,8 +973,8 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                 </Button>
               </HStack>
             </HStack>
-            <TableContainer overflowX="auto">
-              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', minWidth: '2200px' }}>
+            <Box width="100%" overflowX="auto" maxWidth="100vw">
+              <Table variant="simple" size="sm" style={{ tableLayout: 'auto', minWidth: '2000px' }}>
                 <Thead bg="gray.50">
                   <Tr>
                     <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '60px', textAlign: 'center' }}>
@@ -1381,7 +1379,8 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                   })}
                 </Tbody>
               </Table>
-            </TableContainer>
+            </Box>
+
             {subsystemProgressData.length === 0 && (
               <Text color="gray.500" fontSize="sm" textAlign="center" py={4}>
                 No subsystem progress data available
@@ -1392,67 +1391,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
 
         <Divider />
 
-        {/* Top Test Packs and Subsystems */}
-        <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
-          <Card>
-            <CardBody>
-              <Heading size="md" mb={4}>Top Test Packs</Heading>
-              <VStack spacing={3} align="stretch">
-                {topTestPacks.map(([testPack, count], index) => (
-                  <HStack key={testPack} justify="space-between">
-                    <HStack>
-                      <Badge colorScheme="blue" variant="solid">
-                        #{index + 1}
-                      </Badge>
-                      <Text fontSize="sm" fontWeight="medium">
-                        {testPack}
-                      </Text>
-                    </HStack>
-                    <Badge colorScheme="green" variant="outline">
-                      {count} items
-                    </Badge>
-                  </HStack>
-                ))}
-                {topTestPacks.length === 0 && (
-                  <Text color="gray.500" fontSize="sm">
-                    No test pack data available
-                  </Text>
-                )}
-              </VStack>
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardBody>
-              <Heading size="md" mb={4}>Top Subsystems</Heading>
-              <VStack spacing={3} align="stretch">
-                {topSubsystems.map(([subsystem, count], index) => (
-                  <HStack key={subsystem} justify="space-between">
-                    <HStack>
-                      <Badge colorScheme="purple" variant="solid">
-                        #{index + 1}
-                      </Badge>
-                      <Text fontSize="sm" fontWeight="medium">
-                        {subsystem}
-                      </Text>
-                    </HStack>
-                    <Badge colorScheme="orange" variant="outline">
-                      {count} items
-                    </Badge>
-                  </HStack>
-                ))}
-                {topSubsystems.length === 0 && (
-                  <Text color="gray.500" fontSize="sm">
-                    No subsystem data available
-                  </Text>
-                )}
-              </VStack>
-            </CardBody>
-          </Card>
-        </SimpleGrid>
-
-
-        
       </VStack>
     </Box>
   );
