@@ -156,11 +156,27 @@
 │  │  │                       SummarySubsystems.js                                      │ │ │
 │  │  │                                                                                 │ │ │
 │  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │ │ │
-│  │  │  │SQL-to-Table │  │CTE Support  │  │Aggregation  │  │   React Table Component │ │ │ │
-│  │  │  │Generation   │  │• Common Tbl │  │Functions    │  │   • TOTAL_ITEMS         │ │ │ │
-│  │  │  │• Query Parse│  │• Expressions│  │• COUNT, SUM │  │   • DONEITEMS           │ │ │ │
-│  │  │  │• AST Build  │  │• Complex    │  │• AVG, CASE  │  │   • PENDINGITEMS        │ │ │ │
+│  │  │  │Multi-Source │  │Web Worker   │  │Resizable    │  │   Complex Table Layout  │ │ │ │
+│  │  │  │Data Merge   │  │Processing   │  │Container    │  │   • Merged Cells        │ │ │ │
+│  │  │  │• Pipeline   │  │• Background │  │• Drag Handle│  │   • Test Pack Expansion │ │ │ │
+│  │  │  │• Aislamient │  │• Batch Proc │  │• 200-800px  │  │   • Progress Bars       │ │ │ │
+│  │  │  │• Loop Data  │  │• Memory Opt │  │• Smooth Res │  │   • Export Functions    │ │ │ │
 │  │  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────────────────┘ │ │ │
+│  │  │                                                                                 │ │ │
+│  │  │  ┌─────────────────────────────────────────────────────────────────────────────┐ │ │ │
+│  │  │  │                        DATA FLOW ARCHITECTURE                               │ │ │ │
+│  │  │  │                                                                             │ │ │ │
+│  │  │  │  pipelinedata.csv ──┐                                                       │ │ │ │
+│  │  │  │  aislamientos.csv ──┼──► Web Worker ──► Aggregation ──► Table Rendering    │ │ │ │
+│  │  │  │  test_of_lazos.csv ─┘                                                       │ │ │ │
+│  │  │  │  subsystems_info.csv                                                        │ │ │ │
+│  │  │  │                                                                             │ │ │ │
+│  │  │  │  • SUBSYSTEM grouping with TEST PACK expansion                              │ │ │ │
+│  │  │  │  • Progress calculations from CONSTRUC COORD PROGRESS                      │ │ │ │
+│  │  │  │  • Aislamientos DONE/TOTAL statistics                                      │ │ │ │
+│  │  │  │  • Loop testing OK=100% completion tracking                                │ │ │ │
+│  │  │  │  • Export to CSV/Excel with formatted data                                 │ │ │ │
+│  │  │  └─────────────────────────────────────────────────────────────────────────────┘ │ │ │
 │  │  └─────────────────────────────────────────────────────────────────────────────────┘ │ │
 │  └─────────────────────────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────────────────┘

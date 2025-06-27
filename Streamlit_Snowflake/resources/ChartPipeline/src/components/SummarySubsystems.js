@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { css, Global } from '@emotion/react';
 import {
   Box, VStack, HStack, Text, SimpleGrid, Card, CardBody, Heading, Badge, Divider,
-  Table, Thead, Tbody, Tr, Th, Td, TableContainer, Spinner, Progress, Button
+  Table, Thead, Tbody, Tr, Th, Td, TableContainer, Spinner, Progress, Button, Select
 } from '@chakra-ui/react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -287,6 +287,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   const abortControllerRef = useRef(null);
   const dataCache = useRef(new Map());
   const workerRef = useRef(null);
+  const [loopColorFilter, setLoopColorFilter] = useState('all');
+  const [totalItemsColorFilter, setTotalItemsColorFilter] = useState('all');
+  const [testPackProgressFilter, setTestPackProgressFilter] = useState('all');
   
   // State for resizable height (matching LoopTestProgressChart dimensions)
   const [tableContainerHeight, setTableContainerHeight] = useState(400);
@@ -414,7 +417,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   }, [filteredData]);
   
   // Calculate subsystem progress statistics with TEST PACK data
-  const subsystemProgressData = useMemo(() => {
+  const rawSubsystemProgressData = useMemo(() => {
     if (!data || data.length === 0 || !aislData || aislData.length === 0 || !loopData || loopData.length === 0 || !subsystemsInfoData || subsystemsInfoData.length === 0) {
       return [];
     }
@@ -619,6 +622,92 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
 
     return expandedData.sort((a, b) => b.totalItems - a.totalItems);
   }, [data, aislData, loopData, subsystemsInfoData]);
+
+  // Get unique test pack progress percentages for filter
+  const uniqueTestPackPercentages = useMemo(() => {
+    if (!rawSubsystemProgressData) return [];
+    
+    const percentages = new Set();
+    rawSubsystemProgressData.forEach(row => {
+      if (row.testPack && row.testPackProgress !== undefined) {
+        percentages.add(Math.round(row.testPackProgress));
+      }
+    });
+    
+    return Array.from(percentages).sort((a, b) => a - b);
+  }, [rawSubsystemProgressData]);
+
+  // Filter data based on loop color filter, total items color filter, and test pack progress filter
+  const subsystemProgressData = useMemo(() => {
+    if (!rawSubsystemProgressData) {
+      return rawSubsystemProgressData;
+    }
+    
+    let filteredData = rawSubsystemProgressData;
+    
+    // Apply loop color filter
+    if (loopColorFilter !== 'all') {
+      filteredData = filteredData.filter(row => {
+        const isComplete = row.totalLoops > 0 && row.totalLoops === row.doneLoops;
+        if (loopColorFilter === 'complete') {
+          return isComplete;
+        } else if (loopColorFilter === 'incomplete') {
+          return !isComplete;
+        }
+        return true;
+      });
+    }
+    
+    // Apply total items color filter
+    if (totalItemsColorFilter !== 'all') {
+      filteredData = filteredData.filter(row => {
+        const isComplete = row.aislTotalItems > 0 && row.aislTotalItems === row.aislDoneItems;
+        if (totalItemsColorFilter === 'complete') {
+          return isComplete;
+        } else if (totalItemsColorFilter === 'incomplete') {
+          return !isComplete;
+        }
+        return true;
+      });
+    }
+    
+    // Apply test pack progress filter while preserving table structure
+    if (testPackProgressFilter !== 'all') {
+      // Group by subsystem to maintain merged cell structure
+      const subsystemGroups = new Map();
+      filteredData.forEach(row => {
+        if (!subsystemGroups.has(row.subsystem)) {
+          subsystemGroups.set(row.subsystem, []);
+        }
+        subsystemGroups.get(row.subsystem).push(row);
+      });
+      
+      const newFilteredData = [];
+      subsystemGroups.forEach((rows, subsystem) => {
+        // Check if any row in this subsystem matches the filter
+        const matchingRows = rows.filter(row => {
+          if (!row.testPack) return false;
+          const roundedProgress = Math.round(row.testPackProgress);
+          return roundedProgress.toString() === testPackProgressFilter;
+        });
+        
+        if (matchingRows.length > 0) {
+          // Recalculate rowSpan and isFirstRow for the matching rows
+          matchingRows.forEach((row, index) => {
+            newFilteredData.push({
+              ...row,
+              isFirstRow: index === 0,
+              rowSpan: matchingRows.length
+            });
+          });
+        }
+      });
+      
+      filteredData = newFilteredData;
+    }
+    
+    return filteredData;
+  }, [rawSubsystemProgressData, loopColorFilter, totalItemsColorFilter, testPackProgressFilter]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
@@ -1036,9 +1125,24 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                     </Th>
                     <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', width: '140px', textAlign: 'center' }}>SUBSYSTEM</Th>
                     <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0',  textAlign: 'center' }}>
-                      <Text>
-                        TOTAL<br />ITEMS
-                      </Text>
+                      <VStack spacing={1}>
+                        <Text>
+                          TOTAL<br />ITEMS
+                        </Text>
+                        <Select
+                          size="xs"
+                          fontSize="8px"
+                          width="70px"
+                          value={totalItemsColorFilter}
+                          onChange={(e) => setTotalItemsColorFilter(e.target.value)}
+                          bg="white"
+                          border="1px solid #e2e8f0"
+                        >
+                          <option value="all">All</option>
+                          <option value="complete">Complete</option>
+                          <option value="incomplete">Incomplete</option>
+                        </Select>
+                      </VStack>
                     </Th>
                     <Th isNumeric style={{fontSize:'9px', borderRight: '1px solid #e2e8f0', textAlign: 'center' }}>
                       <Text>
@@ -1066,9 +1170,27 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                       </Text>
                     </Th>
                     <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0',width:'140px', textAlign: 'center' }}>
-                      <Text>
-                        PROGRESS<br />TEST PACK
-                      </Text>
+                      <VStack spacing={1}>
+                        <Text>
+                          PROGRESS<br />TEST PACK
+                        </Text>
+                        <Select
+                          size="xs"
+                          fontSize="8px"
+                          width="70px"
+                          value={testPackProgressFilter}
+                          onChange={(e) => setTestPackProgressFilter(e.target.value)}
+                          bg="white"
+                          border="1px solid #e2e8f0"
+                        >
+                          <option value="all">All</option>
+                          {uniqueTestPackPercentages.map(percentage => (
+                            <option key={percentage} value={percentage.toString()}>
+                              {percentage}%
+                            </option>
+                          ))}
+                        </Select>
+                      </VStack>
                     </Th>
                     <Th style={{fontSize:'9px', borderRight: '1px solid #e2e8f0',width:'100px', textAlign: 'center' }}>
                       <Text>
@@ -1076,9 +1198,24 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                       </Text>
                     </Th>
                     <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width:'80px', textAlign: 'center' }}>
-                      <Text>
-                        TOTAL<br />LOOP<br />(Signal)
-                      </Text>
+                      <VStack spacing={1}>
+                        <Text>
+                          TOTAL<br />LOOP<br />(Signal)
+                        </Text>
+                        <Select
+                          size="xs"
+                          fontSize="8px"
+                          width="70px"
+                          value={loopColorFilter}
+                          onChange={(e) => setLoopColorFilter(e.target.value)}
+                          bg="white"
+                          border="1px solid #e2e8f0"
+                        >
+                          <option value="all">All</option>
+                          <option value="complete">Complete</option>
+                          <option value="incomplete">Incomplete</option>
+                        </Select>
+                      </VStack>
                     </Th>
                     <Th isNumeric style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width:'80px',textAlign: 'center' }}>
                       <Text>
@@ -1188,7 +1325,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                             style={{ 
                               verticalAlign: 'middle',
                               textAlign: 'center',
-                              backgroundColor: '#f7fafc',
+                              backgroundColor: row.aislTotalItems > 0 && row.aislTotalItems === row.aislDoneItems ? '#1DE9B6' : '#f7fafc',
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
@@ -1332,7 +1469,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                             style={{ 
                               verticalAlign: 'middle',
                               textAlign: 'center',
-                              backgroundColor: '#f7fafc',
+                              backgroundColor: row.totalLoops > 0 && row.totalLoops === row.doneLoops ? '#1DE9B6' : '#f7fafc',
                               borderRight: '1px solid #e2e8f0'
                             }}
                           >
