@@ -234,15 +234,19 @@ const Row = React.memo(({ data, index, style }) => {
             )}
             {row.isFirstRow && (
               <Td rowSpan={row.rowSpan} style={{ verticalAlign: 'middle', textAlign: 'center', backgroundColor: '#f7fafc' }}>
-                <Box display="flex" flexDirection="column" alignItems="center" height="60px" justifyContent="center">
-                  <Box position="relative" width="30px" height="60px" mb="2">
-                    <Box position="absolute" bottom="0" left="0" width="30px" height="60px" border="1px solid #e2e8f0" bg="#0E2148" />
-                    <Box position="absolute" bottom="0" left="0" width="30px" 
-                         height={`${row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%`}
-                         bg={row.aislTotalItems > 0 ? (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green.500" : 
-                             row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue.500" : "red.500") : "gray.500"} zIndex="2" />
-                  </Box>
-                  <Text fontSize="xs" fontWeight="bold" color="black">
+                <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+                  <Progress 
+                    value={row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}
+                    size="md" 
+                    width="30px"
+                    height="60px"
+                    orientation="vertical"
+                    borderRadius="md"
+                    backgroundColor="#0E2148"
+                    colorScheme={row.aislTotalItems > 0 ? (row.aislDoneItems / row.aislTotalItems * 100 === 100 ? "green" : 
+                             row.aislDoneItems / row.aislTotalItems * 100 > 50 ? "blue" : "red") : "gray"}
+                  />
+                  <Text fontSize="xs" fontWeight="bold" color="black" mt={2}>
                     {row.aislTotalItems > 0 ? Math.round((row.aislDoneItems / row.aislTotalItems) * 100) : 0}%
                   </Text>
                 </Box>
@@ -909,8 +913,13 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
     <Box p={6}>
       <Global
         styles={css`
+          table {
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+          }
           table th, table td {
-            border-color: #555879 !important;
+            border: 1px solid #e2e8f0 !important;
+            vertical-align: middle !important;
           }
         `}
       />
@@ -919,7 +928,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         {/* Summary Statistics */}
         <Box width="100%" overflowX="auto">
           <TableContainer>
-            <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', width: '100%', borderColor: '#3182ce' }}>
+            <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', width: '100%' }}>
               <Thead bg="gray.50">
                 <Tr>
                   <Th style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>Subsystems</Th>
@@ -967,7 +976,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
               </HStack>
             </HStack>
             <TableContainer overflowX="auto">
-              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '2200px', borderColor: '#3182ce' }}>
+              <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', minWidth: '2200px' }}>
                 <Thead bg="gray.50">
                   <Tr>
                     <Th style={{ fontSize:'9px',borderRight: '1px solid #e2e8f0', width: '60px', textAlign: 'center' }}>
@@ -1080,12 +1089,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                           <Td 
                             fontWeight="medium" 
                             rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
+                            textAlign="center"
+                            verticalAlign="middle"
+                            backgroundColor="#f7fafc"
                           >
                             <Text fontSize="sm" fontWeight="bold">
                               {row.serialNumber}
@@ -1098,12 +1104,9 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                           <Td 
                             fontWeight="medium" 
                             rowSpan={row.rowSpan}
-                            style={{ 
-                              verticalAlign: 'middle',
-                              textAlign: 'center',
-                              backgroundColor: '#f7fafc',
-                              borderRight: '1px solid #e2e8f0'
-                            }}
+                            textAlign="center"
+                            verticalAlign="middle"
+                            backgroundColor="#f7fafc"
                           >
                             <Text fontSize="sm" fontWeight="bold">
                               {row.fluid}
@@ -1233,7 +1236,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                         )}
                         
                         {/* TP's INCLUDE - Individual cell per row */}
-                        <Td style={{ textAlign: 'center', padding: '8px', borderRight: '1px solid #e2e8f0' }}>
+                        <Td textAlign="center" p={2}>
                           {row.testPack && (
                             <Text fontSize="sm" fontWeight="medium">
                               {row.testPack}
@@ -1242,7 +1245,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                         </Td>
                         
                         {/* PROGRESS TEST PACK - Individual cell per row */}
-                        <Td style={{ padding: '8px', textAlign: 'center', borderRight: '1px solid #e2e8f0' }}>
+                        <Td textAlign="center" p={2}>
                           {row.testPack && (
                             <Box position="relative" width="100px" margin="0 auto">
                               <Progress 
@@ -1251,11 +1254,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                                 width="100px"
                                 borderRadius="md"
                                 backgroundColor="#0E2148"
-                                sx={{
-                                  '& > div': {
-                                    backgroundColor: '#1DE9B6'
-                                  }
-                                }}
+                                colorScheme="teal"
                               />
                               <Text 
                                 position="absolute" 
@@ -1265,7 +1264,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
                                 fontSize="xs" 
                                 fontWeight="bold" 
                                 color="white"
-                                textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+                                textShadow="1px 1px 2px rgba(0,0,0,0.8)"
                               >
                                 {Math.round(row.testPackProgress)}%
                               </Text>
