@@ -1,11 +1,11 @@
-## REQUEST: FIX ONLY THE LAYOUT OF TABLE "Insulation Progress" IN IsolationProgressControlChart.optimized.js
+## REQUEST: FIX ONLY THE LAYOUT OF TABLE "Insulation Progress" IN LoopTestProgressChart.optimized.js
 
 
 ### 🔧 EXACT CHANGE REQUIRED
 
-**FILE**: `ECS/Streamlit_Snowflake/resources/ChartPipeline/src/components/IsolationProgressControlChart.optimizedjs`
+**FILE**: `ECS/Streamlit_Snowflake/resources/ChartPipeline/src/components/LoopTestProgressChart.optimized.js`
 
-**FIX ONLY**: LAYOUT VISUALIZATION OF TABLE  Insulation Progress:
+**FIX ONLY**: LAYOUT VISUALIZATION OF TABLE  Loop Test Control - Precommissioning:
 
 #### CURRENTLY LAYOUT (OVERLAPPING BOUNDARIES BETWEEN ROWS)
 
@@ -31,7 +31,9 @@
 └─────────────┴───────────────────────┴─────────────────┴───────┴─────────┴───────────────┴──────────┘
 
 
-#### EXAMPLE OF EXPECTED LAYOUT OUTCOME (NOT OVERLAPPING BOUNDARIES BETWEEN ROWS)
+#### EXAMPLE OF EXPECTED LAYOUT OUTCOME (NOT OVERLAPPING BETWEEN ROWS)
+
+- YOU CANNOT DELETE react-window
 
 ┌─────────────┬───────────────────────┬─────────────────┬───────┬─────────┬───────────────┬──────────┐    
 │             │                       │                 │       │         │               │          │    
@@ -54,7 +56,7 @@
 
 ### 🔒 CRITICAL RESTRICTIONS : PRESERVE EVERYTHING ELSE
 
-**DO NOT CHANGE** anything else from the existing IsolationProgressControlChart.optimized.js:
+**DO NOT CHANGE** anything else from the existing LoopTestProgressChart.optimized.js:
 
 #### ✅ Keep Identical:
 - **All Colors**

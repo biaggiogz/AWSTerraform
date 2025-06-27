@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState, useEffect, memo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Table,
@@ -14,7 +14,6 @@ import {
   HStack,
   Button
 } from '@chakra-ui/react';
-import { ExternalLinkIcon, AttachmentIcon } from '@chakra-ui/icons';
 import {
   useReactTable,
   getCoreRowModel,
@@ -23,57 +22,37 @@ import {
   flexRender,
   createColumnHelper
 } from '@tanstack/react-table';
-import { FixedSizeList as List } from 'react-window';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 const columnHelper = createColumnHelper();
 
-// Memoized cell components for better performance
-const TextCell = memo(({ value, ...props }) => (
+const TextCell = ({ value, ...props }) => (
   <Text fontSize="sm" textAlign="center" {...props}>
     {value}
   </Text>
-));
+);
 
-const ProgressCell = memo(({ value }) => {
+const ProgressCell = ({ value }) => {
   const progressValue = parseFloat(value.replace('%', '')) || 0;
   const colorScheme = progressValue === 100 ? 'green' : progressValue >= 50 ? 'yellow' : 'red';
   
   return (
-    <Box display="flex" flexDirection="column" alignItems="center">
+    <Box height="40px" display="flex" flexDirection="column" justifyContent="center">
       <Progress 
         value={progressValue} 
         size="sm" 
         colorScheme={colorScheme}
         borderRadius="md"
         mb={1}
-        width="80px"
       />
       <Text fontSize="xs" textAlign="center" fontWeight="medium">
         {value}
       </Text>
     </Box>
   );
-});
-
-// Optimized HTML generation using efficient array methods
-const generateTableHTML = (data) => {
-  const headers = ['Code', 'Subsystem', 'Tag Loop', 'Area', 'Priority', 'Service', 'Installed', 'Wired', 'Connected', 'Cable Test', 'Progress', 'Dossier', 'Test Loop'];
-  const headerRow = headers.map(h => `<th style="border:1px solid #ddd;padding:8px;text-align:center;font-size:12px;background-color:#f2f2f2;font-weight:bold">${h}</th>`).join('');
-  
-  const rows = data.map((row, i) => 
-    `<tr style="${i % 2 === 0 ? 'background-color:#f9f9f9' : ''}">${[
-      row.code, row.subsystem, row.tagLoop, row.area, row.priority, row.service,
-      row.installed, row.wired, row.connected, row.cableTest, row.progress, row.dossier, row.testLoop
-    ].map(cell => `<td style="border:1px solid #ddd;padding:8px;text-align:center;font-size:12px">${cell}</td>`).join('')}</tr>`
-  ).join('');
-  
-  return `<!DOCTYPE html><html><head><title>Loop Test Control - Precommissioning</title><style>body{font-family:Arial,sans-serif;margin:20px}table{border-collapse:collapse;width:100%}</style></head><body><h2>Loop Test Control - Precommissioning (${data.length} LOOPS)</h2><table><thead><tr>${headerRow}</tr></thead><tbody>${rows}</tbody></table></body></html>`;
 };
 
 const LazosTable = React.memo(({ data }) => {
-  const [isDetached, setIsDetached] = useState(false);
-  const [detachedWindow, setDetachedWindow] = useState(null);
-  const [tableSize, setTableSize] = useState({ width: 1200, height: 600 });
 
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -99,55 +78,174 @@ const LazosTable = React.memo(({ data }) => {
   const columns = useMemo(() => [
     columnHelper.accessor('code', {
       header: 'Code',
-      cell: ({ getValue }) => <TextCell value={getValue()} fontWeight="medium" color="blue.600" />
+      minSize: 80,
+      maxSize: 300,
+      size: 100,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" fontWeight="medium" color="blue.600" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('subsystem', {
       header: 'Subsystem',
-      cell: ({ getValue }) => <TextCell value={getValue()} fontWeight="medium" />
+      minSize: 80,
+      maxSize: 300,
+      size: 120,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" fontWeight="medium" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('tagLoop', {
       header: 'Tag Loop',
-      cell: ({ getValue }) => <TextCell value={getValue()} fontFamily="mono" />
+      minSize: 100,
+      maxSize: 400,
+      size: 150,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" fontFamily="mono" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('area', {
       header: 'Area',
-      cell: ({ getValue }) => <TextCell value={getValue()} fontWeight="medium" />
+      minSize: 60,
+      maxSize: 200,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" fontWeight="medium" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('priority', {
       header: 'Priority',
-      cell: ({ getValue }) => <TextCell value={getValue()} fontWeight="medium" />
+      minSize: 60,
+      maxSize: 200,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" fontWeight="medium" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('service', {
       header: 'Service',
-      cell: ({ getValue }) => <TextCell value={getValue()} noOfLines={2} />
+      minSize: 80,
+      maxSize: 300,
+      size: 120,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" textAlign="center" noOfLines={2}>
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('installed', {
       header: 'Installed',
-      cell: ({ getValue }) => <TextCell value={getValue()} />
+      minSize: 60,
+      maxSize: 200,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('wired', {
       header: 'Wired',
-      cell: ({ getValue }) => <TextCell value={getValue()} />
+      minSize: 60,
+      maxSize: 200,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('connected', {
       header: 'Connected',
-      cell: ({ getValue }) => <TextCell value={getValue()} />
+      minSize: 60,
+      maxSize: 200,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('cableTest', {
       header: 'Cable Test',
-      cell: ({ getValue }) => <TextCell value={getValue()} />
+      minSize: 60,
+      maxSize: 200,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('progress', {
       header: 'Progress',
-      cell: ({ getValue }) => <ProgressCell value={getValue()} />
+      minSize: 80,
+      maxSize: 200,
+      size: 100,
+      enableResizing: true,
+      cell: ({ getValue }) => {
+        const value = getValue();
+        const progressValue = parseFloat(value.replace('%', '')) || 0;
+        const colorScheme = progressValue === 100 ? 'green' : progressValue >= 50 ? 'yellow' : 'red';
+        
+        return (
+          <Box height="40px" display="flex" flexDirection="column" justifyContent="center">
+            <Progress 
+              value={progressValue} 
+              size="sm" 
+              colorScheme={colorScheme}
+              borderRadius="md"
+              mb={1}
+            />
+            <Text fontSize="xs" textAlign="center" fontWeight="medium">
+              {value}
+            </Text>
+          </Box>
+        );
+      }
     }),
     columnHelper.accessor('dossier', {
       header: 'Dossier',
-      cell: ({ getValue }) => <TextCell value={getValue()} color="gray.600" />
+      minSize: 60,
+      maxSize: 200,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" textAlign="center" color="gray.600">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('testLoop', {
       header: 'Test Loop',
-      cell: ({ getValue }) => <TextCell value={getValue()} fontFamily="mono" color="blue.500" />
+      minSize: 80,
+      maxSize: 400,
+      size: 120,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" fontFamily="mono" textAlign="center" color="blue.500">
+          {getValue()}
+        </Text>
+      )
     })
   ], []);
 
@@ -157,57 +255,23 @@ const LazosTable = React.memo(({ data }) => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    enableColumnResizing: true,
+    columnResizeMode: 'onChange',
+    debugTable: false,
+  });
+  
+  const { rows } = table.getRowModel();
+  const parentRef = React.useRef();
+  const headerRef = React.useRef();
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 50,
+    overscan: 10,
   });
 
-  const handleDetach = useCallback(async () => {
-    let newWindow;
-    
-    try {
-      if ('getScreenDetails' in window) {
-        const screens = await window.getScreenDetails();
-        const externalScreen = screens.screens.find(screen => !screen.internal) || screens.screens[1];
-        
-        if (externalScreen) {
-          const left = externalScreen.left + 100;
-          const top = externalScreen.top + 100;
-          newWindow = window.open('', 'DetachedTable',
-            `width=${tableSize.width + 50},height=${tableSize.height + 100},` +
-            `left=${left},top=${top},resizable=yes,scrollbars=yes`
-          );
-        }
-      }
-    } catch (error) {
-      console.log('Screen Details API not available or failed:', error);
-    }
-    
-    if (!newWindow) {
-      const secondaryX = window.screen.width + 100;
-      newWindow = window.open('', 'DetachedTable',
-        `width=${tableSize.width + 50},height=${tableSize.height + 100},` +
-        `left=${secondaryX},top=100,resizable=yes,scrollbars=yes`
-      );
-    }
-
-    if (newWindow) {
-      const htmlContent = generateTableHTML(processedData);
-      newWindow.document.write(htmlContent);
-      newWindow.document.close();
-      setIsDetached(true);
-      setDetachedWindow(newWindow);
-
-      newWindow.addEventListener('beforeunload', () => {
-        setIsDetached(false);
-        setDetachedWindow(null);
-      });
-    }
-  }, [tableSize, processedData]);
-
-  useEffect(() => {
-    if (detachedWindow && !detachedWindow.closed && isDetached) {
-      const htmlContent = generateTableHTML(processedData);
-      detachedWindow.document.body.innerHTML = htmlContent.match(/<body>(.*)<\/body>/s)[1];
-    }
-  }, [processedData, detachedWindow, isDetached]);
+  const headerGroups = useMemo(() => table.getHeaderGroups(), [table]);
 
   if (!data || data.length === 0) {
     return (
@@ -227,109 +291,126 @@ const LazosTable = React.memo(({ data }) => {
           <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
             {processedData.length} LOOPS
           </Badge>
-          {!isDetached ? (
-            <Button
-              leftIcon={<ExternalLinkIcon />}
-              size="sm"
-              colorScheme="blue"
-              variant="outline"
-              onClick={handleDetach}
-              title="Move table to another monitor"
-            >
-              Move to Monitor
-            </Button>
-          ) : (
-            <Button
-              leftIcon={<AttachmentIcon />}
-              size="sm"
-              colorScheme="green"
-              variant="outline"
-              onClick={() => {
-                if (detachedWindow) detachedWindow.close();
-                setIsDetached(false);
-                setDetachedWindow(null);
-              }}
-            >
-              Return to Dashboard
-            </Button>
-          )}
         </HStack>
       </HStack>
       
-      {!isDetached && (
+      <Box
+        border="1px solid"
+        borderColor="gray.200"
+        borderRadius="lg"
+        overflow="hidden"
+        bg="white"
+        boxShadow="sm"
+        width="100%"
+        height="auto"
+        maxWidth="100%"
+        position="relative"
+      >
         <Box
-          border="1px solid"
+          display="flex"
+          width="100%"
+          borderBottom="1px solid"
           borderColor="gray.200"
-          borderRadius="lg"
-          overflow="hidden"
-          bg="white"
-          boxShadow="sm"
-          height="500px"
+          bg="gray.50"
+          ref={headerRef}
         >
-          <Table size="sm">
-            <Thead bg="gray.50" position="sticky" top={0} zIndex={1}>
-              {table.getHeaderGroups().map(headerGroup => (
-                <Tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <Th key={header.id} textAlign="center" fontSize="xs" fontWeight="bold" color="gray.700" py={3}>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </Th>
-                  ))}
-                </Tr>
-              ))}
-            </Thead>
-          </Table>
-          <Box height="calc(100% - 60px)" overflow="hidden">
-            <List
-              height={440}
-              itemCount={table.getRowModel().rows.length}
-              itemSize={40}
-              itemData={table.getRowModel().rows}
+          {headerGroups[0].headers.map(header => (
+            <Box
+              key={header.id}
+              width={`${header.getSize()}px`}
+              minWidth={`${header.getSize()}px`}
+              maxWidth={`${header.getSize()}px`}
+              textAlign="center"
+              fontSize="xs"
+              fontWeight="bold"
+              textTransform="uppercase"
+              letterSpacing="wide"
+              color="gray.600"
+              py={2}
+              px={2}
+              borderRight="1px solid"
+              borderColor="gray.100"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              cursor={header.column.getCanSort() ? 'pointer' : 'default'}
+              onClick={header.column.getToggleSortingHandler()}
+              position="relative"
             >
-              {({ index, style, data }) => {
-                const row = data[index];
-                return (
-                  <div style={style}>
-                    <Table size="sm">
-                      <Tbody>
-                        <Tr _hover={{ bg: 'gray.50' }}>
-                          {row.getVisibleCells().map(cell => (
-                            <Td key={cell.id} py={2} px={2} textAlign="center" borderColor="gray.100" width={`${100/13}%`}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </Td>
-                          ))}
-                        </Tr>
-                      </Tbody>
-                    </Table>
-                  </div>
-                );
-              }}
-            </List>
+              <HStack spacing={1}>
+                <Text>{flexRender(header.column.columnDef.header, header.getContext())}</Text>
+                {header.column.getIsSorted() && (
+                  <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
+                )}
+              </HStack>
+              {header.column.getCanResize() && (
+                <Box
+                  position="absolute"
+                  right="0"
+                  top="0"
+                  height="100%"
+                  width="4px"
+                  cursor="col-resize"
+                  bg="transparent"
+                  _hover={{ bg: 'blue.200' }}
+                  onMouseDown={header.getResizeHandler()}
+                  onTouchStart={header.getResizeHandler()}
+                />
+              )}
+            </Box>
+          ))}
+        </Box>
+
+        <Box
+          ref={parentRef}
+          height="400px"
+          overflow="auto"
+        >
+          <Box
+            height={`${virtualizer.getTotalSize()}px`}
+            position="relative"
+          >
+            {virtualizer.getVirtualItems().map(virtualRow => {
+              const row = rows[virtualRow.index];
+              return (
+                <Box
+                  key={row.id}
+                  position="absolute"
+                  top={0}
+                  left={0}
+                  width="100%"
+                  height={`${virtualRow.size}px`}
+                  transform={`translateY(${virtualRow.start}px)`}
+                  display="flex"
+                  borderBottom="1px solid"
+                  borderColor="gray.100"
+                  _hover={{ bg: 'gray.50' }}
+                >
+                  {row.getVisibleCells().map(cell => (
+                    <Box
+                      key={cell.id}
+                      width={`${cell.column.getSize()}px`}
+                      minWidth={`${cell.column.getSize()}px`}
+                      maxWidth={`${cell.column.getSize()}px`}
+                      py={2}
+                      px={2}
+                      borderRight="1px solid"
+                      borderColor="gray.100"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </Box>
+                  ))}
+                </Box>
+              );
+            })}
           </Box>
         </Box>
-      )}
-      
-      {isDetached && (
-        <Box
-          border="2px dashed"
-          borderColor="gray.300"
-          borderRadius="lg"
-          p={8}
-          textAlign="center"
-          bg="gray.50"
-        >
-          <Text color="gray.500" fontSize="lg" mb={2}>
-            Table moved to external monitor
-          </Text>
-          <Text color="gray.400" fontSize="sm">
-            The table is now displayed on another monitor and will update automatically when you apply filters.
-          </Text>
-        </Box>
-      )}
+      </Box>
     </Box>
   );
 });
-
-LazosTable.displayName = 'LazosTable';
 
 export default LazosTable;
