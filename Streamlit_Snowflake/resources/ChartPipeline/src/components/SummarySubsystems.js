@@ -11,7 +11,7 @@ import { FixedSizeList as List } from 'react-window';
 const createDataWorker = () => {
   const workerCode = `
     self.onmessage = function(e) {
-      const { type, data, testPackData, aislData, loopData, batchSize = 500 } = e.data;
+      const { type, data, aislData, loopData, batchSize = 500 } = e.data;
       
       if (type === 'processSubsystemData') {
         const aislStats = new Map();
@@ -84,7 +84,10 @@ const createDataWorker = () => {
                 const trimmedTp = tp.trim();
                 if (trimmedTp) {
                   stats.testPacks.add(trimmedTp);
-                  stats.testPackProgressValues.set(trimmedTp, progress);
+                  if (!stats.testPackProgressValues.has(trimmedTp)) {
+                    stats.testPackProgressValues.set(trimmedTp, []);
+                  }
+                  stats.testPackProgressValues.get(trimmedTp).push(progress);
                 }
               });
             }
@@ -99,13 +102,10 @@ const createDataWorker = () => {
           const testPacksArray = Array.from(stats.testPacks);
           
           const testPackProgress = testPacksArray.map(tp => {
-            const progressData = testPackData.find(tpd => 
-              tpd.TestPack === tp && tpd.SUBSYSTEM === subsystem
-            );
-            const progress = progressData ? 
-              parseFloat(progressData.Progress.replace('%', '')) : 
-              stats.testPackProgressValues.get(tp) || 0;
-            return { testPack: tp, progress };
+            const progressValues = stats.testPackProgressValues.get(tp) || [];
+            const avgProgress = progressValues.length > 0 ? 
+              progressValues.reduce((sum, val) => sum + val, 0) / progressValues.length : 0;
+            return { testPack: tp, progress: avgProgress };
           });
           
           if (testPackProgress.length === 0) {
@@ -272,7 +272,7 @@ const Row = React.memo(({ data, index, style }) => {
 
 const SummarySubsystems = ({ data: filteredData = [] }) => {
   const [data, setData] = useState([]);
-  const [testPackData, setTestPackData] = useState([]);
+
   const [aislData, setAislData] = useState([]);
   const [loopData, setLoopData] = useState([]);
   const [subsystemsInfoData, setSubsystemsInfoData] = useState([]);
@@ -317,9 +317,6 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         }
         
         // Always load these supporting datasets
-        const testPackResponse = await fetch('/data/test_pack_progress.csv');
-        const testPackCsvText = await testPackResponse.text();
-        
         const aislResponse = await fetch('/data/aislamientos.csv');
         const aislCsvText = await aislResponse.text();
         
@@ -329,51 +326,39 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         const subsystemsInfoResponse = await fetch('/data/subsystems_info.csv');
         const subsystemsInfoCsvText = await subsystemsInfoResponse.text();
         
-        // Parse test pack data
-        Papa.parse(testPackCsvText, {
+        // Parse aislamientos data
+        Papa.parse(aislCsvText, {
           header: true,
-          complete: (testPackResults) => {
-            setTestPackData(testPackResults.data);
+          complete: (aislResults) => {
+            setAislData(aislResults.data);
             
-            // Parse aislamientos data
-            Papa.parse(aislCsvText, {
+            // Parse loop data
+            Papa.parse(loopCsvText, {
               header: true,
-              complete: (aislResults) => {
-                setAislData(aislResults.data);
+              complete: (loopResults) => {
+                setLoopData(loopResults.data);
                 
-                // Parse loop data
-                Papa.parse(loopCsvText, {
+                // Parse subsystems info data
+                Papa.parse(subsystemsInfoCsvText, {
                   header: true,
-                  complete: (loopResults) => {
-                    setLoopData(loopResults.data);
-                    
-                    // Parse subsystems info data
-                    Papa.parse(subsystemsInfoCsvText, {
-                      header: true,
-                      complete: (subsystemsInfoResults) => {
-                        setSubsystemsInfoData(subsystemsInfoResults.data);
-                        setLoading(false);
-                      },
-                      error: (error) => {
-                        setError(`Error parsing subsystems info CSV: ${error.message}`);
-                        setLoading(false);
-                      }
-                    });
+                  complete: (subsystemsInfoResults) => {
+                    setSubsystemsInfoData(subsystemsInfoResults.data);
+                    setLoading(false);
                   },
                   error: (error) => {
-                    setError(`Error parsing loop CSV: ${error.message}`);
+                    setError(`Error parsing subsystems info CSV: ${error.message}`);
                     setLoading(false);
                   }
                 });
               },
               error: (error) => {
-                setError(`Error parsing aislamientos CSV: ${error.message}`);
+                setError(`Error parsing loop CSV: ${error.message}`);
                 setLoading(false);
               }
             });
           },
           error: (error) => {
-            setError(`Error parsing test pack CSV: ${error.message}`);
+            setError(`Error parsing aislamientos CSV: ${error.message}`);
             setLoading(false);
           }
         });
@@ -388,7 +373,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   
   // Calculate subsystem progress statistics with TEST PACK data
   const subsystemProgressData = useMemo(() => {
-    if (!data || data.length === 0 || !testPackData || testPackData.length === 0 || !aislData || aislData.length === 0 || !loopData || loopData.length === 0 || !subsystemsInfoData || subsystemsInfoData.length === 0) {
+    if (!data || data.length === 0 || !aislData || aislData.length === 0 || !loopData || loopData.length === 0 || !subsystemsInfoData || subsystemsInfoData.length === 0) {
       return [];
     }
     
@@ -473,21 +458,19 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       // Progress calculation based on CONSTRUC COORD PROGRESS
       const overallProgress = parseFloat(item['PROGRESS SW+FW (%)']) || 0;
 
-      // Add test pack if available
+      // Add test pack if available and calculate average progress
       if (item['TEST PACK']) {
         const testPacks = item['TEST PACK'].split('|');
         testPacks.forEach(tp => {
-          if (tp.trim()) {
-            subsystemStats[subsystem].testPacks.add(tp.trim());
+          const trimmedTp = tp.trim();
+          if (trimmedTp) {
+            subsystemStats[subsystem].testPacks.add(trimmedTp);
             
-            // Store progress for this test pack
-            if (!subsystemStats[subsystem].testPackProgressValues[tp.trim()]) {
-              subsystemStats[subsystem].testPackProgressValues[tp.trim()] = progress;
-            } else {
-              // If we have multiple entries for the same test pack, average the progress
-              subsystemStats[subsystem].testPackProgressValues[tp.trim()] = 
-                (subsystemStats[subsystem].testPackProgressValues[tp.trim()] + progress) / 2;
+            // Store progress values for averaging
+            if (!subsystemStats[subsystem].testPackProgressValues[trimmedTp]) {
+              subsystemStats[subsystem].testPackProgressValues[trimmedTp] = [];
             }
+            subsystemStats[subsystem].testPackProgressValues[trimmedTp].push(progress);
           }
         });
       }
@@ -515,20 +498,15 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       const description = firstItem['DESCRIPTION'] || '';
       const insulation = firstItem['INSULATION'] || '';
       
-      // Get test pack progress data
+      // Calculate average test pack progress from CONSTRUC COORD PROGRESS
       const testPackProgress = testPacksArray.map(tp => {
-        const progressData = testPackData.find(tpd => 
-          tpd.TestPack === tp && tpd.SUBSYSTEM === subsystem
-        );
-        
-        // Use the progress from testPackData if available, otherwise use the calculated progress
-        const progress = progressData ? 
-          parseFloat(progressData.Progress.replace('%', '')) : 
-          stats.testPackProgressValues[tp] || 0;
+        const progressValues = stats.testPackProgressValues[tp] || [];
+        const avgProgress = progressValues.length > 0 ? 
+          progressValues.reduce((sum, val) => sum + val, 0) / progressValues.length : 0;
         
         return {
           testPack: tp,
-          progress: progress
+          progress: avgProgress
         };
       });
 
@@ -598,7 +576,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
     });
 
     return expandedData.sort((a, b) => b.totalItems - a.totalItems);
-  }, [data, testPackData, aislData, loopData, subsystemsInfoData]);
+  }, [data, aislData, loopData, subsystemsInfoData]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
