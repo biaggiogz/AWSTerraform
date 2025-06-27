@@ -2,9 +2,10 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { css, Global } from '@emotion/react';
 import {
   Box, VStack, HStack, Text, SimpleGrid, Card, CardBody, Heading, Badge, Divider,
-  Table, Thead, Tbody, Tr, Th, Td, TableContainer, Spinner, Progress
+  Table, Thead, Tbody, Tr, Th, Td, TableContainer, Spinner, Progress, Button
 } from '@chakra-ui/react';
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import { FixedSizeList as List } from 'react-window';
 
 // Web Worker for data processing
@@ -836,6 +837,56 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
       .slice(0, 5);
   }, [summaryStats.subsystemBreakdown]);
 
+  // Export data preparation
+  const prepareExportData = useCallback(() => {
+    return subsystemProgressData.map(row => ({
+      'S/N': row.serialNumber,
+      'FLUID': row.fluid,
+      'SUBSYSTEM': row.subsystem,
+      'TOTAL ITEMS': row.aislTotalItems,
+      'DONE ITEMS': row.aislDoneItems,
+      'PENDING ITEMS': row.aislPendingItems,
+      'DESCRIPTION': row.description,
+      'N°TP': row.numTestPacks,
+      'TP INCLUDE': row.testPack || '',
+      'PROGRESS TEST PACK': row.testPack ? `${Math.round(row.testPackProgress)}%` : '',
+      'TRACEADOS': row.traceados,
+      'TOTAL LOOP': row.totalLoops,
+      'LOOP DONE': row.doneLoops,
+      'LOOP PENDING': row.pendingLoops,
+      'PRIORITY': row.priority,
+      'HITO': row.hito,
+      'TEIGA REINSTATEMENT': row.teigaReinstatement,
+      'TEIGA INSULATION': row.teigaInsulation,
+      'SIEMSA': row.siemsa,
+      'TECHNIP': row.technip
+    }));
+  }, [subsystemProgressData]);
+
+  // Export to CSV function
+  const exportToCSV = useCallback(() => {
+    const csvData = prepareExportData();
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'subsystem_progress_data.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [prepareExportData]);
+
+  // Export to Excel function
+  const exportToExcel = useCallback(() => {
+    const excelData = prepareExportData();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Subsystem Progress');
+    XLSX.writeFile(wb, 'subsystem_progress_data.xlsx');
+  }, [prepareExportData]);
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="300px">
@@ -904,7 +955,17 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
         {/* Subsystem Progress Table */}
         <Card>
           <CardBody>
-            <Heading size="sm" mb={4}>Subsystem Progress Overview</Heading>
+            <HStack justify="space-between" mb={4}>
+              <Heading size="sm">Subsystem Progress Overview</Heading>
+              <HStack spacing={2}>
+                <Button colorScheme="blue" size="sm" onClick={exportToCSV}>
+                  Export CSV
+                </Button>
+                <Button colorScheme="green" size="sm" onClick={exportToExcel}>
+                  Export Excel
+                </Button>
+              </HStack>
+            </HStack>
             <TableContainer overflowX="auto">
               <Table variant="simple" size="sm" style={{ tableLayout: 'fixed', borderCollapse: 'collapse', minWidth: '2200px', borderColor: '#3182ce' }}>
                 <Thead bg="gray.50">
