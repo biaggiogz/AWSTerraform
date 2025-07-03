@@ -1,12 +1,22 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Text,
   Badge,
   Heading,
   HStack,
-  Progress
+  Progress,
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  PopoverTrigger,
+  VStack,
+  Button,
+  IconButton,
+  Portal
 } from '@chakra-ui/react';
+import { AttachmentIcon } from '@chakra-ui/icons';
 import {
   useReactTable,
   getCoreRowModel,
@@ -19,12 +29,146 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 
 const columnHelper = createColumnHelper();
 
+// Test Pack Indicator Component
+const TestPackIndicator = ({ testPacks }) => {
+  if (testPacks.length <= 1) return null;
+  
+  return (
+    <Badge 
+      size="xs" 
+      colorScheme="blue" 
+      position="absolute" 
+      top="-2px" 
+      right="-2px"
+      borderRadius="full"
+      fontSize="10px"
+      minWidth="16px"
+      height="16px"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+    >
+      {testPacks.length}
+    </Badge>
+  );
+};
+
+// Test Pack Popup Component
+const TestPackPopup = ({ testPacks, onTestPackSelect, isOpen, onTogglePin, onMouseEnter, onMouseLeave, children }) => {
+  return (
+    <Popover isOpen={isOpen} placement="left-start" closeOnBlur={false}>
+      <PopoverTrigger>
+        {children}
+      </PopoverTrigger>
+      <Portal>
+        <PopoverContent 
+          width="200px" 
+          boxShadow="2xl" 
+          zIndex={99999}
+          bg="white"
+          border="2px solid"
+          borderColor="gray.300"
+          borderRadius="md"
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+        >
+          <PopoverHeader bg="gray.100" borderBottom="1px solid" borderColor="gray.300">
+            <HStack justify="space-between">
+              <Text fontSize="sm" fontWeight="bold" color="gray.800">Test Packs</Text>
+              <IconButton 
+                size="xs" 
+                icon={<AttachmentIcon />} 
+                onClick={onTogglePin}
+                variant="ghost"
+                aria-label="Pin popup"
+                color="gray.600"
+              />
+            </HStack>
+          </PopoverHeader>
+          <PopoverBody bg="white" p={3}>
+            <VStack spacing={2} align="stretch">
+              {testPacks.map(testPack => (
+                <Button
+                  key={testPack}
+                  size="sm"
+                  variant="solid"
+                  onClick={() => onTestPackSelect(testPack)}
+                  _hover={{ bg: "blue.100" }}
+                  fontSize="xs"
+                  fontWeight="medium"
+                  color="blue.700"
+                  bg="blue.50"
+                  border="1px solid"
+                  borderColor="blue.200"
+                >
+                  {testPack}
+                </Button>
+              ))}
+            </VStack>
+          </PopoverBody>
+        </PopoverContent>
+      </Portal>
+    </Popover>
+  );
+};
+
+// Test Pack Cell Component
+const TestPackCell = ({ testPacks, onTestPackSelect }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  
+  const handleMouseEnter = () => setIsHovered(true);
+  const handleMouseLeave = () => {
+    if (!isPinned) {
+      setTimeout(() => setIsHovered(false), 100);
+    }
+  };
+  
+  const cellContent = (
+    <Box 
+      position="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      cursor={testPacks.length > 1 ? "pointer" : "default"}
+      width="100%"
+      height="100%"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+    >
+      <Text fontSize="xs" textAlign="center" fontWeight="medium" color="blue.600">
+        {testPacks.length > 1 ? `has ${testPacks.length} test pack` : testPacks[0]}
+      </Text>
+      <TestPackIndicator testPacks={testPacks} />
+    </Box>
+  );
+  
+  if (testPacks.length > 1) {
+    return (
+      <TestPackPopup 
+        testPacks={testPacks}
+        isOpen={isHovered || isPinned}
+        onTestPackSelect={onTestPackSelect}
+        onTogglePin={() => setIsPinned(!isPinned)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {cellContent}
+      </TestPackPopup>
+    );
+  }
+  
+  return cellContent;
+};
+
 /**
  * ControlInstrumentsTable component - Virtualized table for control instruments data with multi-level headers
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset from control_inst_by_isos.csv
  */
 const ControlInstrumentsTable = React.memo(({ data }) => {
+  // State for test pack filtering
+  const [testPackFilter, setTestPackFilter] = useState(null);
   // Memoize processed data to avoid recalculations
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -55,6 +199,20 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }));
   }, [data]);
 
+  // Group data by isometric to consolidate duplicate rows with different test packs
+  const groupedData = useMemo(() => {
+    const grouped = {};
+    processedData.forEach(row => {
+      const key = `${row.isometric}-${row.subsystem}-${row.crono}`;
+      if (!grouped[key]) {
+        grouped[key] = { ...row, testPacks: [row.testPack] };
+      } else {
+        grouped[key].testPacks.push(row.testPack);
+      }
+    });
+    return Object.values(grouped);
+  }, [processedData]);
+
   // Define multi-level header structure with colors based on requirements
   const multiLevelHeaders = useMemo(() => {
     return [
@@ -67,42 +225,42 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
             title: 'PROGRESS WELD ISO', 
             colspan: 2, 
             startCol: 0,
-            color: '#789FAA' // #8DBCC7 + 15% dark
+            color: '#0082A9' // Base color
           },
           { 
             id: 'planning_delivery', 
             title: 'PLANNING DELIVERY TO ADISSEO', 
             colspan: 3, 
             startCol: 2,
-            color: '#C7C2B5' // #EAE4D5 + 15% dark
+            color: '#E5D6AC' // Base color
           },
           { 
             id: 'mc_realistic', 
             title: 'MECHANICAL COMPLETION (MC) REALISTIC DATE BY SUBSYSTEM', 
             colspan: 5, 
             startCol: 5,
-            color: '#909ABE' // #A9B5DF + 15% dark
+            color: '#6FC1B2' // Base color
           },
           { 
             id: 'progress_iso_test', 
             title: 'PROGRESS ISO & TEST PACK', 
             colspan: 3, 
             startCol: 10,
-            color: '#ABC4CC' // #C9E6F0 + 15% dark
+            color: '#8AB3DB' // Base color
           },
           { 
             id: 'progress_inst_iso', 
             title: 'PROGRESS INST & ISO', 
             colspan: 6, 
             startCol: 13,
-            color: '#B5A2C2' // #D4BEE4 + 15% dark
+            color: '#C7E4F8' // Base color
           },
           { 
             id: 'tracing_insulation', 
             title: 'TRACING & INSULATION', 
             colspan: 2, 
             startCol: 19,
-            color: '#CBD2D9' // #EEF7FF + 15% dark
+            color: '#F09071' // Base color
           }
         ]
       },
@@ -117,21 +275,21 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
             title: 'TEIGA-TMI', 
             colspan: 3, 
             startCol: 5,
-            color: '#98A3C9' // #A9B5DF + 10% dark
+            color: '#69B8AA' // #6FC1B2 -5% dark
           },
           { 
             id: 'siemsa_sub', 
             title: 'SIEMSA', 
             colspan: 1, 
             startCol: 8,
-            color: '#98A3C9' // #A9B5DF + 10% dark
+            color: '#69B8AA' // #6FC1B2 -5% dark
           },
           { 
             id: 'technip_sub', 
             title: 'TECHNIP', 
             colspan: 1, 
             startCol: 9,
-            color: '#98A3C9' // #A9B5DF + 10% dark
+            color: '#69B8AA' // #6FC1B2 -5% dark
           },
           { id: 'empty_3', title: '', colspan: 3, startCol: 10, color: 'transparent' },
           { 
@@ -139,21 +297,21 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
             title: 'INSTRUMENT DISTRIBUTION', 
             colspan: 3, 
             startCol: 13,
-            color: '#C0ABCE' // #D4BEE4 + 10% dark
+            color: '#BDD9EC' // #C7E4F8 -5% dark
           },
           { 
             id: 'instrument_installed', 
             title: 'INSTRUMENT INSTALLED', 
             colspan: 3, 
             startCol: 16,
-            color: '#C0ABCE' // #D4BEE4 + 10% dark
+            color: '#BDD9EC' // #C7E4F8 -5% dark
           },
           { 
             id: 'siemsa_tracing', 
             title: 'SIEMSA', 
             colspan: 2, 
             startCol: 19,
-            color: '#D6DEE6' // #EEF7FF + 10% dark
+            color: '#E6896B' // #F09071 -5% dark
           }
         ]
       }
@@ -163,27 +321,27 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
   // Define column colors based on requirements
   const columnColors = useMemo(() => {
     return {
-      isometric: '#8DBCC7',
-      weldingFwSw: '#8DBCC7',
-      subsystem: '#EAE4D5',
-      crono: '#EAE4D5',
-      priority: '#EAE4D5',
-      hito: '#A9B5DF',
-      reinstatement: '#A9B5DF',
-      insulation: '#A9B5DF',
-      siemsa: '#A9B5DF',
-      technip: '#A9B5DF',
-      testPack: '#C9E6F0',
-      deliveryProgress: '#C9E6F0',
-      readyToInstall: '#C9E6F0',
-      qtyInst: '#D4BEE4',
-      scopeTiegaTmi: '#D4BEE4',
-      scopeSiemsa: '#D4BEE4',
-      installedSiemsa: '#C9B5D6', // #D4BEE4 + 5% dark
-      installedTiegaTmi: '#C9B5D6', // #D4BEE4 + 5% dark
-      totalInstalled: '#C9B5D6', // #D4BEE4 + 5% dark
-      tracYesNot: '#EEF7FF',
-      tagCircuitoTraceado: '#EEF7FF'
+      isometric: '#007598', // #0082A9 -10% dark
+      weldingFwSw: '#007598', // #0082A9 -10% dark
+      subsystem: '#CEC19B', // #E5D6AC -10% dark
+      crono: '#CEC19B', // #E5D6AC -10% dark
+      priority: '#CEC19B', // #E5D6AC -10% dark
+      hito: '#63AEA1', // #6FC1B2 -10% dark
+      reinstatement: '#63AEA1', // #6FC1B2 -10% dark
+      insulation: '#63AEA1', // #6FC1B2 -10% dark
+      siemsa: '#63AEA1', // #6FC1B2 -10% dark
+      technip: '#63AEA1', // #6FC1B2 -10% dark
+      testPack: '#7CA2C5', // #8AB3DB -10% dark
+      deliveryProgress: '#7CA2C5', // #8AB3DB -10% dark
+      readyToInstall: '#7CA2C5', // #8AB3DB -10% dark
+      qtyInst: '#B3CDDF', // #C7E4F8 -10% dark
+      scopeTiegaTmi: '#B3CDDF', // #C7E4F8 -10% dark
+      scopeSiemsa: '#B3CDDF', // #C7E4F8 -10% dark
+      installedSiemsa: '#B3CDDF', // #C7E4F8 -10% dark
+      installedTiegaTmi: '#B3CDDF', // #C7E4F8 -10% dark
+      totalInstalled: '#B3CDDF', // #C7E4F8 -10% dark
+      tracYesNot: '#D98265', // #F09071 -10% dark
+      tagCircuitoTraceado: '#D98265' // #F09071 -10% dark
     };
   }, []);
 
@@ -344,11 +502,21 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
       maxSize: 180,
       size: 80,
       enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" fontWeight="medium" color="blue.600">
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue, row }) => {
+        const testPacks = row.original.testPacks || [getValue()];
+        
+        const handleTestPackFilter = (selectedTestPack) => {
+          setTestPackFilter(selectedTestPack);
+          // Apply filter logic here if needed
+        };
+        
+        return (
+          <TestPackCell 
+            testPacks={testPacks}
+            onTestPackSelect={handleTestPackFilter}
+          />
+        );
+      }
     }),
     columnHelper.accessor('deliveryProgress', {
       header: 'DELIVERY PROGRESS BY TEN',
@@ -476,9 +644,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     })
   ], []);
 
-  // Create table instance with memoization
+  // Create table instance with memoization using grouped data
   const table = useReactTable({
-    data: processedData,
+    data: groupedData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -527,8 +695,13 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
         </Heading>
         <HStack spacing={3}>
           <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
-            {processedData.length} INSTRUMENTS
+            {groupedData.length} ISOS
           </Badge>
+          {testPackFilter && (
+            <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
+              Filtered: Test Pack {testPackFilter}
+            </Badge>
+          )}
         </HStack>
       </HStack>
 
@@ -639,7 +812,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                   fontWeight="bold"
                   textTransform="uppercase"
                   letterSpacing="wide"
-                  color="gray.700"
+                  color="white"
                   py={2}
                   px={1}
                   borderRight="1px solid"
