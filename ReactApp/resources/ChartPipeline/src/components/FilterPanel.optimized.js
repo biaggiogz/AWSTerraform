@@ -30,6 +30,9 @@ const FilterPanel = ({
       if (filterMappings.area === 'TEST PACK') return 'Test Pack';
       return 'Design Area';
     }
+    if (filterMappings && filterMappings.isometric) {
+      return 'Isometric';
+    }
     return 'Design Area';
   };
   
@@ -41,7 +44,7 @@ const FilterPanel = ({
   };
 
   const areaValues = useMemo(() => {
-    const areaField = filterMappings?.area || 'Area';
+    const areaField = filterMappings?.area || filterMappings?.isometric || 'Area';
     return multiFilters[areaField] || [];
   }, [multiFilters, filterMappings]);
 
@@ -177,11 +180,12 @@ const FilterPanel = ({
           <Select
             isMulti
             name="area"
-            placeholder={filterMappings && filterMappings.area === 'TEST PACK' ? "Select Test Packs" : "Select Areas"}
+            placeholder={filterMappings && filterMappings.area === 'TEST PACK' ? "Select Test Packs" : filterMappings && filterMappings.isometric ? "Select Isometrics" : "Select Areas"}
             value={areaValues.map(value => ({ label: value, value }))}
             onChange={(options) => {
               const values = options ? options.map(option => option.value) : [];
-              onFilterChange('area', values);
+              const filterKey = filterMappings?.area ? 'area' : 'isometric';
+              onFilterChange(filterKey, values);
             }}
             options={areaOptions}
             styles={customStyles}

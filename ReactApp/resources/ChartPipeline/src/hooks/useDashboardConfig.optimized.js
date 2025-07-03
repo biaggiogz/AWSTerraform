@@ -25,7 +25,7 @@ const useDashboardConfig = (activeDashboard) => {
     'INSTRUMENTS REPORT': {
       datasetPath: '/data/control_inst_by_isos.csv',
       filterMappings: {
-        area: 'ISOMETRIC',
+        isometric: 'ISOMETRIC',
         subsystem: 'SUBSYSTEM'
       }
     },

@@ -85,7 +85,7 @@ function App() {
           {/* Filter panel - left side */}
           <GridItem>
             <FilterPanel
-              areas={filterOptions[filterMappings.area] || []}
+              areas={filterOptions[filterMappings.area || filterMappings.isometric] || []}
               subsystems={filterOptions[filterMappings.subsystem] || []}
               multiFilters={multiFilters}
               onFilterChange={handleFilterChange}

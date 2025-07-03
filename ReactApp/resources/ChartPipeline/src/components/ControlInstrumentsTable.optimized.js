@@ -85,24 +85,26 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     ];
   }, []);
 
-  // Define table columns with all required columns from CSV
+  // Define table columns with optimized sizing for viewport fit
   const columns = useMemo(() => [
     columnHelper.accessor('isometric', {
       header: 'ISOMETRIC',
-      minSize: 200,
-      maxSize: 200,
-      size: 200,
+      minSize: 100,
+      maxSize: 400,
+      size: 180,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" fontFamily="mono" textAlign="left" noOfLines={2}>
+        <Text fontSize="xs" fontFamily="mono" textAlign="left" noOfLines={2}>
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('weldingFwSw', {
       header: 'WELDING FW+SW',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 80,
+      maxSize: 200,
+      size: 100,
+      enableResizing: true,
       cell: ({ getValue }) => {
         const value = getValue();
         const percentage = value * 100;
@@ -117,31 +119,34 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('subsystem', {
       header: 'SUBSYSTEM',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
+      minSize: 60,
+      maxSize: 200,
+      size: 90,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" fontWeight="medium" textAlign="center">
+        <Text fontSize="xs" fontWeight="medium" textAlign="center">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('crono', {
       header: 'CRONO',
-      minSize: 70,
-      maxSize: 70,
-      size: 70,
+      minSize: 50,
+      maxSize: 150,
+      size: 60,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center" fontWeight="medium">
+        <Text fontSize="xs" textAlign="center" fontWeight="medium">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('priority', {
       header: 'PRIORITY',
-      minSize: 80,
-      maxSize: 80,
-      size: 80,
+      minSize: 60,
+      maxSize: 150,
+      size: 70,
+      enableResizing: true,
       cell: ({ getValue }) => {
         const value = getValue();
         const colorScheme = value <= 3 ? 'red' : value <= 5 ? 'yellow' : 'green';
@@ -155,163 +160,178 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('hito', {
       header: 'HITO',
-      minSize: 80,
-      maxSize: 80,
-      size: 80,
+      minSize: 60,
+      maxSize: 150,
+      size: 70,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center" fontWeight="medium">
+        <Text fontSize="xs" textAlign="center" fontWeight="medium">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('reinstatement', {
       header: 'REINSTATEMENT',
-      minSize: 110,
-      maxSize: 110,
-      size: 110,
+      minSize: 80,
+      maxSize: 200,
+      size: 90,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center">
+        <Text fontSize="xs" textAlign="center">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('insulation', {
       header: 'INSULATION',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
+      minSize: 70,
+      maxSize: 180,
+      size: 80,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center">
+        <Text fontSize="xs" textAlign="center">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('siemsa', {
       header: 'SIEMSA',
-      minSize: 80,
-      maxSize: 80,
-      size: 80,
+      minSize: 60,
+      maxSize: 150,
+      size: 70,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center">
+        <Text fontSize="xs" textAlign="center">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('technip', {
       header: 'TECHNIP',
-      minSize: 80,
-      maxSize: 80,
-      size: 80,
+      minSize: 60,
+      maxSize: 150,
+      size: 70,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center">
+        <Text fontSize="xs" textAlign="center">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('testPack', {
       header: 'TEST PACK',
-      minSize: 90,
-      maxSize: 90,
-      size: 90,
+      minSize: 70,
+      maxSize: 180,
+      size: 80,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center" fontWeight="medium" color="blue.600">
+        <Text fontSize="xs" textAlign="center" fontWeight="medium" color="blue.600">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('deliveryProgress', {
       header: 'DELIVERY PROGRESS BY TEN',
-      minSize: 140,
-      maxSize: 140,
-      size: 140,
+      minSize: 100,
+      maxSize: 250,
+      size: 120,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center">
+        <Text fontSize="xs" textAlign="center">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('readyToInstall', {
       header: 'READY TO INSTALL INST (SIEMSA)',
-      minSize: 150,
-      maxSize: 150,
-      size: 150,
+      minSize: 110,
+      maxSize: 300,
+      size: 130,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center">
+        <Text fontSize="xs" textAlign="center">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('qtyInst', {
       header: 'QTY INST',
-      minSize: 80,
-      maxSize: 80,
-      size: 80,
+      minSize: 60,
+      maxSize: 150,
+      size: 70,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center" fontWeight="medium">
+        <Text fontSize="xs" textAlign="center" fontWeight="medium">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('scopeTiegaTmi', {
       header: 'SCOPE BY TIEGA-TMI',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 80,
+      maxSize: 200,
+      size: 100,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center" fontWeight="medium">
+        <Text fontSize="xs" textAlign="center" fontWeight="medium">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('scopeSiemsa', {
       header: 'SCOPE BY SIEMSA',
-      minSize: 110,
-      maxSize: 110,
-      size: 110,
+      minSize: 80,
+      maxSize: 200,
+      size: 100,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center" fontWeight="medium">
+        <Text fontSize="xs" textAlign="center" fontWeight="medium">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('installedSiemsa', {
       header: 'INSTALLED (SIEMSA)',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 80,
+      maxSize: 200,
+      size: 100,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center">
+        <Text fontSize="xs" textAlign="center">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('installedTiegaTmi', {
       header: 'INSTALLED (TEIGA-TMI)',
-      minSize: 130,
-      maxSize: 130,
-      size: 130,
+      minSize: 90,
+      maxSize: 220,
+      size: 110,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center" fontWeight="medium">
+        <Text fontSize="xs" textAlign="center" fontWeight="medium">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('totalInstalled', {
       header: 'TOTAL INSTALLED',
-      minSize: 110,
-      maxSize: 110,
-      size: 110,
+      minSize: 80,
+      maxSize: 200,
+      size: 100,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center" fontWeight="bold" color="green.600">
+        <Text fontSize="xs" textAlign="center" fontWeight="bold" color="green.600">
           {getValue()}
         </Text>
       )
     }),
     columnHelper.accessor('tracYesNot', {
       header: 'TRAC (YES & NOT)',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
+      minSize: 80,
+      maxSize: 180,
+      size: 90,
+      enableResizing: true,
       cell: ({ getValue }) => {
         const value = getValue();
         const colorScheme = value === 'YES' ? 'green' : 'red';
@@ -324,11 +344,12 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('tagCircuitoTraceado', {
       header: 'TAG CIRCUITO TRACEADO',
-      minSize: 140,
-      maxSize: 140,
-      size: 140,
+      minSize: 100,
+      maxSize: 250,
+      size: 120,
+      enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="sm" fontFamily="mono" textAlign="center">
+        <Text fontSize="xs" fontFamily="mono" textAlign="center">
           {getValue()}
         </Text>
       )
@@ -342,7 +363,14 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    enableColumnResizing: true,
+    columnResizeMode: 'onChange',
     debugTable: false,
+    defaultColumn: {
+      minSize: 60,
+      size: 100,
+      maxSize: 400,
+    },
   });
 
   // Get table rows
@@ -393,7 +421,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
         boxShadow="sm"
         width="100%"
         height="auto"
-        maxWidth="100vw"
+        maxWidth="100%"
         position="relative"
       >
         {/* Multi-Level Table Header */}
@@ -407,8 +435,8 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
           {/* Level 1 Headers */}
           <Box display="flex" width="100%" minWidth="fit-content">
             {multiLevelHeaders[0].headers.map(header => {
-              const totalWidth = columns.slice(header.startCol, header.startCol + header.colspan)
-                .reduce((sum, col) => sum + col.size, 0);
+              const totalWidth = headerGroups[0].headers.slice(header.startCol, header.startCol + header.colspan)
+                .reduce((sum, col) => sum + col.getSize(), 0);
               return (
                 <Box
                   key={header.id}
@@ -429,7 +457,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                   alignItems="center"
                   justifyContent="center"
                   bg="gray.100"
-                  minHeight="40px"
+                  minHeight="35px"
                 >
                   <Text fontSize="xs" fontWeight="bold" textAlign="center" noOfLines={2}>
                     {header.title}
@@ -442,8 +470,8 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
           {/* Level 2 Headers */}
           <Box display="flex" width="100%" minWidth="fit-content">
             {multiLevelHeaders[1].headers.map(header => {
-              const totalWidth = columns.slice(header.startCol, header.startCol + header.colspan)
-                .reduce((sum, col) => sum + col.size, 0);
+              const totalWidth = headerGroups[0].headers.slice(header.startCol, header.startCol + header.colspan)
+                .reduce((sum, col) => sum + col.getSize(), 0);
               return (
                 <Box
                   key={header.id}
@@ -464,7 +492,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                   alignItems="center"
                   justifyContent="center"
                   bg="gray.75"
-                  minHeight="40px"
+                  minHeight="35px"
                 >
                   <Text fontSize="xs" fontWeight="semibold" textAlign="center" noOfLines={2}>
                     {header.title}
@@ -498,7 +526,8 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                 cursor={header.column.getCanSort() ? 'pointer' : 'default'}
                 onClick={header.column.getToggleSortingHandler()}
                 _hover={header.column.getCanSort() ? { bg: 'gray.100' } : {}}
-                minHeight="50px"
+                minHeight="45px"
+                position="relative"
               >
                 <HStack spacing={1}>
                   <Text fontSize="xs" noOfLines={3} textAlign="center">
@@ -508,6 +537,20 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                     <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
                   )}
                 </HStack>
+                {header.column.getCanResize() && (
+                  <Box
+                    position="absolute"
+                    right="0"
+                    top="0"
+                    height="100%"
+                    width="4px"
+                    cursor="col-resize"
+                    bg="transparent"
+                    _hover={{ bg: 'blue.200' }}
+                    onMouseDown={header.getResizeHandler()}
+                    onTouchStart={header.getResizeHandler()}
+                  />
+                )}
               </Box>
             ))}
           </Box>
@@ -518,7 +561,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
           ref={parentRef}
           height="500px"
           overflowY="auto"
-          overflowX="auto"
+          overflowX="hidden"
           maxWidth="100%"
           onScroll={(e) => {
             if (headerRef.current) {

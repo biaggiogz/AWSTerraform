@@ -52,6 +52,11 @@ const useDataLoader = (csvPath, filterMappings = {}) => {
     return getUniqueValues(processedData, areaColumn);
   }, [processedData, filterMappings.area]);
 
+  const isometric = useMemo(() => {
+    const areaColumn = filterMappings.isometric || 'ISOMETRIC';
+    return getUniqueValues(processedData, areaColumn);
+  }, [processedData, filterMappings.isometric]);
+
   const subsystems = useMemo(() => {
     const subsystemColumn = filterMappings.subsystem || 'SUBSYSTEM';
     return getUniqueValues(processedData, subsystemColumn);
