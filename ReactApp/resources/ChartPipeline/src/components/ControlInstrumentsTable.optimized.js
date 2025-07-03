@@ -4,7 +4,8 @@ import {
   Text,
   Badge,
   Heading,
-  HStack
+  HStack,
+  Progress
 } from '@chakra-ui/react';
 import {
   useReactTable,
@@ -101,19 +102,37 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('weldingFwSw', {
       header: 'WELDING FW+SW',
-      minSize: 80,
+      minSize: 120,
       maxSize: 200,
-      size: 100,
+      size: 140,
       enableResizing: true,
       cell: ({ getValue }) => {
         const value = getValue();
         const percentage = value * 100;
-        const colorScheme = percentage === 100 ? 'green' : percentage >= 50 ? 'yellow' : 'red';
         
         return (
-          <Badge colorScheme={colorScheme} fontSize="xs" textAlign="center">
-            {percentage.toFixed(0)}%
-          </Badge>
+          <Box position="relative" width="100px" margin="0 auto">
+            <Progress 
+              value={Math.round(percentage)} 
+              size="md" 
+              width="100px"
+              borderRadius="md"
+              backgroundColor="#0E2148"
+              colorScheme="teal"
+            />
+            <Text 
+              position="absolute" 
+              top="50%" 
+              left="50%" 
+              transform="translate(-50%, -50%)" 
+              fontSize="xs" 
+              fontWeight="bold" 
+              color="white"
+              textShadow="1px 1px 2px rgba(0,0,0,0.8)"
+            >
+              {Math.round(percentage)}%
+            </Text>
+          </Box>
         );
       }
     }),
