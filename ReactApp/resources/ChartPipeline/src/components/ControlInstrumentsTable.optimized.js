@@ -71,6 +71,7 @@ const TestPackPopup = ({ testPacks, onTestPackSelect, isOpen, onTogglePin, onMou
           borderRadius="md"
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
+          ml="-8px"
         >
           <PopoverHeader bg="gray.100" borderBottom="1px solid" borderColor="gray.300">
             <HStack justify="space-between">
@@ -116,11 +117,22 @@ const TestPackPopup = ({ testPacks, onTestPackSelect, isOpen, onTogglePin, onMou
 const TestPackCell = ({ testPacks, onTestPackSelect }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  const [leaveTimeout, setLeaveTimeout] = useState(null);
   
-  const handleMouseEnter = () => setIsHovered(true);
+  const handleMouseEnter = () => {
+    if (leaveTimeout) {
+      clearTimeout(leaveTimeout);
+      setLeaveTimeout(null);
+    }
+    setIsHovered(true);
+  };
+  
   const handleMouseLeave = () => {
     if (!isPinned) {
-      setTimeout(() => setIsHovered(false), 100);
+      const timeout = setTimeout(() => {
+        setIsHovered(false);
+      }, 100);
+      setLeaveTimeout(timeout);
     }
   };
   
