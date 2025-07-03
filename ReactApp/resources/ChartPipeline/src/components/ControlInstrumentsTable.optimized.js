@@ -33,7 +33,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
       id: index,
       isometric: row.ISOMETRIC || '',
       weldingFwSw: parseFloat(row['TP 100% FW+SW']) || 0,
-      subsystem: row.SUBSYSTEM || row.SUSSYTEM || '',
+      subsystem: row.SUSSYTEM || row.SUBSYSTEM || '', // Note: CSV uses SUSSYTEM
       crono: parseInt(row.CRONO) || 0,
       priority: parseInt(row.PRIORITY) || 0,
       hito: row.HITO || '',
@@ -55,35 +55,136 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }));
   }, [data]);
 
-  // Define multi-level header structure based on ASCII diagram
+  // Define multi-level header structure with colors based on requirements
   const multiLevelHeaders = useMemo(() => {
     return [
-      // Level 1 - Main categories (4 groups)
+      // Level 1 - Main categories (6 groups)
       {
         level: 1,
         headers: [
-          { id: 'progress_weld_iso', title: 'PROGRESS WELD ISO', colspan: 2, startCol: 0 },
-          { id: 'mc_realistic', title: 'MECHANICAL COMPLETION (MC) REALISTIC DATE BY SUBSYSTEM', colspan: 8, startCol: 2 },
-          { id: 'progress_inst_iso', title: 'PROGRESS INST & ISO', colspan: 9, startCol: 10 },
-          { id: 'tracing_insulation', title: 'TRACING & INSULATION', colspan: 2, startCol: 19 }
+          { 
+            id: 'progress_weld_iso', 
+            title: 'PROGRESS WELD ISO', 
+            colspan: 2, 
+            startCol: 0,
+            color: '#789FAA' // #8DBCC7 + 15% dark
+          },
+          { 
+            id: 'planning_delivery', 
+            title: 'PLANNING DELIVERY TO ADISSEO', 
+            colspan: 3, 
+            startCol: 2,
+            color: '#C7C2B5' // #EAE4D5 + 15% dark
+          },
+          { 
+            id: 'mc_realistic', 
+            title: 'MECHANICAL COMPLETION (MC) REALISTIC DATE BY SUBSYSTEM', 
+            colspan: 5, 
+            startCol: 5,
+            color: '#909ABE' // #A9B5DF + 15% dark
+          },
+          { 
+            id: 'progress_iso_test', 
+            title: 'PROGRESS ISO & TEST PACK', 
+            colspan: 3, 
+            startCol: 10,
+            color: '#ABC4CC' // #C9E6F0 + 15% dark
+          },
+          { 
+            id: 'progress_inst_iso', 
+            title: 'PROGRESS INST & ISO', 
+            colspan: 6, 
+            startCol: 13,
+            color: '#B5A2C2' // #D4BEE4 + 15% dark
+          },
+          { 
+            id: 'tracing_insulation', 
+            title: 'TRACING & INSULATION', 
+            colspan: 2, 
+            startCol: 19,
+            color: '#CBD2D9' // #EEF7FF + 15% dark
+          }
         ]
       },
       // Level 2 - Sub categories
       {
         level: 2,
         headers: [
-          { id: 'empty_1', title: '', colspan: 2, startCol: 0 }, // No sub-groups for PROGRESS WELD ISO
-          { id: 'planning_delivery', title: 'PLANNING DELIVERY TO ADISSEO', colspan: 3, startCol: 2 },
-          { id: 'teiga_tmi', title: 'TEIGA-TMI', colspan: 3, startCol: 5 },
-          { id: 'siemsa_sub', title: 'SIEMSA', colspan: 1, startCol: 8 },
-          { id: 'technip_sub', title: 'TECHNIP', colspan: 1, startCol: 9 },
-          { id: 'progress_iso_test', title: 'PROGRESS ISO & TEST PACK', colspan: 3, startCol: 10 },
-          { id: 'instrument_distribution', title: 'INSTRUMENT DISTRIBUTION', colspan: 3, startCol: 13 },
-          { id: 'instrument_installed', title: 'INSTRUMENT INSTALLED', colspan: 3, startCol: 16 },
-          { id: 'siemsa_tracing', title: 'SIEMSA', colspan: 2, startCol: 19 }
+          { id: 'empty_1', title: '', colspan: 2, startCol: 0, color: 'transparent' },
+          { id: 'empty_2', title: '', colspan: 3, startCol: 2, color: 'transparent' },
+          { 
+            id: 'teiga_tmi', 
+            title: 'TEIGA-TMI', 
+            colspan: 3, 
+            startCol: 5,
+            color: '#98A3C9' // #A9B5DF + 10% dark
+          },
+          { 
+            id: 'siemsa_sub', 
+            title: 'SIEMSA', 
+            colspan: 1, 
+            startCol: 8,
+            color: '#98A3C9' // #A9B5DF + 10% dark
+          },
+          { 
+            id: 'technip_sub', 
+            title: 'TECHNIP', 
+            colspan: 1, 
+            startCol: 9,
+            color: '#98A3C9' // #A9B5DF + 10% dark
+          },
+          { id: 'empty_3', title: '', colspan: 3, startCol: 10, color: 'transparent' },
+          { 
+            id: 'instrument_distribution', 
+            title: 'INSTRUMENT DISTRIBUTION', 
+            colspan: 3, 
+            startCol: 13,
+            color: '#C0ABCE' // #D4BEE4 + 10% dark
+          },
+          { 
+            id: 'instrument_installed', 
+            title: 'INSTRUMENT INSTALLED', 
+            colspan: 3, 
+            startCol: 16,
+            color: '#C0ABCE' // #D4BEE4 + 10% dark
+          },
+          { 
+            id: 'siemsa_tracing', 
+            title: 'SIEMSA', 
+            colspan: 2, 
+            startCol: 19,
+            color: '#D6DEE6' // #EEF7FF + 10% dark
+          }
         ]
       }
     ];
+  }, []);
+
+  // Define column colors based on requirements
+  const columnColors = useMemo(() => {
+    return {
+      isometric: '#8DBCC7',
+      weldingFwSw: '#8DBCC7',
+      subsystem: '#EAE4D5',
+      crono: '#EAE4D5',
+      priority: '#EAE4D5',
+      hito: '#A9B5DF',
+      reinstatement: '#A9B5DF',
+      insulation: '#A9B5DF',
+      siemsa: '#A9B5DF',
+      technip: '#A9B5DF',
+      testPack: '#C9E6F0',
+      deliveryProgress: '#C9E6F0',
+      readyToInstall: '#C9E6F0',
+      qtyInst: '#D4BEE4',
+      scopeTiegaTmi: '#D4BEE4',
+      scopeSiemsa: '#D4BEE4',
+      installedSiemsa: '#C9B5D6', // #D4BEE4 + 5% dark
+      installedTiegaTmi: '#C9B5D6', // #D4BEE4 + 5% dark
+      totalInstalled: '#C9B5D6', // #D4BEE4 + 5% dark
+      tracYesNot: '#EEF7FF',
+      tagCircuitoTraceado: '#EEF7FF'
+    };
   }, []);
 
   // Define table columns with optimized sizing for viewport fit
@@ -466,7 +567,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                   fontWeight="bold"
                   textTransform="uppercase"
                   letterSpacing="wide"
-                  color="gray.700"
+                  color="white"
                   py={2}
                   px={1}
                   borderRight="1px solid"
@@ -475,7 +576,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  bg="gray.100"
+                  bg={header.color}
                   minHeight="35px"
                 >
                   <Text fontSize="xs" fontWeight="bold" textAlign="center" noOfLines={2}>
@@ -501,7 +602,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                   fontWeight="semibold"
                   textTransform="uppercase"
                   letterSpacing="wide"
-                  color="gray.600"
+                  color={header.color === 'transparent' ? 'transparent' : 'white'}
                   py={2}
                   px={1}
                   borderRight="1px solid"
@@ -510,7 +611,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  bg="gray.75"
+                  bg={header.color}
                   minHeight="35px"
                 >
                   <Text fontSize="xs" fontWeight="semibold" textAlign="center" noOfLines={2}>
@@ -523,55 +624,61 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
 
           {/* Level 3 Headers - Column Headers */}
           <Box display="flex" width="100%" minWidth="fit-content">
-            {headerGroups[0].headers.map((header, index) => (
-              <Box
-                key={header.id}
-                width={`${header.getSize()}px`}
-                minWidth={`${header.getSize()}px`}
-                maxWidth={`${header.getSize()}px`}
-                textAlign="center"
-                fontSize="xs"
-                fontWeight="bold"
-                textTransform="uppercase"
-                letterSpacing="wide"
-                color="gray.600"
-                py={2}
-                px={1}
-                borderRight="1px solid"
-                borderColor="gray.100"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                cursor={header.column.getCanSort() ? 'pointer' : 'default'}
-                onClick={header.column.getToggleSortingHandler()}
-                _hover={header.column.getCanSort() ? { bg: 'gray.100' } : {}}
-                minHeight="45px"
-                position="relative"
-              >
-                <HStack spacing={1}>
-                  <Text fontSize="xs" noOfLines={3} textAlign="center">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </Text>
-                  {header.column.getIsSorted() && (
-                    <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
+            {headerGroups[0].headers.map((header, index) => {
+              const columnId = header.column.id;
+              const bgColor = columnColors[columnId] || '#F7FAFC';
+              
+              return (
+                <Box
+                  key={header.id}
+                  width={`${header.getSize()}px`}
+                  minWidth={`${header.getSize()}px`}
+                  maxWidth={`${header.getSize()}px`}
+                  textAlign="center"
+                  fontSize="xs"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                  letterSpacing="wide"
+                  color="gray.700"
+                  py={2}
+                  px={1}
+                  borderRight="1px solid"
+                  borderColor="gray.100"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  cursor={header.column.getCanSort() ? 'pointer' : 'default'}
+                  onClick={header.column.getToggleSortingHandler()}
+                  _hover={header.column.getCanSort() ? { opacity: 0.8 } : {}}
+                  minHeight="45px"
+                  position="relative"
+                  bg={bgColor}
+                >
+                  <HStack spacing={1}>
+                    <Text fontSize="xs" noOfLines={3} textAlign="center">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </Text>
+                    {header.column.getIsSorted() && (
+                      <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
+                    )}
+                  </HStack>
+                  {header.column.getCanResize() && (
+                    <Box
+                      position="absolute"
+                      right="0"
+                      top="0"
+                      height="100%"
+                      width="4px"
+                      cursor="col-resize"
+                      bg="transparent"
+                      _hover={{ bg: 'blue.200' }}
+                      onMouseDown={header.getResizeHandler()}
+                      onTouchStart={header.getResizeHandler()}
+                    />
                   )}
-                </HStack>
-                {header.column.getCanResize() && (
-                  <Box
-                    position="absolute"
-                    right="0"
-                    top="0"
-                    height="100%"
-                    width="4px"
-                    cursor="col-resize"
-                    bg="transparent"
-                    _hover={{ bg: 'blue.200' }}
-                    onMouseDown={header.getResizeHandler()}
-                    onTouchStart={header.getResizeHandler()}
-                  />
-                )}
-              </Box>
-            ))}
+                </Box>
+              );
+            })}
           </Box>
         </Box>
 

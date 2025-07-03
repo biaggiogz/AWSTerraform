@@ -26,7 +26,7 @@ const useDashboardConfig = (activeDashboard) => {
       datasetPath: '/data/control_inst_by_isos.csv',
       filterMappings: {
         isometric: 'ISOMETRIC',
-        subsystem: 'SUBSYSTEM'
+        subsystem: 'SUSSYTEM' // Note: CSV uses SUSSYTEM instead of SUBSYSTEM
       }
     },
     'TEST PACK PROGRESS': {
