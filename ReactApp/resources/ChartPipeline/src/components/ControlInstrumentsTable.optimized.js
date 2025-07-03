@@ -19,7 +19,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 const columnHelper = createColumnHelper();
 
 /**
- * ControlInstrumentsTable component - Virtualized table for control instruments data
+ * ControlInstrumentsTable component - Virtualized table for control instruments data with multi-level headers
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset from control_inst_by_isos.csv
  */
@@ -32,7 +32,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
       id: index,
       isometric: row.ISOMETRIC || '',
       weldingFwSw: parseFloat(row['TP 100% FW+SW']) || 0,
-      subsystem: row.SUSSYTEM || row.SUBSYSTEM || '',
+      subsystem: row.SUBSYSTEM || row.SUSSYTEM || '',
       crono: parseInt(row.CRONO) || 0,
       priority: parseInt(row.PRIORITY) || 0,
       hito: row.HITO || '',
@@ -54,13 +54,44 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }));
   }, [data]);
 
+  // Define multi-level header structure based on ASCII diagram
+  const multiLevelHeaders = useMemo(() => {
+    return [
+      // Level 1 - Main categories (4 groups)
+      {
+        level: 1,
+        headers: [
+          { id: 'progress_weld_iso', title: 'PROGRESS WELD ISO', colspan: 2, startCol: 0 },
+          { id: 'mc_realistic', title: 'MECHANICAL COMPLETION (MC) REALISTIC DATE BY SUBSYSTEM', colspan: 8, startCol: 2 },
+          { id: 'progress_inst_iso', title: 'PROGRESS INST & ISO', colspan: 9, startCol: 10 },
+          { id: 'tracing_insulation', title: 'TRACING & INSULATION', colspan: 2, startCol: 19 }
+        ]
+      },
+      // Level 2 - Sub categories
+      {
+        level: 2,
+        headers: [
+          { id: 'empty_1', title: '', colspan: 2, startCol: 0 }, // No sub-groups for PROGRESS WELD ISO
+          { id: 'planning_delivery', title: 'PLANNING DELIVERY TO ADISSEO', colspan: 3, startCol: 2 },
+          { id: 'teiga_tmi', title: 'TEIGA-TMI', colspan: 3, startCol: 5 },
+          { id: 'siemsa_sub', title: 'SIEMSA', colspan: 1, startCol: 8 },
+          { id: 'technip_sub', title: 'TECHNIP', colspan: 1, startCol: 9 },
+          { id: 'progress_iso_test', title: 'PROGRESS ISO & TEST PACK', colspan: 3, startCol: 10 },
+          { id: 'instrument_distribution', title: 'INSTRUMENT DISTRIBUTION', colspan: 3, startCol: 13 },
+          { id: 'instrument_installed', title: 'INSTRUMENT INSTALLED', colspan: 3, startCol: 16 },
+          { id: 'siemsa_tracing', title: 'SIEMSA', colspan: 2, startCol: 19 }
+        ]
+      }
+    ];
+  }, []);
+
   // Define table columns with all required columns from CSV
   const columns = useMemo(() => [
     columnHelper.accessor('isometric', {
       header: 'ISOMETRIC',
-      minSize: 250,
-      maxSize: 250,
-      size: 250,
+      minSize: 200,
+      maxSize: 200,
+      size: 200,
       cell: ({ getValue }) => (
         <Text fontSize="sm" fontFamily="mono" textAlign="left" noOfLines={2}>
           {getValue()}
@@ -86,9 +117,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('subsystem', {
       header: 'SUBSYSTEM',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 100,
+      maxSize: 100,
+      size: 100,
       cell: ({ getValue }) => (
         <Text fontSize="sm" fontWeight="medium" textAlign="center">
           {getValue()}
@@ -97,9 +128,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('crono', {
       header: 'CRONO',
-      minSize: 80,
-      maxSize: 80,
-      size: 80,
+      minSize: 70,
+      maxSize: 70,
+      size: 70,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center" fontWeight="medium">
           {getValue()}
@@ -124,9 +155,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('hito', {
       header: 'HITO',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
+      minSize: 80,
+      maxSize: 80,
+      size: 80,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center" fontWeight="medium">
           {getValue()}
@@ -135,9 +166,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('reinstatement', {
       header: 'REINSTATEMENT',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 110,
+      maxSize: 110,
+      size: 110,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center">
           {getValue()}
@@ -146,9 +177,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('insulation', {
       header: 'INSULATION',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 100,
+      maxSize: 100,
+      size: 100,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center">
           {getValue()}
@@ -157,9 +188,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('siemsa', {
       header: 'SIEMSA',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 80,
+      maxSize: 80,
+      size: 80,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center">
           {getValue()}
@@ -168,9 +199,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('technip', {
       header: 'TECHNIP',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 80,
+      maxSize: 80,
+      size: 80,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center">
           {getValue()}
@@ -179,9 +210,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('testPack', {
       header: 'TEST PACK',
-      minSize: 100,
-      maxSize: 100,
-      size: 100,
+      minSize: 90,
+      maxSize: 90,
+      size: 90,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center" fontWeight="medium" color="blue.600">
           {getValue()}
@@ -190,9 +221,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('deliveryProgress', {
       header: 'DELIVERY PROGRESS BY TEN',
-      minSize: 180,
-      maxSize: 180,
-      size: 180,
+      minSize: 140,
+      maxSize: 140,
+      size: 140,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center">
           {getValue()}
@@ -201,9 +232,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('readyToInstall', {
       header: 'READY TO INSTALL INST (SIEMSA)',
-      minSize: 200,
-      maxSize: 200,
-      size: 200,
+      minSize: 150,
+      maxSize: 150,
+      size: 150,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center">
           {getValue()}
@@ -223,9 +254,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('scopeTiegaTmi', {
       header: 'SCOPE BY TIEGA-TMI',
-      minSize: 150,
-      maxSize: 150,
-      size: 150,
+      minSize: 120,
+      maxSize: 120,
+      size: 120,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center" fontWeight="medium">
           {getValue()}
@@ -234,6 +265,28 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('scopeSiemsa', {
       header: 'SCOPE BY SIEMSA',
+      minSize: 110,
+      maxSize: 110,
+      size: 110,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" textAlign="center" fontWeight="medium">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('installedSiemsa', {
+      header: 'INSTALLED (SIEMSA)',
+      minSize: 120,
+      maxSize: 120,
+      size: 120,
+      cell: ({ getValue }) => (
+        <Text fontSize="sm" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('installedTiegaTmi', {
+      header: 'INSTALLED (TEIGA-TMI)',
       minSize: 130,
       maxSize: 130,
       size: 130,
@@ -243,33 +296,11 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
         </Text>
       )
     }),
-    columnHelper.accessor('installedSiemsa', {
-      header: 'INSTALLED (SIEMSA)',
-      minSize: 140,
-      maxSize: 140,
-      size: 140,
-      cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center">
-          {getValue()}
-        </Text>
-      )
-    }),
-    columnHelper.accessor('installedTiegaTmi', {
-      header: 'INSTALLED (TEIGA-TMI)',
-      minSize: 160,
-      maxSize: 160,
-      size: 160,
-      cell: ({ getValue }) => (
-        <Text fontSize="sm" textAlign="center" fontWeight="medium">
-          {getValue()}
-        </Text>
-      )
-    }),
     columnHelper.accessor('totalInstalled', {
       header: 'TOTAL INSTALLED',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 110,
+      maxSize: 110,
+      size: 110,
       cell: ({ getValue }) => (
         <Text fontSize="sm" textAlign="center" fontWeight="bold" color="green.600">
           {getValue()}
@@ -278,9 +309,9 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
     }),
     columnHelper.accessor('tracYesNot', {
       header: 'TRAC (YES & NOT)',
-      minSize: 120,
-      maxSize: 120,
-      size: 120,
+      minSize: 100,
+      maxSize: 100,
+      size: 100,
       cell: ({ getValue }) => {
         const value = getValue();
         const colorScheme = value === 'YES' ? 'green' : 'red';
@@ -292,10 +323,10 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
       }
     }),
     columnHelper.accessor('tagCircuitoTraceado', {
-      header: 'Tag Circuito Traceado',
-      minSize: 160,
-      maxSize: 160,
-      size: 160,
+      header: 'TAG CIRCUITO TRACEADO',
+      minSize: 140,
+      maxSize: 140,
+      size: 140,
       cell: ({ getValue }) => (
         <Text fontSize="sm" fontFamily="mono" textAlign="center">
           {getValue()}
@@ -348,7 +379,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
         </Heading>
         <HStack spacing={3}>
           <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
-            {processedData.length} ITEMS
+            {processedData.length} INSTRUMENTS
           </Badge>
         </HStack>
       </HStack>
@@ -362,48 +393,124 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
         boxShadow="sm"
         width="100%"
         height="auto"
-        maxWidth="100%"
+        maxWidth="100vw"
         position="relative"
       >
-        {/* Table Header */}
+        {/* Multi-Level Table Header */}
         <Box
-          display="flex"
-          width="100%"
+          ref={headerRef}
+          overflowX="auto"
           borderBottom="1px solid"
           borderColor="gray.200"
           bg="gray.50"
-          ref={headerRef}
         >
-          {headerGroups[0].headers.map(header => (
-            <Box
-              key={header.id}
-              width={`${header.getSize()}px`}
-              minWidth={`${header.getSize()}px`}
-              maxWidth={`${header.getSize()}px`}
-              textAlign="center"
-              fontSize="xs"
-              fontWeight="bold"
-              textTransform="uppercase"
-              letterSpacing="wide"
-              color="gray.600"
-              py={2}
-              px={2}
-              borderRight="1px solid"
-              borderColor="gray.100"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              cursor={header.column.getCanSort() ? 'pointer' : 'default'}
-              onClick={header.column.getToggleSortingHandler()}
-            >
-              <HStack spacing={1}>
-                <Text>{flexRender(header.column.columnDef.header, header.getContext())}</Text>
-                {header.column.getIsSorted() && (
-                  <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
-                )}
-              </HStack>
-            </Box>
-          ))}
+          {/* Level 1 Headers */}
+          <Box display="flex" width="100%" minWidth="fit-content">
+            {multiLevelHeaders[0].headers.map(header => {
+              const totalWidth = columns.slice(header.startCol, header.startCol + header.colspan)
+                .reduce((sum, col) => sum + col.size, 0);
+              return (
+                <Box
+                  key={header.id}
+                  width={`${totalWidth}px`}
+                  minWidth={`${totalWidth}px`}
+                  textAlign="center"
+                  fontSize="xs"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                  letterSpacing="wide"
+                  color="gray.700"
+                  py={2}
+                  px={1}
+                  borderRight="1px solid"
+                  borderColor="gray.300"
+                  borderBottom="1px solid"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  bg="gray.100"
+                  minHeight="40px"
+                >
+                  <Text fontSize="xs" fontWeight="bold" textAlign="center" noOfLines={2}>
+                    {header.title}
+                  </Text>
+                </Box>
+              );
+            })}
+          </Box>
+
+          {/* Level 2 Headers */}
+          <Box display="flex" width="100%" minWidth="fit-content">
+            {multiLevelHeaders[1].headers.map(header => {
+              const totalWidth = columns.slice(header.startCol, header.startCol + header.colspan)
+                .reduce((sum, col) => sum + col.size, 0);
+              return (
+                <Box
+                  key={header.id}
+                  width={`${totalWidth}px`}
+                  minWidth={`${totalWidth}px`}
+                  textAlign="center"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  textTransform="uppercase"
+                  letterSpacing="wide"
+                  color="gray.600"
+                  py={2}
+                  px={1}
+                  borderRight="1px solid"
+                  borderColor="gray.200"
+                  borderBottom="1px solid"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  bg="gray.75"
+                  minHeight="40px"
+                >
+                  <Text fontSize="xs" fontWeight="semibold" textAlign="center" noOfLines={2}>
+                    {header.title}
+                  </Text>
+                </Box>
+              );
+            })}
+          </Box>
+
+          {/* Level 3 Headers - Column Headers */}
+          <Box display="flex" width="100%" minWidth="fit-content">
+            {headerGroups[0].headers.map((header, index) => (
+              <Box
+                key={header.id}
+                width={`${header.getSize()}px`}
+                minWidth={`${header.getSize()}px`}
+                maxWidth={`${header.getSize()}px`}
+                textAlign="center"
+                fontSize="xs"
+                fontWeight="bold"
+                textTransform="uppercase"
+                letterSpacing="wide"
+                color="gray.600"
+                py={2}
+                px={1}
+                borderRight="1px solid"
+                borderColor="gray.100"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                cursor={header.column.getCanSort() ? 'pointer' : 'default'}
+                onClick={header.column.getToggleSortingHandler()}
+                _hover={header.column.getCanSort() ? { bg: 'gray.100' } : {}}
+                minHeight="50px"
+              >
+                <HStack spacing={1}>
+                  <Text fontSize="xs" noOfLines={3} textAlign="center">
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </Text>
+                  {header.column.getIsSorted() && (
+                    <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
+                  )}
+                </HStack>
+              </Box>
+            ))}
+          </Box>
         </Box>
 
         {/* Virtualized Table Body */}
@@ -412,6 +519,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
           height="500px"
           overflowY="auto"
           overflowX="auto"
+          maxWidth="100%"
           onScroll={(e) => {
             if (headerRef.current) {
               headerRef.current.scrollLeft = e.target.scrollLeft;

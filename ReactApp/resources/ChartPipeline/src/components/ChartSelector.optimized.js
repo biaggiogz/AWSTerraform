@@ -60,7 +60,7 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
         >
           <TabList mb="1em">
             <Tab>LOOP TESTING PROGRESS REPORT</Tab>
-            <Tab>INSULATION PROGRESS REPORT</Tab>
+            <Tab>INSULATION PROGRESS CONTROL</Tab>
             <Tab>TEST PACK PROGRESS REPORT</Tab>
             <Tab>INSTRUMENTS REPORT</Tab>
             <Tab>SUMMARY SUBSYSTEMS</Tab>
