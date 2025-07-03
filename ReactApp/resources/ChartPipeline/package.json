@@ -1,0 +1,55 @@
+{
+  "name": "pipeline-charts",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@chakra-ui/icons": "2.2.4",
+    "@chakra-ui/react": "^2.8.0",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@tanstack/react-table": "^8.11.8",
+    "@tanstack/react-virtual": "^3.0.1",
+    "chart.js": "^4.3.3",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "framer-motion": "^10.16.4",
+    "lodash": "^4.17.21",
+    "nodejs-polars": "^0.8.4",
+    "papaparse": "^5.5.3",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-draggable": "^4.4.6",
+    "react-icons": "^4.10.1",
+    "react-resizable": "^3.0.5",
+    "react-scripts": "5.0.1",
+    "react-select": "5.10.1",
+    "react-virtualized-auto-sizer": "1.0.26",
+    "react-window": "^1.8.8",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "transform": "node src/etl/transform_polars.js"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
