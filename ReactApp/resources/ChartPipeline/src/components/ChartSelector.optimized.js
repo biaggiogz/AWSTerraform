@@ -10,6 +10,7 @@ import {
   Spinner,
   VStack
 } from '@chakra-ui/react';
+import { useIsometricRelationshipFilter } from './IsometricRelationshipFilter.optimized';
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../charts/LoopTestProgressChart.optimized'));
@@ -19,6 +20,7 @@ const LazosTable = lazy(() => import('./LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('./InsulationProgressTable.optimized'));
 const ControlInstrumentsTable = lazy(() => import('./ControlInstrumentsTable.optimized'));
 const DetailsInstrumentsTable = lazy(() => import('./DetailsInstrumentsTable.optimized'));
+const IsometricRelationshipPanel = lazy(() => import('./IsometricRelationshipPanel.optimized'));
 const SummarySubsystems = lazy(() => import('./SummarySubsystems'));
 
 /**
@@ -34,6 +36,11 @@ const SummarySubsystems = lazy(() => import('./SummarySubsystems'));
  * @param {string} props.progressFilter - Current progress filter
  */
 const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboard, onDashboardChange, onProgressFilter, progressFilter }) => {
+  // Initialize isometric relationship filter for INSTRUMENTS REPORT
+  const isometricFilter = useIsometricRelationshipFilter(
+    activeDashboard === 'INSTRUMENTS REPORT' ? controlData : null,
+    activeDashboard === 'INSTRUMENTS REPORT' ? detailsData : null
+  );
   // Map tab index to dashboard name
   const dashboardNames = [
     'LOOP TESTING PROGRESS REPORT',
@@ -99,9 +106,27 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
 
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <VStack spacing={0} align="stretch">
-                  <ControlInstrumentsTable data={controlData || data} />
-                  <DetailsInstrumentsTable data={detailsData || data} />
+                <VStack spacing={4} align="stretch">
+                  <IsometricRelationshipPanel
+                    selectedIsometric={isometricFilter.selectedIsometric}
+                    matchingChains={isometricFilter.matchingChains}
+                    relationshipStats={isometricFilter.relationshipStats}
+                    onClearFilter={isometricFilter.onClearFilter}
+                    onChainSelect={isometricFilter.onChainSelect}
+                    selectedChainIndex={isometricFilter.selectedChainIndex}
+                  />
+                  <ControlInstrumentsTable 
+                    data={isometricFilter.filteredControlData || controlData || data}
+                    selectedIsometric={isometricFilter.selectedIsometric}
+                    onIsometricClick={isometricFilter.onIsometricSelect}
+                    highlightedRecords={isometricFilter.highlightedControlRecords}
+                  />
+                  <DetailsInstrumentsTable 
+                    data={isometricFilter.filteredDetailData || detailsData || data}
+                    selectedIsometric={isometricFilter.selectedIsometric}
+                    onMountingLocationClick={isometricFilter.onIsometricSelect}
+                    highlightedRecords={isometricFilter.highlightedDetailRecords}
+                  />
                 </VStack>
               </Suspense>
             </TabPanel>

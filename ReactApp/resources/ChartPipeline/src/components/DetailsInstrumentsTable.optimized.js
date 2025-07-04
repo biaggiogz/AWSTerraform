@@ -22,8 +22,16 @@ const columnHelper = createColumnHelper();
  * DetailsInstrumentsTable component - Virtualized table for details instruments data
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset from details_inst.csv
+ * @param {string} props.selectedIsometric - Currently selected isometric ID
+ * @param {Function} props.onMountingLocationClick - Handler for mounting location selection
+ * @param {Set} props.highlightedRecords - Set of highlighted records
  */
-const DetailsInstrumentsTable = React.memo(({ data }) => {
+const DetailsInstrumentsTable = React.memo(({ 
+  data, 
+  selectedIsometric, 
+  onMountingLocationClick, 
+  highlightedRecords = new Set() 
+}) => {
   // Memoize processed data to avoid recalculations
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -79,11 +87,30 @@ const DetailsInstrumentsTable = React.memo(({ data }) => {
       maxSize: 300,
       size: 180,
       enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" noOfLines={2}>
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue, row }) => {
+        const mountingValue = getValue();
+        const isSelected = selectedIsometric === mountingValue;
+        const isHighlighted = highlightedRecords.has(row.original);
+        
+        return (
+          <Text 
+            fontSize="xs" 
+            textAlign="center" 
+            noOfLines={2}
+            cursor="pointer"
+            color={isSelected ? 'blue.600' : 'inherit'}
+            fontWeight={isSelected || isHighlighted ? 'bold' : 'normal'}
+            bg={isSelected ? 'blue.50' : isHighlighted ? 'yellow.50' : 'transparent'}
+            px={1}
+            py={1}
+            borderRadius="sm"
+            _hover={{ bg: 'blue.100', color: 'blue.700' }}
+            onClick={() => onMountingLocationClick && onMountingLocationClick(mountingValue)}
+          >
+            {mountingValue}
+          </Text>
+        );
+      }
     }),
     columnHelper.accessor('on', {
       header: 'ON',
@@ -397,6 +424,7 @@ const DetailsInstrumentsTable = React.memo(({ data }) => {
                     _hover={{ bg: 'gray.50' }}
                     borderBottom="1px solid"
                     borderColor="gray.100"
+                    bg={highlightedRecords.has(row.original) ? 'yellow.50' : 'transparent'}
                   >
                     {row.getVisibleCells().map(cell => (
                       <Box

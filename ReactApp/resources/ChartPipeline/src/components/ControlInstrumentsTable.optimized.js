@@ -177,8 +177,16 @@ const TestPackCell = ({ testPacks, onTestPackSelect }) => {
  * ControlInstrumentsTable component - Virtualized table for control instruments data with multi-level headers
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset from control_inst_by_isos.csv
+ * @param {string} props.selectedIsometric - Currently selected isometric ID
+ * @param {Function} props.onIsometricClick - Handler for isometric selection
+ * @param {Set} props.highlightedRecords - Set of highlighted records
  */
-const ControlInstrumentsTable = React.memo(({ data }) => {
+const ControlInstrumentsTable = React.memo(({ 
+  data, 
+  selectedIsometric, 
+  onIsometricClick, 
+  highlightedRecords = new Set() 
+}) => {
   // State for test pack filtering
   const [testPackFilter, setTestPackFilter] = useState(null);
   // Memoize processed data to avoid recalculations
@@ -365,11 +373,31 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
       maxSize: 400,
       size: 180,
       enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontFamily="mono" textAlign="left" noOfLines={2}>
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue, row }) => {
+        const isoValue = getValue();
+        const isSelected = selectedIsometric === isoValue;
+        const isHighlighted = highlightedRecords.has(row.original);
+        
+        return (
+          <Text 
+            fontSize="xs" 
+            fontFamily="mono" 
+            textAlign="left" 
+            noOfLines={2}
+            cursor="pointer"
+            color={isSelected ? 'blue.600' : 'inherit'}
+            fontWeight={isSelected || isHighlighted ? 'bold' : 'normal'}
+            bg={isSelected ? 'blue.50' : isHighlighted ? 'yellow.50' : 'transparent'}
+            px={1}
+            py={1}
+            borderRadius="sm"
+            _hover={{ bg: 'blue.100', color: 'blue.700' }}
+            onClick={() => onIsometricClick && onIsometricClick(isoValue)}
+          >
+            {isoValue}
+          </Text>
+        );
+      }
     }),
     columnHelper.accessor('weldingFwSw', {
       header: 'WELDING FW+SW',
@@ -905,6 +933,7 @@ const ControlInstrumentsTable = React.memo(({ data }) => {
                     _hover={{ bg: 'gray.50' }}
                     borderBottom="1px solid"
                     borderColor="gray.100"
+                    bg={highlightedRecords.has(row.original) ? 'yellow.50' : 'transparent'}
                   >
                     {row.getVisibleCells().map(cell => (
                       <Box
