@@ -192,7 +192,7 @@ const ControlInstrumentsTable = React.memo(({
       deliveryProgress: row['DELIVERY PROGRESS 100% BY TEN'] || row['DELIVERY PROGRESS BY TEN'] || '',
       readyToInstall: row['READY TO INSTALL INST (SIEMSA)'] || '',
       qtyInst: parseInt(row['QTY INST']) || 0,
-      scopeTiegaTmi: parseInt(row['SCOPE BY TIEGA-TMI']) || 0,
+      scopeTiegaTmi: parseInt(row['SCOPE BY TEIGA-TMI']) || 0,
       scopeSiemsa: parseInt(row['SCOPE BY SIEMSA']) || 0,
       installedSiemsa: row['INSTALLED (SIEMSA)'] || '',
       installedTiegaTmi: parseInt(row['INSTALLED (TEIGA-TMI)']) || 0,
@@ -589,7 +589,7 @@ const ControlInstrumentsTable = React.memo(({
       )
     }),
     columnHelper.accessor('scopeTiegaTmi', {
-      header: 'SCOPE BY TIEGA-TMI',
+      header: 'SCOPE BY TEIGA-TMI',
       minSize: 80,
       maxSize: 200,
       size: 100,

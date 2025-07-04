@@ -341,7 +341,7 @@ const DetailsInstrumentsTable = React.memo(({
       )
     }),
     columnHelper.accessor('teigaTmi', {
-      header: 'TEGIMA-TMI',
+      header: 'TEIGA-TMI',
       minSize: 80,
       maxSize: 180,
       size: 100,
@@ -537,7 +537,11 @@ const DetailsInstrumentsTable = React.memo(({
                 _hover={header.column.getCanSort() ? { opacity: 0.8 } : {}}
                 minHeight="50px"
                 position="relative"
-                bg="blue.600"
+                bg={header.column.columnDef.header === 'SUBSYSTEM' ? '#CEC19B' : header.column.columnDef.header === 'TEST PACK' ? '#7CA2C5'
+                    : header.column.columnDef.header === 'MOUNTING ON ISO/EQUI/PACK' ? '#007598'
+                    : header.column.columnDef.header === 'TAG INST' ? '#B3CDDF'
+                    : header.column.columnDef.header === 'SCOPE BY' ? '#B3CDDF'
+                    : '#BFB6B4'}
               >
                 <HStack spacing={1}>
                   <Text fontSize="xs" noOfLines={3} textAlign="center">
