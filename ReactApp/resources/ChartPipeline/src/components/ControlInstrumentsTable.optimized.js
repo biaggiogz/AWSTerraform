@@ -29,148 +29,84 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 
 const columnHelper = createColumnHelper();
 
-// Test Pack Indicator Component
-const TestPackIndicator = ({ testPacks }) => {
-  if (testPacks.length <= 1) return null;
-  
-  return (
-    <Badge 
-      size="xs" 
-      colorScheme="blue" 
-      position="absolute" 
-      top="-2px" 
-      right="-2px"
-      borderRadius="full"
-      fontSize="10px"
-      minWidth="16px"
-      height="16px"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-    >
-      {testPacks.length}
-    </Badge>
-  );
-};
-
-// Test Pack Popup Component
-const TestPackPopup = ({ testPacks, onTestPackSelect, isOpen, onTogglePin, onMouseEnter, onMouseLeave, children }) => {
-  return (
-    <Popover isOpen={isOpen} placement="left-start" closeOnBlur={false}>
-      <PopoverTrigger>
-        {children}
-      </PopoverTrigger>
-      <Portal>
-        <PopoverContent 
-          width="200px" 
-          boxShadow="2xl" 
-          zIndex={99999}
-          bg="white"
-          border="2px solid"
-          borderColor="gray.300"
-          borderRadius="md"
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-          ml="-8px"
-        >
-          <PopoverHeader bg="gray.100" borderBottom="1px solid" borderColor="gray.300">
-            <HStack justify="space-between">
-              <Text fontSize="sm" fontWeight="bold" color="gray.800">Test Packs</Text>
-              <IconButton 
-                size="xs" 
-                icon={<AttachmentIcon />} 
-                onClick={onTogglePin}
-                variant="ghost"
-                aria-label="Pin popup"
-                color="gray.600"
-              />
-            </HStack>
-          </PopoverHeader>
-          <PopoverBody bg="white" p={3}>
-            <VStack spacing={2} align="stretch">
-              {testPacks.map(testPack => (
-                <Button
-                  key={testPack}
-                  size="sm"
-                  variant="solid"
-                  onClick={() => onTestPackSelect(testPack)}
-                  _hover={{ bg: "blue.100" }}
-                  fontSize="xs"
-                  fontWeight="medium"
-                  color="blue.700"
-                  bg="blue.50"
-                  border="1px solid"
-                  borderColor="blue.200"
-                >
-                  {testPack}
-                </Button>
-              ))}
-            </VStack>
-          </PopoverBody>
-        </PopoverContent>
-      </Portal>
-    </Popover>
-  );
-};
-
 // Test Pack Cell Component
 const TestPackCell = ({ testPacks, onTestPackSelect }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
-  const [leaveTimeout, setLeaveTimeout] = useState(null);
-  
-  const handleMouseEnter = () => {
-    if (leaveTimeout) {
-      clearTimeout(leaveTimeout);
-      setLeaveTimeout(null);
-    }
-    setIsHovered(true);
-  };
-  
-  const handleMouseLeave = () => {
-    if (!isPinned) {
-      const timeout = setTimeout(() => {
-        setIsHovered(false);
-      }, 100);
-      setLeaveTimeout(timeout);
-    }
-  };
-  
-  const cellContent = (
-    <Box 
-      position="relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      cursor={testPacks.length > 1 ? "pointer" : "default"}
-      width="100%"
-      height="100%"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-    >
-      <Text fontSize="xs" textAlign="center" fontWeight="medium" color="blue.600">
-        {testPacks.length > 1 ? `${testPacks.length} packs` : (testPacks[0] || '-')}
-      </Text>
-      <TestPackIndicator testPacks={testPacks} />
-    </Box>
-  );
-  
-  if (testPacks.length > 1) {
+  if (!testPacks || testPacks.length === 0) {
     return (
-      <TestPackPopup 
-        testPacks={testPacks}
-        isOpen={isHovered || isPinned}
-        onTestPackSelect={onTestPackSelect}
-        onTogglePin={() => setIsPinned(!isPinned)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        {cellContent}
-      </TestPackPopup>
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="xs" color="gray.500">-</Text>
+      </Box>
     );
   }
   
-  return cellContent;
+  if (testPacks.length === 1) {
+    return (
+      <Box 
+        width="100%" 
+        height="100%" 
+        display="flex" 
+        alignItems="center" 
+        justifyContent="center"
+        border="1px solid"
+        borderColor="gray.300"
+        borderRadius="md"
+        p={1}
+      >
+        <Button
+          size="xs"
+          variant="solid"
+          onClick={() => onTestPackSelect(testPacks[0])}
+          _hover={{ bg: "blue.200" }}
+          fontSize="10px"
+          fontWeight="medium"
+          color="white"
+          bg="blue.500"
+          minWidth="30px"
+          height="18px"
+          px={2}
+          borderRadius="sm"
+        >
+          {testPacks[0]}
+        </Button>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <HStack spacing={1} wrap="wrap" justify="center">
+        {testPacks.map((testPack, index) => (
+          <Button
+            key={`${testPack}-${index}`}
+            size="xs"
+            variant="solid"
+            onClick={() => onTestPackSelect(testPack)}
+            _hover={{ bg: "blue.200" }}
+            fontSize="10px"
+            fontWeight="medium"
+            color="white"
+            bg="blue.500"
+            minWidth="30px"
+            height="18px"
+            px={2}
+            borderRadius="sm"
+          >
+            {testPack}
+          </Button>
+        ))}
+      </HStack>
+    </Box>
+  );
 };
 
 /**
