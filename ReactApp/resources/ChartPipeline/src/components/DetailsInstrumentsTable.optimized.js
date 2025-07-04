@@ -230,8 +230,7 @@ const DetailsInstrumentsTable = React.memo(({
       enableResizing: true,
       cell: ({ getValue }) => {
         const subsystemValue = getValue();
-        const subsystems = subsystemValue ? 
-          subsystemValue.toString().split("|").map(v => v.trim()).filter(v => v !== '' && v !== '0' && v !== 'NOT_APPLY') : [];
+        const subsystems = subsystemValue ? [subsystemValue] : []; // Single value, no splitting
         
         return (
           <SubsystemCell 

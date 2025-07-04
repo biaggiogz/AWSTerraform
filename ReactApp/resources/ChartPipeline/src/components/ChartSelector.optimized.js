@@ -14,6 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { useIsometricRelationshipFilter } from './IsometricRelationshipFilter.optimized';
 import { useTestPackFilter } from './TestPackRelationshipFilter.optimized';
+import { useSubsystemFilter } from './SubsystemRelationshipFilter.optimized';
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../charts/LoopTestProgressChart.optimized'));
@@ -48,20 +49,25 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
   // Initialize test pack filter for INSTRUMENTS REPORT
   const testPackFilter = useTestPackFilter();
   
-  // Combine both filters - chain them together
+  // Initialize subsystem filter for INSTRUMENTS REPORT
+  const subsystemFilter = useSubsystemFilter();
+  
+  // Combine all three filters - chain them together
   const finalControlData = React.useMemo(() => {
     if (activeDashboard !== 'INSTRUMENTS REPORT') return controlData;
     let data = isometricFilter.filteredControlData || controlData;
     data = testPackFilter.filterControlData(data);
+    data = subsystemFilter.filterControlData(data);
     return data;
-  }, [activeDashboard, isometricFilter.filteredControlData, controlData, testPackFilter.filterControlData]);
+  }, [activeDashboard, isometricFilter.filteredControlData, controlData, testPackFilter.filterControlData, subsystemFilter.filterControlData]);
   
   const finalDetailData = React.useMemo(() => {
     if (activeDashboard !== 'INSTRUMENTS REPORT') return detailsData;
     let data = isometricFilter.filteredDetailData || detailsData;
     data = testPackFilter.filterDetailData(data);
+    data = subsystemFilter.filterDetailData(data);
     return data;
-  }, [activeDashboard, isometricFilter.filteredDetailData, detailsData, testPackFilter.filterDetailData]);
+  }, [activeDashboard, isometricFilter.filteredDetailData, detailsData, testPackFilter.filterDetailData, subsystemFilter.filterDetailData]);
   // Map tab index to dashboard name
   const dashboardNames = [
     'LOOP TESTING PROGRESS REPORT',
@@ -128,7 +134,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
                 <VStack spacing={4} align="stretch">
-                  {/* Dual Filter Status */}
+                  {/* Triple Filter Status */}
                   <HStack spacing={4} justify="center">
                     {isometricFilter.selectedIsometric && (
                       <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
@@ -138,6 +144,11 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     {testPackFilter.selectedTestPack && (
                       <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
                         TEST PACK: {testPackFilter.selectedTestPack}
+                      </Badge>
+                    )}
+                    {subsystemFilter.selectedSubsystem && (
+                      <Badge colorScheme="orange" fontSize="sm" px={3} py={1}>
+                        SUBSYSTEM: {subsystemFilter.selectedSubsystem}
                       </Badge>
                     )}
                   </HStack>
@@ -156,6 +167,8 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     highlightedRecords={isometricFilter.highlightedControlRecords}
                     selectedTestPack={testPackFilter.selectedTestPack}
                     onTestPackClick={testPackFilter.handleTestPackClick}
+                    selectedSubsystem={subsystemFilter.selectedSubsystem}
+                    onSubsystemClick={subsystemFilter.handleSubsystemClick}
                   />
                   <DetailsInstrumentsTable 
                     data={finalDetailData || detailsData || data}
@@ -164,6 +177,8 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     highlightedRecords={isometricFilter.highlightedDetailRecords}
                     selectedTestPack={testPackFilter.selectedTestPack}
                     onTestPackClick={testPackFilter.handleTestPackClick}
+                    selectedSubsystem={subsystemFilter.selectedSubsystem}
+                    onSubsystemClick={subsystemFilter.handleSubsystemClick}
                   />
                 </VStack>
               </Suspense>
