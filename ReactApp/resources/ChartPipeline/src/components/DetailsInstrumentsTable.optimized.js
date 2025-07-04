@@ -19,6 +19,84 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 
 const columnHelper = createColumnHelper();
 
+// Subsystem Cell Component
+const SubsystemCell = ({ subsystems, onSubsystemSelect, selectedSubsystem }) => {
+  if (!subsystems || subsystems.length === 0) {
+    return null;
+  }
+  
+  if (subsystems.length === 1) {
+    return (
+      <Box 
+        width="100%" 
+        height="100%" 
+        display="flex" 
+        alignItems="center" 
+        justifyContent="center"
+        border="1px solid"
+        borderColor="gray.300"
+        borderRadius="md"
+        p={1}
+      >
+        <Button
+          size="xs"
+          variant={selectedSubsystem === subsystems[0] ? "solid" : "outline"}
+          onClick={() => onSubsystemSelect && onSubsystemSelect(subsystems[0])}
+          fontSize="10px"
+          fontWeight="medium"
+          color={selectedSubsystem === subsystems[0] ? "white" : "blue.600"}
+          bg={selectedSubsystem === subsystems[0] ? "green.500" : "white"}
+          borderColor={selectedSubsystem === subsystems[0] ? "green.500" : "blue.500"}
+          minWidth="30px"
+          height="18px"
+          px={2}
+          borderRadius="sm"
+          _hover={{ bg: selectedSubsystem === subsystems[0] ? "green.200" : "blue.200" }}
+        >
+          {subsystems[0]}
+        </Button>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <HStack spacing={1} wrap="wrap" justify="center">
+        {subsystems.map((subsystem, index) => (
+          <Button
+            key={`${subsystem}-${index}`}
+            size="xs"
+            variant={selectedSubsystem === subsystem ? "solid" : "outline"}
+            onClick={() => onSubsystemSelect && onSubsystemSelect(subsystem)}
+            fontSize="10px"
+            fontWeight="medium"
+            color={selectedSubsystem === subsystem ? "white" : "blue.600"}
+            bg={selectedSubsystem === subsystem ? "green.500" : "white"}
+            borderColor={selectedSubsystem === subsystem ? "green.500" : "blue.500"}
+            minWidth="30px"
+            height="18px"
+            px={2}
+            borderRadius="sm"
+            _hover={{ bg: selectedSubsystem === subsystem ? "green.200" : "blue.200" }}
+          >
+            {subsystem}
+          </Button>
+        ))}
+      </HStack>
+    </Box>
+  );
+};
+
 // Test Pack Cell Component
 const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
   if (!testPacks || testPacks.length === 0) {
@@ -115,7 +193,9 @@ const DetailsInstrumentsTable = React.memo(({
   onMountingLocationClick, 
   highlightedRecords = new Set(),
   selectedTestPack,
-  onTestPackClick
+  onTestPackClick,
+  selectedSubsystem,
+  onSubsystemClick
 }) => {
   // Memoize processed data to avoid recalculations
   const processedData = useMemo(() => {
@@ -148,11 +228,19 @@ const DetailsInstrumentsTable = React.memo(({
       maxSize: 200,
       size: 100,
       enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue }) => {
+        const subsystemValue = getValue();
+        const subsystems = subsystemValue ? 
+          subsystemValue.toString().split("|").map(v => v.trim()).filter(v => v !== '' && v !== '0' && v !== 'NOT_APPLY') : [];
+        
+        return (
+          <SubsystemCell 
+            subsystems={subsystems}
+            onSubsystemSelect={onSubsystemClick}
+            selectedSubsystem={selectedSubsystem}
+          />
+        );
+      }
     }),
     columnHelper.accessor('testPack', {
       header: 'TEST PACK',

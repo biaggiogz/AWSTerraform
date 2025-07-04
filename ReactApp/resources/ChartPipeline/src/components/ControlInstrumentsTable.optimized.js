@@ -29,6 +29,49 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 
 const columnHelper = createColumnHelper();
 
+// Subsystem Cell Component
+const SubsystemCell = ({ subsystem, onSubsystemSelect, selectedSubsystem }) => {
+  if (!subsystem || subsystem === '') {
+    return (
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="xs" color="gray.500">-</Text>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <Button
+        size="xs"
+        variant={selectedSubsystem === subsystem ? "solid" : "outline"}
+        onClick={() => onSubsystemSelect && onSubsystemSelect(subsystem)}
+        _hover={{ bg: selectedSubsystem === subsystem ? "green.200" : "blue.200" }}
+        fontSize="10px"
+        fontWeight="medium"
+        color={selectedSubsystem === subsystem ? "white" : "blue.600"}
+        bg={selectedSubsystem === subsystem ? "green.500" : "white"}
+        borderColor={selectedSubsystem === subsystem ? "green.500" : "blue.500"}
+        minWidth="30px"
+        height="18px"
+        px={2}
+        borderRadius="sm"
+      >
+        {subsystem}
+      </Button>
+    </Box>
+  );
+};
+
 // Test Pack Cell Component
 const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
   if (!testPacks || testPacks.length === 0) {
@@ -125,7 +168,9 @@ const ControlInstrumentsTable = React.memo(({
   onIsometricClick, 
   highlightedRecords = new Set(),
   selectedTestPack,
-  onTestPackClick
+  onTestPackClick,
+  selectedSubsystem,
+  onSubsystemClick
 }) => {
   // Memoize processed data to avoid recalculations
   const processedData = useMemo(() => {
@@ -393,9 +438,11 @@ const ControlInstrumentsTable = React.memo(({
       size: 90,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium" textAlign="center">
-          {getValue()}
-        </Text>
+        <SubsystemCell 
+          subsystem={getValue()}
+          onSubsystemSelect={onSubsystemClick}
+          selectedSubsystem={selectedSubsystem}
+        />
       )
     }),
     columnHelper.accessor('crono', {
