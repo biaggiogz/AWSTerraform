@@ -152,11 +152,14 @@ const IsometricRelationshipPanel = ({
                   <VStack align="end" spacing={1}>
                     <Text fontSize="xs" color="gray.600">Test Packs:</Text>
                     <HStack spacing={1}>
-                      {match.matchingTestPacks.map(tp => (
-                        <Badge key={tp} colorScheme="orange" size="xs">
-                          {tp}
-                        </Badge>
-                      ))}
+                      {match.matchingTestPacks && match.matchingTestPacks.length > 0 ? 
+                        match.matchingTestPacks.map(tp => (
+                          <Badge key={tp} colorScheme="orange" size="xs">
+                            {tp}
+                          </Badge>
+                        )) : 
+                        <Badge colorScheme="gray" size="xs">Empty</Badge>
+                      }
                     </HStack>
                   </VStack>
                 </HStack>
@@ -231,11 +234,14 @@ const IsometricRelationshipPanel = ({
                                   </Text>
                                 </VStack>
                                 <HStack spacing={1}>
-                                  {match.matchingTestPacks.map(tp => (
-                                    <Badge key={tp} colorScheme="orange" size="xs">
-                                      {tp}
-                                    </Badge>
-                                  ))}
+                                  {match.matchingTestPacks && match.matchingTestPacks.length > 0 ? 
+                                    match.matchingTestPacks.map(tp => (
+                                      <Badge key={tp} colorScheme="orange" size="xs">
+                                        {tp}
+                                      </Badge>
+                                    )) : 
+                                    <Badge colorScheme="gray" size="xs">Empty</Badge>
+                                  }
                                 </HStack>
                               </HStack>
                             </Box>

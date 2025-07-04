@@ -149,7 +149,7 @@ const TestPackCell = ({ testPacks, onTestPackSelect }) => {
       justifyContent="center"
     >
       <Text fontSize="xs" textAlign="center" fontWeight="medium" color="blue.600">
-        {testPacks.length > 1 ? `has ${testPacks.length} test pack` : testPacks[0]}
+        {testPacks.length > 1 ? `${testPacks.length} packs` : (testPacks[0] || '-')}
       </Text>
       <TestPackIndicator testPacks={testPacks} />
     </Box>
@@ -205,7 +205,7 @@ const ControlInstrumentsTable = React.memo(({
       insulation: row.INSULATION || '',
       siemsa: row.SIEMSA || '',
       technip: row.TECHNIP || '',
-      testPack: parseInt(row['TEST PACK']) || 0,
+      testPack: row.TESTPACK || '',
       deliveryProgress: row['DELIVERY PROGRESS 100% BY TEN'] || row['DELIVERY PROGRESS BY TEN'] || '',
       readyToInstall: row['READY TO INSTALL INST (SIEMSA)'] || '',
       qtyInst: parseInt(row['QTY INST']) || 0,
@@ -219,15 +219,28 @@ const ControlInstrumentsTable = React.memo(({
     }));
   }, [data]);
 
+  // Split test pack function
+  const splitTestPack = (testPackStr) => {
+    if (!testPackStr || testPackStr === '' || testPackStr === '0') return [];
+    return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v !== '' && v !== '0');
+  };
+
   // Group data by isometric to consolidate duplicate rows with different test packs
   const groupedData = useMemo(() => {
     const grouped = {};
     processedData.forEach(row => {
       const key = `${row.isometric}-${row.subsystem}-${row.crono}`;
+      const testPacks = splitTestPack(row.testPack);
       if (!grouped[key]) {
-        grouped[key] = { ...row, testPacks: [row.testPack] };
+        grouped[key] = { ...row, testPacks: testPacks };
       } else {
-        grouped[key].testPacks.push(row.testPack);
+        // Merge test packs without duplicates
+        const existingTestPacks = grouped[key].testPacks;
+        testPacks.forEach(tp => {
+          if (!existingTestPacks.includes(tp)) {
+            existingTestPacks.push(tp);
+          }
+        });
       }
     });
     return Object.values(grouped);
@@ -543,7 +556,7 @@ const ControlInstrumentsTable = React.memo(({
       size: 80,
       enableResizing: true,
       cell: ({ getValue, row }) => {
-        const testPacks = row.original.testPacks || [getValue()];
+        const testPacks = row.original.testPacks || splitTestPack(getValue());
         
         const handleTestPackFilter = (selectedTestPack) => {
           setTestPackFilter(selectedTestPack);

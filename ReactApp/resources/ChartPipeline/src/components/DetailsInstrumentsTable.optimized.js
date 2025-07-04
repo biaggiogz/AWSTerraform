@@ -39,7 +39,7 @@ const DetailsInstrumentsTable = React.memo(({
     return data.map((row, index) => ({
       id: index,
       subsystem: row.SUBSYSTEM || '',
-      testPack: row['TEST PACK'] || '',
+      testPack: row.TESTPACK || '',
       mountingOnIsoEquiPack: row['MOUNTING ON ISO/EQUI/PACK'] || '',
       on: row.ON || '',
       tagInst: row['TAG INST'] || '',
@@ -75,11 +75,46 @@ const DetailsInstrumentsTable = React.memo(({
       maxSize: 180,
       size: 90,
       enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue }) => {
+        const testPackValue = getValue();
+        const testPacks = testPackValue ? 
+          testPackValue.toString().split("|").map(v => v.trim()).filter(v => v !== '' && v !== '0') : [];
+        
+        if (testPacks.length > 1) {
+          return (
+            <Box position="relative" textAlign="center">
+              <Text fontSize="xs" color="blue.600" fontWeight="medium">
+                {testPacks.length} packs
+              </Text>
+              <Badge 
+                size="xs" 
+                colorScheme="blue" 
+                position="absolute" 
+                top="-2px" 
+                right="-2px"
+                borderRadius="full"
+                fontSize="10px"
+                minWidth="16px"
+                height="16px"
+              >
+                {testPacks.length}
+              </Badge>
+            </Box>
+          );
+        } else if (testPacks.length === 1) {
+          return (
+            <Text fontSize="xs" textAlign="center">
+              {testPacks[0]}
+            </Text>
+          );
+        }
+        
+        return (
+          <Text fontSize="xs" textAlign="center">
+            -
+          </Text>
+        );
+      }
     }),
     columnHelper.accessor('mountingOnIsoEquiPack', {
       header: 'MOUNTING ON ISO/EQUI/PACK',

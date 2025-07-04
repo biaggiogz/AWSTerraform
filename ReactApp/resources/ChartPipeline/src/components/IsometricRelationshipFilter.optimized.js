@@ -6,8 +6,8 @@ import React, { useMemo, useCallback, useState } from 'react';
  * @returns {Array} Array of test pack values
  */
 function splitTestPack(testPackStr) {
-  if (!testPackStr) return [];
-  return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v);
+  if (!testPackStr || testPackStr === '' || testPackStr === '0') return [];
+  return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v !== '' && v !== '0');
 }
 
 /**
@@ -55,25 +55,27 @@ function findMatchingChains(controlTable, detailTable) {
       const isoRecords = filterByIsometric(controlTable, currentIso);
 
       for (const isoRec of isoRecords) {
-        const testPacks = splitTestPack(isoRec['TEST PACK']);
+        const testPacks = splitTestPack(isoRec.TESTPACK);
         const subsystemControl = isoRec.SUBSYSTEM || isoRec.SUSSYTEM;
         const mountedDetails = filterByMountingLocation(detailTable, currentIso);
         
         for (const detailRec of mountedDetails) {
           const subsystemDetail = detailRec.SUBSYSTEM;
-          const detailTestPacks = splitTestPack(detailRec['TEST PACK']);
+          const detailTestPacks = splitTestPack(detailRec.TESTPACK);
 
           // RED CONDITION: subsystem must match
           if (subsystemControl === subsystemDetail) {
-            const hasMatchingTestPack = testPacks.some(tp => 
-              detailTestPacks.includes(tp)
-            );
+            // Check if there are any matching test packs
+            const hasMatchingTestPack = testPacks.length > 0 && detailTestPacks.length > 0 && 
+              testPacks.some(tp => detailTestPacks.includes(tp));
             
-            if (hasMatchingTestPack) {
+            // If both have test packs and they match, or if both are empty (allowing broader matching)
+            if (hasMatchingTestPack || (testPacks.length === 0 && detailTestPacks.length === 0)) {
+              const matchingTestPacks = testPacks.filter(tp => detailTestPacks.includes(tp));
               currentChain.push({ 
                 control: isoRec, 
                 detail: detailRec,
-                matchingTestPacks: testPacks.filter(tp => detailTestPacks.includes(tp))
+                matchingTestPacks: matchingTestPacks.length > 0 ? matchingTestPacks : []
               });
             }
           }

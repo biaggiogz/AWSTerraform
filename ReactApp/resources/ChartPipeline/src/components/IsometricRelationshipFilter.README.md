@@ -157,7 +157,6 @@ ControlInstrumentsTable ↔ DetailsInstrumentsTable
 src/components/
 ├── IsometricRelationshipFilter.optimized.js    # Core filtering logic
 ├── IsometricRelationshipPanel.optimized.js     # Visual status panel
-├── IsometricRelationshipFilter.example.js      # Usage examples
 ├── IsometricRelationshipFilter.README.md       # This documentation
 ├── ControlInstrumentsTable.optimized.js        # Enhanced control table
 └── DetailsInstrumentsTable.optimized.js        # Enhanced details table
