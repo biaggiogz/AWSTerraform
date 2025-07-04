@@ -1,39 +1,42 @@
-# Initialize variables
-selected_test_pack = None  # No TEST PACK selected initially
-
-# Function to handle user click on a TEST PACK value
-function onTestPackClick(clicked_value):
-global selected_test_pack
-
-    if selected_test_pack == clicked_value:
-        # Case: User clicked the same value again → reset filter
-        selected_test_pack = None
-        showAllRecordsInBothTables()
-    else:
-        # Case: User clicked a new TEST PACK value → apply filter
-        selected_test_pack = clicked_value
-        filterBothTablesByTestPack(clicked_value)
 
 
-# Function to filter both tables
-function filterBothTablesByTestPack(test_pack_value):
-for row in isometric_table:
-if row["TEST PACK"] == test_pack_value:
-showRow(row)
-else:
-hideRow(row)
+````javascript
+let selectedTestPack = null;
 
-    for row in mounting_table:
-        if row["TEST PACK"] == test_pack_value:
-            showRow(row)
-        else:
-            hideRow(row)
+// Attach click event to all TEST PACK buttons
+document.querySelectorAll('.testpack-button').forEach(button => {
+  button.addEventListener('click', () => {
+    const clickedValue = button.getAttribute('data-testpack');
 
+    if (selectedTestPack === clickedValue) {
+      // Toggle off → reset filter
+      selectedTestPack = null;
+      showAllRecords('#isometricTable');
+      showAllRecords('#mountingTable');
+    } else {
+      // Apply new filter
+      selectedTestPack = clickedValue;
+      filterTableByTestPack('#isometricTable', clickedValue);
+      filterTableByTestPack('#mountingTable', clickedValue);
+    }
+  });
+});
 
-# Function to reset (unfilter) both tables
-function showAllRecordsInBothTables():
-for row in isometric_table:
-showRow(row)
+// Show all rows in a given table
+function showAllRecords(tableSelector) {
+  document.querySelectorAll(`${tableSelector} .data-row`).forEach(row => {
+    row.style.display = '';
+  });
+}
 
-    for row in mounting_table:
-        showRow(row)
+// Filter rows by TEST PACK
+function filterTableByTestPack(tableSelector, testPackValue) {
+  document.querySelectorAll(`${tableSelector} .data-row`).forEach(row => {
+    if (row.getAttribute('data-testpack') === testPackValue) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+````

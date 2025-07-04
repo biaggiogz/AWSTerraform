@@ -5,6 +5,7 @@ import {
   Badge,
   Heading,
   HStack,
+  Button,
 } from '@chakra-ui/react';
 import {
   useReactTable,
@@ -17,6 +18,84 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 const columnHelper = createColumnHelper();
+
+// Test Pack Cell Component
+const TestPackCell = ({ testPacks }) => {
+  if (!testPacks || testPacks.length === 0) {
+    return (
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="xs" color="gray.500">NOT APPLY</Text>
+      </Box>
+    );
+  }
+  
+  if (testPacks.length === 1) {
+    return (
+      <Box 
+        width="100%" 
+        height="100%" 
+        display="flex" 
+        alignItems="center" 
+        justifyContent="center"
+        border="1px solid"
+        borderColor="gray.300"
+        borderRadius="md"
+        p={1}
+      >
+        <Button
+          size="xs"
+          variant="solid"
+          fontSize="10px"
+          fontWeight="medium"
+          color="white"
+          bg="blue.500"
+          minWidth="30px"
+          height="18px"
+          px={2}
+          borderRadius="sm"
+          _hover={{ bg: "blue.200" }}
+        >
+          {testPacks[0]}
+        </Button>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <HStack spacing={1} wrap="wrap" justify="center">
+        {testPacks.map((testPack, index) => (
+          <Button
+            key={`${testPack}-${index}`}
+            size="xs"
+            variant="solid"
+            fontSize="10px"
+            fontWeight="medium"
+            color="white"
+            bg="blue.500"
+            minWidth="30px"
+            height="18px"
+            px={2}
+            borderRadius="sm"
+            _hover={{ bg: "blue.200" }}
+          >
+            {testPack}
+          </Button>
+        ))}
+      </HStack>
+    </Box>
+  );
+};
 
 /**
  * DetailsInstrumentsTable component - Virtualized table for details instruments data
@@ -78,41 +157,10 @@ const DetailsInstrumentsTable = React.memo(({
       cell: ({ getValue }) => {
         const testPackValue = getValue();
         const testPacks = testPackValue ? 
-          testPackValue.toString().split("|").map(v => v.trim()).filter(v => v !== '' && v !== '0') : [];
-        
-        if (testPacks.length > 1) {
-          return (
-            <Box position="relative" textAlign="center">
-              <Text fontSize="xs" color="blue.600" fontWeight="medium">
-                {testPacks.length} packs
-              </Text>
-              <Badge 
-                size="xs" 
-                colorScheme="blue" 
-                position="absolute" 
-                top="-2px" 
-                right="-2px"
-                borderRadius="full"
-                fontSize="10px"
-                minWidth="16px"
-                height="16px"
-              >
-                {testPacks.length}
-              </Badge>
-            </Box>
-          );
-        } else if (testPacks.length === 1) {
-          return (
-            <Text fontSize="xs" textAlign="center">
-              {testPacks[0]}
-            </Text>
-          );
-        }
+          testPackValue.toString().split("|").map(v => v.trim()).filter(v => v !== '' && v !== '0' && v !== 'NOT_APPLY') : [];
         
         return (
-          <Text fontSize="xs" textAlign="center">
-            -
-          </Text>
+          <TestPackCell testPacks={testPacks} />
         );
       }
     }),
