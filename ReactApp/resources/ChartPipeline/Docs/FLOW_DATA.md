@@ -1,5 +1,14 @@
 # Pipeline Construction Dashboard - Data Flow Architecture
 
+## Current Implementation Status: ✅ PRODUCTION READY
+
+**5-Tab Multi-Dashboard System with Advanced Features:**
+- Tab 1: Loop Testing Progress Report (Interactive Charts + Resizable Tables)
+- Tab 2: Insulation Progress Control (Weighted Metrics + Virtualized Tables) 
+- Tab 3: Test Pack Progress Report (Adaptive Rendering)
+- Tab 4: Instruments Report (Isometric Relationships + Cross-Dataset Analysis)
+- Tab 5: Summary Subsystems (Web Worker Processing + Advanced Filtering)
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │                           PIPELINE CONSTRUCTION DASHBOARD                                  │
@@ -29,6 +38,13 @@
 │  │ • SUBSYSTEM → Additional subsystem metadata                                         │  │
 │  │ • DESCRIPTION → Detailed subsystem descriptions                                     │  │
 │  │ • Additional reference data for enhanced reporting                                  │  │
+│  └─────────────────────────────────────────────────────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                    control_inst_by_isos.csv & details_inst.csv                     │  │
+│  │                                                                                     │  │
+│  │ • ISOMETRIC → Instrument control data                                               │  │
+│  │ • MOUNTING_LOCATION → Physical location mapping                                     │  │
+│  │ • Cross-referenced instrument details and control specifications                    │  │
 │  └─────────────────────────────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
                                         │
@@ -245,8 +261,8 @@
 │                                  DATA FLOW SUMMARY                                        │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                           │
-│  1. CSV FILES → Data Loading (useDataLoader) → Processing (dataProcessor)                │
-│  2. Raw Data → Multi-Value Filtering (useMultiValueFilter) → Virtual Data Layer          │
+│  1. CSV FILES → Data Loading (useDataLoader/useInstrumentsDataLoader) → Processing       │
+│  2. Raw Data → Multi-Value Filtering (useMultiValueFilter/useInstrumentsFilter)          │
 │  3. Filtered Data → Application State (App.optimized) → Component Distribution           │
 │  4. Components → Chart Rendering (Chart.js) → Interactive Features                       │
 │  5. User Interactions → State Updates → Real-time Data Flow                              │
@@ -261,10 +277,13 @@
 │  • Resizable components with hardware acceleration and drag-to-resize functionality     │
 │  • Virtual scrolling for 10,000+ rows with react-window optimization                    │
 │  • Web Worker processing for non-blocking operations with batch processing              │
-│  • Advanced data integration across 4 CSV sources with statistical aggregation          │
+│  • Advanced data integration across 6 CSV sources with statistical aggregation          │
 │  • Export functionality (CSV/Excel) with comprehensive data formatting                  │
 │  • Color-coded filtering and progress visualization with real-time updates              │
 │  • Comprehensive accessibility (WCAG 2.1 compliance) and responsive design              │
+│  • Multi-dashboard architecture with specialized data loaders and filters               │
+│  • Instrument relationship analysis with isometric cross-referencing                    │
+│  • Dynamic tab switching with lazy loading and suspense boundaries                      │
 │                                                                                           │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```

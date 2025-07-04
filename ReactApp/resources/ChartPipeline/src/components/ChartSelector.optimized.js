@@ -8,9 +8,12 @@ import {
   TabPanel,
   Center,
   Spinner,
-  VStack
+  VStack,
+  HStack,
+  Badge
 } from '@chakra-ui/react';
 import { useIsometricRelationshipFilter } from './IsometricRelationshipFilter.optimized';
+import { useTestPackFilter } from './TestPackRelationshipFilter.optimized';
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../charts/LoopTestProgressChart.optimized'));
@@ -41,6 +44,24 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
     activeDashboard === 'INSTRUMENTS REPORT' ? controlData : null,
     activeDashboard === 'INSTRUMENTS REPORT' ? detailsData : null
   );
+  
+  // Initialize test pack filter for INSTRUMENTS REPORT
+  const testPackFilter = useTestPackFilter();
+  
+  // Combine both filters - chain them together
+  const finalControlData = React.useMemo(() => {
+    if (activeDashboard !== 'INSTRUMENTS REPORT') return controlData;
+    let data = isometricFilter.filteredControlData || controlData;
+    data = testPackFilter.filterControlData(data);
+    return data;
+  }, [activeDashboard, isometricFilter.filteredControlData, controlData, testPackFilter.filterControlData]);
+  
+  const finalDetailData = React.useMemo(() => {
+    if (activeDashboard !== 'INSTRUMENTS REPORT') return detailsData;
+    let data = isometricFilter.filteredDetailData || detailsData;
+    data = testPackFilter.filterDetailData(data);
+    return data;
+  }, [activeDashboard, isometricFilter.filteredDetailData, detailsData, testPackFilter.filterDetailData]);
   // Map tab index to dashboard name
   const dashboardNames = [
     'LOOP TESTING PROGRESS REPORT',
@@ -107,6 +128,19 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
                 <VStack spacing={4} align="stretch">
+                  {/* Dual Filter Status */}
+                  <HStack spacing={4} justify="center">
+                    {isometricFilter.selectedIsometric && (
+                      <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
+                        ISOMETRIC: {isometricFilter.selectedIsometric}
+                      </Badge>
+                    )}
+                    {testPackFilter.selectedTestPack && (
+                      <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
+                        TEST PACK: {testPackFilter.selectedTestPack}
+                      </Badge>
+                    )}
+                  </HStack>
                   <IsometricRelationshipPanel
                     selectedIsometric={isometricFilter.selectedIsometric}
                     matchingChains={isometricFilter.matchingChains}
@@ -116,16 +150,20 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     selectedChainIndex={isometricFilter.selectedChainIndex}
                   />
                   <ControlInstrumentsTable 
-                    data={isometricFilter.filteredControlData || controlData || data}
+                    data={finalControlData || controlData || data}
                     selectedIsometric={isometricFilter.selectedIsometric}
                     onIsometricClick={isometricFilter.onIsometricSelect}
                     highlightedRecords={isometricFilter.highlightedControlRecords}
+                    selectedTestPack={testPackFilter.selectedTestPack}
+                    onTestPackClick={testPackFilter.handleTestPackClick}
                   />
                   <DetailsInstrumentsTable 
-                    data={isometricFilter.filteredDetailData || detailsData || data}
+                    data={finalDetailData || detailsData || data}
                     selectedIsometric={isometricFilter.selectedIsometric}
                     onMountingLocationClick={isometricFilter.onIsometricSelect}
                     highlightedRecords={isometricFilter.highlightedDetailRecords}
+                    selectedTestPack={testPackFilter.selectedTestPack}
+                    onTestPackClick={testPackFilter.handleTestPackClick}
                   />
                 </VStack>
               </Suspense>

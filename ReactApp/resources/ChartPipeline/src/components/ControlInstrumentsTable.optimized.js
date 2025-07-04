@@ -30,7 +30,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 const columnHelper = createColumnHelper();
 
 // Test Pack Cell Component
-const TestPackCell = ({ testPacks, onTestPackSelect }) => {
+const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
   if (!testPacks || testPacks.length === 0) {
     return (
       <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
@@ -54,13 +54,14 @@ const TestPackCell = ({ testPacks, onTestPackSelect }) => {
       >
         <Button
           size="xs"
-          variant="solid"
+          variant={selectedTestPack === testPacks[0] ? "solid" : "outline"}
           onClick={() => onTestPackSelect(testPacks[0])}
-          _hover={{ bg: "blue.200" }}
+          _hover={{ bg: selectedTestPack === testPacks[0] ? "green.200" : "blue.200" }}
           fontSize="10px"
           fontWeight="medium"
-          color="white"
-          bg="blue.500"
+          color={selectedTestPack === testPacks[0] ? "white" : "blue.600"}
+          bg={selectedTestPack === testPacks[0] ? "green.500" : "white"}
+          borderColor={selectedTestPack === testPacks[0] ? "green.500" : "blue.500"}
           minWidth="30px"
           height="18px"
           px={2}
@@ -89,13 +90,14 @@ const TestPackCell = ({ testPacks, onTestPackSelect }) => {
           <Button
             key={`${testPack}-${index}`}
             size="xs"
-            variant="solid"
+            variant={selectedTestPack === testPack ? "solid" : "outline"}
             onClick={() => onTestPackSelect(testPack)}
-            _hover={{ bg: "blue.200" }}
+            _hover={{ bg: selectedTestPack === testPack ? "green.200" : "blue.200" }}
             fontSize="10px"
             fontWeight="medium"
-            color="white"
-            bg="blue.500"
+            color={selectedTestPack === testPack ? "white" : "blue.600"}
+            bg={selectedTestPack === testPack ? "green.500" : "white"}
+            borderColor={selectedTestPack === testPack ? "green.500" : "blue.500"}
             minWidth="30px"
             height="18px"
             px={2}
@@ -121,10 +123,10 @@ const ControlInstrumentsTable = React.memo(({
   data, 
   selectedIsometric, 
   onIsometricClick, 
-  highlightedRecords = new Set() 
+  highlightedRecords = new Set(),
+  selectedTestPack,
+  onTestPackClick
 }) => {
-  // State for test pack filtering
-  const [testPackFilter, setTestPackFilter] = useState(null);
   // Memoize processed data to avoid recalculations
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -494,15 +496,11 @@ const ControlInstrumentsTable = React.memo(({
       cell: ({ getValue, row }) => {
         const testPacks = row.original.testPacks || splitTestPack(getValue());
         
-        const handleTestPackFilter = (selectedTestPack) => {
-          setTestPackFilter(selectedTestPack);
-          // Apply filter logic here if needed
-        };
-        
         return (
           <TestPackCell 
             testPacks={testPacks}
-            onTestPackSelect={handleTestPackFilter}
+            onTestPackSelect={onTestPackClick}
+            selectedTestPack={selectedTestPack}
           />
         );
       }
@@ -686,9 +684,9 @@ const ControlInstrumentsTable = React.memo(({
           <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
             {groupedData.length} ISOS
           </Badge>
-          {testPackFilter && (
+          {selectedTestPack && (
             <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
-              Filtered: Test Pack {testPackFilter}
+              Test Pack: {selectedTestPack}
             </Badge>
           )}
         </HStack>

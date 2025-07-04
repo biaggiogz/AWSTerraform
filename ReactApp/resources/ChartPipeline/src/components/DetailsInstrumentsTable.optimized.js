@@ -20,7 +20,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 const columnHelper = createColumnHelper();
 
 // Test Pack Cell Component
-const TestPackCell = ({ testPacks }) => {
+const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
   if (!testPacks || testPacks.length === 0) {
     return (
       <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
@@ -44,16 +44,18 @@ const TestPackCell = ({ testPacks }) => {
       >
         <Button
           size="xs"
-          variant="solid"
+          variant={selectedTestPack === testPacks[0] ? "solid" : "outline"}
+          onClick={() => onTestPackSelect && onTestPackSelect(testPacks[0])}
           fontSize="10px"
           fontWeight="medium"
-          color="white"
-          bg="blue.500"
+          color={selectedTestPack === testPacks[0] ? "white" : "blue.600"}
+          bg={selectedTestPack === testPacks[0] ? "green.500" : "white"}
+          borderColor={selectedTestPack === testPacks[0] ? "green.500" : "blue.500"}
           minWidth="30px"
           height="18px"
           px={2}
           borderRadius="sm"
-          _hover={{ bg: "blue.200" }}
+          _hover={{ bg: selectedTestPack === testPacks[0] ? "green.200" : "blue.200" }}
         >
           {testPacks[0]}
         </Button>
@@ -78,16 +80,18 @@ const TestPackCell = ({ testPacks }) => {
           <Button
             key={`${testPack}-${index}`}
             size="xs"
-            variant="solid"
+            variant={selectedTestPack === testPack ? "solid" : "outline"}
+            onClick={() => onTestPackSelect && onTestPackSelect(testPack)}
             fontSize="10px"
             fontWeight="medium"
-            color="white"
-            bg="blue.500"
+            color={selectedTestPack === testPack ? "white" : "blue.600"}
+            bg={selectedTestPack === testPack ? "green.500" : "white"}
+            borderColor={selectedTestPack === testPack ? "green.500" : "blue.500"}
             minWidth="30px"
             height="18px"
             px={2}
             borderRadius="sm"
-            _hover={{ bg: "blue.200" }}
+            _hover={{ bg: selectedTestPack === testPack ? "green.200" : "blue.200" }}
           >
             {testPack}
           </Button>
@@ -109,7 +113,9 @@ const DetailsInstrumentsTable = React.memo(({
   data, 
   selectedIsometric, 
   onMountingLocationClick, 
-  highlightedRecords = new Set() 
+  highlightedRecords = new Set(),
+  selectedTestPack,
+  onTestPackClick
 }) => {
   // Memoize processed data to avoid recalculations
   const processedData = useMemo(() => {
@@ -160,7 +166,11 @@ const DetailsInstrumentsTable = React.memo(({
           testPackValue.toString().split("|").map(v => v.trim()).filter(v => v !== '' && v !== '0' && v !== 'NOT_APPLY') : [];
         
         return (
-          <TestPackCell testPacks={testPacks} />
+          <TestPackCell 
+            testPacks={testPacks}
+            onTestPackSelect={onTestPackClick}
+            selectedTestPack={selectedTestPack}
+          />
         );
       }
     }),
