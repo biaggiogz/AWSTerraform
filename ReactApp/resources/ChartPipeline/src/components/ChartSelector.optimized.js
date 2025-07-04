@@ -18,6 +18,7 @@ const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart
 const LazosTable = lazy(() => import('./LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('./InsulationProgressTable.optimized'));
 const ControlInstrumentsTable = lazy(() => import('./ControlInstrumentsTable.optimized'));
+const DetailsInstrumentsTable = lazy(() => import('./DetailsInstrumentsTable.optimized'));
 const SummarySubsystems = lazy(() => import('./SummarySubsystems'));
 
 /**
@@ -25,12 +26,14 @@ const SummarySubsystems = lazy(() => import('./SummarySubsystems'));
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset
  * @param {Array} props.rawData - Raw unfiltered dataset for global metrics
+ * @param {Array} props.controlData - Control instruments data for INSTRUMENTS REPORT
+ * @param {Array} props.detailsData - Details instruments data for INSTRUMENTS REPORT
  * @param {string} props.activeDashboard - Currently active dashboard
  * @param {Function} props.onDashboardChange - Function to call when dashboard changes
  * @param {Function} props.onProgressFilter - Function to handle progress filtering
  * @param {string} props.progressFilter - Current progress filter
  */
-const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onProgressFilter, progressFilter }) => {
+const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboard, onDashboardChange, onProgressFilter, progressFilter }) => {
   // Map tab index to dashboard name
   const dashboardNames = [
     'LOOP TESTING PROGRESS REPORT',
@@ -96,7 +99,10 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
 
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <ControlInstrumentsTable data={data} />
+                <VStack spacing={0} align="stretch">
+                  <ControlInstrumentsTable data={controlData || data} />
+                  <DetailsInstrumentsTable data={detailsData || data} />
+                </VStack>
               </Suspense>
             </TabPanel>
 
