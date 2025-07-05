@@ -25,6 +25,7 @@ const InsulationProgressTable = lazy(() => import('./InsulationProgressTable.opt
 const ControlInstrumentsTable = lazy(() => import('./ControlInstrumentsTable.optimized'));
 const DetailsInstrumentsTable = lazy(() => import('./DetailsInstrumentsTable.optimized'));
 const IsometricRelationshipPanel = lazy(() => import('./IsometricRelationshipPanel.optimized'));
+const DynamicCalculationPanel = lazy(() => import('./DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('./SummarySubsystems'));
 
 /**
@@ -159,6 +160,15 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     onClearFilter={isometricFilter.onClearFilter}
                     onChainSelect={isometricFilter.onChainSelect}
                     selectedChainIndex={isometricFilter.selectedChainIndex}
+                  />
+                  <DynamicCalculationPanel
+                    controlData={finalControlData || controlData}
+                    detailsData={finalDetailData || detailsData}
+                    filters={{
+                      selectedIsometric: isometricFilter.selectedIsometric,
+                      selectedTestPack: testPackFilter.selectedTestPack,
+                      selectedSubsystem: subsystemFilter.selectedSubsystem
+                    }}
                   />
                   <ControlInstrumentsTable 
                     data={finalControlData || controlData || data}
