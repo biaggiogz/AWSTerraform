@@ -58,7 +58,7 @@ const useInstrumentsFilter = (controlData, detailsData, filterMappings) => {
       if (key === 'ISOMETRIC') {
         // Map ISOMETRIC to MOUNTING ON ISO/EQUI/PACK in details data
         mappedFilters['MOUNTING ON ISO/EQUI/PACK'] = multiFilters[key];
-      } else if (key === 'SUSSYTEM' || key === 'SUBSYSTEM') {
+      } else if (key === 'SUBSYSTEM' || key === 'SUSSYTEM') {
         // Map to SUBSYSTEM in details data
         mappedFilters['SUBSYSTEM'] = multiFilters[key];
       } else {

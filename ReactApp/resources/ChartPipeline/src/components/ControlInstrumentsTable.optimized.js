@@ -180,7 +180,7 @@ const ControlInstrumentsTable = React.memo(({
       id: index,
       isometric: row.ISOMETRIC || '',
       weldingFwSw: parseFloat(row['TP 100% FW+SW']) || 0,
-      subsystem: row.SUSSYTEM || row.SUBSYSTEM || '', // Note: CSV uses SUSSYTEM
+      subsystem: row.SUBSYSTEM || row.SUSSYTEM || '', // Use SUBSYSTEM field
       crono: parseInt(row.CRONO) || 0,
       priority: parseInt(row.PRIORITY) || 0,
       hito: row.HITO || '',
