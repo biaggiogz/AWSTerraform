@@ -29,6 +29,49 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 
 const columnHelper = createColumnHelper();
 
+// Isometric Cell Component
+const IsometricCell = ({ isometric, onIsometricSelect, selectedIsometric }) => {
+  if (!isometric || isometric === '') {
+    return (
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="xs" color="gray.500">-</Text>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <Button
+        size="xs"
+        variant={selectedIsometric === isometric ? "solid" : "outline"}
+        onClick={() => onIsometricSelect && onIsometricSelect(isometric)}
+        _hover={{ bg: selectedIsometric === isometric ? "green.200" : "blue.200" }}
+        fontSize="10px"
+        fontWeight="medium"
+        color={selectedIsometric === isometric ? "white" : "blue.600"}
+        bg={selectedIsometric === isometric ? "green.500" : "white"}
+        borderColor={selectedIsometric === isometric ? "green.500" : "blue.500"}
+        minWidth="30px"
+        height="18px"
+        px={2}
+        borderRadius="sm"
+      >
+        {isometric}
+      </Button>
+    </Box>
+  );
+};
+
 // Subsystem Cell Component
 const SubsystemCell = ({ subsystem, onSubsystemSelect, selectedSubsystem }) => {
   if (!subsystem || subsystem === '') {
@@ -369,31 +412,13 @@ const ControlInstrumentsTable = React.memo(({
       maxSize: 400,
       size: 180,
       enableResizing: true,
-      cell: ({ getValue, row }) => {
-        const isoValue = getValue();
-        const isSelected = selectedIsometric === isoValue;
-        const isHighlighted = highlightedRecords.has(row.original);
-        
-        return (
-          <Text 
-            fontSize="xs" 
-            fontFamily="mono" 
-            textAlign="left" 
-            noOfLines={2}
-            cursor="pointer"
-            color={isSelected ? 'blue.600' : 'inherit'}
-            fontWeight={isSelected || isHighlighted ? 'bold' : 'normal'}
-            bg={isSelected ? 'blue.50' : isHighlighted ? 'yellow.50' : 'transparent'}
-            px={1}
-            py={1}
-            borderRadius="sm"
-            _hover={{ bg: 'blue.100', color: 'blue.700' }}
-            onClick={() => onIsometricClick && onIsometricClick(isoValue)}
-          >
-            {isoValue}
-          </Text>
-        );
-      }
+      cell: ({ getValue }) => (
+        <IsometricCell 
+          isometric={getValue()}
+          onIsometricSelect={onIsometricClick}
+          selectedIsometric={selectedIsometric}
+        />
+      )
     }),
     columnHelper.accessor('weldingFwSw', {
       header: 'WELDING FW+SW',
@@ -433,7 +458,7 @@ const ControlInstrumentsTable = React.memo(({
     }),
     columnHelper.accessor('subsystem', {
       header: 'SUBSYSTEM',
-      minSize: 80,
+      minSize: 110,
       maxSize: 200,
       size: 90,
       enableResizing: true,
