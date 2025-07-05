@@ -488,16 +488,11 @@ const ControlInstrumentsTable = React.memo(({
       maxSize: 150,
       size: 70,
       enableResizing: true,
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const colorScheme = value <= 3 ? 'red' : value <= 5 ? 'yellow' : 'green';
-        
-        return (
-          <Badge colorScheme={colorScheme} fontSize="xs">
-            {value}
-          </Badge>
-        );
-      }
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
     }),
     columnHelper.accessor('hito', {
       header: 'HITO',

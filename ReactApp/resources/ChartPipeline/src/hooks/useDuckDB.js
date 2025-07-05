@@ -133,9 +133,9 @@ const useDuckDB = () => {
       
     // Apply WHERE clause
     if (whereClause) {
-      // Support multiple comparison operators: =, >=, <=, >, <
+      // Support multiple comparison operators: =, >=, <=, >, <, !=
       // Improved regex to handle quoted field names with spaces and special characters
-      const whereMatch = whereClause.match(/["']([^"']+)["']\s*(>=|<=|>|<|=)\s*["']?([^"']+)["']?|([^\s>=<!]+)\s*(>=|<=|>|<|=)\s*["']?([^"']+)["']?/);
+      const whereMatch = whereClause.match(/["']([^"']+)["']\s*(!=|>=|<=|>|<|=)\s*["']?([^"']+)["']?|([^\s>=<!]+)\s*(!=|>=|<=|>|<|=)\s*["']?([^"']+)["']?/);
       if (whereMatch) {
         const field = whereMatch[1] || whereMatch[4]; // quoted or unquoted field name
         const operator = whereMatch[2] || whereMatch[5];
@@ -159,7 +159,7 @@ const useDuckDB = () => {
             }
           }
           
-          // Handle string/percentage comparisons for = operator
+          // Handle string/percentage comparisons for = and != operators
           if (operator === '=') {
             if (value.includes('%')) {
               return String(rowValue) === value;
@@ -169,17 +169,21 @@ const useDuckDB = () => {
             return String(rowValue) === value;
           }
           
+          if (operator === '!=') {
+            return String(rowValue) !== value;
+          }
+          
           return false;
         });
       }
     }
     
-    // Handle SELECT with aggregation (including DISTINCT)
-    const aggMatch = selectFields.match(/(COUNT)\s*\(\s*DISTINCT\s+["']?([^"')]+)["']?\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(["']([^"']+)["']\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(([^)]+)\)\s+AS\s+["']?([^"']+)["']?/i);
+    // Handle SELECT with aggregation (including DISTINCT and CAST)
+    const aggMatch = selectFields.match(/(COUNT)\s*\(\s*DISTINCT\s+["']?([^"')]+)["']?\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(["']([^"']+)["']\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(CAST\(["']([^"']+)["']\s+AS\s+\w+\)\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(([^)]+)\)\s+AS\s+["']?([^"']+)["']?/i);
     if (aggMatch) {
-      const aggFunc = aggMatch[1] || aggMatch[4] || aggMatch[7];
-      const field = aggMatch[2] || aggMatch[5] || aggMatch[8];
-      const alias = aggMatch[3] || aggMatch[6] || aggMatch[9];
+      const aggFunc = aggMatch[1] || aggMatch[4] || aggMatch[7] || aggMatch[10];
+      const field = aggMatch[2] || aggMatch[5] || aggMatch[8] || aggMatch[11];
+      const alias = aggMatch[3] || aggMatch[6] || aggMatch[9] || aggMatch[12];
       const isDistinct = !!aggMatch[1]; // true if COUNT(DISTINCT ...)
       const fieldName = field.replace(/["/]/g, ''); // remove quotes
       
@@ -233,6 +237,11 @@ const useDuckDB = () => {
         } else {
           const values = data.map(row => {
             const value = mapFieldName(fieldName, row);
+            // Handle CAST to INTEGER - convert to number, skip non-numeric values
+            if (aggFunc.toUpperCase() === 'SUM' && fieldName === 'INSTALLED (TEIGA-TMI)') {
+              const numValue = parseInt(value);
+              return isNaN(numValue) ? 0 : numValue;
+            }
             return parseFloat(value) || 0;
           }).filter(v => !isNaN(v));
           
