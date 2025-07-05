@@ -72,6 +72,7 @@ const useDuckDB = () => {
       'TP 100% FW+SW': ['TP 100% FW+SW', 'WELDING FW+SW', 'weldingFwSw', 'WELDING_FW_SW', 'WELDING FW SW'],
       'ISOMETRIC': ['ISOMETRIC', 'isometric'],
       'SUBSYSTEM': ['SUBSYSTEM', 'SUSSYTEM', 'subsystem'],
+      'QTY INST': ['QTY INST', 'QTY_INST', 'qtyInst', 'QUANTITY INST'],
       'TESTPACK': ['TESTPACK', 'testPack', 'TEST PACK'],
       'MOUNTING': ['MOUNTING ON ISO/EQUI/PACK', 'mountingOnIsoEquiPack']
     };
@@ -110,9 +111,9 @@ const useDuckDB = () => {
       }
     }
     
-    // Debug logging for WELDING FW+SW field
-    if (fieldName === 'WELDING FW+SW' || fieldName === 'TP 100% FW+SW') {
-      console.log(`Field: ${fieldName}, Row keys:`, Object.keys(row), 'Value found:', value);
+    // Debug logging for problematic fields
+    if (['WELDING FW+SW', 'TP 100% FW+SW', 'QTY INST'].includes(fieldName)) {
+      console.log(`Field: ${fieldName}, Available keys:`, Object.keys(row).slice(0, 10), 'Value found:', value);
     }
     
     return value;
@@ -246,18 +247,18 @@ const useDuckDB = () => {
         // Single query
         return await executeSingleQuery(queries[0]);
       } else {
-        // Multiple queries - combine results
-        const allResults = {};
+        // Multiple queries - merge all results into single object
+        const combinedResult = {};
         
         for (const singleQuery of queries) {
           const result = await executeSingleQuery(singleQuery);
-          if (result && result.length > 0) {
-            // Merge results into a single object
-            Object.assign(allResults, result[0]);
+          if (result && result.length > 0 && result[0]) {
+            // Merge each query result into the combined object
+            Object.assign(combinedResult, result[0]);
           }
         }
         
-        return [allResults];
+        return [combinedResult];
       }
     } catch (err) {
       console.error('SQL Parse Error:', err);
