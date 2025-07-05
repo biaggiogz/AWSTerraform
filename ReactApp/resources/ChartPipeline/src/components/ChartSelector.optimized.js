@@ -142,11 +142,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                         ISOMETRIC: {isometricFilter.selectedIsometric}
                       </Badge>
                     )}
-                    {testPackFilter.selectedTestPack && (
-                      <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
-                        TEST PACK: {testPackFilter.selectedTestPack}
-                      </Badge>
-                    )}
                     {subsystemFilter.selectedSubsystem && (
                       <Badge colorScheme="orange" fontSize="sm" px={3} py={1}>
                         SUBSYSTEM: {subsystemFilter.selectedSubsystem}

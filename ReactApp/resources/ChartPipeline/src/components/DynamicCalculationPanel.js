@@ -56,7 +56,6 @@ FROM "Control Instruments";`);
         
         {/* Schema Reference */}
         <VStack spacing={2} align="stretch" fontSize="xs" color="gray.600">
-          <Text><strong>Available Tables:</strong></Text>
           {Object.entries(tableInfo).map(([tableName, info]) => (
             <Box key={tableName} pl={4} borderLeft="2px solid" borderColor="blue.200">
               <Text fontWeight="bold">"{tableName}" ({info.filteredRows}/{info.totalRows} rows)</Text>
