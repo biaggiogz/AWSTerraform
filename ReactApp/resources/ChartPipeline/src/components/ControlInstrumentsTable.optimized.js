@@ -235,10 +235,10 @@ const ControlInstrumentsTable = React.memo(({
       deliveryProgress: row['DELIVERY PROGRESS 100% BY TEN'] || row['DELIVERY PROGRESS BY TEN'] || '',
       readyToInstall: row['READY TO INSTALL INST (SIEMSA)'] || '',
       qtyInst: parseInt(row['QTY INST']) || 0,
-      scopeTiegaTmi: parseInt(row['SCOPE BY TEIGA-TMI']) || 0,
+      scopeTeigaTmi: parseFloat(row['SCOPE BY TEIGA-TMI']) || 0,
       scopeSiemsa: parseInt(row['SCOPE BY SIEMSA']) || 0,
       installedSiemsa: row['INSTALLED (SIEMSA)'] || '',
-      installedTiegaTmi: parseInt(row['INSTALLED (TEIGA-TMI)']) || 0,
+      installedTiegaTmi: isNaN(parseInt(row['INSTALLED (TEIGA-TMI)'])) ? (row['INSTALLED (TEIGA-TMI)'] || '') : parseInt(row['INSTALLED (TEIGA-TMI)']),
       totalInstalled: parseInt(row['TOTAL INSTALLED']) || 0,
       tracYesNot: row['TRAC (YES & NOT)'] || '',
       tagCircuitoTraceado: row['Tag Circuito Traceado'] || ''
@@ -394,7 +394,7 @@ const ControlInstrumentsTable = React.memo(({
       deliveryProgress: '#7CA2C5', // #8AB3DB -10% dark
       readyToInstall: '#7CA2C5', // #8AB3DB -10% dark
       qtyInst: '#B3CDDF', // #C7E4F8 -10% dark
-      scopeTiegaTmi: '#B3CDDF', // #C7E4F8 -10% dark
+      scopeTeigaTmi: '#B3CDDF', // #C7E4F8 -10% dark
       scopeSiemsa: '#B3CDDF', // #C7E4F8 -10% dark
       installedSiemsa: '#B3CDDF', // #C7E4F8 -10% dark
       installedTiegaTmi: '#B3CDDF', // #C7E4F8 -10% dark
@@ -613,7 +613,7 @@ const ControlInstrumentsTable = React.memo(({
         </Text>
       )
     }),
-    columnHelper.accessor('scopeTiegaTmi', {
+    columnHelper.accessor('scopeTeigaTmi', {
       header: 'SCOPE BY TEIGA-TMI',
       minSize: 80,
       maxSize: 200,
@@ -668,7 +668,7 @@ const ControlInstrumentsTable = React.memo(({
       size: 100,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" fontWeight="bold" color="green.600">
+        <Text fontSize="xs" textAlign="center">
           {getValue()}
         </Text>
       )
