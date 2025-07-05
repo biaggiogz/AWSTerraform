@@ -97,6 +97,66 @@ const SubsystemCell = ({ subsystems, onSubsystemSelect, selectedSubsystem }) => 
   );
 };
 
+// Mounting Cell Component
+const MountingCell = ({ mountingValue, onMountingSelect, selectedMounting, isHighlighted }) => {
+  const pattern = /^(?:[^-]*-){5}[^-]*$/;
+  const matchesPattern = pattern.test(mountingValue);
+  
+  if (!mountingValue || !matchesPattern) {
+    const isSelected = selectedMounting === mountingValue;
+    return (
+      <Text 
+        fontSize="xs" 
+        textAlign="left"
+        noOfLines={2}
+        cursor="pointer"
+        color={isSelected ? 'blue.600' : 'inherit'}
+        fontWeight={isSelected || isHighlighted ? 'bold' : 'normal'}
+        bg={isSelected ? 'blue.50' : isHighlighted ? 'yellow.50' : 'transparent'}
+        px={1}
+        py={1}
+        borderRadius="sm"
+        _hover={{ bg: 'blue.100', color: 'blue.700' }}
+        onClick={() => onMountingSelect && onMountingSelect(mountingValue)}
+      >
+        {mountingValue}
+      </Text>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <Button
+        size="xs"
+        variant={selectedMounting === mountingValue ? "solid" : "outline"}
+        onClick={() => onMountingSelect && onMountingSelect(mountingValue)}
+        fontSize="10px"
+        fontWeight="medium"
+        color={selectedMounting === mountingValue ? "white" : "blue.600"}
+        bg={selectedMounting === mountingValue ? "green.500" : "white"}
+        borderColor={selectedMounting === mountingValue ? "green.500" : "blue.500"}
+        minWidth="30px"
+        height="18px"
+        px={2}
+        borderRadius="sm"
+        _hover={{ bg: selectedMounting === mountingValue ? "green.200" : "blue.200" }}
+      >
+        {mountingValue}
+      </Button>
+    </Box>
+  );
+};
+
 // Test Pack Cell Component
 const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
   if (!testPacks || testPacks.length === 0) {
@@ -269,26 +329,15 @@ const DetailsInstrumentsTable = React.memo(({
       enableResizing: true,
       cell: ({ getValue, row }) => {
         const mountingValue = getValue();
-        const isSelected = selectedIsometric === mountingValue;
         const isHighlighted = highlightedRecords.has(row.original);
         
         return (
-          <Text 
-            fontSize="xs" 
-            textAlign="left"
-            noOfLines={2}
-            cursor="pointer"
-            color={isSelected ? 'blue.600' : 'inherit'}
-            fontWeight={isSelected || isHighlighted ? 'bold' : 'normal'}
-            bg={isSelected ? 'blue.50' : isHighlighted ? 'yellow.50' : 'transparent'}
-            px={1}
-            py={1}
-            borderRadius="sm"
-            _hover={{ bg: 'blue.100', color: 'blue.700' }}
-            onClick={() => onMountingLocationClick && onMountingLocationClick(mountingValue)}
-          >
-            {mountingValue}
-          </Text>
+          <MountingCell 
+            mountingValue={mountingValue}
+            onMountingSelect={onMountingLocationClick}
+            selectedMounting={selectedIsometric}
+            isHighlighted={isHighlighted}
+          />
         );
       }
     }),
