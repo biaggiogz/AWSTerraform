@@ -73,7 +73,8 @@ const useDuckDB = () => {
       'ISOMETRIC': ['ISOMETRIC', 'isometric'],
       'SUBSYSTEM': ['SUBSYSTEM', 'SUSSYTEM', 'subsystem'],
       'QTY INST': ['QTY INST', 'QTY_INST', 'qtyInst', 'QUANTITY INST'],
-      'TESTPACK': ['TESTPACK', 'testPack', 'TEST PACK'],
+      'TEST PACK': ['TEST PACK', 'TESTPACK', 'testPack', 'TEST_PACK'],
+      'TESTPACK': ['TESTPACK', 'testPack', 'TEST PACK', 'TEST_PACK'],
       'MOUNTING': ['MOUNTING ON ISO/EQUI/PACK', 'mountingOnIsoEquiPack']
     };
 
@@ -112,7 +113,7 @@ const useDuckDB = () => {
     }
     
     // Debug logging for problematic fields
-    if (['WELDING FW+SW', 'TP 100% FW+SW', 'QTY INST'].includes(fieldName)) {
+    if (['WELDING FW+SW', 'TP 100% FW+SW', 'QTY INST', 'TEST PACK'].includes(fieldName)) {
       console.log(`Field: ${fieldName}, Available keys:`, Object.keys(row).slice(0, 10), 'Value found:', value);
     }
     
@@ -173,12 +174,13 @@ const useDuckDB = () => {
       }
     }
     
-    // Handle SELECT with aggregation
-    const aggMatch = selectFields.match(/(COUNT|SUM|AVG|MIN|MAX)\(["']([^"']+)["']\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(([^)]+)\)\s+AS\s+["']?([^"']+)["']?/i);
+    // Handle SELECT with aggregation (including DISTINCT)
+    const aggMatch = selectFields.match(/(COUNT)\s*\(\s*DISTINCT\s+["']?([^"')]+)["']?\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(["']([^"']+)["']\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(([^)]+)\)\s+AS\s+["']?([^"']+)["']?/i);
     if (aggMatch) {
-      const aggFunc = aggMatch[1] || aggMatch[4];
-      const field = aggMatch[2] || aggMatch[5];
-      const alias = aggMatch[3] || aggMatch[6];
+      const aggFunc = aggMatch[1] || aggMatch[4] || aggMatch[7];
+      const field = aggMatch[2] || aggMatch[5] || aggMatch[8];
+      const alias = aggMatch[3] || aggMatch[6] || aggMatch[9];
+      const isDistinct = !!aggMatch[1]; // true if COUNT(DISTINCT ...)
       const fieldName = field.replace(/["/]/g, ''); // remove quotes
       
       if (groupBy) {
@@ -210,6 +212,24 @@ const useDuckDB = () => {
         let result;
         if (fieldName === '*') {
           result = data.length;
+        } else if (isDistinct) {
+          // Handle COUNT(DISTINCT field) with pipe-separated values
+          const uniqueValues = new Set();
+          data.forEach(row => {
+            const value = mapFieldName(fieldName, row);
+            if (value) {
+              // Split by pipe if it contains pipe-separated values
+              if (String(value).includes('|')) {
+                String(value).split('|').forEach(v => {
+                  const trimmed = v.trim();
+                  if (trimmed) uniqueValues.add(trimmed);
+                });
+              } else {
+                uniqueValues.add(String(value).trim());
+              }
+            }
+          });
+          result = uniqueValues.size;
         } else {
           const values = data.map(row => {
             const value = mapFieldName(fieldName, row);
