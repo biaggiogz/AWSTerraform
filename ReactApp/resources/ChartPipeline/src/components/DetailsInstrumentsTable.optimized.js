@@ -263,7 +263,7 @@ const DetailsInstrumentsTable = React.memo(({
     }),
     columnHelper.accessor('mountingOnIsoEquiPack', {
       header: 'MOUNTING ON ISO/EQUI/PACK',
-      minSize: 280,
+      minSize: 270,
       maxSize: 300,
       size: 180,
       enableResizing: true,
@@ -275,7 +275,7 @@ const DetailsInstrumentsTable = React.memo(({
         return (
           <Text 
             fontSize="xs" 
-            textAlign="center" 
+            textAlign="left"
             noOfLines={2}
             cursor="pointer"
             color={isSelected ? 'blue.600' : 'inherit'}

@@ -365,7 +365,7 @@ const ControlInstrumentsTable = React.memo(({
   const columns = useMemo(() => [
     columnHelper.accessor('isometric', {
       header: 'ISOMETRIC',
-      minSize: 280,
+      minSize: 270,
       maxSize: 400,
       size: 180,
       enableResizing: true,
@@ -433,7 +433,7 @@ const ControlInstrumentsTable = React.memo(({
     }),
     columnHelper.accessor('subsystem', {
       header: 'SUBSYSTEM',
-      minSize: 60,
+      minSize: 80,
       maxSize: 200,
       size: 90,
       enableResizing: true,
