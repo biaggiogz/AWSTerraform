@@ -56,11 +56,9 @@ const useInstrumentsFilter = (controlData, detailsData, filterMappings) => {
     const mappedFilters = {};
     Object.keys(multiFilters).forEach(key => {
       if (key === 'ISOMETRIC') {
-        // Details data doesn't have ISOMETRIC field directly, but we can filter by SUBSYSTEM
-        // which should be consistent between both datasets
-        return;
-      }
-      if (key === 'SUSSYTEM' || key === 'SUBSYSTEM') {
+        // Map ISOMETRIC to MOUNTING ON ISO/EQUI/PACK in details data
+        mappedFilters['MOUNTING ON ISO/EQUI/PACK'] = multiFilters[key];
+      } else if (key === 'SUSSYTEM' || key === 'SUBSYSTEM') {
         // Map to SUBSYSTEM in details data
         mappedFilters['SUBSYSTEM'] = multiFilters[key];
       } else {
