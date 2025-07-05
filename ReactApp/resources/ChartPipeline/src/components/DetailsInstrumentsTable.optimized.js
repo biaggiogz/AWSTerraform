@@ -263,7 +263,7 @@ const DetailsInstrumentsTable = React.memo(({
     }),
     columnHelper.accessor('mountingOnIsoEquiPack', {
       header: 'MOUNTING ON ISO/EQUI/PACK',
-      minSize: 120,
+      minSize: 280,
       maxSize: 300,
       size: 180,
       enableResizing: true,

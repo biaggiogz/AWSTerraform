@@ -15,7 +15,7 @@ const useDashboardConfig = (activeDashboard) => {
         subsystem: 'SUBS_PRE'
       }
     },
-    'INSULATION PROGRESS CONTROL': {
+    'INSULATION PROGRESS REPORT': {
       datasetPath: '/data/aislamientos.csv',
       filterMappings: {
         area: 'Area',

@@ -71,7 +71,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
   // Map tab index to dashboard name
   const dashboardNames = [
     'LOOP TESTING PROGRESS REPORT',
-    'INSULATION PROGRESS CONTROL',
+    'INSULATION PROGRESS REPORT',
     'TEST PACK PROGRESS',
     'INSTRUMENTS REPORT',
     'SUMMARY SUBSYSTEMS'
@@ -97,7 +97,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
         >
           <TabList mb="1em">
             <Tab>LOOP TESTING PROGRESS REPORT</Tab>
-            <Tab>INSULATION PROGRESS CONTROL</Tab>
+            <Tab>INSULATION PROGRESS REPORT</Tab>
             <Tab>TEST PACK PROGRESS REPORT</Tab>
             <Tab>INSTRUMENTS REPORT</Tab>
             <Tab>SUMMARY SUBSYSTEMS</Tab>
