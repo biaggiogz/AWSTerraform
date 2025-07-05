@@ -162,8 +162,10 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     selectedChainIndex={isometricFilter.selectedChainIndex}
                   />
                   <DynamicCalculationPanel
-                    controlData={finalControlData || controlData}
-                    detailsData={finalDetailData || detailsData}
+                    controlData={controlData}
+                    detailsData={detailsData}
+                    filteredControlData={finalControlData}
+                    filteredDetailsData={finalDetailData}
                     filters={{
                       selectedIsometric: isometricFilter.selectedIsometric,
                       selectedTestPack: testPackFilter.selectedTestPack,

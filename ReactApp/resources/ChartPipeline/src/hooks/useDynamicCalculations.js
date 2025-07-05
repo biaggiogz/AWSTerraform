@@ -1,8 +1,16 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import useDuckDB from './useDuckDB';
 
-const useDynamicCalculations = (controlData, detailsData, filters = {}) => {
-  const { executeQuery, createTable, loading: dbLoading } = useDuckDB();
+const useDynamicCalculations = (controlData, detailsData, filteredControlData, filteredDetailsData, filters = {}) => {
+  const { 
+    executeQuery, 
+    createTable, 
+    updateFilteredTable,
+    getAvailableTables,
+    getTableFields,
+    getTableInfo,
+    loading: dbLoading 
+  } = useDuckDB();
   const [calculations, setCalculations] = useState([]);
   const [loading, setLoading] = useState(false);
   const tablesInitialized = useRef(false);
@@ -13,20 +21,43 @@ const useDynamicCalculations = (controlData, detailsData, filters = {}) => {
     try {
       await createTable('Control Instruments', controlData);
       await createTable('Details Instruments', detailsData);
+      tablesInitialized.current = true;
+      
+      // Immediately update with filtered data if available
+      const controlDataToUse = filteredControlData && filteredControlData.length > 0 ? filteredControlData : controlData;
+      const detailsDataToUse = filteredDetailsData && filteredDetailsData.length > 0 ? filteredDetailsData : detailsData;
+      
+      updateFilteredTable('Control Instruments', controlDataToUse);
+      updateFilteredTable('Details Instruments', detailsDataToUse);
     } catch (error) {
       console.error('Failed to initialize tables:', error);
     }
-  }, [controlData, detailsData, createTable]);
+  }, [controlData, detailsData, filteredControlData, filteredDetailsData, createTable, updateFilteredTable]);
+
+  // Update filtered data when filters change
+  useEffect(() => {
+    if (tablesInitialized.current) {
+      // Always update with current data (filtered or original)
+      const controlDataToUse = filteredControlData && filteredControlData.length > 0 ? filteredControlData : controlData;
+      const detailsDataToUse = filteredDetailsData && filteredDetailsData.length > 0 ? filteredDetailsData : detailsData;
+      
+      if (controlDataToUse) {
+        updateFilteredTable('Control Instruments', controlDataToUse);
+      }
+      if (detailsDataToUse) {
+        updateFilteredTable('Details Instruments', detailsDataToUse);
+      }
+    }
+  }, [filteredControlData, filteredDetailsData, controlData, detailsData, updateFilteredTable]);
 
   const executeSQLQuery = useCallback(async (sqlQuery) => {
     if (dbLoading) return;
     
     setLoading(true);
     try {
-      // Initialize tables only once
+      // Initialize tables if not done
       if (!tablesInitialized.current) {
         await initializeTables();
-        tablesInitialized.current = true;
       }
       
       const result = await executeQuery(sqlQuery);
@@ -41,22 +72,26 @@ const useDynamicCalculations = (controlData, detailsData, filters = {}) => {
     }
   }, [dbLoading, executeQuery, initializeTables]);
 
+  const tableInfo = useMemo(() => getTableInfo(), [getTableInfo]);
+  
+  const availableTables = useMemo(() => getAvailableTables(), [getAvailableTables]);
+
   const controlColumns = useMemo(() => {
-    if (!controlData || controlData.length === 0) return [];
-    return Object.keys(controlData[0]);
-  }, [controlData]);
+    return getTableFields('Control Instruments');
+  }, [getTableFields]);
 
   const detailColumns = useMemo(() => {
-    if (!detailsData || detailsData.length === 0) return [];
-    return Object.keys(detailsData[0]);
-  }, [detailsData]);
+    return getTableFields('Details Instruments');
+  }, [getTableFields]);
 
   return {
     calculations,
     loading: loading || dbLoading,
     executeSQLQuery,
     controlColumns,
-    detailColumns
+    detailColumns,
+    availableTables,
+    tableInfo
   };
 };
 

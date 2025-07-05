@@ -1,16 +1,47 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-// JavaScript-based SQL parser
+// JavaScript-based SQL parser with reactive filtering
 const useDuckDB = () => {
   const [db, setDb] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const tablesRef = useRef({});
+  const filteredTablesRef = useRef({});
+  const [lastQueryResult, setLastQueryResult] = useState([]);
+  const [lastQuery, setLastQuery] = useState('');
 
   useEffect(() => {
     setDb({ type: 'js-sql' });
     setLoading(false);
   }, []);
+
+  // Get available tables
+  const getAvailableTables = useCallback(() => {
+    return Object.keys(tablesRef.current);
+  }, []);
+
+  // Get available fields for a table
+  const getTableFields = useCallback((tableName) => {
+    const data = filteredTablesRef.current[tableName] || tablesRef.current[tableName];
+    if (!data || data.length === 0) return [];
+    return Object.keys(data[0]);
+  }, []);
+
+  // Get table info (tables with their fields)
+  const getTableInfo = useCallback(() => {
+    const tables = {};
+    Object.keys(tablesRef.current).forEach(tableName => {
+      const totalRows = tablesRef.current[tableName]?.length || 0;
+      const filteredRows = filteredTablesRef.current[tableName]?.length || totalRows;
+      
+      tables[tableName] = {
+        totalRows,
+        filteredRows,
+        fields: getTableFields(tableName)
+      };
+    });
+    return tables;
+  }, [getTableFields]);
 
   const parseSQL = (query) => {
     const sql = query.trim();
@@ -34,80 +65,264 @@ const useDuckDB = () => {
     return { tableName, selectFields, whereClause, groupBy };
   };
 
-  const executeQuery = async (query) => {
-    try {
-      const { tableName, selectFields, whereClause, groupBy } = parseSQL(query);
-      console.log('Parsed table name:', tableName);
-      console.log('Available tables:', Object.keys(tablesRef.current));
-      
-      let data = tablesRef.current[tableName] || [];
-      
-      if (data.length === 0) {
-        return [{ 'Error': `Table '${tableName}' not found. Available: ${Object.keys(tablesRef.current).join(', ')}` }];
+  const mapFieldName = (fieldName, row) => {
+    // Field name mappings for different tables
+    const fieldMappings = {
+      'WELDING FW+SW': ['TP 100% FW+SW', 'WELDING FW+SW', 'weldingFwSw', 'WELDING_FW_SW', 'WELDING FW SW'],
+      'TP 100% FW+SW': ['TP 100% FW+SW', 'WELDING FW+SW', 'weldingFwSw', 'WELDING_FW_SW', 'WELDING FW SW'],
+      'ISOMETRIC': ['ISOMETRIC', 'isometric'],
+      'SUBSYSTEM': ['SUBSYSTEM', 'SUSSYTEM', 'subsystem'],
+      'TESTPACK': ['TESTPACK', 'testPack', 'TEST PACK'],
+      'MOUNTING': ['MOUNTING ON ISO/EQUI/PACK', 'mountingOnIsoEquiPack']
+    };
+
+    // First try exact match (case sensitive)
+    let value = row[fieldName];
+    
+    // Try case variations
+    if (value === undefined) {
+      value = row[fieldName.toUpperCase()] || row[fieldName.toLowerCase()];
+    }
+    
+    // Try mapped field names
+    if (value === undefined && fieldMappings[fieldName]) {
+      for (const mappedField of fieldMappings[fieldName]) {
+        value = row[mappedField];
+        if (value !== undefined) break;
       }
+    }
+    
+    // Fuzzy matching for fields with special characters
+    if (value === undefined) {
+      const rowKeys = Object.keys(row);
       
-      // Handle SELECT with aggregation
-      if (selectFields.includes('COUNT')) {
-        const countMatch = selectFields.match(/COUNT\(["']?([^"')]+)["']?\)\s+AS\s+["']?([^"']+)["']?/);
-        if (countMatch) {
-          const [, field, alias] = countMatch;
-          
-          if (groupBy) {
-            // GROUP BY aggregation
-            const groups = {};
-            const groupField = groupBy.replace(/"/g, '');
-            
-            data.forEach(row => {
-              // Try different field name variations
-              const key = row[groupField] || row[groupField.toUpperCase()] || row[groupField.toLowerCase()] || 'Unknown';
-              groups[key] = (groups[key] || 0) + 1;
-            });
-            
-            return Object.entries(groups)
-              .sort(([,a], [,b]) => b - a) // Sort by count descending
-              .map(([key, count]) => ({
-                [groupField]: key,
-                [alias]: count
-              }));
-          } else {
-            // Simple COUNT
-            const fieldName = field.replace(/"/g, '');
-            let count = 0;
-            
-            if (fieldName === '*') {
-              count = data.length;
-            } else {
-              // Count non-null values in specific field
-              count = data.filter(row => {
-                const value = row[fieldName] || row[fieldName.toUpperCase()] || row[fieldName.toLowerCase()];
-                return value !== null && value !== undefined && value !== '';
-              }).length;
-            }
-            
-            return [{ [alias]: count }];
-          }
+      // Try to find field by partial matching (remove special chars and spaces)
+      const normalizedFieldName = fieldName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      
+      for (const key of rowKeys) {
+        const normalizedKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        if (normalizedKey === normalizedFieldName || 
+            normalizedKey.includes(normalizedFieldName) ||
+            normalizedFieldName.includes(normalizedKey)) {
+          value = row[key];
+          break;
         }
       }
+    }
+    
+    // Debug logging for WELDING FW+SW field
+    if (fieldName === 'WELDING FW+SW' || fieldName === 'TP 100% FW+SW') {
+      console.log(`Field: ${fieldName}, Row keys:`, Object.keys(row), 'Value found:', value);
+    }
+    
+    return value;
+  };
+
+  const executeSingleQuery = async (singleQuery) => {
+    const { tableName, selectFields, whereClause, groupBy } = parseSQL(singleQuery);
+    
+    // Use filtered data if available, otherwise use original data
+    let data = filteredTablesRef.current[tableName] || tablesRef.current[tableName] || [];
+    
+    if (data.length === 0) {
+      const availableTables = Object.keys(tablesRef.current);
+      return [{ 'Error': `Table '${tableName}' not found. Available: ${availableTables.join(', ')}` }];
+    }
       
-      // Handle simple SELECT *
-      if (selectFields.trim() === '*') {
-        return data.slice(0, 10); // Limit to first 10 rows
+    // Apply WHERE clause
+    if (whereClause) {
+      // Support multiple comparison operators: =, >=, <=, >, <
+      // Improved regex to handle quoted field names with spaces and special characters
+      const whereMatch = whereClause.match(/["']([^"']+)["']\s*(>=|<=|>|<|=)\s*["']?([^"']+)["']?|([^\s>=<!]+)\s*(>=|<=|>|<|=)\s*["']?([^"']+)["']?/);
+      if (whereMatch) {
+        const field = whereMatch[1] || whereMatch[4]; // quoted or unquoted field name
+        const operator = whereMatch[2] || whereMatch[5];
+        const value = whereMatch[3] || whereMatch[6];
+        const fieldName = field.replace(/["/]/g, ''); // remove quotes
+        
+        data = data.filter(row => {
+          const rowValue = mapFieldName(fieldName, row);
+          const numericRowValue = parseFloat(rowValue);
+          const numericValue = parseFloat(value);
+          
+          // Handle numeric comparisons
+          if (!isNaN(numericRowValue) && !isNaN(numericValue)) {
+            switch (operator) {
+              case '>=': return numericRowValue >= numericValue;
+              case '<=': return numericRowValue <= numericValue;
+              case '>': return numericRowValue > numericValue;
+              case '<': return numericRowValue < numericValue;
+              case '=': return numericRowValue === numericValue;
+              default: return false;
+            }
+          }
+          
+          // Handle string/percentage comparisons for = operator
+          if (operator === '=') {
+            if (value.includes('%')) {
+              return String(rowValue) === value;
+            } else if (value === '1' || value === '1.0') {
+              return rowValue === 1 || rowValue === '1' || rowValue === '1.0' || rowValue === '100%';
+            }
+            return String(rowValue) === value;
+          }
+          
+          return false;
+        });
       }
+    }
+    
+    // Handle SELECT with aggregation
+    const aggMatch = selectFields.match(/(COUNT|SUM|AVG|MIN|MAX)\(["']([^"']+)["']\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(([^)]+)\)\s+AS\s+["']?([^"']+)["']?/i);
+    if (aggMatch) {
+      const aggFunc = aggMatch[1] || aggMatch[4];
+      const field = aggMatch[2] || aggMatch[5];
+      const alias = aggMatch[3] || aggMatch[6];
+      const fieldName = field.replace(/["/]/g, ''); // remove quotes
       
-      // Default: return count
-      return [{ 'Total Records': data.length }];
+      if (groupBy) {
+        // GROUP BY aggregation
+        const groups = {};
+        const groupField = groupBy.replace(/"/g, '');
+        
+        data.forEach(row => {
+          const key = mapFieldName(groupField, row) || 'Unknown';
+          const value = mapFieldName(fieldName, row) || 0;
+          
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(parseFloat(value) || 0);
+        });
+        
+        return Object.entries(groups).map(([key, values]) => {
+          let result;
+          switch (aggFunc.toUpperCase()) {
+            case 'SUM': result = values.reduce((a, b) => a + b, 0); break;
+            case 'AVG': result = values.reduce((a, b) => a + b, 0) / values.length; break;
+            case 'MIN': result = Math.min(...values); break;
+            case 'MAX': result = Math.max(...values); break;
+            default: result = values.length;
+          }
+          return { [groupField]: key, [alias]: result };
+        });
+      } else {
+        // Simple aggregation
+        let result;
+        if (fieldName === '*') {
+          result = data.length;
+        } else {
+          const values = data.map(row => {
+            const value = mapFieldName(fieldName, row);
+            return parseFloat(value) || 0;
+          }).filter(v => !isNaN(v));
+          
+          switch (aggFunc.toUpperCase()) {
+            case 'SUM': result = values.reduce((a, b) => a + b, 0); break;
+            case 'AVG': result = values.reduce((a, b) => a + b, 0) / values.length; break;
+            case 'MIN': result = Math.min(...values); break;
+            case 'MAX': result = Math.max(...values); break;
+            default: result = values.length;
+          }
+        }
+        
+        return [{ [alias]: result }];
+      }
+    }
+    
+    // Handle simple SELECT *
+    if (selectFields.trim() === '*') {
+      return data.slice(0, 10);
+    }
+    
+    // Default: return count
+    return [{ 'Total Records': data.length }];
+  };
+
+  const executeQuery = useCallback(async (query) => {
+    try {
+      // Split multiple queries by semicolon
+      const queries = query.split(';').map(q => q.trim()).filter(q => q.length > 0);
+      
+      if (queries.length === 1) {
+        // Single query
+        return await executeSingleQuery(queries[0]);
+      } else {
+        // Multiple queries - combine results
+        const allResults = {};
+        
+        for (const singleQuery of queries) {
+          const result = await executeSingleQuery(singleQuery);
+          if (result && result.length > 0) {
+            // Merge results into a single object
+            Object.assign(allResults, result[0]);
+          }
+        }
+        
+        return [allResults];
+      }
     } catch (err) {
       console.error('SQL Parse Error:', err);
       return [{ 'Error': `Query failed: ${err.message}` }];
     }
-  };
+  }, []);
 
-  const createTable = async (tableName, data) => {
+  // Auto-refresh query when filtered data changes
+  const refreshQuery = useCallback(() => {
+    if (lastQuery) {
+      executeQuery(lastQuery).then(result => {
+        setLastQueryResult(result);
+      });
+    }
+  }, [lastQuery, executeQuery]);
+
+  const createTable = useCallback(async (tableName, data) => {
     if (!data || data.length === 0) return;
+    
+    // Debug: Log the actual data structure
+    if (data.length > 0) {
+      console.log(`Creating table: ${tableName}`);
+      console.log('Sample row keys:', Object.keys(data[0]));
+      console.log('Sample row:', data[0]);
+      
+      // Specifically check for welding field
+      const weldingFields = Object.keys(data[0]).filter(key => 
+        key.includes('WELDING') || key.includes('FW') || key.includes('SW') || key.includes('TP')
+      );
+      console.log('Welding-related fields:', weldingFields);
+    }
+    
     tablesRef.current[tableName] = data;
-  };
+  }, []);
 
-  return { db, loading, error, executeQuery, createTable };
+  // Update filtered table data (called by table components)
+  const updateFilteredTable = useCallback((tableName, filteredData) => {
+    if (!filteredData || filteredData.length === 0) {
+      delete filteredTablesRef.current[tableName];
+    } else {
+      filteredTablesRef.current[tableName] = filteredData;
+    }
+    // Auto-refresh last query
+    refreshQuery();
+  }, [refreshQuery]);
+
+  const executeQueryWithCache = useCallback(async (query) => {
+    setLastQuery(query);
+    const result = await executeQuery(query);
+    setLastQueryResult(result);
+    return result;
+  }, [executeQuery]);
+
+  return { 
+    db, 
+    loading, 
+    error, 
+    executeQuery: executeQueryWithCache, 
+    createTable,
+    updateFilteredTable,
+    getAvailableTables,
+    getTableFields,
+    getTableInfo,
+    lastQueryResult
+  };
 };
 
 export default useDuckDB;

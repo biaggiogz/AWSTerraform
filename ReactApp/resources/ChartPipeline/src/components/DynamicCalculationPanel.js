@@ -12,13 +12,23 @@ import {
 } from '@chakra-ui/react';
 import useDynamicCalculations from '../hooks/useDynamicCalculations';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filters }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT COUNT("ISOMETRIC") AS "Total Isometrics"
 FROM "Control Instruments";`);
   
-  const { calculations, loading, executeSQLQuery, controlColumns, detailColumns } = useDynamicCalculations(
+  const { 
+    calculations, 
+    loading, 
+    executeSQLQuery, 
+    controlColumns, 
+    detailColumns,
+    availableTables,
+    tableInfo
+  } = useDynamicCalculations(
     controlData, 
-    detailsData, 
+    detailsData,
+    filteredControlData,
+    filteredDetailsData,
     filters
   );
 
@@ -45,10 +55,15 @@ FROM "Control Instruments";`);
         </Text>
         
         {/* Schema Reference */}
-        <HStack spacing={6} fontSize="xs" color="gray.600">
-          <Text><strong>Tables:</strong> "Control Instruments", "Details Instruments"</Text>
-          <Text><strong>Key Fields:</strong> ISOMETRIC, SUSSYTEM, PRIORITY, TESTPACK</Text>
-        </HStack>
+        <VStack spacing={2} align="stretch" fontSize="xs" color="gray.600">
+          <Text><strong>Available Tables:</strong></Text>
+          {Object.entries(tableInfo).map(([tableName, info]) => (
+            <Box key={tableName} pl={4} borderLeft="2px solid" borderColor="blue.200">
+              <Text fontWeight="bold">"{tableName}" ({info.filteredRows}/{info.totalRows} rows)</Text>
+              <Text><strong>Fields:</strong> {info.fields.slice(0, 8).join(', ')}{info.fields.length > 8 ? '...' : ''}</Text>
+            </Box>
+          ))}
+        </VStack>
 
         {/* Example Queries */}
         <Box>
@@ -63,8 +78,8 @@ FROM "Control Instruments";`);
             <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT(*) AS "Total Records"\nFROM "Details Instruments";')}>
               Count Details
             </Button>
-            <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT "PRIORITY", COUNT(*) AS "Count by Priority"\nFROM "Control Instruments"\nGROUP BY "PRIORITY";')}>
-              Group by Priority
+            <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT(*) AS "Priority 1"\nFROM "Control Instruments"\nWHERE "PRIORITY" = "1";')}>
+              WHERE Filter
             </Button>
           </HStack>
         </Box>
