@@ -13,7 +13,7 @@ import {
 import useDynamicCalculations from '../hooks/useDynamicCalculations';
 
 const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters }) => {
-  const [sqlQuery, setSqlQuery] = useState(`SELECT COUNT("ISOMETRIC") AS "Total Isometrics"
+  const [sqlQuery, setSqlQuery] = useState(`SELECT COUNT("ISOMETRIC") AS "Total Isos"
 FROM "Control Instruments";`);
   
   const { 
@@ -65,23 +65,45 @@ FROM "Control Instruments";`);
           ))}
         </VStack>
 
-        {/* Example Queries */}
+        {/* Default Quick Metrics */}
         <Box>
-          <Text fontSize="sm" fontWeight="semibold" mb={2}>Quick Examples:</Text>
-          <HStack spacing={2} wrap="wrap">
-            <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("ISOMETRIC") AS "Total Isometrics"\nFROM "Control Instruments";')}>
-              Count Isometrics
-            </Button>
-            <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT "SUSSYTEM", COUNT("ISOMETRIC") AS "Count by Subsystem"\nFROM "Control Instruments"\nGROUP BY "SUSSYTEM";')}>
-              Group by Subsystem
-            </Button>
-            <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT(*) AS "Total Records"\nFROM "Details Instruments";')}>
-              Count Details
-            </Button>
-            <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT(*) AS "Priority 1"\nFROM "Control Instruments"\nWHERE "PRIORITY" = "1";')}>
-              WHERE Filter
-            </Button>
-          </HStack>
+          <Text fontSize="sm" fontWeight="semibold" mb={2}>Default Quick Metrics:</Text>
+          <VStack spacing={2} align="stretch">
+            <HStack spacing={2} wrap="wrap">
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("ISOMETRIC") AS "Total Isos"\nFROM "Control Instruments";')}>
+                Total Isos
+              </Button>
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("WELDING FW+SW") AS "Total at 100%"\nFROM "Control Instruments"\nWHERE "WELDING FW+SW" = 1;')}>
+                Total at 100%
+              </Button>
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("SUBSYSTEM") AS "Total Subsystem"\nFROM "Control Instruments";')}>
+                Total Subsystem
+              </Button>
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("TEST PACK") AS "Total Test Pack"\nFROM "Control Instruments";')}>
+                Total Test Pack
+              </Button>
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM("QTY INST") AS "Total Inst"\nFROM "Control Instruments";')}>
+                Total Inst
+              </Button>
+            </HStack>
+            <HStack spacing={2} wrap="wrap">
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM("SCOPE BY TEIGA-TMI") AS "Total Scope TEIGA"\nFROM "Control Instruments";')}>
+                Total Scope TEIGA
+              </Button>
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM("SCOPE BY SIEMSA") AS "Total Scope Siemsa"\nFROM "Control Instruments";')}>
+                Total Scope Siemsa
+              </Button>
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM(CAST("INSTALLED (TEIGA-TMI)" AS INTEGER)) AS "Total Installed Teiga"\nFROM "Control Instruments"\nWHERE "INSTALLED (TEIGA-TMI)" != \'NOT APPLY\';')}>
+                Total Installed Teiga
+              </Button>
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM("TOTAL INSTALLED") AS "Total Installed"\nFROM "Control Instruments";')}>
+                Total Installed
+              </Button>
+              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("TRAC (YES & NOT)") AS "Trac YES"\nFROM "Control Instruments"\nWHERE "TRAC (YES & NOT)" = \'YES\';')}>
+                Trac YES
+              </Button>
+            </HStack>
+          </VStack>
         </Box>
 
         {/* SQL Editor */}
