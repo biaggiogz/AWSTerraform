@@ -30,10 +30,13 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && npm run copy-wasm",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "transform": "node src/etl/transform_polars.js"
+    "transform": "node src/etl/transform_polars.js",
+    "copy-wasm": "mkdir -p build/wasm && cp -r public/wasm/* build/wasm/ 2>/dev/null || true",
+    "wasm:build": "echo 'WASM compilation would happen here - currently using JS fallbacks'",
+    "wasm:test": "node scripts/test-wasm-performance.js"
   },
   "eslintConfig": {
     "extends": [

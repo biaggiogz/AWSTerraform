@@ -18,6 +18,7 @@ import useInstrumentsDataLoader from './hooks/useInstrumentsDataLoader.optimized
 import useDashboardConfig from './hooks/useDashboardConfig.optimized';
 import useMultiValueFilter from './hooks/useMultiValueFilter';
 import useInstrumentsFilter from './hooks/useInstrumentsFilter';
+import WasmPerformanceMonitor, { usePerformanceMonitor } from './components/WasmPerformanceMonitor';
 
 // Lazy load chart components
 const ChartSelector = lazy(() => import('./components/ChartSelector.optimized'));
@@ -25,6 +26,9 @@ const ChartSelector = lazy(() => import('./components/ChartSelector.optimized'))
 function App() {
   // State for active dashboard
   const [activeDashboard, setActiveDashboard] = useState('LOOP TESTING PROGRESS REPORT');
+  
+  // WASM performance monitoring
+  const showPerformanceMonitor = usePerformanceMonitor();
   
   // Get dashboard configuration based on active dashboard
   const { datasetPath, filterMappings } = useDashboardConfig(activeDashboard);
@@ -169,6 +173,9 @@ function App() {
             </Suspense>
           </GridItem>
         </Grid>
+        
+        {/* WASM Performance Monitor Overlay */}
+        <WasmPerformanceMonitor isVisible={showPerformanceMonitor} />
       </Box>
     </ChakraProvider>
   );
