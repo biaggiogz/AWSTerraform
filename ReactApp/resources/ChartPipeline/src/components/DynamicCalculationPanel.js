@@ -41,6 +41,22 @@ FROM "Control Instruments";`);
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
+  // Color mapping for metric cards
+  const getMetricColor = (metricName) => {
+    const name = metricName.toLowerCase();
+    if (name.includes('total isos')) return '#007598';
+    if (name.includes('total at') && name.includes('%')) return '#007598';
+    if (name.includes('total subsystem')) return '#CEC19B';
+    if (name.includes('total test pack')) return '#7CA2C5';
+    if (name.includes('total inst')) return '#B3CDDF';
+    if (name.includes('total scope teiga')) return '#B3CDDF';
+    if (name.includes('total scope siemsa')) return '#B3CDDF';
+    if (name.includes('total installed teiga')) return '#B3CDDF';
+    if (name.includes('total installed')) return '#B3CDDF';
+    if (name.includes('trac yes')) return '#D98265';
+    return '#E2E8F0'; // default gray
+  };
+
   const handleExecute = () => {
     if (!sqlQuery.trim()) return;
     setDeletedCards(new Set()); // Clear deleted cards on new query
@@ -267,7 +283,7 @@ FROM "Control Instruments";`);
               return (
                 <Box
                   key={card.id}
-                  bg="white"
+                  bg={getMetricColor(card.key)}
                   border="2px solid"
                   borderColor={isLocked ? "orange.300" : "blue.200"}
                   borderRadius="lg"
@@ -318,14 +334,14 @@ FROM "Control Instruments";`);
                   {/* Metric content */}
                   <Box pt={2}>
                     {card.scope && (
-                      <Text fontSize="sm" fontWeight="bold" color="gray.500" mb={1}>
+                      <Text fontSize="sm" fontWeight="bold" color="white" mb={1}>
                         {card.scope}
                       </Text>
                     )}
-                    <Text fontSize="sm" fontWeight="bold" color="blue.600">
+                    <Text fontSize="sm" fontWeight="bold" color="white">
                       {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
                     </Text>
-                    <Text fontSize="sm" color="gray.600" mt={1}>
+                    <Text fontSize="sm" color="white" mt={1}>
                       {card.key}
                     </Text>
                   </Box>
