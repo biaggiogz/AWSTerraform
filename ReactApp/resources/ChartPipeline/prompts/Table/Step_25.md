@@ -44,6 +44,7 @@ App.optimized.js - Main app with specialized handling for INSTRUMENTS REPORT mod
 
 ChartSelector.optimized.js - Tab container that renders the INSTRUMENTS REPORT tab content
 
+
 Main Tables
 ControlInstrumentsTable.optimized.js - Primary virtualized table displaying control instruments data with multi-level headers
 

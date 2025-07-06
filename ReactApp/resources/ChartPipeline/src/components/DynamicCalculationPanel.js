@@ -8,13 +8,17 @@ import {
   Button,
   Badge,
   Spinner,
-  useColorModeValue
+  useColorModeValue,
+  IconButton
 } from '@chakra-ui/react';
+import { MdClose, MdLock, MdLockOpen } from 'react-icons/md';
 import useDynamicCalculations from '../hooks/useDynamicCalculations';
 
 const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT COUNT("ISOMETRIC") AS "Total Isos"
 FROM "Control Instruments";`);
+  const [metricCards, setMetricCards] = useState([]);
+  const [lockedCards, setLockedCards] = useState(new Set());
   
   const { 
     calculations, 
@@ -46,6 +50,50 @@ FROM "Control Instruments";`);
       return prev + '\n\n' + newQuery;
     });
   };
+
+  const deleteCard = (cardId) => {
+    setMetricCards(prev => prev.filter(card => card.id !== cardId));
+    setLockedCards(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(cardId);
+      return newSet;
+    });
+  };
+
+  const toggleCardLock = (cardId) => {
+    setLockedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(cardId)) {
+        newSet.delete(cardId);
+      } else {
+        newSet.add(cardId);
+      }
+      return newSet;
+    });
+  };
+
+  // Update metric cards when calculations change
+  React.useEffect(() => {
+    if (calculations.length > 0) {
+      const newCards = calculations.flatMap((row, rowIdx) => 
+        Object.entries(row).map(([key, value], entryIdx) => ({
+          id: `${rowIdx}-${entryIdx}-${key}`,
+          key,
+          value,
+          timestamp: Date.now()
+        }))
+      );
+      
+      setMetricCards(prev => {
+        // Keep locked cards, update unlocked ones
+        const lockedCardData = prev.filter(card => lockedCards.has(card.id));
+        const unlockedNewCards = newCards.filter(newCard => 
+          !lockedCards.has(newCard.id)
+        );
+        return [...lockedCardData, ...unlockedNewCards];
+      });
+    }
+  }, [calculations, lockedCards]);
 
   return (
     <Box 
@@ -161,30 +209,79 @@ FROM "Control Instruments";`);
           </HStack>
         )}
         
-        {calculations.length > 0 && !loading && (
+        {metricCards.length === 0 && !loading && (
+          <Text textAlign="center" color="gray.500" py={4}>
+            Execute a query to see metric cards
+          </Text>
+        )}
+        
+        {metricCards.length > 0 && !loading && (
           <HStack spacing={4} wrap="wrap" justify="center">
-            {calculations.map((row, idx) => (
-              Object.entries(row).map(([key, value]) => (
+            {metricCards.map((card) => {
+              const isLocked = lockedCards.has(card.id);
+              return (
                 <Box
-                  key={`${idx}-${key}`}
+                  key={card.id}
                   bg="white"
                   border="2px solid"
-                  borderColor="blue.200"
+                  borderColor={isLocked ? "orange.300" : "blue.200"}
                   borderRadius="lg"
-                  p={0.5}
-                  minW="100px"
+                  p={3}
+                  minW="120px"
                   textAlign="center"
                   boxShadow="md"
+                  position="relative"
                 >
-                  <Text fontSize="2xl" fontWeight="bold" color="blue.600">
-                    {typeof value === 'number' ? value.toLocaleString() : value}
-                  </Text>
-                  <Text fontSize="sm" color="gray.600" mt={1}>
-                    {key}
-                  </Text>
+                  {/* Top row with buttons */}
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="flex-start"
+                    position="absolute"
+                    top="4px"
+                    left="4px"
+                    right="4px"
+                    zIndex={1}
+                  >
+                    {/* Delete button - top left */}
+                    <IconButton
+                      icon={<MdClose />}
+                      size="xs"
+                      colorScheme="blue"
+                      variant="ghost"
+                      onClick={() => deleteCard(card.id)}
+                      aria-label="Delete card"
+                      minW="auto"
+                      h="auto"
+                      p={0}
+                    />
+                    
+                    {/* Lock/Unlock button - top right */}
+                    <IconButton
+                      icon={isLocked ? <MdLock /> : <MdLockOpen />}
+                      size="xs"
+                      colorScheme="blue"
+                      variant="ghost"
+                      onClick={() => toggleCardLock(card.id)}
+                      aria-label={isLocked ? "Unlock card" : "Lock card"}
+                      minW="auto"
+                      h="auto"
+                      p={0}
+                    />
+                  </Box>
+                  
+                  {/* Metric content */}
+                  <Box pt={2}>
+                    <Text fontSize="2xl" fontWeight="bold" color="blue.600">
+                      {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600" mt={1}>
+                      {card.key}
+                    </Text>
+                  </Box>
                 </Box>
-              ))
-            ))}
+              );
+            })}
           </HStack>
         )}
       </VStack>
