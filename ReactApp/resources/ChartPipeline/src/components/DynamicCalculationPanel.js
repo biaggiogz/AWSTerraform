@@ -247,7 +247,7 @@ FROM "Control Instruments";`);
         )}
         
         {metricCards.length > 0 && !loading && (
-          <HStack spacing={4} wrap="wrap" justify="center">
+          <HStack spacing={2} wrap="wrap" justify="center">
             {metricCards.map((card) => {
               const isLocked = lockedCards.has(card.id);
               return (
@@ -257,7 +257,7 @@ FROM "Control Instruments";`);
                   border="2px solid"
                   borderColor={isLocked ? "orange.300" : "blue.200"}
                   borderRadius="lg"
-                  p={3}
+                  p={1}
                   minW="120px"
                   textAlign="center"
                   boxShadow="md"
@@ -304,11 +304,11 @@ FROM "Control Instruments";`);
                   {/* Metric content */}
                   <Box pt={2}>
                     {card.scope && (
-                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                      <Text fontSize="sm" fontWeight="bold" color="gray.500" mb={1}>
                         {card.scope}
                       </Text>
                     )}
-                    <Text fontSize="2xl" fontWeight="bold" color="blue.600">
+                    <Text fontSize="sm" fontWeight="bold" color="blue.600">
                       {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
                     </Text>
                     <Text fontSize="sm" color="gray.600" mt={1}>
