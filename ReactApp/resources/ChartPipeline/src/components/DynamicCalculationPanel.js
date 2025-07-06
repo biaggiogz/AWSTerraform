@@ -19,6 +19,7 @@ const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData
 FROM "Control Instruments";`);
   const [metricCards, setMetricCards] = useState([]);
   const [lockedCards, setLockedCards] = useState(new Set());
+  const [deletedCards, setDeletedCards] = useState(new Set());
   
   const { 
     calculations, 
@@ -41,6 +42,7 @@ FROM "Control Instruments";`);
 
   const handleExecute = () => {
     if (!sqlQuery.trim()) return;
+    setDeletedCards(new Set()); // Clear deleted cards on new query
     executeSQLQuery(sqlQuery);
   };
 
@@ -52,10 +54,20 @@ FROM "Control Instruments";`);
   };
 
   const deleteCard = (cardId) => {
-    setMetricCards(prev => prev.filter(card => card.id !== cardId));
+    console.log('Deleting card:', cardId);
+    setMetricCards(prev => {
+      const filtered = prev.filter(card => card.id !== cardId);
+      console.log('Cards after delete:', filtered.length);
+      return filtered;
+    });
     setLockedCards(prev => {
       const newSet = new Set(prev);
       newSet.delete(cardId);
+      return newSet;
+    });
+    setDeletedCards(prev => {
+      const newSet = new Set(prev);
+      newSet.add(cardId);
       return newSet;
     });
   };
@@ -76,24 +88,43 @@ FROM "Control Instruments";`);
   React.useEffect(() => {
     if (calculations.length > 0) {
       const newCards = calculations.flatMap((row, rowIdx) => 
-        Object.entries(row).map(([key, value], entryIdx) => ({
-          id: `${rowIdx}-${entryIdx}-${key}`,
-          key,
-          value,
-          timestamp: Date.now()
-        }))
+        Object.entries(row).map(([key, value], entryIdx) => {
+          const cleanKey = key.replace(/_Local$|_Global$/, '');
+          const scope = key.endsWith('_Local') ? 'LOCAL' : key.endsWith('_Global') ? 'GLOBAL' : null;
+          return {
+            id: `${rowIdx}-${entryIdx}-${key}`,
+            key: cleanKey,
+            value,
+            scope,
+            timestamp: Date.now()
+          };
+        })
       );
       
       setMetricCards(prev => {
-        // Keep locked cards, update unlocked ones
-        const lockedCardData = prev.filter(card => lockedCards.has(card.id));
-        const unlockedNewCards = newCards.filter(newCard => 
-          !lockedCards.has(newCard.id)
+        // Keep existing cards that still exist in new results AND haven't been manually deleted
+        const existingCards = prev.filter(card => 
+          newCards.some(newCard => newCard.id === card.id) && !deletedCards.has(card.id)
         );
-        return [...lockedCardData, ...unlockedNewCards];
+        
+        // Add only truly new cards that don't exist yet and haven't been deleted
+        const trulyNewCards = newCards.filter(newCard => 
+          !prev.some(existingCard => existingCard.id === newCard.id) && !deletedCards.has(newCard.id)
+        );
+        
+        // Update values for existing unlocked cards
+        const updatedCards = existingCards.map(existingCard => {
+          if (lockedCards.has(existingCard.id)) {
+            return existingCard; // Keep locked cards unchanged
+          }
+          const newCard = newCards.find(nc => nc.id === existingCard.id);
+          return newCard || existingCard;
+        });
+        
+        return [...updatedCards, ...trulyNewCards];
       });
     }
-  }, [calculations, lockedCards]);
+  }, [calculations, lockedCards, deletedCards]);
 
   return (
     <Box 
@@ -272,6 +303,11 @@ FROM "Control Instruments";`);
                   
                   {/* Metric content */}
                   <Box pt={2}>
+                    {card.scope && (
+                      <Text fontSize="xs" fontWeight="bold" color="gray.500" mb={1}>
+                        {card.scope}
+                      </Text>
+                    )}
                     <Text fontSize="2xl" fontWeight="bold" color="blue.600">
                       {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
                     </Text>
