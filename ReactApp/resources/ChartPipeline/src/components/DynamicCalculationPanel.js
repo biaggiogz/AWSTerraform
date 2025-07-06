@@ -40,6 +40,13 @@ FROM "Control Instruments";`);
     executeSQLQuery(sqlQuery);
   };
 
+  const addMetricQuery = (newQuery) => {
+    setSqlQuery(prev => {
+      if (!prev.trim()) return newQuery;
+      return prev + '\n\n' + newQuery;
+    });
+  };
+
   return (
     <Box 
       bg={bgColor} 
@@ -69,36 +76,36 @@ FROM "Control Instruments";`);
           <Text fontSize="sm" fontWeight="semibold" mb={2}>Default Quick Metrics:</Text>
           <VStack spacing={2} align="stretch">
             <HStack spacing={2} wrap="wrap">
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("ISOMETRIC") AS "Total Isos"\nFROM "Control Instruments";')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT("ISOMETRIC") AS "Total Isos"\nFROM "Control Instruments";')}>
                 Total Isos
               </Button>
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("WELDING FW+SW") AS "Total at 100%"\nFROM "Control Instruments"\nWHERE "WELDING FW+SW" = 1;')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT("WELDING FW+SW") AS "Total at 100%"\nFROM "Control Instruments"\nWHERE "WELDING FW+SW" = 1;')}>
                 Total at 100%
               </Button>
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("SUBSYSTEM") AS "Total Subsystem"\nFROM "Control Instruments";')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT("SUBSYSTEM") AS "Total Subsystem"\nFROM "Control Instruments";')}>
                 Total Subsystem
               </Button>
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("TEST PACK") AS "Total Test Pack"\nFROM "Control Instruments";')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT(DISTINCT "TEST PACK") AS "Total Test Pack"\nFROM "Control Instruments";')}>
                 Total Test Pack
               </Button>
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM("QTY INST") AS "Total Inst"\nFROM "Control Instruments";')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM("QTY INST") AS "Total Inst"\nFROM "Control Instruments";')}>
                 Total Inst
               </Button>
             </HStack>
             <HStack spacing={2} wrap="wrap">
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM("SCOPE BY TEIGA-TMI") AS "Total Scope TEIGA"\nFROM "Control Instruments";')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM("SCOPE BY TEIGA-TMI") AS "Total Scope TEIGA"\nFROM "Control Instruments";')}>
                 Total Scope TEIGA
               </Button>
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM("SCOPE BY SIEMSA") AS "Total Scope Siemsa"\nFROM "Control Instruments";')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM("SCOPE BY SIEMSA") AS "Total Scope Siemsa"\nFROM "Control Instruments";')}>
                 Total Scope Siemsa
               </Button>
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM(CAST("INSTALLED (TEIGA-TMI)" AS INTEGER)) AS "Total Installed Teiga"\nFROM "Control Instruments"\nWHERE "INSTALLED (TEIGA-TMI)" != \'NOT APPLY\';')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(CAST("INSTALLED (TEIGA-TMI)" AS INTEGER)) AS "Total Installed Teiga"\nFROM "Control Instruments"\nWHERE "INSTALLED (TEIGA-TMI)" != \'NOT APPLY\';')}>
                 Total Installed Teiga
               </Button>
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT SUM("TOTAL INSTALLED") AS "Total Installed"\nFROM "Control Instruments";')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM("TOTAL INSTALLED") AS "Total Installed"\nFROM "Control Instruments";')}>
                 Total Installed
               </Button>
-              <Button size="xs" variant="outline" onClick={() => setSqlQuery('SELECT COUNT("TRAC (YES & NOT)") AS "Trac YES"\nFROM "Control Instruments"\nWHERE "TRAC (YES & NOT)" = \'YES\';')}>
+              <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT("TRAC (YES & NOT)") AS "Trac YES"\nFROM "Control Instruments"\nWHERE "TRAC (YES & NOT)" = \'YES\';')}>
                 Trac YES
               </Button>
             </HStack>
@@ -164,8 +171,8 @@ FROM "Control Instruments";`);
                   border="2px solid"
                   borderColor="blue.200"
                   borderRadius="lg"
-                  p={4}
-                  minW="120px"
+                  p={0.5}
+                  minW="100px"
                   textAlign="center"
                   boxShadow="md"
                 >
