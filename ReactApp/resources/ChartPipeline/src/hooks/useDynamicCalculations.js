@@ -9,6 +9,7 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
     getAvailableTables,
     getTableFields,
     getTableInfo,
+    lastQueryResult,
     loading: dbLoading 
   } = useDuckDB();
   const [calculations, setCalculations] = useState([]);
@@ -49,6 +50,13 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
       }
     }
   }, [filteredControlData, filteredDetailsData, controlData, detailsData, updateFilteredTable]);
+
+  // Sync calculations with auto-refreshed query results
+  useEffect(() => {
+    if (lastQueryResult && lastQueryResult.length > 0 && tablesInitialized.current) {
+      setCalculations(lastQueryResult);
+    }
+  }, [lastQueryResult]);
 
   const executeSQLQuery = useCallback(async (sqlQuery) => {
     if (dbLoading) return;
