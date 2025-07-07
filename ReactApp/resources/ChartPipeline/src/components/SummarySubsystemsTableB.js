@@ -80,7 +80,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect })
               width="100px"
               borderRadius="md"
               backgroundColor="#0E2148"
-              colorScheme={progress === 100 ? "green" : progress > 50 ? "blue" : "red"}
+              colorScheme="green"
             />
             <Text
               position="absolute"
