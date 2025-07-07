@@ -25,7 +25,7 @@ const ChartSelector = lazy(() => import('./components/ChartSelector.optimized'))
 
 function App() {
   // State for active dashboard
-  const [activeDashboard, setActiveDashboard] = useState('LOOP TESTING PROGRESS REPORT');
+  const [activeDashboard, setActiveDashboard] = useState('LOOP SIGNAL PROGRESS REPORT');
   
   // WASM performance monitoring
   const showPerformanceMonitor = usePerformanceMonitor();

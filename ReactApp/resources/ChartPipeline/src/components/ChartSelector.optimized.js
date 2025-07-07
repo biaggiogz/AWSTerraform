@@ -72,7 +72,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
   }, [activeDashboard, isometricFilter.filteredDetailData, detailsData, testPackFilter.filterDetailData, subsystemFilter.filterDetailData]);
   // Map tab index to dashboard name
   const dashboardNames = [
-    'LOOP TESTING PROGRESS REPORT',
+    'LOOP SIGNAL PROGRESS REPORT',
     'INSULATION PROGRESS REPORT',
     'TEST PACK PROGRESS',
     'INSTRUMENTS REPORT',
@@ -95,11 +95,11 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             variant="enclosed"
             colorScheme="blue"
             lazyBehavior="keepMounted"
-            index={activeIndex !== -1 ? activeIndex : 0} // Default to LOOP TESTING PROGRESS REPORT if not found
+            index={activeIndex !== -1 ? activeIndex : 0} // Default to LOOP SIGNAL PROGRESS REPORT if not found
             onChange={handleTabChange}
         >
           <TabList mb="1em">
-            <Tab>LOOP TESTING PROGRESS REPORT</Tab>
+            <Tab>LOOP SIGNAL PROGRESS REPORT</Tab>
             <Tab>INSULATION PROGRESS REPORT</Tab>
             <Tab>TEST PACK PROGRESS REPORT</Tab>
             <Tab>INSTRUMENTS REPORT</Tab>

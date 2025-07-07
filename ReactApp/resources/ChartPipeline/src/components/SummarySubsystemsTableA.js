@@ -170,7 +170,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
           },
           { 
             id: 'loop_testing', 
-            title: 'LOOP TESTING PROGRESS', 
+            title: 'LOOP SIGNAL PROGRESS', 
             colspan: 3, 
             startCol: 8,
             color: '#8AB3DB'

@@ -8,7 +8,7 @@ import { useState, useEffect, useMemo } from 'react';
 const useDashboardConfig = (activeDashboard) => {
   // Memoize the dashboard configurations to avoid recreating objects on each render
   const dashboardConfigs = useMemo(() => ({
-    'LOOP TESTING PROGRESS REPORT': {
+    'LOOP SIGNAL PROGRESS REPORT': {
       datasetPath: '/data/test_of_lazos_updated.csv',
       filterMappings: {
         area: 'Area',
