@@ -22,6 +22,7 @@ const VirtualizedRow = ({ index, style, data }) => {
               borderRight: '1px solid #e2e8f0',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               fontSize: '12px'
             }}
           >

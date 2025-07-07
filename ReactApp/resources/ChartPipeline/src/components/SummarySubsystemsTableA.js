@@ -9,7 +9,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   
   return (
     <div style={style}>
-      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0' }}>
+      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', minHeight: '48px' }}>
         {row.getVisibleCells().map(cell => (
           <div
             key={cell.id}
@@ -22,6 +22,7 @@ const VirtualizedRow = ({ index, style, data }) => {
               borderRight: '1px solid #e2e8f0',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               fontSize: '12px'
             }}
           >
@@ -40,7 +41,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'S/N',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
       )
     },
     {
@@ -48,7 +49,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'FLUID',
       size: 80,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
       )
     },
     {
@@ -78,7 +79,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'TOTAL ITEMS',
       size: 90,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -86,7 +87,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'DONE ITEMS',
       size: 90,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -94,15 +95,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'PENDING ITEMS',
       size: 100,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
       accessorKey: 'description',
       header: 'DESCRIPTION',
-      size: 140,
+      size: 200,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" title={getValue()} noOfLines={2} wordBreak="break-word">{getValue()}</Text>
+        <Text fontSize="xs" title={getValue()} noOfLines={2} wordBreak="break-word" textAlign="center">{getValue()}</Text>
       )
     },
     {
@@ -110,7 +111,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'N°TP',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
       )
     },
     {
@@ -118,7 +119,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'TOTAL LOOP',
       size: 90,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -126,7 +127,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'LOOP DONE',
       size: 90,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -134,7 +135,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'LOOP PENDING',
       size: 100,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     }
   ], [selectedSubsystem, onSubsystemSelect]);
@@ -381,7 +382,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       <List
         height={500}
         itemCount={rows.length}
-        itemSize={40}
+        itemSize={48}
         itemData={{ rows, table }}
       >
         {VirtualizedRow}
