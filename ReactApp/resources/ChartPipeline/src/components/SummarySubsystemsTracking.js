@@ -41,7 +41,7 @@ const SummarySubsystemsTracking = ({ data: filteredData = [] }) => {
     <Box p={6} width="100%" maxWidth="100vw" overflow="hidden">
       <VStack spacing={4} align="stretch">
         <HStack justify="space-between" align="center">
-          <Heading size="lg">Summary Subsystems Tracking (Optimized)</Heading>
+          <Heading size="lg">Summary Subsystems Tracking</Heading>
           <WasmPerformanceMonitor onMetricsUpdate={handlePerformanceUpdate} />
         </HStack>
 
