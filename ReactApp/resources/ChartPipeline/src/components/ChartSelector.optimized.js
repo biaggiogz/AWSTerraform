@@ -76,7 +76,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
     'INSULATION PROGRESS REPORT',
     'TEST PACK PROGRESS',
     'INSTRUMENTS REPORT',
-    'SUMMARY SUBSYSTEMS',
     'SUMMARY SUBSYSTEMS TRACKING'
   ];
 
@@ -103,7 +102,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             <Tab>INSULATION PROGRESS REPORT</Tab>
             <Tab>TEST PACK PROGRESS REPORT</Tab>
             <Tab>INSTRUMENTS REPORT</Tab>
-            <Tab>SUMMARY SUBSYSTEMS</Tab>
             <Tab>SUMMARY SUBSYSTEMS TRACKING</Tab>
           </TabList>
           <TabPanels>

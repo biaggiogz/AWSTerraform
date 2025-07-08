@@ -36,7 +36,7 @@ const useDashboardConfig = (activeDashboard) => {
         subsystem: 'SUBSYSTEM'
       }
     },
-    'SUMMARY SUBSYSTEMS': {
+    'SUMMARY SUBSYSTEMS TRACKING': {
       datasetPath: '/data/pipelinedata.csv',
       filterMappings: {
         area: 'Design Area',
