@@ -26,7 +26,6 @@ const ControlInstrumentsTable = lazy(() => import('./ControlInstrumentsTable.opt
 const DetailsInstrumentsTable = lazy(() => import('./DetailsInstrumentsTable.optimized'));
 const IsometricRelationshipPanel = lazy(() => import('./IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('./DynamicCalculationPanel'));
-const SummarySubsystems = lazy(() => import('./SummarySubsystems'));
 const SummarySubsystemsTracking = lazy(() => import('./SummarySubsystemsTracking'));
 
 /**
@@ -189,12 +188,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     onSubsystemClick={subsystemFilter.handleSubsystemClick}
                   />
                 </VStack>
-              </Suspense>
-            </TabPanel>
-
-            <TabPanel p={0}>
-              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <SummarySubsystems data={data} />
               </Suspense>
             </TabPanel>
 
