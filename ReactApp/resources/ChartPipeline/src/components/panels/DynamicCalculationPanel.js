@@ -13,7 +13,6 @@ import {
 } from '@chakra-ui/react';
 import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
-import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 
 const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
@@ -411,6 +410,7 @@ FROM "Control Instruments";`);
             </HStack>
           </>
         )}
+
       </VStack>
       
       {/* Results as Metric Cards - Always Visible */}
@@ -427,190 +427,38 @@ FROM "Control Instruments";`);
         </Text>
       )}
       
-      {/* Global Metrics Panel */}
+      {/* Global Metrics Section */}
       {globalMetrics.length > 0 && !loading && (
-        <ResizableDraggablePanel
-          title="GLOBAL METRICS"
-          initialWidth={400}
-          initialHeight={200}
-          initialX={50}
-          initialY={50}
-          minWidth={300}
-          minHeight={150}
-        >
-          <Box p={2} overflow="auto" height="100%">
-            <HStack spacing={2} wrap="wrap" justify="center">
-              {globalMetrics.map((card) => {
-                const isLocked = lockedCards.has(card.id);
-                return (
-                  <Box
-                    key={card.id}
-                    bg="rgba(164, 29, 99,0.5)"
-                    border="3px solid"
-                    borderColor={isLocked ? "rgba(164, 29, 99,0.3)" : "rgba(164, 29, 99,1)"}
-                    borderRadius="lg"
-                    p={0.5}
-                    minW="100px"
-                    textAlign="center"
-                    boxShadow="md"
-                    position="relative"
-                    minH="fit-content"
-                  >
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                      position="absolute"
-                      top="2px"
-                      left="2px"
-                      right="2px"
-                      zIndex={1}
-                    >
-                      <IconButton
-                        icon={<MdClose />}
-                        size="xs"
-                        colorScheme="blue"
-                        variant="ghost"
-                        onClick={() => deleteCard(card.id)}
-                        aria-label="Delete card"
-                        minW="auto"
-                        h="auto"
-                        p={0}
-                      />
-                      <IconButton
-                        icon={isLocked ? <MdLock /> : <MdLockOpen />}
-                        size="xs"
-                        colorScheme="blue"
-                        variant="ghost"
-                        onClick={() => toggleCardLock(card.id)}
-                        aria-label={isLocked ? "Unlock card" : "Lock card"}
-                        minW="auto"
-                        h="auto"
-                        p={0}
-                      />
-                    </Box>
-                    <Box pt={3} pb={1}>
-                      <Text fontSize="md" fontWeight="bold" color="white">
-                        {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
-                      </Text>
-                      <Text fontSize="xs" color="white">
-                        {card.key}
-                      </Text>
-                    </Box>
-                  </Box>
-                );
-              })}
-            </HStack>
-          </Box>
-        </ResizableDraggablePanel>
-      )}
-      
-      {/* Local Metrics Panel */}
-      {localMetrics.length > 0 && !loading && (
-        <ResizableDraggablePanel
-          title="LOCAL METRICS"
-          initialWidth={400}
-          initialHeight={200}
-          initialX={500}
-          initialY={50}
-          minWidth={300}
-          minHeight={150}
-        >
-          <Box p={2} overflow="auto" height="100%">
-            <HStack spacing={2} wrap="wrap" justify="center">
-              {localMetrics.map((card) => {
-                const isLocked = lockedCards.has(card.id);
-                return (
-                  <Box
-                    key={card.id}
-                    bg="rgba(217, 154, 0,0.5)"
-                    border="3px solid"
-                    borderColor={isLocked ? "rgba(217, 154, 0,0.3)" : "rgba(217, 154, 0,1)"}
-                    borderRadius="lg"
-                    p={0.5}
-                    minW="100px"
-                    textAlign="center"
-                    boxShadow="md"
-                    position="relative"
-                    minH="fit-content"
-                  >
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                      position="absolute"
-                      top="2px"
-                      left="2px"
-                      right="2px"
-                      zIndex={1}
-                    >
-                      <IconButton
-                        icon={<MdClose />}
-                        size="xs"
-                        colorScheme="blue"
-                        variant="ghost"
-                        onClick={() => deleteCard(card.id)}
-                        aria-label="Delete card"
-                        minW="auto"
-                        h="auto"
-                        p={0}
-                      />
-                      <IconButton
-                        icon={isLocked ? <MdLock /> : <MdLockOpen />}
-                        size="xs"
-                        colorScheme="blue"
-                        variant="ghost"
-                        onClick={() => toggleCardLock(card.id)}
-                        aria-label={isLocked ? "Unlock card" : "Lock card"}
-                        minW="auto"
-                        h="auto"
-                        p={0}
-                      />
-                    </Box>
-                    <Box pt={3} pb={1}>
-                      <Text fontSize="md" fontWeight="bold" color="white">
-                        {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
-                      </Text>
-                      <Text fontSize="xs" color="white">
-                        {card.key}
-                      </Text>
-                    </Box>
-                  </Box>
-                );
-              })}
-            </HStack>
-          </Box>
-        </ResizableDraggablePanel>
-      )}
-      
-      {/* Other Metrics (without scope) */}
-      {otherMetrics.length > 0 && !loading && (
-        <Box position="relative" mt={2}>
+        <VStack spacing={1} align="stretch" mt={1}>
+          <Text fontSize="xs" fontWeight="bold" color="rgba(103, 154, 154,1)" textAlign="center">
+            GLOBAL
+          </Text>
           <HStack spacing={2} wrap="wrap" justify="center">
-            {otherMetrics.map((card) => {
+            {globalMetrics.map((card) => {
               const isLocked = lockedCards.has(card.id);
               return (
                 <Box
                   key={card.id}
-                  bg="#E2E8F0"
-                  border="2px solid"
-                  borderColor={isLocked ? "orange.300" : "#3D365C"}
+                  bg="rgba(103, 154, 154)"
+                  border="3px solid"
+                  borderColor={isLocked ? "rgba(103, 154, 154,0.8)" : "rgba(103, 154, 154,0.8)"}
                   borderRadius="lg"
                   p={0.5}
-                  minW="120px"
+                  minW="100px"
                   textAlign="center"
                   boxShadow="md"
                   position="relative"
                   minH="fit-content"
                 >
+                  {/* Top row with buttons */}
                   <Box
                     display="flex"
                     justifyContent="space-between"
                     alignItems="flex-start"
                     position="absolute"
-                    top="4px"
-                    left="4px"
-                    right="4px"
+                    top="2px"
+                    left="2px"
+                    right="2px"
                     zIndex={1}
                   >
                     <IconButton
@@ -636,6 +484,8 @@ FROM "Control Instruments";`);
                       p={0}
                     />
                   </Box>
+                  
+                  {/* Metric content without scope text */}
                   <Box pt={3} pb={1}>
                     <Text fontSize="md" fontWeight="bold" color="white">
                       {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
@@ -648,7 +498,150 @@ FROM "Control Instruments";`);
               );
             })}
           </HStack>
-        </Box>
+        </VStack>
+      )}
+      
+      {/* Local Metrics Section */}
+      {localMetrics.length > 0 && !loading && (
+        <VStack spacing={1} align="stretch" mt={1}>
+          <Text fontSize="xs" fontWeight="bold" color="rgba(0, 0, 60,1)" textAlign="center">
+            LOCAL
+          </Text>
+          <HStack spacing={2} wrap="wrap" justify="center">
+            {localMetrics.map((card) => {
+              const isLocked = lockedCards.has(card.id);
+              return (
+                <Box
+                  key={card.id}
+                  bg="rgba(0, 0, 60,1)"
+                  border="3px solid"
+                  borderColor={isLocked ? "rgba(0, 0, 60,1)" : "rgba(0, 0, 60,1)"}
+                  borderRadius="lg"
+                  p={0.5}
+                  minW="100px"
+                  textAlign="center"
+                  boxShadow="md"
+                  position="relative"
+                  minH="fit-content"
+                >
+                  {/* Top row with buttons */}
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    alignItems="flex-start"
+                    position="absolute"
+                    top="2px"
+                    left="2px"
+                    right="2px"
+                    zIndex={1}
+                  >
+                    <IconButton
+                      icon={<MdClose />}
+                      size="xs"
+                      colorScheme="blue"
+                      variant="ghost"
+                      onClick={() => deleteCard(card.id)}
+                      aria-label="Delete card"
+                      minW="auto"
+                      h="auto"
+                      p={0}
+                    />
+                    <IconButton
+                      icon={isLocked ? <MdLock /> : <MdLockOpen />}
+                      size="xs"
+                      colorScheme="blue"
+                      variant="ghost"
+                      onClick={() => toggleCardLock(card.id)}
+                      aria-label={isLocked ? "Unlock card" : "Lock card"}
+                      minW="auto"
+                      h="auto"
+                      p={0}
+                    />
+                  </Box>
+                  
+                  {/* Metric content without scope text */}
+                  <Box pt={3} pb={1}>
+                    <Text fontSize="md" fontWeight="bold" color="white">
+                      {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+                    </Text>
+                    <Text fontSize="xs" color="white">
+                      {card.key}
+                    </Text>
+                  </Box>
+                </Box>
+              );
+            })}
+          </HStack>
+        </VStack>
+      )}
+      
+      {/* Other Metrics (without scope) */}
+      {otherMetrics.length > 0 && !loading && (
+        <HStack spacing={2} wrap="wrap" justify="center" mt={2}>
+          {otherMetrics.map((card) => {
+            const isLocked = lockedCards.has(card.id);
+            return (
+              <Box
+                key={card.id}
+                bg="#E2E8F0"
+                border="2px solid"
+                borderColor={isLocked ? "orange.300" : "#3D365C"}
+                borderRadius="lg"
+                p={0.5}
+                minW="120px"
+                textAlign="center"
+                boxShadow="md"
+                position="relative"
+                minH="fit-content"
+              >
+                {/* Top row with buttons */}
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="flex-start"
+                  position="absolute"
+                  top="4px"
+                  left="4px"
+                  right="4px"
+                  zIndex={1}
+                >
+                  <IconButton
+                    icon={<MdClose />}
+                    size="xs"
+                    colorScheme="blue"
+                    variant="ghost"
+                    onClick={() => deleteCard(card.id)}
+                    aria-label="Delete card"
+                    minW="auto"
+                    h="auto"
+                    p={0}
+                  />
+                  <IconButton
+                    icon={isLocked ? <MdLock /> : <MdLockOpen />}
+                    size="xs"
+                    colorScheme="blue"
+                    variant="ghost"
+                    onClick={() => toggleCardLock(card.id)}
+                    aria-label={isLocked ? "Unlock card" : "Lock card"}
+                    minW="auto"
+                    h="auto"
+                    p={0}
+                  />
+                </Box>
+                
+                {/* Metric content */}
+                <Box pt={3} pb={1}>
+                  <Text fontSize="md" fontWeight="bold" color="white">
+                    {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+                  </Text>
+                  <Text fontSize="xs" color="white">
+                    {card.key}
+                  </Text>
+                </Box>
+              </Box>
+            );
+          })}
+        </HStack>
       )}
     </Box>
   );
