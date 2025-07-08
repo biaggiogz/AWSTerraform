@@ -17,7 +17,7 @@ import useDashboardConfig from './hooks/useDashboardConfig.optimized';
 import { createVirtualDataset } from './utils/multiValueFilter';
 
 // Lazy load chart components
-const ChartSelector = lazy(() => import('./components/ChartSelector.optimized'));
+const ChartSelector = lazy(() => import('./components/ui/ChartSelector.optimized'));
 
 function App() {
   // State for active dashboard

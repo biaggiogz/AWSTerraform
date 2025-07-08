@@ -23,8 +23,8 @@ import {
   Legend
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import SidebarMetricContributionPanel from '../components/SidebarMetricContributionPanel';
-import SidebarProgressItemsPanel from '../components/SidebarProgressItemsPanel';
+import SidebarMetricContributionPanel from '../components/panels/SidebarMetricContributionPanel';
+import SidebarProgressItemsPanel from '../components/panels/SidebarProgressItemsPanel';
 
 // Register Chart.js components
 ChartJS.register(

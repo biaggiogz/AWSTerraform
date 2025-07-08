@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Box, VStack, HStack, Heading, Spinner, Text } from '@chakra-ui/react';
 import SummarySubsystemsContainer from './SummarySubsystemsContainer';
-import { useSummarySubsystemsData } from '../hooks/useSummarySubsystemsData';
-import WasmPerformanceMonitor from './WasmPerformanceMonitor';
+import { useSummarySubsystemsData } from '../../hooks/useSummarySubsystemsData';
+import WasmPerformanceMonitor from '../ui/WasmPerformanceMonitor';
 
 const SummarySubsystemsTracking = ({ data: filteredData = [] }) => {
   const [performanceMetrics, setPerformanceMetrics] = useState({});

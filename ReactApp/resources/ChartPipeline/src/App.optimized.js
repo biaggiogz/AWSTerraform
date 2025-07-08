@@ -12,16 +12,16 @@ import {
   AlertTitle,
   AlertDescription
 } from '@chakra-ui/react';
-import FilterPanel from './components/FilterPanel.optimized';
+import FilterPanel from './components/filters/FilterPanel.optimized';
 import useDataLoader from './hooks/useDataLoader.optimized';
 import useInstrumentsDataLoader from './hooks/useInstrumentsDataLoader.optimized';
 import useDashboardConfig from './hooks/useDashboardConfig.optimized';
 import useMultiValueFilter from './hooks/useMultiValueFilter';
 import useInstrumentsFilter from './hooks/useInstrumentsFilter';
-import WasmPerformanceMonitor, { usePerformanceMonitor } from './components/WasmPerformanceMonitor';
+import WasmPerformanceMonitor, { usePerformanceMonitor } from './components/ui/WasmPerformanceMonitor';
 
 // Lazy load chart components
-const ChartSelector = lazy(() => import('./components/ChartSelector.optimized'));
+const ChartSelector = lazy(() => import('./components/ui/ChartSelector.optimized'));
 
 function App() {
   // State for active dashboard

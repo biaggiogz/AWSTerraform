@@ -12,21 +12,21 @@ import {
   HStack,
   Badge
 } from '@chakra-ui/react';
-import { useIsometricRelationshipFilter } from './IsometricRelationshipFilter.wasm';
-import { useTestPackFilter } from './TestPackRelationshipFilter.optimized';
-import { useSubsystemFilter } from './SubsystemRelationshipFilter.optimized';
+import { useIsometricRelationshipFilter } from '../filters/IsometricRelationshipFilter.wasm';
+import { useTestPackFilter } from '../filters/TestPackRelationshipFilter.optimized';
+import { useSubsystemFilter } from '../filters/SubsystemRelationshipFilter.optimized';
 
 // Lazy load chart components
-const LoopTestProgressChart = lazy(() => import('../charts/LoopTestProgressChart.optimized'));
-const IsolationProgressControlChart = lazy(() => import('../charts/IsolationProgressControlChart.optimized'));
-const TestPackProgressChart = lazy(() => import('../charts/TestPackProgressChart.optimized'));
-const LazosTable = lazy(() => import('./LazosTable.optimized'));
-const InsulationProgressTable = lazy(() => import('./InsulationProgressTable.optimized'));
-const ControlInstrumentsTable = lazy(() => import('./ControlInstrumentsTable.optimized'));
-const DetailsInstrumentsTable = lazy(() => import('./DetailsInstrumentsTable.optimized'));
-const IsometricRelationshipPanel = lazy(() => import('./IsometricRelationshipPanel.optimized'));
-const DynamicCalculationPanel = lazy(() => import('./DynamicCalculationPanel'));
-const SummarySubsystemsTracking = lazy(() => import('./SummarySubsystemsTracking'));
+const LoopTestProgressChart = lazy(() => import('../../charts/LoopTestProgressChart.optimized'));
+const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationProgressControlChart.optimized'));
+const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
+const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
+const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
+const ControlInstrumentsTable = lazy(() => import('../tables/ControlInstrumentsTable.optimized'));
+const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable.optimized'));
+const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
+const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
+const SummarySubsystemsTracking = lazy(() => import('../panels/SummarySubsystemsTracking'));
 
 /**
  * ChartSelector component to switch between different charts

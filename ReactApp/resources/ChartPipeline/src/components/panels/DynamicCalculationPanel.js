@@ -12,7 +12,7 @@ import {
   IconButton
 } from '@chakra-ui/react';
 import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore } from 'react-icons/md';
-import useDynamicCalculations from '../hooks/useDynamicCalculations';
+import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 
 const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT COUNT("ISOMETRIC") AS "Total Isos _Global"

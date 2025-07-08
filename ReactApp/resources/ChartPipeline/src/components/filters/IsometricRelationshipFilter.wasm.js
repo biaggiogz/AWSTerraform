@@ -9,7 +9,7 @@ import {
   splitTestPack as wasmSplitTestPack,
   filterByIsometric as wasmFilterByIsometric,
   filterByMountingLocation as wasmFilterByMountingLocation
-} from '../wasm/relationship-engine.wasm.js';
+} from '../../wasm/relationship-engine.wasm.js';
 
 /**
  * WASM-enhanced hook for isometric relationship filtering
@@ -240,7 +240,7 @@ export {
 
 // Performance monitoring
 export const getPerformanceMetrics = () => {
-  const { relationshipEngineWasm } = require('../wasm/relationship-engine.wasm.js');
+  const { relationshipEngineWasm } = require('../../wasm/relationship-engine.wasm.js');
   return {
     usingWasm: relationshipEngineWasm.isUsingWasm(),
     module: 'relationship-engine'

@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import GlobalMetricsDisplay from '../components/GlobalMetricsDisplay';
+import GlobalMetricsDisplay from '../components/ui/GlobalMetricsDisplay';
 import useMultiValueFilter from '../hooks/useMultiValueFilter';
 
 // Register the plugin

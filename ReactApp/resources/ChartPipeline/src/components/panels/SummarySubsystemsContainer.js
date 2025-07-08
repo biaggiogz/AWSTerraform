@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box, HStack, VStack } from '@chakra-ui/react';
-import SummarySubsystemsTableA from './SummarySubsystemsTableA';
-import SummarySubsystemsTableB from './SummarySubsystemsTableB';
-import { useSubsystemBidirectionalFilter } from '../hooks/useSubsystemBidirectionalFilter';
+import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
+import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
+import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
 
 const SummarySubsystemsContainer = ({ 
   tableAData, 

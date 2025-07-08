@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { wasmLoader } from '../wasm/wasm-loader.js';
+import { wasmLoader } from '../../wasm/wasm-loader.js';
 
 const WasmPerformanceMonitor = ({ isVisible = false }) => {
   const [metrics, setMetrics] = useState({});
