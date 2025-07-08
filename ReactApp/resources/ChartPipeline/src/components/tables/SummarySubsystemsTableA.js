@@ -224,17 +224,27 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
   const headerGroups = useMemo(() => table.getHeaderGroups(), [table]);
 
   return (
-    <Box border="1px solid" borderColor="gray.200" borderRadius="md" bg="white">
+    <Box border="1px solid" borderColor="gray.200" borderRadius="md" bg="white" height="100%" display="flex" flexDirection="column">
+      <Box p={3} borderBottom="1px solid" borderColor="gray.200" bg="gray.50" flexShrink={0}>
+        <Heading size="sm">Subsystem Overview</Heading>
+        <Text fontSize="xs" color="gray.600">
+          {data?.length || 0} subsystems • Click SUBSYSTEM to filter
+        </Text>
+      </Box>
 
-      {/* Multi-Level Table Header */}
-      <Box
-        overflowX="hidden"
-        borderBottom="1px solid"
-        borderColor="gray.200"
-        bg="gray.50"
-      >
-        {/* Level 1 Headers */}
-        <Box display="flex" width="100%" minWidth="fit-content">
+      {/* Scrollable Container */}
+      <Box flex={1} overflowX="auto" overflowY="hidden">
+        {/* Multi-Level Table Header */}
+        <Box
+          borderBottom="1px solid"
+          borderColor="gray.200"
+          bg="gray.50"
+          position="sticky"
+          top={0}
+          zIndex={1}
+        >
+          {/* Level 1 Headers */}
+          <Box display="flex" width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
           {multiLevelHeaders[0].headers.map(header => {
             const totalWidth = headerGroups[0].headers.slice(header.startCol, header.startCol + header.colspan)
               .reduce((sum, col) => sum + col.getSize(), 0);
@@ -268,8 +278,8 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
           })}
         </Box>
 
-        {/* Level 2 Headers */}
-        <Box display="flex" width="100%" minWidth="fit-content">
+          {/* Level 2 Headers */}
+          <Box display="flex" width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
           {multiLevelHeaders[1].headers.map(header => {
             const totalWidth = headerGroups[0].headers.slice(header.startCol, header.startCol + header.colspan)
               .reduce((sum, col) => sum + col.getSize(), 0);
@@ -303,8 +313,8 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
           })}
         </Box>
 
-        {/* Level 3 Headers - Column Headers */}
-        <Box display="flex" width="100%" minWidth="fit-content">
+          {/* Level 3 Headers - Column Headers */}
+          <Box display="flex" width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
           {headerGroups[0].headers.map((header, index) => {
             const columnColors = {
               serialNumber: '#007598',
@@ -373,18 +383,20 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
               </Box>
             );
           })}
+          </Box>
         </Box>
+        
+        {/* Virtualized Body */}
+        <List
+          height={350}
+          itemCount={rows.length}
+          itemSize={48}
+          itemData={{ rows, table }}
+          width={headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}
+        >
+          {VirtualizedRow}
+        </List>
       </Box>
-      
-      {/* Virtualized Body */}
-      <List
-        height={500}
-        itemCount={rows.length}
-        itemSize={48}
-        itemData={{ rows, table }}
-      >
-        {VirtualizedRow}
-      </List>
       
       {rows.length === 0 && (
         <Box p={4} textAlign="center" color="gray.500">
