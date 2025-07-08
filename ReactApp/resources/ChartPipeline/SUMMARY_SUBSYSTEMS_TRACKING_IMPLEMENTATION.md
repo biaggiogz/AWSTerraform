@@ -97,7 +97,7 @@ GROUP BY s.SUBSYSTEM, s.FLUID, s.DESCRIPTION;
 ### Main Components
 ```
 src/components/
-├── SummarySubsystemsTracking.js      # Main container
+├── SummarySubsystems.js      # Main container
 ├── SummarySubsystemsContainer.js     # Split-table layout manager
 ├── SummarySubsystemsTableA.js        # Left table (overview)
 ├── SummarySubsystemsTableB.js        # Right table (details)
