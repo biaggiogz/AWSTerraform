@@ -4,6 +4,7 @@ import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
 import SummarySubsystemsSQLPanel from './SummarySubsystemsSQLPanel';
 import SummarySubsystemsPhase2Test from './SummarySubsystemsPhase2Test';
+import SummarySubsystemsPhase3Test from './SummarySubsystemsPhase3Test';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
 
@@ -81,6 +82,18 @@ const SummarySubsystemsContainer = ({
         minHeight={400}
       >
         <SummarySubsystemsPhase2Test />
+      </ResizableDraggablePanel>
+      
+      <ResizableDraggablePanel
+        title="Phase 3 UI Components Test"
+        initialWidth={800}
+        initialHeight={600}
+        initialX={50}
+        initialY={50}
+        minWidth={700}
+        minHeight={500}
+      >
+        <SummarySubsystemsPhase3Test />
       </ResizableDraggablePanel>
     </Box>
   );

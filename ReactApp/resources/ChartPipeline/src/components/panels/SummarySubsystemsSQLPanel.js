@@ -21,6 +21,8 @@ import {
 } from '@chakra-ui/react';
 import useSummarySubsystemsSQL from '../../hooks/useSummarySubsystemsSQL';
 import WasmPerformanceMonitorEnhanced from '../ui/WasmPerformanceMonitor.enhanced';
+import CSVUploadDropzone from '../ui/CSVUploadDropzone';
+import SummarySubsystemsMetricCardsContainer from '../ui/SummarySubsystemsMetricCardsContainer';
 
 const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) => {
   const {
@@ -35,8 +37,7 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
   } = useSummarySubsystemsSQL(tableAData, tableBData);
 
   const [sqlQuery, setSqlQuery] = useState('');
-  const [uploadedFile, setUploadedFile] = useState(null);
-  const [tableName, setTableName] = useState('');
+
   const toast = useToast();
 
   const handleExecuteQuery = useCallback(async () => {
@@ -74,43 +75,7 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
     }
   }, [sqlQuery, executeSQLQuery, onResultsChange, toast]);
 
-  const handleFileUpload = useCallback(async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
 
-    if (!tableName.trim()) {
-      toast({
-        title: 'Table Name Required',
-        description: 'Please enter a table name for the CSV',
-        status: 'warning',
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    try {
-      const success = await uploadCSV(file, tableName);
-      if (success) {
-        setUploadedFile(file);
-        toast({
-          title: 'CSV Uploaded',
-          description: `Table "${tableName}" created successfully`,
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Upload Failed',
-        description: error.message,
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  }, [tableName, uploadCSV, toast]);
 
   const insertSampleQuery = useCallback((query) => {
     setSqlQuery(query);
@@ -144,6 +109,8 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
       <Tabs variant="enclosed">
         <TabList>
           <Tab>SQL Interface</Tab>
+          <Tab>CSV Upload</Tab>
+          <Tab>Metric Cards</Tab>
           <Tab>Performance Monitor</Tab>
         </TabList>
         
@@ -171,32 +138,7 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
 
         <Divider />
 
-        {/* CSV Upload */}
-        <VStack spacing={3} align="stretch">
-          <Text fontSize="sm" fontWeight="semibold">Upload CSV File</Text>
-          <HStack>
-            <FormControl flex={1}>
-              <FormLabel fontSize="xs">Table Name</FormLabel>
-              <Input
-                size="sm"
-                placeholder="Enter table name"
-                value={tableName}
-                onChange={(e) => setTableName(e.target.value)}
-              />
-            </FormControl>
-            <FormControl flex={1}>
-              <FormLabel fontSize="xs">CSV File</FormLabel>
-              <Input
-                type="file"
-                accept=".csv"
-                size="sm"
-                onChange={handleFileUpload}
-              />
-            </FormControl>
-          </HStack>
-        </VStack>
 
-        <Divider />
 
         {/* Sample Queries */}
         <Box>
@@ -275,6 +217,21 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
           </Box>
         )}
             </VStack>
+          </TabPanel>
+          
+          <TabPanel>
+            <CSVUploadDropzone 
+              onUpload={uploadCSV}
+              isUploading={loading}
+            />
+          </TabPanel>
+          
+          <TabPanel>
+            <SummarySubsystemsMetricCardsContainer 
+              onExecuteQuery={executeSQLQuery}
+              queryResults={calculations}
+              isLoading={loading}
+            />
           </TabPanel>
           
           <TabPanel>
