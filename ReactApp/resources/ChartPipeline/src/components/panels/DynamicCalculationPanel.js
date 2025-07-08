@@ -9,13 +9,7 @@ import {
   Badge,
   Spinner,
   useColorModeValue,
-  IconButton,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverBody,
-  List,
-  ListItem
+  IconButton
 } from '@chakra-ui/react';
 import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
