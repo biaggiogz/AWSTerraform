@@ -162,8 +162,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     subsystemsInfoData.forEach(item => {
       if (item['SUBSYSTEM']) {
         metadataMap.set(item['SUBSYSTEM'], {
-          fluid: item['SUBSYSTEM'].split('-')[0] || '',
-          description: item['DESCRIPTION'] || ''
+          fluid: item['SUBSYSTEM'].split('-')[0] || ''
         });
       }
     });
@@ -211,7 +210,8 @@ export const useSummarySubsystemsData = (filteredData = []) => {
       if (!testPackMap.has(subsystem)) {
         testPackMap.set(subsystem, {
           serialNumber: item['S/N'] || '',
-          testPacks: new Set()
+          testPacks: new Set(),
+          description: item['DESCRIPTION'] || ''
         });
       }
 
@@ -224,10 +224,10 @@ export const useSummarySubsystemsData = (filteredData = []) => {
 
     // Create final result following SQL specification
     const result = Array.from(allSubsystems).map(subsystem => {
-      const metadata = metadataMap.get(subsystem) || { fluid: '', description: '' };
+      const metadata = metadataMap.get(subsystem) || { fluid: ''};
       const insulation = insulationMap.get(subsystem) || { totalItems: 0, doneItems: 0 };
       const loop = loopMap.get(subsystem) || { totalLoop: 0, loopDone: 0, loopPending: 0 };
-      const testPack = testPackMap.get(subsystem) || { serialNumber: '', testPacks: new Set() };
+      const testPack = testPackMap.get(subsystem) || { serialNumber: '', testPacks: new Set() , description: ''  };
 
       return {
         serialNumber: testPack.serialNumber,
@@ -236,7 +236,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
         totalItems: insulation.totalItems,
         doneItems: insulation.doneItems,
         pendingItems: insulation.totalItems - insulation.doneItems,
-        description: metadata.description,
+        description: testPack.description,
         numTestPacks: testPack.testPacks.size,
         totalLoops: loop.totalLoop,
         doneLoops: loop.loopDone,
