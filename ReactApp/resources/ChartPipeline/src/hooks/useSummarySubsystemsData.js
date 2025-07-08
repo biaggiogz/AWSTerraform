@@ -142,97 +142,105 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     }
   }, [data, aislData, loopData, subsystemsInfoData, createTable]);
 
-  // Process data for TableA (Subsystem Overview)
+  // Process data for TableA (Subsystem Overview) using SQL specification
   const tableAData = useMemo(() => {
-    if (!data.length || !aislData.length || !loopData.length) return [];
+    if (!data.length || !aislData.length || !loopData.length || !subsystemsInfoData.length) return [];
 
     const startTime = performance.now();
     
-    // Use WASM aggregator if available
-    const aggregator = wasmModules.aggregator;
-    
-    if (aggregator && aggregator.type === 'wasm') {
-      // WASM implementation would go here
-      console.log('Using WASM aggregator for TableA data processing');
-    }
+    // Get all unique subsystems from both loop_data and main_dataset
+    const allSubsystems = new Set();
+    loopData.forEach(item => {
+      if (item['SUBS_PRE']) allSubsystems.add(item['SUBS_PRE']);
+    });
+    data.forEach(item => {
+      if (item['SUBSYSTEM']) allSubsystems.add(item['SUBSYSTEM']);
+    });
 
-    // JavaScript fallback implementation
-    const subsystemStats = new Map();
-    const aislStats = new Map();
-    const loopStats = new Map();
+    // Create metadata lookup
+    const metadataMap = new Map();
+    subsystemsInfoData.forEach(item => {
+      if (item['SUBSYSTEM']) {
+        metadataMap.set(item['SUBSYSTEM'], {
+          fluid: item['SUBSYSTEM'].split('-')[0] || '',
+          description: item['DESCRIPTION'] || ''
+        });
+      }
+    });
 
-    // Process aislamientos data
+    // Process insulation data
+    const insulationMap = new Map();
     aislData.forEach(item => {
       const subsystem = item['SUBSYSTEM'];
       if (!subsystem) return;
       
-      if (!aislStats.has(subsystem)) {
-        aislStats.set(subsystem, { totalItems: 0, doneItems: 0 });
+      if (!insulationMap.has(subsystem)) {
+        insulationMap.set(subsystem, { totalItems: 0, doneItems: 0 });
       }
       
-      const stats = aislStats.get(subsystem);
+      const stats = insulationMap.get(subsystem);
       stats.totalItems += 1;
       if (item['DONE'] === 'YES') stats.doneItems += 1;
     });
 
     // Process loop data
+    const loopMap = new Map();
     loopData.forEach(item => {
       const subsystem = item['SUBS_PRE'];
       if (!subsystem) return;
       
-      if (!loopStats.has(subsystem)) {
-        loopStats.set(subsystem, { totalLoops: 0, doneLoops: 0, pendingLoops: 0 });
+      if (!loopMap.has(subsystem)) {
+        loopMap.set(subsystem, { totalLoop: 0, loopDone: 0, loopPending: 0 });
       }
       
-      const stats = loopStats.get(subsystem);
-      stats.totalLoops += 1;
+      const stats = loopMap.get(subsystem);
+      stats.totalLoop += 1;
       if (item['OK=100%'] === '100.00%') {
-        stats.doneLoops += 1;
+        stats.loopDone += 1;
       } else {
-        stats.pendingLoops += 1;
+        stats.loopPending += 1;
       }
     });
 
-    // Process main data for subsystem overview
+    // Process test pack data
+    const testPackMap = new Map();
     data.forEach(item => {
       const subsystem = item['SUBSYSTEM'];
-      if (!subsystem) return;
+      if (!subsystem || !item['TEST PACK']) return;
 
-      if (!subsystemStats.has(subsystem)) {
-        subsystemStats.set(subsystem, {
+      if (!testPackMap.has(subsystem)) {
+        testPackMap.set(subsystem, {
           serialNumber: item['S/N'] || '',
-          fluid: item['FLUID_SUBSYSTEM'] || '',
-          description: item['DESCRIPTION'] || '',
           testPacks: new Set()
         });
       }
 
-      const stats = subsystemStats.get(subsystem);
-      if (item['TEST PACK']) {
-        item['TEST PACK'].split('|').forEach(tp => {
-          const trimmedTp = tp.trim();
-          if (trimmedTp) stats.testPacks.add(trimmedTp);
-        });
-      }
+      const stats = testPackMap.get(subsystem);
+      item['TEST PACK'].split('|').forEach(tp => {
+        const trimmedTp = tp.trim();
+        if (trimmedTp) stats.testPacks.add(trimmedTp);
+      });
     });
 
-    // Create TableA data
-    const result = Array.from(subsystemStats.entries()).map(([subsystem, stats]) => {
-      const aislStat = aislStats.get(subsystem) || { totalItems: 0, doneItems: 0 };
-      const loopStat = loopStats.get(subsystem) || { totalLoops: 0, doneLoops: 0, pendingLoops: 0 };
+    // Create final result following SQL specification
+    const result = Array.from(allSubsystems).map(subsystem => {
+      const metadata = metadataMap.get(subsystem) || { fluid: '', description: '' };
+      const insulation = insulationMap.get(subsystem) || { totalItems: 0, doneItems: 0 };
+      const loop = loopMap.get(subsystem) || { totalLoop: 0, loopDone: 0, loopPending: 0 };
+      const testPack = testPackMap.get(subsystem) || { serialNumber: '', testPacks: new Set() };
 
       return {
+        serialNumber: testPack.serialNumber,
         subsystem,
-        serialNumber: stats.serialNumber,
-        fluid: stats.fluid,
-        description: stats.description,
-        totalItems: aislStat.totalItems,
-        doneItems: aislStat.doneItems,
-        pendingItems: aislStat.totalItems - aislStat.doneItems,
-        numTestPacks: stats.testPacks.size,
-        totalLoops: loopStat.totalLoops,
-        doneLoops: loopStat.doneLoops,
-        pendingLoops: loopStat.pendingLoops
+        fluid: metadata.fluid,
+        totalItems: insulation.totalItems,
+        doneItems: insulation.doneItems,
+        pendingItems: insulation.totalItems - insulation.doneItems,
+        description: metadata.description,
+        numTestPacks: testPack.testPacks.size,
+        totalLoops: loop.totalLoop,
+        doneLoops: loop.loopDone,
+        pendingLoops: loop.loopPending
       };
     }).sort((a, b) => b.totalItems - a.totalItems);
 
@@ -240,45 +248,70 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     console.log(`TableA processing time: ${processingTime.toFixed(2)}ms`);
 
     return result;
-  }, [data, aislData, loopData, wasmModules]);
+  }, [data, aislData, loopData, subsystemsInfoData, wasmModules]);
 
-  // Process data for TableB (Test Pack Details)
+  // Process data for TableB (Test Pack Details) using SQL specification
   const tableBData = useMemo(() => {
-    if (!data.length) return [];
+    if (!data.length || !loopData.length) return [];
 
     const startTime = performance.now();
     
-    // Use WASM testpack processor if available
-    const testpackProcessor = wasmModules.testpackProcessor;
-    
-    if (testpackProcessor && testpackProcessor.type === 'wasm') {
-      console.log('Using WASM testpack processor for TableB data processing');
-    }
+    // Get all unique subsystems from both loop_data and main_dataset
+    const allSubsystems = new Set();
+    loopData.forEach(item => {
+      if (item['SUBS_PRE']) allSubsystems.add(item['SUBS_PRE']);
+    });
+    data.forEach(item => {
+      if (item['SUBSYSTEM']) allSubsystems.add(item['SUBSYSTEM']);
+    });
 
-    // JavaScript fallback implementation
-    const expandedData = [];
-
+    // Process progress data - group by SUBSYSTEM and TEST PACK, then calculate averages
+    const progressMap = new Map();
     data.forEach(item => {
       const subsystem = item['SUBSYSTEM'];
-      if (!subsystem || !item['TEST PACK']) return;
+      const testPack = item['TEST PACK'];
+      if (!subsystem || !testPack) return;
 
-      const testPacks = item['TEST PACK'].split('|');
+      const key = `${subsystem}|${testPack}`;
+      if (!progressMap.has(key)) {
+        progressMap.set(key, {
+          subsystem,
+          testPack,
+          progressValues: [],
+          traceados: item['TRACEADOS'] || '',
+          priority: item['PRIORITY'] || '',
+          hito: item['HITO'] || '',
+          teigaReinstatement: item['TEIGA REINSTATEMENT'] || '',
+          teigaInsulation: item['TEIGA INSULATION'] || '',
+          siemsa: item['SIEMSA'] || '',
+          technip: item['TECHNIP'] || ''
+        });
+      }
+      
       const progress = parseFloat(item['CONSTRUC COORD PROGRESS']) || 0;
+      progressMap.get(key).progressValues.push(progress);
+    });
 
+    // Expand test packs and calculate average progress
+    const expandedData = [];
+    progressMap.forEach((groupData) => {
+      const testPacks = groupData.testPack.split('|');
+      const avgProgress = groupData.progressValues.reduce((sum, val) => sum + val, 0) / groupData.progressValues.length;
+      
       testPacks.forEach(tp => {
         const trimmedTp = tp.trim();
         if (trimmedTp) {
           expandedData.push({
-            subsystem,
+            subsystem: groupData.subsystem,
             testPack: trimmedTp,
-            testPackProgress: progress,
-            traceados: item['TRACEADOS'] || '',
-            priority: item['PRIORITY'] || '',
-            hito: item['HITO'] || '',
-            teigaReinstatement: item['TEIGA REINSTATEMENT'] || '',
-            teigaInsulation: item['TEIGA INSULATION'] || '',
-            siemsa: item['SIEMSA'] || '',
-            technip: item['TECHNIP'] || ''
+            testPackProgress: avgProgress,
+            traceados: groupData.traceados,
+            priority: groupData.priority,
+            hito: groupData.hito,
+            teigaReinstatement: groupData.teigaReinstatement,
+            teigaInsulation: groupData.teigaInsulation,
+            siemsa: groupData.siemsa,
+            technip: groupData.technip
           });
         }
       });
@@ -288,7 +321,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     console.log(`TableB processing time: ${processingTime.toFixed(2)}ms`);
 
     return expandedData.sort((a, b) => a.subsystem.localeCompare(b.subsystem));
-  }, [data, wasmModules]);
+  }, [data, loopData, wasmModules]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
