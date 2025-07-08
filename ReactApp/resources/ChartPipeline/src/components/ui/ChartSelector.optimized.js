@@ -26,7 +26,7 @@ const ControlInstrumentsTable = lazy(() => import('../tables/ControlInstrumentsT
 const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable.optimized'));
 const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
-const SummarySubsystemsTracking = lazy(() => import('../panels/SummarySubsystemsTracking'));
+const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
 
 /**
  * ChartSelector component to switch between different charts
@@ -193,7 +193,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
 
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <SummarySubsystemsTracking data={data} />
+                <SummarySubsystems data={data} />
               </Suspense>
             </TabPanel>
           </TabPanels>

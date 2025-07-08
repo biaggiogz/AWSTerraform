@@ -4,7 +4,7 @@ import SummarySubsystemsContainer from './SummarySubsystemsContainer';
 import { useSummarySubsystemsData } from '../../hooks/useSummarySubsystemsData';
 import WasmPerformanceMonitor from '../ui/WasmPerformanceMonitor';
 
-const SummarySubsystemsTracking = ({ data: filteredData = [] }) => {
+const SummarySubsystems = ({ data: filteredData = [] }) => {
   const [performanceMetrics, setPerformanceMetrics] = useState({});
   
   const {
@@ -53,4 +53,4 @@ const SummarySubsystemsTracking = ({ data: filteredData = [] }) => {
   );
 };
 
-export default SummarySubsystemsTracking;
+export default SummarySubsystems;
