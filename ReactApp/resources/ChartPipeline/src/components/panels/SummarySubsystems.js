@@ -38,17 +38,13 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   }
 
   return (
-    <Box p={6} width="100%" maxWidth="100vw" overflow="hidden">
-      <VStack spacing={4} align="stretch">
-
-
-        <SummarySubsystemsContainer
-          tableAData={tableAData}
-          tableBData={tableBData}
-          summaryStats={summaryStats}
-          performanceMetrics={performanceMetrics}
-        />
-      </VStack>
+    <Box p={6} width="100%" height="100vh" maxWidth="100vw" overflow="hidden">
+      <SummarySubsystemsContainer
+        tableAData={tableAData}
+        tableBData={tableBData}
+        summaryStats={summaryStats}
+        performanceMetrics={performanceMetrics}
+      />
     </Box>
   );
 };

@@ -225,13 +225,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
 
   return (
     <Box border="1px solid" borderColor="gray.200" borderRadius="md" bg="white">
-      <Box p={3} borderBottom="1px solid" borderColor="gray.200" bg="gray.50">
-        <Heading size="sm">Subsystem Overview</Heading>
-        <Text fontSize="xs" color="gray.600">
-          {data?.length || 0} subsystems • Click SUBSYSTEM to filter
-        </Text>
-      </Box>
-      
+
       {/* Multi-Level Table Header */}
       <Box
         overflowX="hidden"
