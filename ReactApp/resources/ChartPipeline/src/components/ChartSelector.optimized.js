@@ -12,7 +12,7 @@ import {
   HStack,
   Badge
 } from '@chakra-ui/react';
-import { useIsometricRelationshipFilter } from './IsometricRelationshipFilter.optimized';
+import { useIsometricRelationshipFilter } from './IsometricRelationshipFilter.wasm';
 import { useTestPackFilter } from './TestPackRelationshipFilter.optimized';
 import { useSubsystemFilter } from './SubsystemRelationshipFilter.optimized';
 

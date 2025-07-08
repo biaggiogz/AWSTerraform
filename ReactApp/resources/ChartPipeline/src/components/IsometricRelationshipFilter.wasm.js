@@ -36,9 +36,9 @@ export const useIsometricRelationshipFilter = (controlData, detailData) => {
       }
     };
 
-    // For now, use synchronous fallback in useMemo
-    // In production, this would be handled differently with async state management
-    const { findMatchingChains } = require('./IsometricRelationshipFilter.optimized.js');
+    // Import the function directly from the optimized module
+    const optimizedModule = require('./IsometricRelationshipFilter.optimized.js');
+    const findMatchingChains = optimizedModule.default.findMatchingChains;
     return findMatchingChains(controlData, detailData);
   }, [controlData, detailData]);
 
