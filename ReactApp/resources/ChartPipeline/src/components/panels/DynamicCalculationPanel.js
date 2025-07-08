@@ -127,13 +127,19 @@ FROM "Control Instruments";`);
     setSqlQuery(value);
     setCursorPosition(position);
     
-    // Show suggestions when typing field names
+    // Show suggestions when typing after opening quote
     const beforeCursor = value.substring(0, position);
-    const afterQuote = beforeCursor.lastIndexOf('"');
-    const beforeQuote = beforeCursor.lastIndexOf('"', afterQuote - 1);
+    const lastQuote = beforeCursor.lastIndexOf("'");
     
-    if (afterQuote > beforeQuote && beforeCursor.charAt(afterQuote + 1) !== '"') {
-      setShowFieldSuggestions(true);
+    // Check if we're inside an unclosed quote
+    if (lastQuote !== -1) {
+      const afterLastQuote = beforeCursor.substring(lastQuote + 1);
+      // Show suggestions if no closing quote found after the last opening quote
+      if (!afterLastQuote.includes("'")) {
+        setShowFieldSuggestions(true);
+      } else {
+        setShowFieldSuggestions(false);
+      }
     } else {
       setShowFieldSuggestions(false);
     }
@@ -146,10 +152,10 @@ FROM "Control Instruments";`);
     const afterCursor = sqlQuery.substring(cursorPosition);
     
     // Find the last quote before cursor
-    const lastQuoteIndex = beforeCursor.lastIndexOf('"');
+    const lastQuoteIndex = beforeCursor.lastIndexOf("'");
     const beforeQuote = beforeCursor.substring(0, lastQuoteIndex + 1);
     
-    const newQuery = beforeQuote + fieldName + '"' + afterCursor;
+    const newQuery = beforeQuote + fieldName + "'" + afterCursor;
     setSqlQuery(newQuery);
     setShowFieldSuggestions(false);
     
@@ -214,10 +220,10 @@ FROM "Control Instruments";`);
       border="1px" 
       borderColor={borderColor} 
       borderRadius="md" 
-      p={4} 
-      mt={4}
+      p={2} 
+      mt={2}
     >
-      <VStack spacing={4} align="stretch">
+      <VStack spacing={2} align="stretch">
         <HStack justify="space-between" align="center">
           <Text fontSize="sm" fontWeight="bold" color="blue.600">
             SQL Query Interface
@@ -372,7 +378,7 @@ FROM "Control Instruments";`);
                 )}
               </Box>
               <Text fontSize="xs" color="gray.500" mt={1}>
-                💡 Type " to see field suggestions
+                💡 Type ' to see field suggestions
               </Text>
             </Box>
             
@@ -423,17 +429,10 @@ FROM "Control Instruments";`);
       
       {/* Global Metrics Section */}
       {globalMetrics.length > 0 && !loading && (
-        <VStack spacing={3} align="stretch" mt={4}>
-          <Box
-            bg="blue.500"
-            color="white"
-            p={2}
-            borderRadius="md"
-            textAlign="center"
-            fontWeight="bold"
-          >
+        <VStack spacing={1} align="stretch" mt={1}>
+          <Text fontSize="xs" fontWeight="bold" color="#A41D63" textAlign="center">
             GLOBAL
-          </Box>
+          </Text>
           <HStack spacing={2} wrap="wrap" justify="center">
             {globalMetrics.map((card) => {
               const isLocked = lockedCards.has(card.id);
@@ -441,14 +440,15 @@ FROM "Control Instruments";`);
                 <Box
                   key={card.id}
                   bg={getMetricColor(card.key)}
-                  border="2px solid"
-                  borderColor={isLocked ? "orange.300" : "blue.200"}
+                  border="3px solid"
+                  borderColor={isLocked ? "rgba(164, 29, 99,0.3)" : "rgba(164, 29, 99,1)"}
                   borderRadius="lg"
-                  p={1}
-                  minW="120px"
+                  p={0.5}
+                  minW="100px"
                   textAlign="center"
                   boxShadow="md"
                   position="relative"
+                  minH="fit-content"
                 >
                   {/* Top row with buttons */}
                   <Box
@@ -456,9 +456,9 @@ FROM "Control Instruments";`);
                     justifyContent="space-between"
                     alignItems="flex-start"
                     position="absolute"
-                    top="4px"
-                    left="4px"
-                    right="4px"
+                    top="2px"
+                    left="2px"
+                    right="2px"
                     zIndex={1}
                   >
                     <IconButton
@@ -486,11 +486,11 @@ FROM "Control Instruments";`);
                   </Box>
                   
                   {/* Metric content without scope text */}
-                  <Box pt={6}>
-                    <Text fontSize="lg" fontWeight="bold" color="white">
+                  <Box pt={3} pb={1}>
+                    <Text fontSize="md" fontWeight="bold" color="white">
                       {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
                     </Text>
-                    <Text fontSize="sm" color="white" mt={1}>
+                    <Text fontSize="xs" color="white">
                       {card.key}
                     </Text>
                   </Box>
@@ -503,17 +503,10 @@ FROM "Control Instruments";`);
       
       {/* Local Metrics Section */}
       {localMetrics.length > 0 && !loading && (
-        <VStack spacing={3} align="stretch" mt={4}>
-          <Box
-            bg="green.500"
-            color="white"
-            p={2}
-            borderRadius="md"
-            textAlign="center"
-            fontWeight="bold"
-          >
+        <VStack spacing={1} align="stretch" mt={1}>
+          <Text fontSize="xs" fontWeight="bold" color="#D99A00" textAlign="center">
             LOCAL
-          </Box>
+          </Text>
           <HStack spacing={2} wrap="wrap" justify="center">
             {localMetrics.map((card) => {
               const isLocked = lockedCards.has(card.id);
@@ -521,14 +514,15 @@ FROM "Control Instruments";`);
                 <Box
                   key={card.id}
                   bg={getMetricColor(card.key)}
-                  border="2px solid"
-                  borderColor={isLocked ? "orange.300" : "blue.200"}
+                  border="3px solid"
+                  borderColor={isLocked ? "rgba(217, 154, 0,0.3)" : "rgba(217, 154, 0,1)"}
                   borderRadius="lg"
-                  p={1}
-                  minW="120px"
+                  p={0.5}
+                  minW="100px"
                   textAlign="center"
                   boxShadow="md"
                   position="relative"
+                  minH="fit-content"
                 >
                   {/* Top row with buttons */}
                   <Box
@@ -536,9 +530,9 @@ FROM "Control Instruments";`);
                     justifyContent="space-between"
                     alignItems="flex-start"
                     position="absolute"
-                    top="4px"
-                    left="4px"
-                    right="4px"
+                    top="2px"
+                    left="2px"
+                    right="2px"
                     zIndex={1}
                   >
                     <IconButton
@@ -566,11 +560,11 @@ FROM "Control Instruments";`);
                   </Box>
                   
                   {/* Metric content without scope text */}
-                  <Box pt={6}>
-                    <Text fontSize="lg" fontWeight="bold" color="white">
+                  <Box pt={3} pb={1}>
+                    <Text fontSize="md" fontWeight="bold" color="white">
                       {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
                     </Text>
-                    <Text fontSize="sm" color="white" mt={1}>
+                    <Text fontSize="xs" color="white">
                       {card.key}
                     </Text>
                   </Box>
@@ -583,7 +577,7 @@ FROM "Control Instruments";`);
       
       {/* Other Metrics (without scope) */}
       {otherMetrics.length > 0 && !loading && (
-        <HStack spacing={2} wrap="wrap" justify="center" mt={4}>
+        <HStack spacing={2} wrap="wrap" justify="center" mt={2}>
           {otherMetrics.map((card) => {
             const isLocked = lockedCards.has(card.id);
             return (
@@ -591,13 +585,14 @@ FROM "Control Instruments";`);
                 key={card.id}
                 bg={getMetricColor(card.key)}
                 border="2px solid"
-                borderColor={isLocked ? "orange.300" : "blue.200"}
+                borderColor={isLocked ? "orange.300" : "#3D365C"}
                 borderRadius="lg"
-                p={1}
+                p={0.5}
                 minW="120px"
                 textAlign="center"
                 boxShadow="md"
                 position="relative"
+                minH="fit-content"
               >
                 {/* Top row with buttons */}
                 <Box
@@ -635,11 +630,11 @@ FROM "Control Instruments";`);
                 </Box>
                 
                 {/* Metric content */}
-                <Box pt={6}>
-                  <Text fontSize="lg" fontWeight="bold" color="white">
+                <Box pt={3} pb={1}>
+                  <Text fontSize="md" fontWeight="bold" color="white">
                     {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
                   </Text>
-                  <Text fontSize="sm" color="white" mt={1}>
+                  <Text fontSize="xs" color="white">
                     {card.key}
                   </Text>
                 </Box>

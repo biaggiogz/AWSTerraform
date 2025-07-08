@@ -178,41 +178,21 @@ const useDuckDB = () => {
       }
     }
     
-    // Handle SELECT with aggregation (including DISTINCT and CAST)
-    const aggMatch = selectFields.match(/(COUNT)\s*\(\s*DISTINCT\s+["']?([^"')]+)["']?\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(["']([^"']+)["']\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(CAST\(["']([^"']+)["']\s+AS\s+\w+\)\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(([^)]+)\)\s+AS\s+["']?([^"']+)["']?/i);
-    if (aggMatch) {
-      const aggFunc = aggMatch[1] || aggMatch[4] || aggMatch[7] || aggMatch[10];
-      const field = aggMatch[2] || aggMatch[5] || aggMatch[8] || aggMatch[11];
-      const alias = aggMatch[3] || aggMatch[6] || aggMatch[9] || aggMatch[12];
-      const isDistinct = !!aggMatch[1]; // true if COUNT(DISTINCT ...)
-      const fieldName = field.replace(/["/]/g, ''); // remove quotes
+    // Handle SELECT with aggregation (including DISTINCT and CAST) - support multiple metrics
+    const aggRegex = /(COUNT)\s*\(\s*DISTINCT\s+["']?([^"')]+)["']?\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(["']([^"']+)["']\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(CAST\(["']([^"']+)["']\s+AS\s+\w+\)\)\s+AS\s+["']?([^"']+)["']?|(COUNT|SUM|AVG|MIN|MAX)\(([^)]+)\)\s+AS\s+["']?([^"']+)["']?/gi;
+    const aggMatches = [...selectFields.matchAll(aggRegex)];
+    
+    if (aggMatches.length > 0) {
+      // Process multiple aggregations in single query
+      const results = {};
       
-      if (groupBy) {
-        // GROUP BY aggregation
-        const groups = {};
-        const groupField = groupBy.replace(/"/g, '');
+      for (const aggMatch of aggMatches) {
+        const aggFunc = aggMatch[1] || aggMatch[4] || aggMatch[7] || aggMatch[10];
+        const field = aggMatch[2] || aggMatch[5] || aggMatch[8] || aggMatch[11];
+        const alias = aggMatch[3] || aggMatch[6] || aggMatch[9] || aggMatch[12];
+        const isDistinct = !!aggMatch[1]; // true if COUNT(DISTINCT ...)
+        const fieldName = field.replace(/["/]/g, ''); // remove quotes
         
-        data.forEach(row => {
-          const key = mapFieldName(groupField, row) || 'Unknown';
-          const value = mapFieldName(fieldName, row) || 0;
-          
-          if (!groups[key]) groups[key] = [];
-          groups[key].push(parseFloat(value) || 0);
-        });
-        
-        return Object.entries(groups).map(([key, values]) => {
-          let result;
-          switch (aggFunc.toUpperCase()) {
-            case 'SUM': result = values.reduce((a, b) => a + b, 0); break;
-            case 'AVG': result = values.reduce((a, b) => a + b, 0) / values.length; break;
-            case 'MIN': result = Math.min(...values); break;
-            case 'MAX': result = Math.max(...values); break;
-            default: result = values.length;
-          }
-          return { [groupField]: key, [alias]: result };
-        });
-      } else {
-        // Simple aggregation
         let result;
         if (fieldName === '*') {
           result = data.length;
@@ -254,8 +234,10 @@ const useDuckDB = () => {
           }
         }
         
-        return [{ [alias]: result }];
+        results[alias] = result;
       }
+      
+      return [results];
     }
     
     // Handle simple SELECT *
