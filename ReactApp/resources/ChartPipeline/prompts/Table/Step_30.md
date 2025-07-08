@@ -1,5 +1,11 @@
 # Step_30.md: SQL Query Interface Implementation for SUMMARY SUBSYSTEMS Tab
 
+## Project Structure
+
+- ReactApp/resources/ChartPipeline/src
+- TableA: ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableA.js
+- TableB: ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableB.js
+
 ## Implementation Flow by Phases
 
 ### Phase 1: Core Infrastructure Setup
