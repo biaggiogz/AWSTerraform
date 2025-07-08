@@ -313,6 +313,35 @@ const useDuckDBEnhanced = () => {
     }
   }, []);
 
+  // Register multiple tables for SUMMARY SUBSYSTEMS
+  const registerSummarySubsystemsTables = useCallback(async (tableAData, tableBData) => {
+    if (tableAData && tableAData.length > 0) {
+      await createTable('subsystem_overview', tableAData);
+    }
+    if (tableBData && tableBData.length > 0) {
+      await createTable('test_pack_details', tableBData);
+    }
+  }, [createTable]);
+
+  // CSV upload and table registration
+  const registerCSVTable = useCallback(async (tableName, csvData) => {
+    if (!csvData || csvData.length === 0) return false;
+    
+    try {
+      await createTable(tableName, csvData);
+      console.log(`CSV table registered: ${tableName}`);
+      return true;
+    } catch (error) {
+      console.error(`Failed to register CSV table ${tableName}:`, error);
+      return false;
+    }
+  }, [createTable]);
+
+  // Get available tables
+  const getAvailableTables = useCallback(() => {
+    return Object.keys(tablesRef.current);
+  }, []);
+
   // Get performance metrics
   const getPerformanceMetrics = useCallback(() => {
     return {
@@ -328,6 +357,9 @@ const useDuckDBEnhanced = () => {
     error,
     executeQuery,
     createTable,
+    registerSummarySubsystemsTables,
+    registerCSVTable,
+    getAvailableTables,
     getPerformanceMetrics
   };
 };

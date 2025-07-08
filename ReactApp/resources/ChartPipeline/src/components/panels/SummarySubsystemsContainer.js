@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, VStack } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
+import SummarySubsystemsSQLPanel from './SummarySubsystemsSQLPanel';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
 
@@ -16,6 +17,8 @@ const SummarySubsystemsContainer = ({
     handleSubsystemSelect,
     clearFilter
   } = useSubsystemBidirectionalFilter(tableAData, tableBData);
+  
+  const [sqlResults, setSqlResults] = useState([]);
 
   return (
     <Box position="relative" width="100%" height="800px" overflow="hidden">
@@ -48,6 +51,22 @@ const SummarySubsystemsContainer = ({
           data={filteredTableBData}
           selectedSubsystem={selectedSubsystem}
           onSubsystemSelect={handleSubsystemSelect}
+        />
+      </ResizableDraggablePanel>
+      
+      <ResizableDraggablePanel
+        title="SQL Query Interface"
+        initialWidth={600}
+        initialHeight={400}
+        initialX={20}
+        initialY={600}
+        minWidth={500}
+        minHeight={300}
+      >
+        <SummarySubsystemsSQLPanel
+          tableAData={tableAData}
+          tableBData={tableBData}
+          onResultsChange={setSqlResults}
         />
       </ResizableDraggablePanel>
     </Box>
