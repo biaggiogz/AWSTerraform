@@ -141,24 +141,8 @@ function App() {
         <Heading mb={2} fontSize="16px">Pipeline Construction Dashboard</Heading>
 
         {/* Main layout with filter panel on left and charts on right */}
-        <Grid templateColumns="250px 1fr" gap={6}>
-          {/* Filter panel - left side */}
-          <GridItem>
-            <FilterPanel
-              areas={filterOptions[filterMappings.area || filterMappings.isometric] || []}
-              subsystems={filterOptions[filterMappings.subsystem] || []}
-              multiFilters={multiFilters}
-              onFilterChange={handleFilterChange}
-              filterMappings={filterMappings}
-              progressFilter={progressFilter}
-              onResetAll={resetAllFilters}
-              metadata={metadata}
-              relationshipMaps={relationshipMaps}
-            />
-          </GridItem>
-
-          {/* Chart area - right side */}
-          <GridItem>
+        {activeDashboard === 'SUMMARY SUBSYSTEMS' ? (
+          <Box>
             <Suspense fallback={<Center p={4}><Spinner /></Center>}>
               <ChartSelector 
                 data={filteredData} 
@@ -171,8 +155,41 @@ function App() {
                 progressFilter={progressFilter}
               />
             </Suspense>
-          </GridItem>
-        </Grid>
+          </Box>
+        ) : (
+          <Grid templateColumns="250px 1fr" gap={6}>
+            {/* Filter panel - left side */}
+            <GridItem>
+              <FilterPanel
+                areas={filterOptions[filterMappings.area || filterMappings.isometric] || []}
+                subsystems={filterOptions[filterMappings.subsystem] || []}
+                multiFilters={multiFilters}
+                onFilterChange={handleFilterChange}
+                filterMappings={filterMappings}
+                progressFilter={progressFilter}
+                onResetAll={resetAllFilters}
+                metadata={metadata}
+                relationshipMaps={relationshipMaps}
+              />
+            </GridItem>
+
+            {/* Chart area - right side */}
+            <GridItem>
+              <Suspense fallback={<Center p={4}><Spinner /></Center>}>
+                <ChartSelector 
+                  data={filteredData} 
+                  rawData={data}
+                  controlData={filteredControlData || controlData}
+                  detailsData={filteredDetailsData || detailsData}
+                  activeDashboard={activeDashboard}
+                  onDashboardChange={handleDashboardChange}
+                  onProgressFilter={handleProgressFilter}
+                  progressFilter={progressFilter}
+                />
+              </Suspense>
+            </GridItem>
+          </Grid>
+        )}
         
         {/* WASM Performance Monitor Overlay */}
         <WasmPerformanceMonitor isVisible={showPerformanceMonitor} />
