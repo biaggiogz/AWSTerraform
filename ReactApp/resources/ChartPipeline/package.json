@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@chakra-ui/icons": "2.2.4",
+    "@chakra-ui/icons": "^1.1.7",
     "@chakra-ui/react": "^2.8.0",
     "@duckdb/duckdb-wasm": "^1.29.1-dev132.0",
     "@emotion/react": "^11.11.1",
@@ -28,7 +28,9 @@
     "react-select": "5.10.1",
     "react-virtualized-auto-sizer": "1.0.26",
     "react-window": "^1.8.8",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "@react-buddy/ide-toolbox": "^2.4.0",
+    "@react-buddy/palette-chakra-ui": "^2.3.1"
   },
   "scripts": {
     "start": "react-scripts start",

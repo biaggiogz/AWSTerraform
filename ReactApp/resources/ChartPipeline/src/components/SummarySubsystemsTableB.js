@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Heading, Text, Progress, HStack } from '@chakra-ui/react';
+import { Box, Heading, Text, Progress, HStack, Button } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { FixedSizeList as List } from 'react-window';
 
@@ -41,21 +41,25 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect })
       header: 'SUBSYSTEM',
       size: 140,
       cell: ({ getValue }) => (
-        <Text
-          fontSize="xs"
-          fontWeight="bold"
-          cursor="pointer"
-          color={selectedSubsystem === getValue() ? "blue.600" : "black"}
-          bg={selectedSubsystem === getValue() ? "blue.50" : "transparent"}
-          p={1}
-          borderRadius="md"
+        <Button
+          size="xs"
+          variant={selectedSubsystem === getValue() ? "solid" : "outline"}
           onClick={() => onSubsystemSelect(getValue())}
-          _hover={{ bg: "gray.100" }}
+          _hover={{ bg: selectedSubsystem === getValue() ? "#007598" : "blue.200" }}
+          fontSize="10px"
+          fontWeight="medium"
+          color={selectedSubsystem === getValue() ? "white" : "blue.600"}
+          bg={selectedSubsystem === getValue() ? "#007598" : "white"}
+          borderColor={selectedSubsystem === getValue() ? "#007598" : "blue.500"}
+          minWidth="30px"
+          height="18px"
+          px={2}
+          borderRadius="sm"
           title={getValue()}
           isTruncated
         >
           {getValue()}
-        </Text>
+        </Button>
       )
     },
     {
