@@ -3,6 +3,7 @@ import { Box, VStack } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
 import SummarySubsystemsSQLPanel from './SummarySubsystemsSQLPanel';
+import SummarySubsystemsPhase2Test from './SummarySubsystemsPhase2Test';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
 
@@ -68,6 +69,18 @@ const SummarySubsystemsContainer = ({
           tableBData={tableBData}
           onResultsChange={setSqlResults}
         />
+      </ResizableDraggablePanel>
+      
+      <ResizableDraggablePanel
+        title="Phase 2 WASM Performance Test"
+        initialWidth={700}
+        initialHeight={500}
+        initialX={650}
+        initialY={600}
+        minWidth={600}
+        minHeight={400}
+      >
+        <SummarySubsystemsPhase2Test />
       </ResizableDraggablePanel>
     </Box>
   );

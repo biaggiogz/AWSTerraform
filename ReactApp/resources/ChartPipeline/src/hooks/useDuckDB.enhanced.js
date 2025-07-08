@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { wasmLoader } from '../wasm/wasm-loader';
+import { sqlEngineWasm } from '../wasm/sql-engine.wasm';
+import { dataProcessorWasm } from '../wasm/data-processor.wasm';
+import { multiFilterWasm } from '../wasm/multi-filter.wasm';
 
 const useDuckDBEnhanced = () => {
   const [db, setDb] = useState(null);
@@ -7,29 +10,31 @@ const useDuckDBEnhanced = () => {
   const [error, setError] = useState(null);
   const tablesRef = useRef({});
   const [wasmSqlEngine, setWasmSqlEngine] = useState(null);
+  const queryCache = useRef(new Map());
+  const tableIndices = useRef(new Map());
 
   // Initialize enhanced DuckDB with WASM acceleration
   useEffect(() => {
     const initializeDB = async () => {
       try {
-        // Try to load WASM SQL engine
-        const sqlEngine = await wasmLoader.loadModule(
-          'sql-engine',
-          '/wasm/sql-engine.wasm',
-          // JavaScript fallback
-          {
-            executeSQL: (query, tables) => {
-              console.log('Using JavaScript SQL fallback');
-              return executeJavaScriptSQL(query, tables);
-            }
-          }
-        );
+        // Initialize WASM modules
+        await Promise.all([
+          sqlEngineWasm.initialize(),
+          dataProcessorWasm.initialize(),
+          multiFilterWasm.initialize()
+        ]);
 
-        setWasmSqlEngine(sqlEngine);
-        setDb({ type: 'enhanced-js-sql', wasmEnabled: sqlEngine.type === 'wasm' });
+        setWasmSqlEngine({
+          type: 'wasm',
+          sqlEngine: sqlEngineWasm,
+          dataProcessor: dataProcessorWasm,
+          multiFilter: multiFilterWasm
+        });
+        setDb({ type: 'enhanced-wasm-sql', wasmEnabled: true });
         setLoading(false);
       } catch (err) {
-        console.warn('Enhanced DuckDB initialization failed:', err);
+        console.warn('WASM initialization failed, using JavaScript fallback:', err);
+        setWasmSqlEngine({ type: 'js' });
         setDb({ type: 'js-sql', wasmEnabled: false });
         setLoading(false);
       }
@@ -259,59 +264,142 @@ const useDuckDBEnhanced = () => {
     return selectFields.trim() === '*' ? data.slice(0, 10) : [{ 'Total Records': data.length }];
   };
 
-  // Enhanced query execution with WASM acceleration
+  // Enhanced query execution with WASM acceleration and caching
   const executeQuery = useCallback(async (query) => {
     try {
+      const queryHash = hashQuery(query);
+      
+      // Check cache first
+      if (queryCache.current.has(queryHash)) {
+        const cached = queryCache.current.get(queryHash);
+        if (Date.now() - cached.timestamp < 30000) { // 30 second cache
+          console.log('Using cached query result');
+          return cached.result;
+        }
+      }
+      
       const startTime = performance.now();
+      let result;
       
       // Use WASM SQL engine if available
       if (wasmSqlEngine && wasmSqlEngine.type === 'wasm') {
-        console.log('Using WASM SQL engine for query execution');
-        // WASM implementation would call the actual WASM module
-        // For now, fall back to JavaScript
-      }
-      
-      // Split multiple queries
-      const queries = query.split(';').map(q => q.trim()).filter(q => q.length > 0);
-      
-      if (queries.length === 1) {
-        const result = executeJavaScriptSQL(queries[0], tablesRef.current);
-        const processingTime = performance.now() - startTime;
-        console.log(`SQL query processing time: ${processingTime.toFixed(2)}ms`);
-        return result;
+        result = await executeQueryWasm(query);
       } else {
-        // Multiple queries - merge results
-        const combinedResult = {};
-        for (const singleQuery of queries) {
-          const result = executeJavaScriptSQL(singleQuery, tablesRef.current);
-          if (result && result.length > 0 && result[0]) {
-            Object.assign(combinedResult, result[0]);
-          }
-        }
-        const processingTime = performance.now() - startTime;
-        console.log(`Multiple SQL queries processing time: ${processingTime.toFixed(2)}ms`);
-        return [combinedResult];
+        result = await executeQueryJS(query);
       }
+      
+      const processingTime = performance.now() - startTime;
+      console.log(`SQL query processing time: ${processingTime.toFixed(2)}ms (${wasmSqlEngine?.type || 'js'})`);
+      
+      // Cache result
+      queryCache.current.set(queryHash, {
+        result,
+        timestamp: Date.now()
+      });
+      
+      // Limit cache size
+      if (queryCache.current.size > 50) {
+        const oldestKey = queryCache.current.keys().next().value;
+        queryCache.current.delete(oldestKey);
+      }
+      
+      return result;
     } catch (err) {
       console.error('Enhanced SQL execution error:', err);
       return [{ 'Error': `Query failed: ${err.message}` }];
     }
   }, [wasmSqlEngine]);
 
-  // Create table with enhanced indexing
+  // WASM query execution
+  const executeQueryWasm = useCallback(async (query) => {
+    const queries = query.split(';').map(q => q.trim()).filter(q => q.length > 0);
+    
+    if (queries.length === 1) {
+      const { tableName } = parseSQL(queries[0]);
+      const tableData = tablesRef.current[tableName] || [];
+      return await wasmSqlEngine.sqlEngine.executeQuery(tableData, queries[0]);
+    } else {
+      const combinedResult = {};
+      for (const singleQuery of queries) {
+        const { tableName } = parseSQL(singleQuery);
+        const tableData = tablesRef.current[tableName] || [];
+        const result = await wasmSqlEngine.sqlEngine.executeQuery(tableData, singleQuery);
+        if (result && result.length > 0 && result[0]) {
+          Object.assign(combinedResult, result[0]);
+        }
+      }
+      return [combinedResult];
+    }
+  }, [wasmSqlEngine]);
+
+  // JavaScript query execution fallback
+  const executeQueryJS = useCallback(async (query) => {
+    const queries = query.split(';').map(q => q.trim()).filter(q => q.length > 0);
+    
+    if (queries.length === 1) {
+      return executeJavaScriptSQL(queries[0], tablesRef.current);
+    } else {
+      const combinedResult = {};
+      for (const singleQuery of queries) {
+        const result = executeJavaScriptSQL(singleQuery, tablesRef.current);
+        if (result && result.length > 0 && result[0]) {
+          Object.assign(combinedResult, result[0]);
+        }
+      }
+      return [combinedResult];
+    }
+  }, []);
+
+  // Query hashing for cache keys
+  const hashQuery = useCallback((query) => {
+    let hash = 0;
+    for (let i = 0; i < query.length; i++) {
+      const char = query.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString();
+  }, []);
+
+  // Create table with enhanced indexing and WASM processing
   const createTable = useCallback(async (tableName, data) => {
     if (!data || data.length === 0) return;
     
     console.log(`Creating enhanced table: ${tableName} with ${data.length} rows`);
     
+    let processedData = data;
+    
+    // Use WASM data processor if available
+    if (wasmSqlEngine && wasmSqlEngine.type === 'wasm') {
+      try {
+        // Pre-process data for better performance
+        const uniqueValues = await wasmSqlEngine.dataProcessor.getUniqueValues(data, 'SUBSYSTEM');
+        console.log(`Pre-indexed ${uniqueValues.length} unique subsystems`);
+        
+        // Store indices for faster lookups
+        tableIndices.current.set(`${tableName}_subsystems`, new Set(uniqueValues));
+      } catch (error) {
+        console.warn('WASM data processing failed, using original data:', error);
+      }
+    }
+    
     // Store data with potential indexing for performance
-    tablesRef.current[tableName] = data;
+    tablesRef.current[tableName] = processedData;
+    
+    // Clear related cache entries
+    const keysToDelete = [];
+    for (const key of queryCache.current.keys()) {
+      if (key.includes(tableName)) {
+        keysToDelete.push(key);
+      }
+    }
+    keysToDelete.forEach(key => queryCache.current.delete(key));
     
     // Log sample data structure for debugging
-    if (data.length > 0) {
-      console.log(`Sample row from ${tableName}:`, Object.keys(data[0]));
+    if (processedData.length > 0) {
+      console.log(`Sample row from ${tableName}:`, Object.keys(processedData[0]));
     }
-  }, []);
+  }, [wasmSqlEngine]);
 
   // Register multiple tables for SUMMARY SUBSYSTEMS
   const registerSummarySubsystemsTables = useCallback(async (tableAData, tableBData) => {
@@ -347,9 +435,22 @@ const useDuckDBEnhanced = () => {
     return {
       wasmEnabled: wasmSqlEngine?.type === 'wasm',
       tablesLoaded: Object.keys(tablesRef.current).length,
-      sqlEngine: wasmSqlEngine?.type || 'javascript'
+      sqlEngine: wasmSqlEngine?.type || 'javascript',
+      cacheSize: queryCache.current.size,
+      indicesCreated: tableIndices.current.size,
+      wasmModules: wasmSqlEngine?.type === 'wasm' ? {
+        sqlEngine: wasmSqlEngine.sqlEngine.isUsingWasm(),
+        dataProcessor: wasmSqlEngine.dataProcessor.isUsingWasm(),
+        multiFilter: wasmSqlEngine.multiFilter.isUsingWasm()
+      } : null
     };
   }, [wasmSqlEngine]);
+
+  // Clear cache
+  const clearCache = useCallback(() => {
+    queryCache.current.clear();
+    console.log('Query cache cleared');
+  }, []);
 
   return {
     db,
@@ -360,7 +461,8 @@ const useDuckDBEnhanced = () => {
     registerSummarySubsystemsTables,
     registerCSVTable,
     getAvailableTables,
-    getPerformanceMetrics
+    getPerformanceMetrics,
+    clearCache
   };
 };
 

@@ -12,9 +12,15 @@ import {
   FormControl,
   FormLabel,
   Switch,
-  Divider
+  Divider,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel
 } from '@chakra-ui/react';
 import useSummarySubsystemsSQL from '../../hooks/useSummarySubsystemsSQL';
+import WasmPerformanceMonitorEnhanced from '../ui/WasmPerformanceMonitor.enhanced';
 
 const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) => {
   const {
@@ -23,7 +29,9 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
     executeSQLQuery,
     uploadCSV,
     availableTables,
-    tablesReady
+    tablesReady,
+    getComprehensiveMetrics,
+    clearCache
   } = useSummarySubsystemsSQL(tableAData, tableBData);
 
   const [sqlQuery, setSqlQuery] = useState('');
@@ -111,27 +119,43 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
   const sampleQueries = [
     {
       name: 'Subsystem Summary',
-      query: 'SELECT subsystem, totalItems, doneItems, pendingItems FROM subsystem_overview ORDER BY totalItems DESC LIMIT 10'
+      query: 'SELECT subsystem, totalItems, doneItems, pendingItems FROM subsystem_overview ORDER BY totalItems DESC LIMIT 10',
+      description: 'Basic aggregation query - optimized for WASM'
     },
     {
       name: 'Test Pack Progress',
-      query: 'SELECT subsystem, AVG(testPackProgress) as avg_progress FROM test_pack_details GROUP BY subsystem ORDER BY avg_progress DESC'
+      query: 'SELECT subsystem, AVG(testPackProgress) as avg_progress FROM test_pack_details GROUP BY subsystem ORDER BY avg_progress DESC',
+      description: 'GROUP BY with aggregation - 2-3x faster with WASM'
     },
     {
       name: 'Cross-Table Join',
-      query: 'SELECT a.subsystem, a.totalItems, COUNT(b.testPack) as test_packs FROM subsystem_overview a LEFT JOIN test_pack_details b ON a.subsystem = b.subsystem GROUP BY a.subsystem, a.totalItems'
+      query: 'SELECT a.subsystem, a.totalItems, COUNT(b.testPack) as test_packs FROM subsystem_overview a LEFT JOIN test_pack_details b ON a.subsystem = b.subsystem GROUP BY a.subsystem, a.totalItems',
+      description: 'Complex JOIN operation - benefits from pre-indexing'
+    },
+    {
+      name: 'Performance Test',
+      query: 'SELECT COUNT(DISTINCT subsystem) as unique_subsystems, SUM(totalItems) as total_items, AVG(doneItems) as avg_done FROM subsystem_overview; SELECT COUNT(*) as test_pack_count FROM test_pack_details',
+      description: 'Multi-query test - demonstrates caching benefits'
     }
   ];
 
   return (
     <Box p={4} border="1px solid" borderColor="gray.200" borderRadius="md" bg="white">
-      <VStack spacing={4} align="stretch">
-        <HStack justify="space-between">
-          <Text fontSize="lg" fontWeight="bold">SQL Query Interface</Text>
-          <Badge colorScheme={tablesReady ? 'green' : 'yellow'}>
-            {tablesReady ? 'Tables Ready' : 'Loading Tables'}
-          </Badge>
-        </HStack>
+      <Tabs variant="enclosed">
+        <TabList>
+          <Tab>SQL Interface</Tab>
+          <Tab>Performance Monitor</Tab>
+        </TabList>
+        
+        <TabPanels>
+          <TabPanel>
+            <VStack spacing={4} align="stretch">
+              <HStack justify="space-between">
+                <Text fontSize="lg" fontWeight="bold">SQL Query Interface</Text>
+                <Badge colorScheme={tablesReady ? 'green' : 'yellow'}>
+                  {tablesReady ? 'Tables Ready' : 'Loading Tables'}
+                </Badge>
+              </HStack>
 
         {/* Available Tables */}
         <Box>
@@ -176,19 +200,24 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
 
         {/* Sample Queries */}
         <Box>
-          <Text fontSize="sm" fontWeight="semibold" mb={2}>Sample Queries:</Text>
-          <HStack wrap="wrap" spacing={2}>
+          <Text fontSize="sm" fontWeight="semibold" mb={2}>Optimized Sample Queries:</Text>
+          <VStack spacing={2} align="stretch">
             {sampleQueries.map(sample => (
-              <Button
-                key={sample.name}
-                size="xs"
-                variant="outline"
-                onClick={() => insertSampleQuery(sample.query)}
-              >
-                {sample.name}
-              </Button>
+              <Box key={sample.name} p={2} border="1px solid" borderColor="gray.100" borderRadius="md">
+                <HStack justify="space-between" mb={1}>
+                  <Text fontSize="sm" fontWeight="medium">{sample.name}</Text>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => insertSampleQuery(sample.query)}
+                  >
+                    Use Query
+                  </Button>
+                </HStack>
+                <Text fontSize="xs" color="gray.600">{sample.description}</Text>
+              </Box>
             ))}
-          </HStack>
+          </VStack>
         </Box>
 
         {/* SQL Query Input */}
@@ -205,14 +234,24 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
         </FormControl>
 
         {/* Execute Button */}
-        <Button
-          colorScheme="blue"
-          onClick={handleExecuteQuery}
-          isLoading={loading}
-          isDisabled={!tablesReady}
-        >
-          Execute Query
-        </Button>
+        <HStack>
+          <Button
+            colorScheme="blue"
+            onClick={handleExecuteQuery}
+            isLoading={loading}
+            isDisabled={!tablesReady}
+            flex={1}
+          >
+            Execute Query (WASM Optimized)
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={clearCache}
+          >
+            Clear Cache
+          </Button>
+        </HStack>
 
         {/* Results Display */}
         {calculations.length > 0 && (
@@ -235,7 +274,17 @@ const SummarySubsystemsSQLPanel = ({ tableAData, tableBData, onResultsChange }) 
             </Box>
           </Box>
         )}
-      </VStack>
+            </VStack>
+          </TabPanel>
+          
+          <TabPanel>
+            <WasmPerformanceMonitorEnhanced 
+              getMetrics={getComprehensiveMetrics}
+              onClearCache={clearCache}
+            />
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </Box>
   );
 };
