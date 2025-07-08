@@ -129,13 +129,13 @@ FROM "Control Instruments";`);
     
     // Show suggestions when typing after opening quote
     const beforeCursor = value.substring(0, position);
-    const lastQuote = beforeCursor.lastIndexOf("'");
+    const lastQuote = beforeCursor.lastIndexOf("+");
     
     // Check if we're inside an unclosed quote
     if (lastQuote !== -1) {
       const afterLastQuote = beforeCursor.substring(lastQuote + 1);
       // Show suggestions if no closing quote found after the last opening quote
-      if (!afterLastQuote.includes("'")) {
+      if (!afterLastQuote.includes("+")) {
         setShowFieldSuggestions(true);
       } else {
         setShowFieldSuggestions(false);
@@ -151,18 +151,18 @@ FROM "Control Instruments";`);
     const beforeCursor = sqlQuery.substring(0, cursorPosition);
     const afterCursor = sqlQuery.substring(cursorPosition);
     
-    // Find the last quote before cursor
-    const lastQuoteIndex = beforeCursor.lastIndexOf("'");
-    const beforeQuote = beforeCursor.substring(0, lastQuoteIndex + 1);
+    // Find the last + before cursor
+    const lastPlusIndex = beforeCursor.lastIndexOf("+");
+    const beforePlus = beforeCursor.substring(0, lastPlusIndex);
     
-    const newQuery = beforeQuote + fieldName + "'" + afterCursor;
+    const newQuery = beforePlus + fieldName + afterCursor;
     setSqlQuery(newQuery);
     setShowFieldSuggestions(false);
     
     // Focus back to textarea
     setTimeout(() => {
       textarea.focus();
-      const newPosition = beforeQuote.length + fieldName.length + 1;
+      const newPosition = beforePlus.length + fieldName.length;
       textarea.setSelectionRange(newPosition, newPosition);
     }, 0);
   };
@@ -378,7 +378,7 @@ FROM "Control Instruments";`);
                 )}
               </Box>
               <Text fontSize="xs" color="gray.500" mt={1}>
-                💡 Type ' to see field suggestions
+                💡 Type + to see field suggestions
               </Text>
             </Box>
             
@@ -430,7 +430,7 @@ FROM "Control Instruments";`);
       {/* Global Metrics Section */}
       {globalMetrics.length > 0 && !loading && (
         <VStack spacing={1} align="stretch" mt={1}>
-          <Text fontSize="xs" fontWeight="bold" color="#A41D63" textAlign="center">
+          <Text fontSize="xs" fontWeight="bold" color="rgba(103, 154, 154,1)" textAlign="center">
             GLOBAL
           </Text>
           <HStack spacing={2} wrap="wrap" justify="center">
@@ -439,9 +439,9 @@ FROM "Control Instruments";`);
               return (
                 <Box
                   key={card.id}
-                  bg={getMetricColor(card.key)}
+                  bg="rgba(103, 154, 154)"
                   border="3px solid"
-                  borderColor={isLocked ? "rgba(164, 29, 99,0.3)" : "rgba(164, 29, 99,1)"}
+                  borderColor={isLocked ? "rgba(103, 154, 154,0.8)" : "rgba(103, 154, 154,0.8)"}
                   borderRadius="lg"
                   p={0.5}
                   minW="100px"
@@ -504,7 +504,7 @@ FROM "Control Instruments";`);
       {/* Local Metrics Section */}
       {localMetrics.length > 0 && !loading && (
         <VStack spacing={1} align="stretch" mt={1}>
-          <Text fontSize="xs" fontWeight="bold" color="#D99A00" textAlign="center">
+          <Text fontSize="xs" fontWeight="bold" color="rgba(0, 0, 60,1)" textAlign="center">
             LOCAL
           </Text>
           <HStack spacing={2} wrap="wrap" justify="center">
@@ -513,9 +513,9 @@ FROM "Control Instruments";`);
               return (
                 <Box
                   key={card.id}
-                  bg={getMetricColor(card.key)}
+                  bg="rgba(0, 0, 60,1)"
                   border="3px solid"
-                  borderColor={isLocked ? "rgba(217, 154, 0,0.3)" : "rgba(217, 154, 0,1)"}
+                  borderColor={isLocked ? "rgba(0, 0, 60,1)" : "rgba(0, 0, 60,1)"}
                   borderRadius="lg"
                   p={0.5}
                   minW="100px"
@@ -583,7 +583,7 @@ FROM "Control Instruments";`);
             return (
               <Box
                 key={card.id}
-                bg={getMetricColor(card.key)}
+                bg="#E2E8F0"
                 border="2px solid"
                 borderColor={isLocked ? "orange.300" : "#3D365C"}
                 borderRadius="lg"
