@@ -1,5 +1,5 @@
 /**
- * Enhanced WASM Loader for Summary Subsystems Tracking
+ * Enhanced WASM Loader for SUMMARY SUBSYSTEMS
  * Handles loading of specialized WASM modules with performance monitoring
  */
 
