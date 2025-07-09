@@ -38,6 +38,7 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - Path: `ReactApp/resources/ChartPipeline/src/components/filters/ProgressFilter.js`
   - Filters TableB data by "testPackProgress" column
   - Detached, movable window using ResizableDraggablePanel
+  - **Z-Index Management**: Automatically brought to front when clicked or interacted with
   - **Search Functionality**: Real-time test pack search with multiple selection
     - **Search Box**: Small input field for filtering test packs by name
     - **Case-Insensitive**: Searches using partial matching
@@ -88,6 +89,7 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - Path: `ReactApp/resources/ChartPipeline/src/components/filters/ItemsStatusFilter.js`
   - Filters TableA data by items completion status
   - Detached, movable window using ResizableDraggablePanel
+  - **Z-Index Management**: Automatically brought to front when clicked or interacted with
   - **Search Functionality**: Real-time subsystem search with multiple selection
     - **Search Box**: Small input field for filtering subsystems by name
     - **Case-Insensitive**: Searches using partial matching
@@ -128,6 +130,7 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - Path: `ReactApp/resources/ChartPipeline/src/components/filters/LoopStatusFilter.js`
   - Filters TableA data by loop completion status
   - Detached, movable window using ResizableDraggablePanel
+  - **Z-Index Management**: Automatically brought to front when clicked or interacted with
   - **Search Functionality**: Real-time subsystem search with multiple selection
     - **Search Box**: Small input field for filtering subsystems by name
     - **Case-Insensitive**: Searches using partial matching
@@ -256,8 +259,11 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
     - **State Management**: Filter visibility state managed through component hierarchy
     - **Performance Optimized**: Minimal re-rendering impact with proper dependency managementalization components
 - **Supporting Components**:
-  - **ResizableDraggablePanel** - UI component for movable filter windows
+  - **ResizableDraggablePanel** - UI component for movable filter windows with z-index management
     - Path: `ReactApp/resources/ChartPipeline/src/components/ui/ResizableDraggablePanel.js`
+    - **Z-Index Management**: Dynamic z-index assignment to bring panels to front
+    - **Click-to-Front**: Panels automatically come to front when clicked or dragged
+    - **Layer Management**: Maintains proper stacking order above tables and other components
   - **useSubsystemBidirectionalFilter** - Hook for bidirectional filtering logic
     - Path: `ReactApp/resources/ChartPipeline/src/hooks/useSubsystemBidirectionalFilter.js`
 - **Advanced Filter Chaining**: 

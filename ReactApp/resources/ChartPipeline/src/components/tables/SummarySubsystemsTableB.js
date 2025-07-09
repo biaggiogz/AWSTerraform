@@ -39,7 +39,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'subsystem',
       header: 'SUBSYSTEM',
-      size: 140,
+      size: 104,
       cell: ({ getValue }) => (
         <Button
           size="xs"
@@ -65,7 +65,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'testPack',
       header: "TP's INCLUDE",
-      size: 100,
+      size: 60,
       cell: ({ getValue, row }) => {
         const getTestPackColor = () => {
           if (!isProgressFilterVisible) return { bg: 'transparent', color: 'inherit' };
@@ -86,7 +86,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
         return (
           <Text 
             fontSize="xs" 
-            fontWeight="medium"
+            fontWeight="bold"
             bg={colors.bg}
             color={colors.color}
             px={colors.bg !== 'transparent' ? 2 : 0}
@@ -101,7 +101,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'testPackProgress',
       header: 'PROGRESS TEST PACK',
-      size: 140,
+      size: 110,
       cell: ({ getValue }) => {
         const progress = Math.round(getValue() || 0);
         return (
@@ -133,25 +133,25 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'traceados',
       header: 'TRACEADOS',
-      size: 100,
+      size: 94,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
     },
     {
       accessorKey: 'priority',
       header: 'PRIORITY',
-      size: 80,
+      size: 72,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
     },
     {
       accessorKey: 'hito',
       header: 'HITO',
-      size: 80,
+      size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
     },
     {
@@ -159,31 +159,31 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'TEIGA REINSTATEMENT',
       size: 120,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
     },
     {
       accessorKey: 'teigaInsulation',
       header: 'TEIGA INSULATION',
-      size: 120,
+      size: 88,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
     },
     {
       accessorKey: 'siemsa',
       header: 'SIEMSA',
-      size: 80,
+      size: 64,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
     },
     {
       accessorKey: 'technip',
       header: 'TECHNIP',
-      size: 80,
+      size: 64,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium">{getValue()}</Text>
+        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
     }
   ], [selectedSubsystem, onSubsystemSelect, isProgressFilterVisible]);

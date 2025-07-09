@@ -47,7 +47,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'fluid',
       header: 'FLUID',
-      size: 80,
+      size: 60,
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
       )
@@ -55,7 +55,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'subsystem',
       header: 'SUBSYSTEM',
-      size: 140,
+      size: 104,
       cell: ({ getValue, row }) => (
         <Button
           size="xs"
@@ -81,7 +81,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'totalItems',
       header: 'TOTAL ITEMS',
-      size: 90,
+      size: 60,
       cell: ({ getValue, row }) => {
         const getItemsStatusColor = () => {
           if (!isItemsFilterVisible) return { bg: 'transparent', color: 'inherit' };
@@ -99,7 +99,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         return (
           <Text 
             fontSize="xs" 
-            fontWeight="semibold" 
+            fontWeight="bold"
             textAlign="center"
             bg={colors.bg}
             color={colors.color}
@@ -115,23 +115,23 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'doneItems',
       header: 'DONE ITEMS',
-      size: 90,
+      size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
       accessorKey: 'pendingItems',
       header: 'PENDING ITEMS',
-      size: 100,
+      size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
       accessorKey: 'description',
       header: 'DESCRIPTION',
-      size: 200,
+      size: 112,
       cell: ({ getValue }) => (
         <Text fontSize="xs" title={getValue()} noOfLines={2} wordBreak="break-word" textAlign="center">{getValue()}</Text>
       )
@@ -147,7 +147,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'totalLoops',
       header: 'TOTAL LOOP',
-      size: 90,
+      size: 60,
       cell: ({ getValue, row }) => {
         const getLoopStatusColor = () => {
           if (!isLoopFilterVisible) return { bg: 'transparent', color: 'inherit' };
@@ -165,7 +165,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         return (
           <Text 
             fontSize="xs" 
-            fontWeight="semibold" 
+            fontWeight="bold"
             textAlign="center"
             bg={colors.bg}
             color={colors.color}
@@ -181,17 +181,17 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'doneLoops',
       header: 'LOOP DONE',
-      size: 90,
+      size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
       accessorKey: 'pendingLoops',
       header: 'LOOP PENDING',
-      size: 100,
+      size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     }
   ], [selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible]);
