@@ -3,12 +3,21 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
 ## Main Components:
 - **SummarySubsystems.js** - Main container
 - **SummarySubsystemsContainer.js** - Layout container with:
-  - **DynamicCalculationPanel** (the one we just modified)
+  - **DynamicCalculationPanel** (enhanced with filter toggle button)
   - Two draggable panels containing:
     - **SummarySubsystemsTableA** (Subsystem Overview)
     - **SummarySubsystemsTableB** (Test Pack Details)
 - **SummarySubsystemsSQLInterface.js** - Alternative SQL interface
 - **SummarySubsystemsMetricCards.js** - Dedicated metric cards component
+
+## Filter Components:
+- **ProgressFilter.js** - Comprehensive test pack progress filter panel
+  - Filters TableB data by "testPackProgress" column
+  - Detached, movable window using ResizableDraggablePanel
+  - Status legend filters: Above 90%, 70-90%, Below 70%
+  - Bulk actions: Select All, Clear All, Invert
+  - Individual test pack buttons with progress percentages
+  - Cascades filtering from TableB to TableA through bidirectional filter
 
 ## WASM & DuckDB Components:
 - **useSummarySubsystemsData.js** - Main data hook with WASM integration
@@ -27,3 +36,10 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
 - Creates DuckDB tables for SQL querying
 - Uses WASM acceleration for data processing when available
 - Falls back to JavaScript implementations when WASM fails
+
+## Filter Integration:
+- **Filter Toggle**: Small filter icon button above SQL Query Interface
+- **Filter Flow**: ProgressFilter → TableB → TableA (through useSubsystemBidirectionalFilter)
+- **State Management**: SummarySubsystemsContainer manages progress filter state
+- **Performance**: Maintains existing virtualization and performance optimizations
+- **UI/UX**: Hide/show functionality with detached movable window

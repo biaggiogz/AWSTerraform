@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { Box, VStack, Center, Spinner } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
@@ -11,13 +11,23 @@ const SummarySubsystemsContainer = ({
   tableAData, 
   tableBData
 }) => {
+  const [progressFilteredData, setProgressFilteredData] = useState(tableBData);
+  
   const {
     selectedSubsystem,
     filteredTableAData,
     filteredTableBData,
     handleSubsystemSelect,
     clearFilter
-  } = useSubsystemBidirectionalFilter(tableAData, tableBData);
+  } = useSubsystemBidirectionalFilter(tableAData, progressFilteredData);
+  
+  React.useEffect(() => {
+    setProgressFilteredData(tableBData);
+  }, [tableBData]);
+  
+  const handleProgressFilterChange = (filteredData) => {
+    setProgressFilteredData(filteredData);
+  };
 
   return (
     <VStack spacing={4} align="stretch">
@@ -31,6 +41,7 @@ const SummarySubsystemsContainer = ({
           filters={{
             selectedSubsystem: selectedSubsystem
           }}
+          onFilteredDataChange={handleProgressFilterChange}
         />
       </Suspense>
       

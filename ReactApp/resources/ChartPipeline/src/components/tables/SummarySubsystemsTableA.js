@@ -388,6 +388,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
             itemSize={48}
             itemData={{ rows, table }}
             width={headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}
+            style={{ overflow: 'hidden' }}
           >
             {VirtualizedRow}
           </List>

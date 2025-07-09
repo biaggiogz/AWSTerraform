@@ -11,10 +11,11 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore } from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
+import ProgressFilter from '../filters/ProgressFilter';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
@@ -26,6 +27,7 @@ FROM "Control Instruments";`);
   const [isInterfaceVisible, setIsInterfaceVisible] = useState(true);
   const [showFieldSuggestions, setShowFieldSuggestions] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
   const textareaRef = useRef(null);
   
   const { 
@@ -228,13 +230,23 @@ FROM "Control Instruments";`);
           <Text fontSize="sm" fontWeight="bold" color="blue.600">
             SQL Query Interface
           </Text>
-          <IconButton
-            icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}
-            size="sm"
-            variant="ghost"
-            onClick={() => setIsInterfaceVisible(!isInterfaceVisible)}
-            aria-label={isInterfaceVisible ? "Hide interface" : "Show interface"}
-          />
+          <HStack spacing={2}>
+            <IconButton
+              icon={<MdFilterList />}
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsFilterVisible(!isFilterVisible)}
+              aria-label="Toggle progress filter"
+              title="Test Pack Progress Filter"
+            />
+            <IconButton
+              icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsInterfaceVisible(!isInterfaceVisible)}
+              aria-label={isInterfaceVisible ? "Hide interface" : "Show interface"}
+            />
+          </HStack>
         </HStack>
         
         {isInterfaceVisible && (
@@ -647,6 +659,15 @@ FROM "Control Instruments";`);
             );
           })}
         </HStack>
+      )}
+      
+      {isFilterVisible && (
+        <ProgressFilter
+          data={detailsData}
+          onFilterChange={onFilteredDataChange || (() => {})}
+          isVisible={isFilterVisible}
+          onClose={() => setIsFilterVisible(false)}
+        />
       )}
     </Box>
   );
