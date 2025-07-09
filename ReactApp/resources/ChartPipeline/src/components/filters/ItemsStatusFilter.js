@@ -9,7 +9,8 @@ import {
   Tooltip,
   SimpleGrid,
   Divider,
-  IconButton
+  IconButton,
+  Select
 } from '@chakra-ui/react';
 import { MdClose } from 'react-icons/md';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
@@ -18,10 +19,12 @@ const ItemsStatusFilter = ({
   data, 
   onFilterChange, 
   isVisible, 
-  onClose 
+  onClose,
+  onPropagationChange
 }) => {
   const [exclusiveFilter, setExclusiveFilter] = useState(null);
   const [selectedSubsystems, setSelectedSubsystems] = useState({});
+  const [propagationTarget, setPropagationTarget] = useState('nothing');
 
   const subsystemMetrics = useMemo(() => {
     if (!data || data.length === 0) return {};
@@ -88,6 +91,11 @@ const ItemsStatusFilter = ({
       });
       
       onFilterChange(filteredData);
+      
+      // Handle propagation based on selected target
+      if (onPropagationChange && propagationTarget !== 'nothing') {
+        onPropagationChange(filteredData, propagationTarget);
+      }
     }, 100);
     
     return () => {
@@ -95,7 +103,7 @@ const ItemsStatusFilter = ({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [data, selectedSubsystems, exclusiveFilter, onFilterChange]);
+  }, [data, selectedSubsystems, exclusiveFilter, onFilterChange, onPropagationChange, propagationTarget]);
 
   const toggleExclusiveFilter = useCallback((filter) => {
     setExclusiveFilter(prev => prev === filter ? null : filter);
@@ -125,6 +133,32 @@ const ItemsStatusFilter = ({
       return invertedState;
     });
   }, [sortedSubsystems]);
+
+  const handlePropagationChange = useCallback((value) => {
+    setPropagationTarget(value);
+    
+    // Immediately trigger propagation when dropdown changes
+    if (onPropagationChange) {
+      if (value === 'nothing') {
+        onPropagationChange([], 'nothing');
+      } else {
+        // Get current filtered data and propagate
+        const currentFilteredData = data.filter(row => {
+          if (!selectedSubsystems[row.subsystem]) return false;
+          
+          if (exclusiveFilter) {
+            const isDone = (row.totalItems === row.doneItems) && (row.totalItems > 0);
+            const status = isDone ? 'Done' : 'Pending';
+            if (exclusiveFilter === 'done') return status === 'Done';
+            if (exclusiveFilter === 'pending') return status === 'Pending';
+          }
+          
+          return true;
+        });
+        onPropagationChange(currentFilteredData, value);
+      }
+    }
+  }, [data, selectedSubsystems, exclusiveFilter, onPropagationChange]);
 
   const getStatusColor = useCallback((status) => {
     if (status === 'Done') return '#2F5249';
@@ -229,6 +263,19 @@ const ItemsStatusFilter = ({
           <Button size="xs" colorScheme="gray" onClick={() => toggleAllSubsystems(false)}>Clear All</Button>
           <Button size="xs" colorScheme="teal" onClick={invertSubsystemSelection}>Invert</Button>
         </HStack>
+
+        <Box>
+          <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>
+          <Select
+            size="sm"
+            value={propagationTarget}
+            onChange={(e) => handlePropagationChange(e.target.value)}
+            bg="white"
+          >
+            <option value="nothing">Nothing</option>
+            <option value="tableB">Table B (Test Pack Details)</option>
+          </Select>
+        </Box>
 
         <Divider />
 

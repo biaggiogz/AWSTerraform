@@ -17,7 +17,7 @@ import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
@@ -696,6 +696,7 @@ FROM "Control Instruments";`);
           onFilterChange={onFilteredControlDataChange || (() => {})}
           isVisible={isSubsystemFilterVisible}
           onClose={() => setIsSubsystemFilterVisible(false)}
+          onPropagationChange={onItemsPropagationChange || (() => {})}
         />
       )}
       
