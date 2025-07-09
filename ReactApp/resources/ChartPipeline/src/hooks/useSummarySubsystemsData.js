@@ -248,7 +248,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     console.log(`TableA processing time: ${processingTime.toFixed(2)}ms`);
 
     return result;
-  }, [data, aislData, loopData, subsystemsInfoData, wasmModules]);
+  }, [data, aislData, loopData, subsystemsInfoData]);
 
   // Process data for TableB (Test Pack Details) using SQL specification
   const tableBData = useMemo(() => {
@@ -321,7 +321,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     console.log(`TableB processing time: ${processingTime.toFixed(2)}ms`);
 
     return expandedData.sort((a, b) => a.subsystem.localeCompare(b.subsystem));
-  }, [data, loopData, wasmModules]);
+  }, [data, loopData]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
@@ -371,7 +371,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
       pendingTestPacks,
       avgProgressItemsPercent
     };
-  }, [tableAData, tableBData, wasmModules]);
+  }, [tableAData, tableBData]);
 
   return {
     tableAData,

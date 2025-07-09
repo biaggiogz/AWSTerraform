@@ -380,31 +380,17 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
           </Box>
         </Box>
         
-        {/* Table Body */}
-        <Box width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
-          {rows.map((row, index) => (
-            <div key={row.id} className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', minHeight: '48px' }}>
-              {row.getVisibleCells().map(cell => (
-                <div
-                  key={cell.id}
-                  className="table-cell"
-                  style={{
-                    width: `${cell.column.getSize()}px`,
-                    minWidth: `${cell.column.getSize()}px`,
-                    maxWidth: `${cell.column.getSize()}px`,
-                    padding: '8px',
-                    borderRight: '1px solid #e2e8f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '12px'
-                  }}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </div>
-              ))}
-            </div>
-          ))}
+        {/* Table Body - Virtualized */}
+        <Box width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content" height="400px">
+          <List
+            height={400}
+            itemCount={rows.length}
+            itemSize={48}
+            itemData={{ rows, table }}
+            width={headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}
+          >
+            {VirtualizedRow}
+          </List>
         </Box>
       </Box>
       
