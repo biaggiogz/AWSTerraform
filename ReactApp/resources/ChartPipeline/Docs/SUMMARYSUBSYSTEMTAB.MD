@@ -10,8 +10,12 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - Two draggable panels containing:
     - **SummarySubsystemsTableA** (Subsystem Overview)
       - Path: `ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableA.js`
-    - **SummarySubsystemsTableB** (Test Pack Details)
+    - **SummarySubsystemsTableB** (Test Pack Details) - Enhanced with color synchronization
       - Path: `ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableB.js`
+      - **Color Synchronization**: "TP's INCLUDE" column synchronized with ProgressFilter
+        - Automatic background coloring based on testPackProgress values
+        - White font color when filter is visible, default when hidden
+        - Matches exact color scheme of ProgressFilter buttons
 - **SummarySubsystemsSQLInterface.js** - Alternative SQL interface
   - Path: `ReactApp/resources/ChartPipeline/src/components/panels/SummarySubsystemsSQLInterface.js`
   - ReactApp/resources/ChartPipeline/Docs/COMPLETE_SQL_INTERFACE_DOCUMENTATION.md
@@ -19,17 +23,22 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - Path: `ReactApp/resources/ChartPipeline/src/components/ui/SummarySubsystemsMetricCards.js`
 
 ## Filter Components:
-- **ProgressFilter.js** - High-performance test pack progress filter panel
+- **ProgressFilter.js** - High-performance test pack progress filter panel with color synchronization
   - Path: `ReactApp/resources/ChartPipeline/src/components/filters/ProgressFilter.js`
   - Filters TableB data by "testPackProgress" column
   - Detached, movable window using ResizableDraggablePanel
   - **Status Legend Filters**: DONE 100%, Above 90%, 70-90%, Below 70%
   - **Color-Coded Buttons**: Each test pack button painted according to progress category
   - **Color Scheme**:
-    - DONE 100%: #2F5249 (Dark green)
-    - Above 90%: #437057 (Medium green)
-    - 70-90%: #97B067 (Light green)
-    - Below 70%: #E3DE61 (Yellow)
+    - DONE 100%: #437057 
+    - Above 90%: #97B067 
+    - 70-90%: #FFBF78 
+    - Below 70%: #E86A33 
+  - **Color Synchronization**: Automatic visual synchronization with TableB
+    - **When Filter Opens**: "TP's INCLUDE" column cells automatically get colored backgrounds matching progress categories
+    - **When Filter Closes**: "TP's INCLUDE" column cells return to default transparent background
+    - **Font Color**: White text when colored, default when transparent
+    - **Real-time Sync**: Immediate visual feedback showing filter-table relationship
   - Bulk actions: Select All, Clear All, Invert
   - Individual test pack buttons with progress percentages and category colors
   - Cascades filtering from TableB to TableA through bidirectional filter
@@ -145,6 +154,13 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - **Propagation Logic**: Extracts subsystems from filtered TableA and applies to target components
   - **Reset Mechanism**: Proper restoration of target components when propagation is disabled
   - **Future Extensibility**: Architecture ready for charts and additional visualization components
+- **Visual Synchronization System**:
+  - **ProgressFilter ↔ TableB Color Sync**: Automatic color synchronization between filter and table
+    - **Visibility-Based Coloring**: TableB "TP's INCLUDE" column colors activate when ProgressFilter opens
+    - **Progress-Based Colors**: Cell backgrounds match exact progress categories from filter buttons
+    - **Automatic Reset**: Colors automatically clear when filter closes
+    - **State Management**: Filter visibility state managed through component hierarchy
+    - **Performance Optimized**: Minimal re-rendering impact with proper dependency managementalization components
 - **Supporting Components**:
   - **ResizableDraggablePanel** - UI component for movable filter windows
     - Path: `ReactApp/resources/ChartPipeline/src/components/ui/ResizableDraggablePanel.js`
@@ -158,6 +174,9 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - **Dual Propagation State**: Additional state management for both TableA filter propagation targets
     - ItemsStatusFilter propagation targets
     - LoopStatusFilter propagation targets
+  - **Visual Synchronization State**: ProgressFilter visibility state for TableB color synchronization
+    - Filter open/close state propagation to TableB
+    - Automatic color activation/deactivation
   - **Reset Logic**: Automatic restoration of propagated components when propagation is disabled
   - **Independent Control**: Each propagation system operates independently without interference
 - **Independent Operation**: All three filters can be used simultaneously for comprehensive data filtering
