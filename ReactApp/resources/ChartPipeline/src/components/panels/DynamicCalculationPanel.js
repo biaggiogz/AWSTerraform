@@ -11,12 +11,13 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle } from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import ProgressFilter from '../filters/ProgressFilter';
 import SubsystemStatusFilter from '../filters/SubsystemStatusFilter';
+import LoopStatusFilter from '../filters/LoopStatusFilter';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
@@ -30,6 +31,7 @@ FROM "Control Instruments";`);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
+  const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const textareaRef = useRef(null);
   
   const { 
@@ -248,6 +250,14 @@ FROM "Control Instruments";`);
               onClick={() => setIsSubsystemFilterVisible(!isSubsystemFilterVisible)}
               aria-label="Toggle subsystem status filter"
               title="Subsystem Status Filter"
+            />
+            <IconButton
+              icon={<MdLoop />}
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsLoopFilterVisible(!isLoopFilterVisible)}
+              aria-label="Toggle loop status filter"
+              title="Loop Status Filter"
             />
             <IconButton
               icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}
@@ -686,6 +696,15 @@ FROM "Control Instruments";`);
           onFilterChange={onFilteredControlDataChange || (() => {})}
           isVisible={isSubsystemFilterVisible}
           onClose={() => setIsSubsystemFilterVisible(false)}
+        />
+      )}
+      
+      {isLoopFilterVisible && (
+        <LoopStatusFilter
+          data={controlData}
+          onFilterChange={onLoopFilteredControlDataChange || (() => {})}
+          isVisible={isLoopFilterVisible}
+          onClose={() => setIsLoopFilterVisible(false)}
         />
       )}
     </Box>

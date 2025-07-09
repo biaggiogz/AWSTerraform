@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState } from 'react';
+import React, { lazy, Suspense, useState, useMemo } from 'react';
 import { Box, VStack, Center, Spinner } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
@@ -13,6 +13,21 @@ const SummarySubsystemsContainer = ({
 }) => {
   const [progressFilteredData, setProgressFilteredData] = useState(tableBData);
   const [statusFilteredData, setStatusFilteredData] = useState(tableAData);
+  const [loopFilteredData, setLoopFilteredData] = useState(tableAData);
+  
+  // Apply both status and loop filters to TableA
+  const combinedFilteredTableAData = useMemo(() => {
+    const statusFiltered = statusFilteredData;
+    const loopFiltered = loopFilteredData;
+    
+    // Find intersection of both filters
+    const statusSubsystems = new Set(statusFiltered.map(row => row.subsystem));
+    const loopSubsystems = new Set(loopFiltered.map(row => row.subsystem));
+    
+    return tableAData.filter(row => 
+      statusSubsystems.has(row.subsystem) && loopSubsystems.has(row.subsystem)
+    );
+  }, [tableAData, statusFilteredData, loopFilteredData]);
   
   const {
     selectedSubsystem,
@@ -20,7 +35,7 @@ const SummarySubsystemsContainer = ({
     filteredTableBData,
     handleSubsystemSelect,
     clearFilter
-  } = useSubsystemBidirectionalFilter(statusFilteredData, progressFilteredData);
+  } = useSubsystemBidirectionalFilter(combinedFilteredTableAData, progressFilteredData);
   
   React.useEffect(() => {
     setProgressFilteredData(tableBData);
@@ -30,12 +45,20 @@ const SummarySubsystemsContainer = ({
     setStatusFilteredData(tableAData);
   }, [tableAData]);
   
+  React.useEffect(() => {
+    setLoopFilteredData(tableAData);
+  }, [tableAData]);
+  
   const handleProgressFilterChange = (filteredData) => {
     setProgressFilteredData(filteredData);
   };
   
   const handleStatusFilterChange = (filteredData) => {
     setStatusFilteredData(filteredData);
+  };
+  
+  const handleLoopFilterChange = (filteredData) => {
+    setLoopFilteredData(filteredData);
   };
 
   return (
@@ -52,6 +75,7 @@ const SummarySubsystemsContainer = ({
           }}
           onFilteredDataChange={handleProgressFilterChange}
           onFilteredControlDataChange={handleStatusFilterChange}
+          onLoopFilteredControlDataChange={handleLoopFilterChange}
         />
       </Suspense>
       
