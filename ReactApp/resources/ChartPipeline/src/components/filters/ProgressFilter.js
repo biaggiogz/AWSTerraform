@@ -125,10 +125,10 @@ const ProgressFilter = ({
   }, [sortedTestPacks]);
 
   const getProgressColor = useCallback((progress) => {
-    if (progress === 100) return '#2F5249';
-    if (progress > 90) return '#437057';
-    if (progress >= 70) return '#97B067';
-    return '#E3DE61';
+    if (progress === 100) return '#437057';
+    if (progress > 90) return '#97B067';
+    if (progress >= 70) return '#FFBF78';
+    return '#E86A33';
   }, []);
 
   const memoizedButtons = useMemo(() => 
@@ -205,7 +205,7 @@ const ProgressFilter = ({
                 borderColor={exclusiveFilter === 'done100' ? "blue.300" : "transparent"}
                 _hover={{ bg: "gray.100" }}
             >
-              <Box width="15px" height="15px" bg="#2F5249" borderWidth="1px" />
+              <Box width="15px" height="15px" bg="#437057" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'done100' ? "bold" : "normal"}>Done 100%</Text>
             </HStack>
           </Tooltip>
@@ -221,7 +221,7 @@ const ProgressFilter = ({
               borderColor={exclusiveFilter === 'above90' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
-              <Box width="15px" height="15px" bg="#437057" borderWidth="1px" />
+              <Box width="15px" height="15px" bg="#97B067" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'above90' ? "bold" : "normal"}>Above 90%</Text>
             </HStack>
           </Tooltip>
@@ -237,7 +237,7 @@ const ProgressFilter = ({
               borderColor={exclusiveFilter === 'between70And90' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
-              <Box width="15px" height="15px" bg="#97B067" borderWidth="1px" />
+              <Box width="15px" height="15px" bg="#FFBF78" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'between70And90' ? "bold" : "normal"}>70-90%</Text>
             </HStack>
           </Tooltip>
@@ -253,7 +253,7 @@ const ProgressFilter = ({
               borderColor={exclusiveFilter === 'below70' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
-              <Box width="15px" height="15px" bg="#E3DE61" borderWidth="1px" />
+              <Box width="15px" height="15px" bg="#E86A33" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'below70' ? "bold" : "normal"}>Below 70%</Text>
             </HStack>
           </Tooltip>
