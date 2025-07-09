@@ -8,8 +8,9 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - **DynamicCalculationPanel** (enhanced with filter toggle button)
     - Path: `ReactApp/resources/ChartPipeline/src/components/panels/DynamicCalculationPanel.js`
   - Two draggable panels containing:
-    - **SummarySubsystemsTableA** (Subsystem Overview) - Enhanced with dual color synchronization
+    - **SummarySubsystemsTableA** (Subsystem Overview) - Enhanced with dual color synchronization and vertical scrolling
       - Path: `ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableA.js`
+      - **Vertical Scroll Bar**: Enabled for table body when content exceeds 400px height
       - **Dual Color Synchronization**: Multiple columns synchronized with respective filters
         - **"TOTAL ITEMS" Column**: Synchronized with ItemsStatusFilter
           - Automatic background coloring based on items completion status
@@ -19,8 +20,9 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
           - Automatic background coloring based on loop completion status
           - White font color when filter is visible, default when hidden
           - Matches exact color scheme of LoopStatusFilter buttons
-    - **SummarySubsystemsTableB** (Test Pack Details) - Enhanced with color synchronization
+    - **SummarySubsystemsTableB** (Test Pack Details) - Enhanced with color synchronization and vertical scrolling
       - Path: `ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableB.js`
+      - **Vertical Scroll Bar**: Enabled for table body when content exceeds 400px height
       - **Color Synchronization**: "TP's INCLUDE" column synchronized with ProgressFilter
         - Automatic background coloring based on testPackProgress values
         - White font color when filter is visible, default when hidden
@@ -32,7 +34,7 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - Path: `ReactApp/resources/ChartPipeline/src/components/ui/SummarySubsystemsMetricCards.js`
 
 ## Filter Components:
-- **ProgressFilter.js** - High-performance test pack progress filter panel with color synchronization and smart visual feedback
+- **ProgressFilter.js** - High-performance test pack progress filter panel with propagation control, color synchronization and smart visual feedback
   - Path: `ReactApp/resources/ChartPipeline/src/components/filters/ProgressFilter.js`
   - Filters TableB data by "testPackProgress" column
   - Detached, movable window using ResizableDraggablePanel
@@ -56,8 +58,17 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
     - **When Filter Closes**: "TP's INCLUDE" column cells return to default transparent background
     - **Font Color**: White text when colored, default when transparent
     - **Real-time Sync**: Immediate visual feedback showing filter-table relationship
+  - **Propagation Control**: Small dropdown for selective filter propagation
+    - **Default**: "Nothing" (no propagation beyond TableB)
+    - **Table A Option**: Propagates filtering to TableA (Subsystem Overview)
+    - **Future Ready**: Extensible for charts and additional tables
+    - **Immediate Response**: Instant propagation when dropdown selection changes
+    - **Proper Reset**: "Nothing" selection restores TableA to full dataset
   - Bulk actions: Select All, Clear All, Invert
   - Individual test pack buttons with progress percentages and category colors
+  - **Dual Filter Modes**:
+    - **Standard**: TableB → TableA (through bidirectional filter)
+    - **Propagation**: TableB → TableA (direct propagation based on dropdown selection)
   - Cascades filtering from TableB to TableA through bidirectional filter
   - **Performance Optimizations**:
     - Debounced filtering (100ms) to prevent CPU spikes
