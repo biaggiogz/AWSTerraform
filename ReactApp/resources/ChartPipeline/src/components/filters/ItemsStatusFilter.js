@@ -10,7 +10,8 @@ import {
   SimpleGrid,
   Divider,
   IconButton,
-  Select
+  Select,
+  Input
 } from '@chakra-ui/react';
 import { MdClose } from 'react-icons/md';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
@@ -25,6 +26,7 @@ const ItemsStatusFilter = ({
   const [exclusiveFilter, setExclusiveFilter] = useState(null);
   const [selectedSubsystems, setSelectedSubsystems] = useState({});
   const [propagationTarget, setPropagationTarget] = useState('nothing');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const subsystemMetrics = useMemo(() => {
     if (!data || data.length === 0) return {};
@@ -165,8 +167,20 @@ const ItemsStatusFilter = ({
     return '#E85C0D';
   }, []);
 
+  const filteredSubsystems = useMemo(() => {
+    if (!searchTerm) return sortedSubsystems;
+    
+    const filtered = {};
+    Object.entries(sortedSubsystems).forEach(([subsystem, metrics]) => {
+      if (subsystem.toLowerCase().includes(searchTerm.toLowerCase())) {
+        filtered[subsystem] = metrics;
+      }
+    });
+    return filtered;
+  }, [sortedSubsystems, searchTerm]);
+
   const memoizedButtons = useMemo(() => 
-    Object.entries(sortedSubsystems).map(([subsystem, metrics]) => {
+    Object.entries(filteredSubsystems).map(([subsystem, metrics]) => {
       const status = metrics.status;
       const isSelected = selectedSubsystems[subsystem] || false;
       const isVisible = !exclusiveFilter ||
@@ -197,7 +211,7 @@ const ItemsStatusFilter = ({
           </VStack>
         </Button>
       );
-    }), [sortedSubsystems, selectedSubsystems, exclusiveFilter, toggleSubsystem, getStatusColor]
+    }), [filteredSubsystems, selectedSubsystems, exclusiveFilter, toggleSubsystem, getStatusColor]
   );
 
   if (!isVisible) return null;
@@ -264,18 +278,31 @@ const ItemsStatusFilter = ({
           <Button size="xs" colorScheme="teal" onClick={invertSubsystemSelection}>Invert</Button>
         </HStack>
 
-        <Box>
-          <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>
-          <Select
-            size="sm"
-            value={propagationTarget}
-            onChange={(e) => handlePropagationChange(e.target.value)}
-            bg="white"
-          >
-            <option value="nothing">Nothing</option>
-            <option value="tableB">Table B (Test Pack Details)</option>
-          </Select>
-        </Box>
+        <VStack spacing={2} align="stretch">
+          <Box>
+            <Text fontSize="xs" fontWeight="semibold" mb={1}>Search subsystems:</Text>
+            <Input
+              size="sm"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              bg="white"
+            />
+          </Box>
+          
+          <Box>
+            <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>
+            <Select
+              size="sm"
+              value={propagationTarget}
+              onChange={(e) => handlePropagationChange(e.target.value)}
+              bg="white"
+            >
+              <option value="nothing">Nothing</option>
+              <option value="tableB">Table B (Test Pack Details)</option>
+            </Select>
+          </Box>
+        </VStack>
 
         <Divider />
 

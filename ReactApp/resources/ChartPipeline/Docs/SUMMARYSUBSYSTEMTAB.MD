@@ -34,10 +34,16 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - Path: `ReactApp/resources/ChartPipeline/src/components/ui/SummarySubsystemsMetricCards.js`
 
 ## Filter Components:
-- **ProgressFilter.js** - High-performance test pack progress filter panel with propagation control, color synchronization and smart visual feedback
+- **ProgressFilter.js** - High-performance test pack progress filter panel with search, propagation control, color synchronization and smart visual feedback
   - Path: `ReactApp/resources/ChartPipeline/src/components/filters/ProgressFilter.js`
   - Filters TableB data by "testPackProgress" column
   - Detached, movable window using ResizableDraggablePanel
+  - **Search Functionality**: Real-time test pack search with multiple selection
+    - **Search Box**: Small input field for filtering test packs by name
+    - **Case-Insensitive**: Searches using partial matching
+    - **Real-time Results**: Updates button display as user types
+    - **Multiple Selection**: Users can search and select multiple test packs
+    - **Memoized Performance**: Optimized search with useMemo for large datasets
   - **Status Legend Filters**: DONE 100%, Above 90%, 70-90%, Below 70%
   - **Color-Coded Buttons**: Each test pack button painted according to progress category
   - **Color Scheme**:
@@ -73,6 +79,7 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - **Performance Optimizations**:
     - Debounced filtering (100ms) to prevent CPU spikes
     - Memoized button rendering to reduce DOM updates
+    - Memoized search filtering for optimal performance
     - React.memo wrapper to prevent unnecessary re-renders
     - Conditional mounting (only loads when visible)
     - Proper cleanup of timers to prevent memory leaks
