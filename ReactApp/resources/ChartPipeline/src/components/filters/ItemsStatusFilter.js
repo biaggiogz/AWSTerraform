@@ -21,7 +21,8 @@ const ItemsStatusFilter = ({
   onFilterChange, 
   isVisible, 
   onClose,
-  onPropagationChange
+  onPropagationChange,
+  onBringToFront
 }) => {
   const [exclusiveFilter, setExclusiveFilter] = useState(null);
   const [selectedSubsystems, setSelectedSubsystems] = useState({});
@@ -222,6 +223,7 @@ const ItemsStatusFilter = ({
       initialY={150}
       minWidth={350}
       minHeight={400}
+      onBringToFront={onBringToFront}
     >
       <VStack spacing={3} align="stretch" p={3} height="100%">
         <HStack justify="flex-end" align="center">

@@ -21,7 +21,8 @@ const ProgressFilter = ({
   onFilterChange, 
   isVisible, 
   onClose,
-  onPropagationChange
+  onPropagationChange,
+  onBringToFront
 }) => {
   const [exclusiveFilter, setExclusiveFilter] = useState(null);
   const [selectedTestPacks, setSelectedTestPacks] = useState({});
@@ -232,6 +233,7 @@ const ProgressFilter = ({
       initialY={100}
       minWidth={350}
       minHeight={400}
+      onBringToFront={onBringToFront}
     >
       <VStack spacing={3} align="stretch" p={3} height="100%">
         <HStack justify="flex-end" align="center">

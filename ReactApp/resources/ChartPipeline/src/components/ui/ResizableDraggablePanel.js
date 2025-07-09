@@ -9,7 +9,8 @@ const ResizableDraggablePanel = ({
   initialY = 0,
   minWidth = 300,
   minHeight = 200,
-  title = "Panel"
+  title = "Panel",
+  onBringToFront
 }) => {
   const [dimensions, setDimensions] = useState({
     width: initialWidth,
@@ -17,6 +18,8 @@ const ResizableDraggablePanel = ({
     x: initialX,
     y: initialY
   });
+  
+  const [zIndex, setZIndex] = useState(1);
   
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -26,9 +29,18 @@ const ResizableDraggablePanel = ({
   
   const panelRef = useRef(null);
 
+  const bringToFront = useCallback(() => {
+    if (onBringToFront) {
+      const newZIndex = onBringToFront();
+      setZIndex(newZIndex);
+    }
+  }, [onBringToFront]);
+
   const handleMouseDown = useCallback((e, action, direction = '') => {
     e.preventDefault();
     e.stopPropagation();
+    
+    bringToFront();
     
     if (action === 'drag') {
       setIsDragging(true);
@@ -46,7 +58,7 @@ const ResizableDraggablePanel = ({
         height: dimensions.height
       });
     }
-  }, [dimensions]);
+  }, [dimensions, bringToFront]);
 
   const handleMouseMove = useCallback((e) => {
     if (isDragging) {
@@ -109,7 +121,7 @@ const ResizableDraggablePanel = ({
       borderRadius="md"
       bg="white"
       boxShadow="lg"
-      zIndex={isDragging || isResizing ? 1000 : 1}
+      zIndex={isDragging || isResizing ? zIndex + 1000 : zIndex}
       cursor={isDragging ? 'grabbing' : 'default'}
     >
       {/* Drag Handle */}
@@ -128,6 +140,7 @@ const ResizableDraggablePanel = ({
         fontWeight="bold"
         cursor="grab"
         onMouseDown={(e) => handleMouseDown(e, 'drag')}
+        onClick={bringToFront}
         _active={{ cursor: 'grabbing' }}
         borderTopRadius="md"
       >

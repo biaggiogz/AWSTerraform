@@ -17,6 +17,7 @@ const SummarySubsystemsContainer = ({
   const [isProgressFilterVisible, setIsProgressFilterVisible] = useState(false);
   const [isItemsFilterVisible, setIsItemsFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
+  const [topZIndex, setTopZIndex] = useState(100);
   
   // Apply both status and loop filters to TableA
   const combinedFilteredTableAData = useMemo(() => {
@@ -108,6 +109,12 @@ const SummarySubsystemsContainer = ({
       setStatusFilteredData(tableAData);
     }
   };
+  
+  const handleBringToFront = () => {
+    const newZIndex = topZIndex + 1;
+    setTopZIndex(newZIndex);
+    return newZIndex;
+  };
 
   return (
     <VStack spacing={4} align="stretch">
@@ -130,6 +137,7 @@ const SummarySubsystemsContainer = ({
           onItemsFilterVisibilityChange={setIsItemsFilterVisible}
           onLoopFilterVisibilityChange={setIsLoopFilterVisible}
           onProgressPropagationChange={handleProgressPropagationChange}
+          onBringToFront={handleBringToFront}
         />
       </Suspense>
       
@@ -143,6 +151,7 @@ const SummarySubsystemsContainer = ({
           initialY={20}
           minWidth={400}
           minHeight={300}
+          onBringToFront={handleBringToFront}
         >
           <SummarySubsystemsTableA
             data={filteredTableAData}
@@ -161,6 +170,7 @@ const SummarySubsystemsContainer = ({
           initialY={20}
           minWidth={400}
           minHeight={300}
+          onBringToFront={handleBringToFront}
         >
           <SummarySubsystemsTableB
             data={filteredTableBData}

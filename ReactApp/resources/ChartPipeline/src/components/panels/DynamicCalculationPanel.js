@@ -17,7 +17,7 @@ import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onBringToFront }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
@@ -711,6 +711,7 @@ FROM "Control Instruments";`);
             }
           }}
           onPropagationChange={onProgressPropagationChange || (() => {})}
+          onBringToFront={onBringToFront}
         />
       )}
       
@@ -726,6 +727,7 @@ FROM "Control Instruments";`);
             }
           }}
           onPropagationChange={onItemsPropagationChange || (() => {})}
+          onBringToFront={onBringToFront}
         />
       )}
       
@@ -741,6 +743,7 @@ FROM "Control Instruments";`);
             }
           }}
           onPropagationChange={onLoopPropagationChange || (() => {})}
+          onBringToFront={onBringToFront}
         />
       )}
     </Box>
