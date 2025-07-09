@@ -40,7 +40,7 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
     - Conditional mounting (only loads when visible)
     - Proper cleanup of timers to prevent memory leaks
 
-- **ItemsStatusFilter.js** - High-performance items status filter panel
+- **ItemsStatusFilter.js** - High-performance items status filter panel with propagation control
   - Path: `ReactApp/resources/ChartPipeline/src/components/filters/ItemsStatusFilter.js`
   - Filters TableA data by items completion status
   - Detached, movable window using ResizableDraggablePanel
@@ -50,9 +50,17 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - **Color Scheme**:
     - Done: #2F5249 (Dark green)
     - Pending: #E85C0D (Orange)
+  - **Propagation Control**: Small dropdown for selective filter propagation
+    - **Default**: "Nothing" (no propagation beyond TableA)
+    - **Table B Option**: Propagates filtering to TableB (Test Pack Details)
+    - **Future Ready**: Extensible for charts and additional tables
+    - **Immediate Response**: Instant propagation when dropdown selection changes
+    - **Proper Reset**: "Nothing" selection restores TableB to full dataset
   - Bulk actions: Select All, Clear All, Invert
   - Individual subsystem buttons with unique subsystem names and items status colors
-  - Cascades filtering from TableA to TableB through bidirectional filter
+  - **Dual Filter Modes**:
+    - **Standard**: TableA → TableB (through bidirectional filter)
+    - **Propagation**: TableA → TableB (direct propagation based on dropdown selection)
   - **Performance Optimizations**:
     - Debounced filtering (100ms) to prevent CPU spikes
     - Memoized button rendering to reduce DOM updates
@@ -123,12 +131,17 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - **Loop Filter**: Loop icon (MdLoop) for loop status filtering
 - **Triple Filter Flows**:
   - **ProgressFilter** → TableB → TableA (through useSubsystemBidirectionalFilter)
-  - **ItemsStatusFilter** → TableA → TableB (through useSubsystemBidirectionalFilter)
+  - **ItemsStatusFilter** → TableA → TableB (through useSubsystemBidirectionalFilter + optional propagation)
   - **LoopStatusFilter** → TableA → TableB (through useSubsystemBidirectionalFilter + optional propagation)
 - **Enhanced Propagation System**:
-  - **LoopStatusFilter Propagation Control**: Dropdown-based selective propagation
-    - "Nothing": Standard bidirectional filtering only
-    - "Table B": Additional direct propagation to TableB based on filtered subsystems
+  - **Dual Propagation Control**: Both TableA filters have dropdown-based selective propagation
+    - **ItemsStatusFilter Propagation Control**: 
+      - "Nothing": Standard bidirectional filtering only
+      - "Table B": Additional direct propagation to TableB based on filtered subsystems
+    - **LoopStatusFilter Propagation Control**: 
+      - "Nothing": Standard bidirectional filtering only
+      - "Table B": Additional direct propagation to TableB based on filtered subsystems
+  - **Independent Propagation**: Each filter's propagation operates independently
   - **Propagation Logic**: Extracts subsystems from filtered TableA and applies to target components
   - **Reset Mechanism**: Proper restoration of target components when propagation is disabled
   - **Future Extensibility**: Architecture ready for charts and additional visualization components
@@ -142,8 +155,11 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - Subsystems must pass BOTH status and loop filters to be visible
   - TableB filter (ProgressFilter) operates independently
 - **State Management**: SummarySubsystemsContainer manages all three filter states independently
-  - **Propagation State**: Additional state management for LoopStatusFilter propagation targets
+  - **Dual Propagation State**: Additional state management for both TableA filter propagation targets
+    - ItemsStatusFilter propagation targets
+    - LoopStatusFilter propagation targets
   - **Reset Logic**: Automatic restoration of propagated components when propagation is disabled
+  - **Independent Control**: Each propagation system operates independently without interference
 - **Independent Operation**: All three filters can be used simultaneously for comprehensive data filtering
 - **Performance Optimizations**:
   - Maintains existing virtualization and performance optimizations
