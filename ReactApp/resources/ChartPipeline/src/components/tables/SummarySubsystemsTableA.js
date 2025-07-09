@@ -34,7 +34,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect }) => {
+const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible }) => {
   const columns = useMemo(() => [
     {
       accessorKey: 'serialNumber',
@@ -82,9 +82,35 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       accessorKey: 'totalItems',
       header: 'TOTAL ITEMS',
       size: 90,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
-      )
+      cell: ({ getValue, row }) => {
+        const getItemsStatusColor = () => {
+          if (!isItemsFilterVisible) return { bg: 'transparent', color: 'inherit' };
+          
+          const totalItems = row.original.totalItems || 0;
+          const doneItems = row.original.doneItems || 0;
+          const isDone = (totalItems === doneItems) && (totalItems > 0);
+          
+          const bgColor = isDone ? '#2F5249' : '#E85C0D';
+          return { bg: bgColor, color: 'white' };
+        };
+        
+        const colors = getItemsStatusColor();
+        
+        return (
+          <Text 
+            fontSize="xs" 
+            fontWeight="semibold" 
+            textAlign="center"
+            bg={colors.bg}
+            color={colors.color}
+            px={colors.bg !== 'transparent' ? 2 : 0}
+            py={colors.bg !== 'transparent' ? 1 : 0}
+            borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
+          >
+            {getValue()?.toLocaleString()}
+          </Text>
+        );
+      }
     },
     {
       accessorKey: 'doneItems',
@@ -122,9 +148,35 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
       accessorKey: 'totalLoops',
       header: 'TOTAL LOOP',
       size: 90,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
-      )
+      cell: ({ getValue, row }) => {
+        const getLoopStatusColor = () => {
+          if (!isLoopFilterVisible) return { bg: 'transparent', color: 'inherit' };
+          
+          const totalLoops = row.original.totalLoops || 0;
+          const doneLoops = row.original.doneLoops || 0;
+          const isDone = (totalLoops === doneLoops) && (totalLoops > 0);
+          
+          const bgColor = isDone ? '#2F5249' : '#E85C0D';
+          return { bg: bgColor, color: 'white' };
+        };
+        
+        const colors = getLoopStatusColor();
+        
+        return (
+          <Text 
+            fontSize="xs" 
+            fontWeight="semibold" 
+            textAlign="center"
+            bg={colors.bg}
+            color={colors.color}
+            px={colors.bg !== 'transparent' ? 2 : 0}
+            py={colors.bg !== 'transparent' ? 1 : 0}
+            borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
+          >
+            {getValue()?.toLocaleString()}
+          </Text>
+        );
+      }
     },
     {
       accessorKey: 'doneLoops',
@@ -142,7 +194,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect })
         <Text fontSize="xs" fontWeight="semibold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     }
-  ], [selectedSubsystem, onSubsystemSelect]);
+  ], [selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {

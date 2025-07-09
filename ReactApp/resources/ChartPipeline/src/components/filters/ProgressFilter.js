@@ -140,6 +140,8 @@ const ProgressFilter = ({
                       (exclusiveFilter === 'between70And90' && progress >= 70 && progress <= 90) ||
                       (exclusiveFilter === 'below70' && progress < 70) ||
                       (exclusiveFilter === 'done100' && progress === 100);
+      
+      const isDisabled = exclusiveFilter && !isVisible;
 
       return (
         <Button
@@ -147,13 +149,15 @@ const ProgressFilter = ({
           size="sm"
           height="36px"
           variant={isSelected ? "solid" : "outline"}
-          bg={isSelected ? getProgressColor(progress) : "white"}
-          borderColor={getProgressColor(progress)}
-          color={isSelected ? "white" : "black"}
+          bg={isDisabled ? "gray.600" : (isSelected ? getProgressColor(progress) : "white")}
+          borderColor={isDisabled ? "gray.600" : getProgressColor(progress)}
+          color={isDisabled ? "gray.400" : (isSelected ? "white" : "black")}
           opacity={isVisible ? 1 : 0.5}
-          onClick={() => toggleTestPack(testPack)}
+          onClick={isDisabled ? undefined : () => toggleTestPack(testPack)}
+          cursor={isDisabled ? "not-allowed" : "pointer"}
           mb={1}
-          _hover={{ bg: isSelected ? getProgressColor(progress) : "gray.100" }}
+          _hover={isDisabled ? {} : { bg: isSelected ? getProgressColor(progress) : "gray.100" }}
+          isDisabled={isDisabled}
         >
           <VStack spacing={0} align="center">
             <Text fontSize="xs" fontWeight="bold" noOfLines={1}>

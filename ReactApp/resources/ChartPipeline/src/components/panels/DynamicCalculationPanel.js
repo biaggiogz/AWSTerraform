@@ -17,7 +17,7 @@ import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
@@ -253,7 +253,13 @@ FROM "Control Instruments";`);
               icon={<MdCheckCircle />}
               size="sm"
               variant="ghost"
-              onClick={() => setIsSubsystemFilterVisible(!isSubsystemFilterVisible)}
+              onClick={() => {
+                const newVisibility = !isSubsystemFilterVisible;
+                setIsSubsystemFilterVisible(newVisibility);
+                if (onItemsFilterVisibilityChange) {
+                  onItemsFilterVisibilityChange(newVisibility);
+                }
+              }}
               aria-label="Toggle subsystem status filter"
               title="Items Status Filter"
             />
@@ -261,7 +267,13 @@ FROM "Control Instruments";`);
               icon={<MdLoop />}
               size="sm"
               variant="ghost"
-              onClick={() => setIsLoopFilterVisible(!isLoopFilterVisible)}
+              onClick={() => {
+                const newVisibility = !isLoopFilterVisible;
+                setIsLoopFilterVisible(newVisibility);
+                if (onLoopFilterVisibilityChange) {
+                  onLoopFilterVisibilityChange(newVisibility);
+                }
+              }}
               aria-label="Toggle loop status filter"
               title="Loop Status Filter"
             />
@@ -706,7 +718,12 @@ FROM "Control Instruments";`);
           data={controlData}
           onFilterChange={onFilteredControlDataChange || (() => {})}
           isVisible={isSubsystemFilterVisible}
-          onClose={() => setIsSubsystemFilterVisible(false)}
+          onClose={() => {
+            setIsSubsystemFilterVisible(false);
+            if (onItemsFilterVisibilityChange) {
+              onItemsFilterVisibilityChange(false);
+            }
+          }}
           onPropagationChange={onItemsPropagationChange || (() => {})}
         />
       )}
@@ -716,7 +733,12 @@ FROM "Control Instruments";`);
           data={controlData}
           onFilterChange={onLoopFilteredControlDataChange || (() => {})}
           isVisible={isLoopFilterVisible}
-          onClose={() => setIsLoopFilterVisible(false)}
+          onClose={() => {
+            setIsLoopFilterVisible(false);
+            if (onLoopFilterVisibilityChange) {
+              onLoopFilterVisibilityChange(false);
+            }
+          }}
           onPropagationChange={onLoopPropagationChange || (() => {})}
         />
       )}
