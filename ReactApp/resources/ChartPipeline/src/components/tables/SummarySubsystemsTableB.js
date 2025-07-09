@@ -1,6 +1,38 @@
 import React, { useMemo } from 'react';
 import { Box, Heading, Text, Progress, HStack, Button } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
+import { FixedSizeList as List } from 'react-window';
+
+const VirtualizedRow = ({ index, style, data }) => {
+  const { rows, table } = data;
+  const row = rows[index];
+  
+  return (
+    <div style={style}>
+      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0' }}>
+        {row.getVisibleCells().map(cell => (
+          <div
+            key={cell.id}
+            className="table-cell"
+            style={{
+              width: `${cell.column.getSize()}px`,
+              minWidth: `${cell.column.getSize()}px`,
+              maxWidth: `${cell.column.getSize()}px`,
+              padding: '8px',
+              borderRight: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px'
+            }}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect }) => {
   const columns = useMemo(() => [
@@ -362,31 +394,17 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect })
           </Box>
         </Box>
         
-        {/* Table Body */}
-        <Box width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
-          {rows.map((row, index) => (
-            <div key={row.id} className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0' }}>
-              {row.getVisibleCells().map(cell => (
-                <div
-                  key={cell.id}
-                  className="table-cell"
-                  style={{
-                    width: `${cell.column.getSize()}px`,
-                    minWidth: `${cell.column.getSize()}px`,
-                    maxWidth: `${cell.column.getSize()}px`,
-                    padding: '8px',
-                    borderRight: '1px solid #e2e8f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '12px'
-                  }}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </div>
-              ))}
-            </div>
-          ))}
+        {/* Table Body - Virtualized */}
+        <Box width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content" height="400px">
+          <List
+            height={400}
+            itemCount={rows.length}
+            itemSize={40}
+            itemData={{ rows, table }}
+            width={headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}
+          >
+            {VirtualizedRow}
+          </List>
         </Box>
       </Box>
       
