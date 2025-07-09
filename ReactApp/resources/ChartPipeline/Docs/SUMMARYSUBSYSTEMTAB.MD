@@ -124,10 +124,16 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
     - Conditional mounting (only loads when visible)
     - Proper cleanup of timers to prevent memory leaks
 
-- **LoopStatusFilter.js** - High-performance loop status filter panel with propagation control and color synchronization
+- **LoopStatusFilter.js** - High-performance loop status filter panel with search, propagation control and color synchronization
   - Path: `ReactApp/resources/ChartPipeline/src/components/filters/LoopStatusFilter.js`
   - Filters TableA data by loop completion status
   - Detached, movable window using ResizableDraggablePanel
+  - **Search Functionality**: Real-time subsystem search with multiple selection
+    - **Search Box**: Small input field for filtering subsystems by name
+    - **Case-Insensitive**: Searches using partial matching
+    - **Real-time Results**: Updates button display as user types
+    - **Multiple Selection**: Users can search and select multiple subsystems
+    - **Memoized Performance**: Optimized search with useMemo for large datasets
   - **Status Legend Filters**: Done, Pending (no progress bars)
   - **Loop Status Calculation**: `(totalLoops === doneLoops) && (totalLoops > 0)` = Done, else Pending
   - **Color-Coded Buttons**: Each subsystem button painted according to loop status
@@ -153,6 +159,7 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - **Performance Optimizations**:
     - Debounced filtering (100ms) to prevent CPU spikes
     - Memoized button rendering to reduce DOM updates
+    - Memoized search filtering for optimal performance
     - React.memo wrapper to prevent unnecessary re-renders
     - Conditional mounting (only loads when visible)
     - Proper cleanup of timers to prevent memory leaks

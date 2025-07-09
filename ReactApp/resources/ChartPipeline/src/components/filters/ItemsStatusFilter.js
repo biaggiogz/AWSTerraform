@@ -205,9 +205,6 @@ const ItemsStatusFilter = ({
             <Text fontSize="xs" fontWeight="bold" noOfLines={1}>
               {subsystem}
             </Text>
-            <Text fontSize="10px" noOfLines={1}>
-              {status}
-            </Text>
           </VStack>
         </Button>
       );
