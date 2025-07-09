@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Text, HStack, VStack, IconButton, Badge } from '@chakra-ui/react';
-import { DeleteIcon } from '@chakra-ui/icons';
+import { DeleteIcon, ChevronUpIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 
 const PersistentMetricCard = ({ card, onRemove }) => (
@@ -42,8 +42,9 @@ const PersistentMetricCard = ({ card, onRemove }) => (
   </Box>
 );
 
-const PersistentMetricCards = () => {
-  const { sqlState, removeMetricCard, getStateAge } = usePersistentSQLState();
+const PersistentMetricCards = ({ tabName = 'summarySubsystems' }) => {
+  const { sqlState, removeMetricCard, getStateAge } = usePersistentSQLState(tabName);
+  const [isVisible, setIsVisible] = useState(true);
   const stateAge = getStateAge();
 
   // Show persistent metric cards from saved queries
@@ -54,26 +55,38 @@ const PersistentMetricCards = () => {
   const cardsToShow = sqlState.metricCards.length > 0 ? sqlState.metricCards : (sqlState.result || []);
 
   return (
-    <Box p={4} bg="blue.50" borderRadius="md">
-      <HStack justify="space-between" mb={3}>
+    <Box p={1} bg="blue.50" borderRadius="md">
+      <HStack justify="space-between" mb={1}>
         <Text fontSize="sm" fontWeight="bold" color="blue.700">
           SAVED SQL METRICS ({cardsToShow.length})
         </Text>
-        {stateAge !== null && (
-          <Badge colorScheme="blue" fontSize="xs">
-            Saved {stateAge}m ago
-          </Badge>
-        )}
-      </HStack>
-      <HStack spacing={4} wrap="wrap">
-        {cardsToShow.map(card => (
-          <PersistentMetricCard
-            key={card.id}
-            card={card}
-            onRemove={removeMetricCard}
+        <HStack spacing={2}>
+          {stateAge !== null && (
+            <Badge colorScheme="blue" fontSize="xs">
+              Saved {stateAge}m ago
+            </Badge>
+          )}
+          <IconButton
+            icon={isVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
+            size="xs"
+            variant="ghost"
+            colorScheme="blue"
+            onClick={() => setIsVisible(!isVisible)}
+            aria-label={isVisible ? "Hide metrics" : "Show metrics"}
           />
-        ))}
+        </HStack>
       </HStack>
+      {isVisible && (
+        <HStack spacing={4} wrap="wrap">
+          {cardsToShow.map(card => (
+            <PersistentMetricCard
+              key={card.id}
+              card={card}
+              onRemove={removeMetricCard}
+            />
+          ))}
+        </HStack>
+      )}
     </Box>
   );
 };

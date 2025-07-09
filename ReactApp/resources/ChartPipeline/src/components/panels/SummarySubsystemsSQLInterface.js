@@ -6,7 +6,7 @@ import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 
 const SummarySubsystemsSQLInterface = ({ filteredData, onMetricCardAdd }) => {
   const { executeMetricQuery } = useSummarySubsystemsData(filteredData);
-  const { sqlState, updateQuery, addMetricCard, clearState } = usePersistentSQLState();
+  const { sqlState, updateQuery, addMetricCard, clearState } = usePersistentSQLState('summarySubsystems');
   const [query, setQuery] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);

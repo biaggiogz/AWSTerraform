@@ -19,7 +19,12 @@ import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 
 const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onBringToFront }) => {
-  const { sqlState, updateQuery } = usePersistentSQLState();
+  // Determine tab context based on data structure
+  const isSubsystemsTab = controlData && detailsData && 
+    controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
+  const tabName = isSubsystemsTab ? 'summarySubsystems' : 'instrumentsReport';
+  
+  const { sqlState, updateQuery } = usePersistentSQLState(tabName);
   const [sqlQuery, setSqlQuery] = useState(sqlState.query || `SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
@@ -59,9 +64,7 @@ FROM "Control Instruments";`);
     filters
   );
 
-  // Table names for SUMMARY SUBSYSTEMS
-  const isSubsystemsTab = controlData && detailsData && 
-    controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
+  // Tab context already determined above
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');

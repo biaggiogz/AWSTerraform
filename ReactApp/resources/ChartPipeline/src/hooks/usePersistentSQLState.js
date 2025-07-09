@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const STORAGE_KEY = 'summarySubsystems_sqlState';
-
-export const usePersistentSQLState = () => {
+export const usePersistentSQLState = (tabName = 'default') => {
+  const STORAGE_KEY = `${tabName}_sqlState`;
   const [sqlState, setSqlState] = useState({
     query: '',
     result: null,

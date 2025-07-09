@@ -3,8 +3,8 @@ import { Box, Text, IconButton, HStack, Badge } from '@chakra-ui/react';
 import { CloseIcon, InfoIcon } from '@chakra-ui/icons';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 
-const PersistentStateNotification = () => {
-  const { sqlState, getStateAge } = usePersistentSQLState();
+const PersistentStateNotification = ({ tabName = 'summarySubsystems' }) => {
+  const { sqlState, getStateAge } = usePersistentSQLState(tabName);
   const [isVisible, setIsVisible] = useState(false);
   const [hasShownNotification, setHasShownNotification] = useState(false);
 
