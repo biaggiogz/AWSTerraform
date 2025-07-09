@@ -10,7 +10,8 @@ import {
   SimpleGrid,
   Divider,
   IconButton,
-  Select
+  Select,
+  Input
 } from '@chakra-ui/react';
 import { MdClose } from 'react-icons/md';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
@@ -25,6 +26,7 @@ const ProgressFilter = ({
   const [exclusiveFilter, setExclusiveFilter] = useState(null);
   const [selectedTestPacks, setSelectedTestPacks] = useState({});
   const [propagationTarget, setPropagationTarget] = useState('nothing');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const testPackMetrics = useMemo(() => {
     if (!data || data.length === 0) return {};
@@ -166,8 +168,20 @@ const ProgressFilter = ({
     }
   }, [data, selectedTestPacks, exclusiveFilter, onPropagationChange]);
 
+  const filteredTestPacks = useMemo(() => {
+    if (!searchTerm) return sortedTestPacks;
+    
+    const filtered = {};
+    Object.entries(sortedTestPacks).forEach(([testPack, metrics]) => {
+      if (testPack.toLowerCase().includes(searchTerm.toLowerCase())) {
+        filtered[testPack] = metrics;
+      }
+    });
+    return filtered;
+  }, [sortedTestPacks, searchTerm]);
+
   const memoizedButtons = useMemo(() => 
-    Object.entries(sortedTestPacks).map(([testPack, metrics]) => {
+    Object.entries(filteredTestPacks).map(([testPack, metrics]) => {
       const progress = metrics.progress;
       const isSelected = selectedTestPacks[testPack] || false;
       const isVisible = !exclusiveFilter ||
@@ -204,7 +218,7 @@ const ProgressFilter = ({
           </VStack>
         </Button>
       );
-    }), [sortedTestPacks, selectedTestPacks, exclusiveFilter, toggleTestPack, getProgressColor]
+    }), [filteredTestPacks, selectedTestPacks, exclusiveFilter, toggleTestPack, getProgressColor]
   );
 
   if (!isVisible) return null;
@@ -230,6 +244,16 @@ const ProgressFilter = ({
             aria-label="Close filter"
           />
         </HStack>
+
+        <Box>
+          <Input
+            placeholder="Search test packs..."
+            size="sm"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            bg="white"
+          />
+        </Box>
 
         <HStack spacing={4} justifyContent="center">
 
