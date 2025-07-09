@@ -79,6 +79,7 @@ const ProgressFilter = ({
           if (exclusiveFilter === 'above90') return progress > 90;
           if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
           if (exclusiveFilter === 'below70') return progress < 70;
+          if (exclusiveFilter === 'done100') return progress === 100;
         }
         
         return true;
@@ -123,6 +124,13 @@ const ProgressFilter = ({
     });
   }, [sortedTestPacks]);
 
+  const getProgressColor = useCallback((progress) => {
+    if (progress === 100) return '#2F5249';
+    if (progress > 90) return '#437057';
+    if (progress >= 70) return '#97B067';
+    return '#E3DE61';
+  }, []);
+
   const memoizedButtons = useMemo(() => 
     Object.entries(sortedTestPacks).map(([testPack, metrics]) => {
       const progress = metrics.progress;
@@ -130,7 +138,8 @@ const ProgressFilter = ({
       const isVisible = !exclusiveFilter ||
                       (exclusiveFilter === 'above90' && progress > 90) ||
                       (exclusiveFilter === 'between70And90' && progress >= 70 && progress <= 90) ||
-                      (exclusiveFilter === 'below70' && progress < 70);
+                      (exclusiveFilter === 'below70' && progress < 70) ||
+                      (exclusiveFilter === 'done100' && progress === 100);
 
       return (
         <Button
@@ -138,10 +147,13 @@ const ProgressFilter = ({
           size="sm"
           height="36px"
           variant={isSelected ? "solid" : "outline"}
-          colorScheme={isSelected ? "blue" : "gray"}
+          bg={isSelected ? getProgressColor(progress) : "white"}
+          borderColor={getProgressColor(progress)}
+          color={isSelected ? "white" : "black"}
           opacity={isVisible ? 1 : 0.5}
           onClick={() => toggleTestPack(testPack)}
           mb={1}
+          _hover={{ bg: isSelected ? getProgressColor(progress) : "gray.100" }}
         >
           <VStack spacing={0} align="center">
             <Text fontSize="xs" fontWeight="bold" noOfLines={1}>
@@ -153,7 +165,7 @@ const ProgressFilter = ({
           </VStack>
         </Button>
       );
-    }), [sortedTestPacks, selectedTestPacks, exclusiveFilter, toggleTestPack]
+    }), [sortedTestPacks, selectedTestPacks, exclusiveFilter, toggleTestPack, getProgressColor]
   );
 
   if (!isVisible) return null;
@@ -181,6 +193,23 @@ const ProgressFilter = ({
         </HStack>
 
         <HStack spacing={4} justifyContent="center">
+
+          <Tooltip label="Click to show only 100% done" placement="top">
+            <HStack
+                onClick={() => toggleExclusiveFilter('done100')}
+                cursor="pointer"
+                p={1}
+                borderRadius="md"
+                bg={exclusiveFilter === 'done100' ? "blue.50" : "transparent"}
+                borderWidth="1px"
+                borderColor={exclusiveFilter === 'done100' ? "blue.300" : "transparent"}
+                _hover={{ bg: "gray.100" }}
+            >
+              <Box width="15px" height="15px" bg="#2F5249" borderWidth="1px" />
+              <Text fontWeight={exclusiveFilter === 'done100' ? "bold" : "normal"}>Done 100%</Text>
+            </HStack>
+          </Tooltip>
+
           <Tooltip label="Click to show only above 90%" placement="top">
             <HStack
               onClick={() => toggleExclusiveFilter('above90')}
@@ -192,7 +221,7 @@ const ProgressFilter = ({
               borderColor={exclusiveFilter === 'above90' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
-              <Box width="15px" height="15px" bg="rgb(29, 233, 182)" borderWidth="1px" />
+              <Box width="15px" height="15px" bg="#437057" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'above90' ? "bold" : "normal"}>Above 90%</Text>
             </HStack>
           </Tooltip>
@@ -208,7 +237,7 @@ const ProgressFilter = ({
               borderColor={exclusiveFilter === 'between70And90' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
-              <Box width="15px" height="15px" bg="rgba(255, 206, 86, 0.6)" borderWidth="1px" />
+              <Box width="15px" height="15px" bg="#97B067" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'between70And90' ? "bold" : "normal"}>70-90%</Text>
             </HStack>
           </Tooltip>
@@ -224,7 +253,7 @@ const ProgressFilter = ({
               borderColor={exclusiveFilter === 'below70' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
-              <Box width="15px" height="15px" bg="rgba(255, 22, 139, 1)" borderWidth="1px" />
+              <Box width="15px" height="15px" bg="#E3DE61" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'below70' ? "bold" : "normal"}>Below 70%</Text>
             </HStack>
           </Tooltip>
