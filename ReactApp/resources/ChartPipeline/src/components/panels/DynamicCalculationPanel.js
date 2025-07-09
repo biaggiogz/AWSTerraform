@@ -11,11 +11,12 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList } from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import ProgressFilter from '../filters/ProgressFilter';
+import SubsystemStatusFilter from '../filters/SubsystemStatusFilter';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
@@ -28,6 +29,7 @@ FROM "Control Instruments";`);
   const [showFieldSuggestions, setShowFieldSuggestions] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
+  const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const textareaRef = useRef(null);
   
   const { 
@@ -238,6 +240,14 @@ FROM "Control Instruments";`);
               onClick={() => setIsFilterVisible(!isFilterVisible)}
               aria-label="Toggle progress filter"
               title="Test Pack Progress Filter"
+            />
+            <IconButton
+              icon={<MdCheckCircle />}
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsSubsystemFilterVisible(!isSubsystemFilterVisible)}
+              aria-label="Toggle subsystem status filter"
+              title="Subsystem Status Filter"
             />
             <IconButton
               icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}
@@ -667,6 +677,15 @@ FROM "Control Instruments";`);
           onFilterChange={onFilteredDataChange || (() => {})}
           isVisible={isFilterVisible}
           onClose={() => setIsFilterVisible(false)}
+        />
+      )}
+      
+      {isSubsystemFilterVisible && (
+        <SubsystemStatusFilter
+          data={controlData}
+          onFilterChange={onFilteredControlDataChange || (() => {})}
+          isVisible={isSubsystemFilterVisible}
+          onClose={() => setIsSubsystemFilterVisible(false)}
         />
       )}
     </Box>

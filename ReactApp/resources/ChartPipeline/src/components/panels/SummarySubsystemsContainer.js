@@ -12,6 +12,7 @@ const SummarySubsystemsContainer = ({
   tableBData
 }) => {
   const [progressFilteredData, setProgressFilteredData] = useState(tableBData);
+  const [statusFilteredData, setStatusFilteredData] = useState(tableAData);
   
   const {
     selectedSubsystem,
@@ -19,14 +20,22 @@ const SummarySubsystemsContainer = ({
     filteredTableBData,
     handleSubsystemSelect,
     clearFilter
-  } = useSubsystemBidirectionalFilter(tableAData, progressFilteredData);
+  } = useSubsystemBidirectionalFilter(statusFilteredData, progressFilteredData);
   
   React.useEffect(() => {
     setProgressFilteredData(tableBData);
   }, [tableBData]);
   
+  React.useEffect(() => {
+    setStatusFilteredData(tableAData);
+  }, [tableAData]);
+  
   const handleProgressFilterChange = (filteredData) => {
     setProgressFilteredData(filteredData);
+  };
+  
+  const handleStatusFilterChange = (filteredData) => {
+    setStatusFilteredData(filteredData);
   };
 
   return (
@@ -42,6 +51,7 @@ const SummarySubsystemsContainer = ({
             selectedSubsystem: selectedSubsystem
           }}
           onFilteredDataChange={handleProgressFilterChange}
+          onFilteredControlDataChange={handleStatusFilterChange}
         />
       </Suspense>
       

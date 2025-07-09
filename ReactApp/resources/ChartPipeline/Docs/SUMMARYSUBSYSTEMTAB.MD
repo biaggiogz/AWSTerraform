@@ -15,9 +15,15 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
 - **ProgressFilter.js** - High-performance test pack progress filter panel
   - Filters TableB data by "testPackProgress" column
   - Detached, movable window using ResizableDraggablePanel
-  - Status legend filters: Above 90%, 70-90%, Below 70%
+  - **Status Legend Filters**: DONE 100%, Above 90%, 70-90%, Below 70%
+  - **Color-Coded Buttons**: Each test pack button painted according to progress category
+  - **Color Scheme**:
+    - DONE 100%: #2F5249 (Dark green)
+    - Above 90%: #437057 (Medium green)
+    - 70-90%: #97B067 (Light green)
+    - Below 70%: #E3DE61 (Yellow)
   - Bulk actions: Select All, Clear All, Invert
-  - Individual test pack buttons with progress percentages
+  - Individual test pack buttons with progress percentages and category colors
   - Cascades filtering from TableB to TableA through bidirectional filter
   - **Performance Optimizations**:
     - Debounced filtering (100ms) to prevent CPU spikes
