@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   VStack,
@@ -13,12 +13,14 @@ import {
 } from '@chakra-ui/react';
 import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
+import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 
 const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onBringToFront }) => {
-  const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
+  const { sqlState, updateQuery } = usePersistentSQLState();
+  const [sqlQuery, setSqlQuery] = useState(sqlState.query || `SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
 SELECT SUM(doneItems) AS "Done Items _Local"
@@ -33,6 +35,13 @@ FROM "Control Instruments";`);
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const textareaRef = useRef(null);
+
+  // Restore query from persistent state
+  useEffect(() => {
+    if (sqlState.query && sqlState.query !== sqlQuery) {
+      setSqlQuery(sqlState.query);
+    }
+  }, [sqlState.query]);
   
   const { 
     calculations, 
@@ -76,13 +85,15 @@ FROM "Control Instruments";`);
   const handleExecute = () => {
     if (!sqlQuery.trim()) return;
     setDeletedCards(new Set()); // Clear deleted cards on new query
+    updateQuery(sqlQuery); // Save query to persistent state
     executeSQLQuery(sqlQuery);
   };
 
   const addMetricQuery = (newQuery) => {
     setSqlQuery(prev => {
-      if (!prev.trim()) return newQuery;
-      return prev + '\n\n' + newQuery;
+      const updatedQuery = !prev.trim() ? newQuery : prev + '\n\n' + newQuery;
+      updateQuery(updatedQuery); // Save to persistent state
+      return updatedQuery;
     });
   };
 
@@ -91,6 +102,8 @@ FROM "Control Instruments";`);
     setMetricCards(prev => {
       const filtered = prev.filter(card => card.id !== cardId);
       console.log('Cards after delete:', filtered.length);
+      // Update persistent state
+      updateQuery(sqlQuery, filtered);
       return filtered;
     });
     setLockedCards(prev => {
@@ -210,10 +223,22 @@ FROM "Control Instruments";`);
           return newCard || existingCard;
         });
         
-        return [...updatedCards, ...trulyNewCards];
+        const finalCards = [...updatedCards, ...trulyNewCards];
+        
+        // Save metric cards to persistent state
+        updateQuery(sqlQuery, finalCards);
+        
+        return finalCards;
       });
     }
-  }, [calculations, lockedCards, deletedCards]);
+  }, [calculations, lockedCards, deletedCards, sqlQuery, updateQuery]);
+
+  // Restore metric cards from persistent state on mount
+  useEffect(() => {
+    if (sqlState.result && Array.isArray(sqlState.result)) {
+      setMetricCards(sqlState.result);
+    }
+  }, [sqlState.result]);
 
   // Separate global and local metrics
   const globalMetrics = metricCards.filter(card => card.scope === 'GLOBAL');
