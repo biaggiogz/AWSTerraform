@@ -14,6 +14,7 @@ const SummarySubsystemsContainer = ({
   const [progressFilteredData, setProgressFilteredData] = useState(tableBData);
   const [statusFilteredData, setStatusFilteredData] = useState(tableAData);
   const [loopFilteredData, setLoopFilteredData] = useState(tableAData);
+  const [isProgressFilterVisible, setIsProgressFilterVisible] = useState(false);
   
   // Apply both status and loop filters to TableA
   const combinedFilteredTableAData = useMemo(() => {
@@ -108,6 +109,7 @@ const SummarySubsystemsContainer = ({
           onLoopFilteredControlDataChange={handleLoopFilterChange}
           onLoopPropagationChange={handleLoopPropagationChange}
           onItemsPropagationChange={handleItemsPropagationChange}
+          onProgressFilterVisibilityChange={setIsProgressFilterVisible}
         />
       </Suspense>
       
@@ -142,6 +144,7 @@ const SummarySubsystemsContainer = ({
             data={filteredTableBData}
             selectedSubsystem={selectedSubsystem}
             onSubsystemSelect={handleSubsystemSelect}
+            isProgressFilterVisible={isProgressFilterVisible}
           />
         </ResizableDraggablePanel>
       </Box>

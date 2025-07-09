@@ -34,7 +34,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect }) => {
+const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, isProgressFilterVisible }) => {
   const columns = useMemo(() => [
     {
       accessorKey: 'subsystem',
@@ -66,9 +66,37 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect })
       accessorKey: 'testPack',
       header: "TP's INCLUDE",
       size: 100,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="medium">{getValue()}</Text>
-      )
+      cell: ({ getValue, row }) => {
+        const getTestPackColor = () => {
+          if (!isProgressFilterVisible) return { bg: 'transparent', color: 'inherit' };
+          
+          const progress = row.original.testPackProgress || 0;
+          let bgColor = 'transparent';
+          
+          if (progress === 100) bgColor = '#437057';
+          else if (progress > 90) bgColor = '#97B067';
+          else if (progress >= 70) bgColor = '#FFBF78';
+          else bgColor = '#E86A33';
+          
+          return { bg: bgColor, color: 'white' };
+        };
+        
+        const colors = getTestPackColor();
+        
+        return (
+          <Text 
+            fontSize="xs" 
+            fontWeight="medium"
+            bg={colors.bg}
+            color={colors.color}
+            px={colors.bg !== 'transparent' ? 2 : 0}
+            py={colors.bg !== 'transparent' ? 1 : 0}
+            borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
+          >
+            {getValue()}
+          </Text>
+        );
+      }
     },
     {
       accessorKey: 'testPackProgress',
@@ -158,7 +186,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect })
         <Text fontSize="xs" fontWeight="medium">{getValue()}</Text>
       )
     }
-  ], [selectedSubsystem, onSubsystemSelect]);
+  ], [selectedSubsystem, onSubsystemSelect, isProgressFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {

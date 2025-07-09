@@ -17,7 +17,7 @@ import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
@@ -239,7 +239,13 @@ FROM "Control Instruments";`);
               icon={<MdFilterList />}
               size="sm"
               variant="ghost"
-              onClick={() => setIsFilterVisible(!isFilterVisible)}
+              onClick={() => {
+                const newVisibility = !isFilterVisible;
+                setIsFilterVisible(newVisibility);
+                if (onProgressFilterVisibilityChange) {
+                  onProgressFilterVisibilityChange(newVisibility);
+                }
+              }}
               aria-label="Toggle progress filter"
               title="Test Pack Progress Filter"
             />
@@ -686,7 +692,12 @@ FROM "Control Instruments";`);
           data={detailsData}
           onFilterChange={onFilteredDataChange || (() => {})}
           isVisible={isFilterVisible}
-          onClose={() => setIsFilterVisible(false)}
+          onClose={() => {
+            setIsFilterVisible(false);
+            if (onProgressFilterVisibilityChange) {
+              onProgressFilterVisibilityChange(false);
+            }
+          }}
         />
       )}
       
