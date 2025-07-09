@@ -9,7 +9,8 @@ import {
   Tooltip,
   SimpleGrid,
   Divider,
-  IconButton
+  IconButton,
+  Select
 } from '@chakra-ui/react';
 import { MdClose } from 'react-icons/md';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
@@ -18,10 +19,12 @@ const ProgressFilter = ({
   data, 
   onFilterChange, 
   isVisible, 
-  onClose 
+  onClose,
+  onPropagationChange
 }) => {
   const [exclusiveFilter, setExclusiveFilter] = useState(null);
   const [selectedTestPacks, setSelectedTestPacks] = useState({});
+  const [propagationTarget, setPropagationTarget] = useState('nothing');
 
   const testPackMetrics = useMemo(() => {
     if (!data || data.length === 0) return {};
@@ -86,6 +89,11 @@ const ProgressFilter = ({
       });
       
       onFilterChange(filteredData);
+      
+      // Handle propagation based on selected target
+      if (onPropagationChange && propagationTarget !== 'nothing') {
+        onPropagationChange(filteredData, propagationTarget);
+      }
     }, 100);
     
     return () => {
@@ -93,7 +101,7 @@ const ProgressFilter = ({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [data, selectedTestPacks, exclusiveFilter, onFilterChange]);
+  }, [data, selectedTestPacks, exclusiveFilter, onFilterChange, onPropagationChange, propagationTarget]);
 
   const toggleExclusiveFilter = useCallback((filter) => {
     setExclusiveFilter(prev => prev === filter ? null : filter);
@@ -130,6 +138,33 @@ const ProgressFilter = ({
     if (progress >= 70) return '#FFBF78';
     return '#E86A33';
   }, []);
+
+  const handlePropagationChange = useCallback((value) => {
+    setPropagationTarget(value);
+    
+    // Immediately trigger propagation when dropdown changes
+    if (onPropagationChange) {
+      if (value === 'nothing') {
+        onPropagationChange([], 'nothing');
+      } else {
+        // Get current filtered data and propagate
+        const currentFilteredData = data.filter(row => {
+          if (!selectedTestPacks[row.testPack]) return false;
+          
+          if (exclusiveFilter) {
+            const progress = row.testPackProgress;
+            if (exclusiveFilter === 'above90') return progress > 90;
+            if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
+            if (exclusiveFilter === 'below70') return progress < 70;
+            if (exclusiveFilter === 'done100') return progress === 100;
+          }
+          
+          return true;
+        });
+        onPropagationChange(currentFilteredData, value);
+      }
+    }
+  }, [data, selectedTestPacks, exclusiveFilter, onPropagationChange]);
 
   const memoizedButtons = useMemo(() => 
     Object.entries(sortedTestPacks).map(([testPack, metrics]) => {
@@ -268,6 +303,19 @@ const ProgressFilter = ({
           <Button size="xs" colorScheme="gray" onClick={() => toggleAllTestPacks(false)}>Clear All</Button>
           <Button size="xs" colorScheme="teal" onClick={invertTestPackSelection}>Invert</Button>
         </HStack>
+
+        <Box>
+          <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>
+          <Select
+            size="sm"
+            value={propagationTarget}
+            onChange={(e) => handlePropagationChange(e.target.value)}
+            bg="white"
+          >
+            <option value="nothing">Nothing</option>
+            <option value="tableA">Table A (Subsystem Overview)</option>
+          </Select>
+        </Box>
 
         <Divider />
 

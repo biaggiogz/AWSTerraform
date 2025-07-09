@@ -93,6 +93,21 @@ const SummarySubsystemsContainer = ({
       setProgressFilteredData(tableBData);
     }
   };
+  
+  const handleProgressPropagationChange = (filteredData, target) => {
+    if (target === 'tableA') {
+      // Extract subsystems from filtered TableB data
+      const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
+      // Filter TableA data based on subsystems
+      const propagatedTableAData = tableAData.filter(row => 
+        allowedSubsystems.has(row.subsystem)
+      );
+      setStatusFilteredData(propagatedTableAData);
+    } else if (target === 'nothing') {
+      // Reset TableA to original state when propagation is disabled
+      setStatusFilteredData(tableAData);
+    }
+  };
 
   return (
     <VStack spacing={4} align="stretch">
@@ -114,6 +129,7 @@ const SummarySubsystemsContainer = ({
           onProgressFilterVisibilityChange={setIsProgressFilterVisible}
           onItemsFilterVisibilityChange={setIsItemsFilterVisible}
           onLoopFilterVisibilityChange={setIsLoopFilterVisible}
+          onProgressPropagationChange={handleProgressPropagationChange}
         />
       </Suspense>
       
