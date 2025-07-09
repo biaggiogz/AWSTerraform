@@ -234,8 +234,7 @@ const ProgressFilter = ({
       minHeight={400}
     >
       <VStack spacing={3} align="stretch" p={3} height="100%">
-        <HStack justify="space-between" align="center">
-          <Heading size="sm">TEST PACKS: {Object.keys(sortedTestPacks).length}</Heading>
+        <HStack justify="flex-end" align="center">
           <IconButton
             icon={<MdClose />}
             size="sm"
