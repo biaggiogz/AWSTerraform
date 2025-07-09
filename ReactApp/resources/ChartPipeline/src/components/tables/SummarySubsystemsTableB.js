@@ -423,9 +423,9 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
         </Box>
         
         {/* Table Body - Virtualized */}
-        <Box width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content" height="400px">
+        <Box width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content" flex={1}>
           <List
-            height={400}
+            height={600}
             itemCount={rows.length}
             itemSize={40}
             itemData={{ rows, table }}
