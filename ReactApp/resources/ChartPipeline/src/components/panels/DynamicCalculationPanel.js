@@ -427,152 +427,157 @@ FROM "Control Instruments";`);
         </Text>
       )}
       
-      {/* Global Metrics Section */}
-      {globalMetrics.length > 0 && !loading && (
-        <VStack spacing={1} align="stretch" mt={1}>
-          <Text fontSize="xs" fontWeight="bold" color="rgba(103, 154, 154,1)" textAlign="center">
-            GLOBAL
-          </Text>
-          <HStack spacing={2} wrap="wrap" justify="center">
-            {globalMetrics.map((card) => {
-              const isLocked = lockedCards.has(card.id);
-              return (
-                <Box
-                  key={card.id}
-                  bg="rgba(103, 154, 154)"
-                  border="3px solid"
-                  borderColor={isLocked ? "rgba(103, 154, 154,0.8)" : "rgba(103, 154, 154,0.8)"}
-                  borderRadius="lg"
-                  p={0.5}
-                  minW="100px"
-                  textAlign="center"
-                  boxShadow="md"
-                  position="relative"
-                  minH="fit-content"
-                >
-                  {/* Top row with buttons */}
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                    position="absolute"
-                    top="2px"
-                    left="2px"
-                    right="2px"
-                    zIndex={1}
-                  >
-                    <IconButton
-                      icon={<MdClose />}
-                      size="xs"
-                      colorScheme="blue"
-                      variant="ghost"
-                      onClick={() => deleteCard(card.id)}
-                      aria-label="Delete card"
-                      minW="auto"
-                      h="auto"
-                      p={0}
-                    />
-                    <IconButton
-                      icon={isLocked ? <MdLock /> : <MdLockOpen />}
-                      size="xs"
-                      colorScheme="blue"
-                      variant="ghost"
-                      onClick={() => toggleCardLock(card.id)}
-                      aria-label={isLocked ? "Unlock card" : "Lock card"}
-                      minW="auto"
-                      h="auto"
-                      p={0}
-                    />
-                  </Box>
-                  
-                  {/* Metric content without scope text */}
-                  <Box pt={3} pb={1}>
-                    <Text fontSize="md" fontWeight="bold" color="white">
-                      {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
-                    </Text>
-                    <Text fontSize="xs" color="white">
-                      {card.key}
-                    </Text>
-                  </Box>
-                </Box>
-              );
-            })}
-          </HStack>
-        </VStack>
-      )}
-      
-      {/* Local Metrics Section */}
-      {localMetrics.length > 0 && !loading && (
-        <VStack spacing={1} align="stretch" mt={1}>
-          <Text fontSize="xs" fontWeight="bold" color="rgba(0, 0, 60,1)" textAlign="center">
-            LOCAL
-          </Text>
-          <HStack spacing={2} wrap="wrap" justify="center">
-            {localMetrics.map((card) => {
-              const isLocked = lockedCards.has(card.id);
-              return (
-                <Box
-                  key={card.id}
-                  bg="rgba(0, 0, 60,1)"
-                  border="3px solid"
-                  borderColor={isLocked ? "rgba(0, 0, 60,1)" : "rgba(0, 0, 60,1)"}
-                  borderRadius="lg"
-                  p={0.5}
-                  minW="100px"
-                  textAlign="center"
-                  boxShadow="md"
-                  position="relative"
-                  minH="fit-content"
-                >
-                  {/* Top row with buttons */}
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                    position="absolute"
-                    top="2px"
-                    left="2px"
-                    right="2px"
-                    zIndex={1}
-                  >
-                    <IconButton
-                      icon={<MdClose />}
-                      size="xs"
-                      colorScheme="blue"
-                      variant="ghost"
-                      onClick={() => deleteCard(card.id)}
-                      aria-label="Delete card"
-                      minW="auto"
-                      h="auto"
-                      p={0}
-                    />
-                    <IconButton
-                      icon={isLocked ? <MdLock /> : <MdLockOpen />}
-                      size="xs"
-                      colorScheme="blue"
-                      variant="ghost"
-                      onClick={() => toggleCardLock(card.id)}
-                      aria-label={isLocked ? "Unlock card" : "Lock card"}
-                      minW="auto"
-                      h="auto"
-                      p={0}
-                    />
-                  </Box>
-                  
-                  {/* Metric content without scope text */}
-                  <Box pt={3} pb={1}>
-                    <Text fontSize="md" fontWeight="bold" color="white">
-                      {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
-                    </Text>
-                    <Text fontSize="xs" color="white">
-                      {card.key}
-                    </Text>
-                  </Box>
-                </Box>
-              );
-            })}
-          </HStack>
-        </VStack>
+      {/* Global and Local Metrics Side by Side */}
+      {(globalMetrics.length > 0 || localMetrics.length > 0) && !loading && (
+        <HStack spacing={4} align="flex-start" mt={1}>
+          {/* Global Metrics - Left Side */}
+          {globalMetrics.length > 0 && (
+            <VStack spacing={1} align="stretch" flex={1}>
+              <Text fontSize="xs" fontWeight="bold" color="rgba(103, 154, 154,1)" textAlign="center">
+                GLOBAL
+              </Text>
+              <HStack spacing={2} wrap="wrap" justify="center">
+                {globalMetrics.map((card) => {
+                  const isLocked = lockedCards.has(card.id);
+                  return (
+                    <Box
+                      key={card.id}
+                      bg="rgba(103, 154, 154)"
+                      border="3px solid"
+                      borderColor={isLocked ? "rgba(103, 154, 154,0.8)" : "rgba(103, 154, 154,0.8)"}
+                      borderRadius="lg"
+                      p={0.5}
+                      minW="100px"
+                      textAlign="center"
+                      boxShadow="md"
+                      position="relative"
+                      minH="fit-content"
+                    >
+                      {/* Top row with buttons */}
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                        position="absolute"
+                        top="2px"
+                        left="2px"
+                        right="2px"
+                        zIndex={1}
+                      >
+                        <IconButton
+                          icon={<MdClose />}
+                          size="xs"
+                          colorScheme="blue"
+                          variant="ghost"
+                          onClick={() => deleteCard(card.id)}
+                          aria-label="Delete card"
+                          minW="auto"
+                          h="auto"
+                          p={0}
+                        />
+                        <IconButton
+                          icon={isLocked ? <MdLock /> : <MdLockOpen />}
+                          size="xs"
+                          colorScheme="blue"
+                          variant="ghost"
+                          onClick={() => toggleCardLock(card.id)}
+                          aria-label={isLocked ? "Unlock card" : "Lock card"}
+                          minW="auto"
+                          h="auto"
+                          p={0}
+                        />
+                      </Box>
+                      
+                      {/* Metric content without scope text */}
+                      <Box pt={3} pb={1}>
+                        <Text fontSize="md" fontWeight="bold" color="white">
+                          {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+                        </Text>
+                        <Text fontSize="xs" color="white">
+                          {card.key}
+                        </Text>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </HStack>
+            </VStack>
+          )}
+          
+          {/* Local Metrics - Right Side */}
+          {localMetrics.length > 0 && (
+            <VStack spacing={1} align="stretch" flex={1}>
+              <Text fontSize="xs" fontWeight="bold" color="rgba(0, 0, 60,1)" textAlign="center">
+                LOCAL
+              </Text>
+              <HStack spacing={2} wrap="wrap" justify="center">
+                {localMetrics.map((card) => {
+                  const isLocked = lockedCards.has(card.id);
+                  return (
+                    <Box
+                      key={card.id}
+                      bg="rgba(0, 0, 60,1)"
+                      border="3px solid"
+                      borderColor={isLocked ? "rgba(0, 0, 60,1)" : "rgba(0, 0, 60,1)"}
+                      borderRadius="lg"
+                      p={0.5}
+                      minW="100px"
+                      textAlign="center"
+                      boxShadow="md"
+                      position="relative"
+                      minH="fit-content"
+                    >
+                      {/* Top row with buttons */}
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                        position="absolute"
+                        top="2px"
+                        left="2px"
+                        right="2px"
+                        zIndex={1}
+                      >
+                        <IconButton
+                          icon={<MdClose />}
+                          size="xs"
+                          colorScheme="blue"
+                          variant="ghost"
+                          onClick={() => deleteCard(card.id)}
+                          aria-label="Delete card"
+                          minW="auto"
+                          h="auto"
+                          p={0}
+                        />
+                        <IconButton
+                          icon={isLocked ? <MdLock /> : <MdLockOpen />}
+                          size="xs"
+                          colorScheme="blue"
+                          variant="ghost"
+                          onClick={() => toggleCardLock(card.id)}
+                          aria-label={isLocked ? "Unlock card" : "Lock card"}
+                          minW="auto"
+                          h="auto"
+                          p={0}
+                        />
+                      </Box>
+                      
+                      {/* Metric content without scope text */}
+                      <Box pt={3} pb={1}>
+                        <Text fontSize="md" fontWeight="bold" color="white">
+                          {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+                        </Text>
+                        <Text fontSize="xs" color="white">
+                          {card.key}
+                        </Text>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </HStack>
+            </VStack>
+          )}
+        </HStack>
       )}
       
       {/* Other Metrics (without scope) */}
