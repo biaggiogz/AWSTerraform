@@ -9,34 +9,31 @@ import {
   Tooltip,
   SimpleGrid,
   Divider,
-  IconButton,
-  Select
+  IconButton
 } from '@chakra-ui/react';
 import { MdClose } from 'react-icons/md';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 
-const LoopStatusFilter = ({ 
+const ItemsStatusFilter = ({ 
   data, 
   onFilterChange, 
   isVisible, 
-  onClose,
-  onPropagationChange
+  onClose 
 }) => {
   const [exclusiveFilter, setExclusiveFilter] = useState(null);
   const [selectedSubsystems, setSelectedSubsystems] = useState({});
-  const [propagationTarget, setPropagationTarget] = useState('nothing');
 
   const subsystemMetrics = useMemo(() => {
     if (!data || data.length === 0) return {};
     
     const metrics = {};
     data.forEach(row => {
-      if (row.subsystem && row.totalLoops !== undefined && row.doneLoops !== undefined) {
-        const isDone = (row.totalLoops === row.doneLoops) && (row.totalLoops > 0);
+      if (row.subsystem && row.totalItems !== undefined && row.doneItems !== undefined) {
+        const isDone = (row.totalItems === row.doneItems) && (row.totalItems > 0);
         metrics[row.subsystem] = {
           status: isDone ? 'Done' : 'Pending',
-          totalLoops: row.totalLoops,
-          doneLoops: row.doneLoops
+          totalItems: row.totalItems,
+          doneItems: row.doneItems
         };
       }
     });
@@ -81,7 +78,7 @@ const LoopStatusFilter = ({
         if (!selectedSubsystems[row.subsystem]) return false;
         
         if (exclusiveFilter) {
-          const isDone = (row.totalLoops === row.doneLoops) && (row.totalLoops > 0);
+          const isDone = (row.totalItems === row.doneItems) && (row.totalItems > 0);
           const status = isDone ? 'Done' : 'Pending';
           if (exclusiveFilter === 'done') return status === 'Done';
           if (exclusiveFilter === 'pending') return status === 'Pending';
@@ -91,11 +88,6 @@ const LoopStatusFilter = ({
       });
       
       onFilterChange(filteredData);
-      
-      // Handle propagation based on selected target
-      if (onPropagationChange && propagationTarget !== 'nothing') {
-        onPropagationChange(filteredData, propagationTarget);
-      }
     }, 100);
     
     return () => {
@@ -103,7 +95,7 @@ const LoopStatusFilter = ({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [data, selectedSubsystems, exclusiveFilter, onFilterChange, onPropagationChange, propagationTarget]);
+  }, [data, selectedSubsystems, exclusiveFilter, onFilterChange]);
 
   const toggleExclusiveFilter = useCallback((filter) => {
     setExclusiveFilter(prev => prev === filter ? null : filter);
@@ -133,32 +125,6 @@ const LoopStatusFilter = ({
       return invertedState;
     });
   }, [sortedSubsystems]);
-
-  const handlePropagationChange = useCallback((value) => {
-    setPropagationTarget(value);
-    
-    // Immediately trigger propagation when dropdown changes
-    if (onPropagationChange) {
-      if (value === 'nothing') {
-        onPropagationChange([], 'nothing');
-      } else {
-        // Get current filtered data and propagate
-        const currentFilteredData = data.filter(row => {
-          if (!selectedSubsystems[row.subsystem]) return false;
-          
-          if (exclusiveFilter) {
-            const isDone = (row.totalLoops === row.doneLoops) && (row.totalLoops > 0);
-            const status = isDone ? 'Done' : 'Pending';
-            if (exclusiveFilter === 'done') return status === 'Done';
-            if (exclusiveFilter === 'pending') return status === 'Pending';
-          }
-          
-          return true;
-        });
-        onPropagationChange(currentFilteredData, value);
-      }
-    }
-  }, [data, selectedSubsystems, exclusiveFilter, onPropagationChange]);
 
   const getStatusColor = useCallback((status) => {
     if (status === 'Done') return '#2F5249';
@@ -191,6 +157,9 @@ const LoopStatusFilter = ({
             <Text fontSize="xs" fontWeight="bold" noOfLines={1}>
               {subsystem}
             </Text>
+            <Text fontSize="10px" noOfLines={1}>
+              {status}
+            </Text>
           </VStack>
         </Button>
       );
@@ -201,17 +170,17 @@ const LoopStatusFilter = ({
 
   return (
     <ResizableDraggablePanel
-      title="Loop Status Filter"
+      title="Items Status Filter"
       initialWidth={400}
       initialHeight={600}
-      initialX={200}
-      initialY={200}
+      initialX={150}
+      initialY={150}
       minWidth={350}
       minHeight={400}
     >
       <VStack spacing={3} align="stretch" p={3} height="100%">
         <HStack justify="space-between" align="center">
-          <Heading size="sm">LOOP STATUS: {Object.keys(sortedSubsystems).length}</Heading>
+          <Heading size="sm">ITEMS STATUS: {Object.keys(sortedSubsystems).length}</Heading>
           <IconButton
             icon={<MdClose />}
             size="sm"
@@ -222,7 +191,7 @@ const LoopStatusFilter = ({
         </HStack>
 
         <HStack spacing={4} justifyContent="center">
-          <Tooltip label="Click to show only done loops" placement="top">
+          <Tooltip label="Click to show only done items" placement="top">
             <HStack
               onClick={() => toggleExclusiveFilter('done')}
               cursor="pointer"
@@ -238,7 +207,7 @@ const LoopStatusFilter = ({
             </HStack>
           </Tooltip>
 
-          <Tooltip label="Click to show only pending loops" placement="top">
+          <Tooltip label="Click to show only pending items" placement="top">
             <HStack
               onClick={() => toggleExclusiveFilter('pending')}
               cursor="pointer"
@@ -261,19 +230,6 @@ const LoopStatusFilter = ({
           <Button size="xs" colorScheme="teal" onClick={invertSubsystemSelection}>Invert</Button>
         </HStack>
 
-        <Box>
-          <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>
-          <Select
-            size="sm"
-            value={propagationTarget}
-            onChange={(e) => handlePropagationChange(e.target.value)}
-            bg="white"
-          >
-            <option value="nothing">Nothing</option>
-            <option value="tableB">Table B (Test Pack Details)</option>
-          </Select>
-        </Box>
-
         <Divider />
 
         <Box overflowY="auto" flex="1">
@@ -286,4 +242,4 @@ const LoopStatusFilter = ({
   );
 };
 
-export default React.memo(LoopStatusFilter);
+export default React.memo(ItemsStatusFilter);

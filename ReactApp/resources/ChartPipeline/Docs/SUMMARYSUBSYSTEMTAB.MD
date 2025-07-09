@@ -40,18 +40,18 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
     - Conditional mounting (only loads when visible)
     - Proper cleanup of timers to prevent memory leaks
 
-- **SubsystemStatusFilter.js** - High-performance subsystem status filter panel
-  - Path: `ReactApp/resources/ChartPipeline/src/components/filters/SubsystemStatusFilter.js`
-  - Filters TableA data by subsystem completion status
+- **ItemsStatusFilter.js** - High-performance items status filter panel
+  - Path: `ReactApp/resources/ChartPipeline/src/components/filters/ItemsStatusFilter.js`
+  - Filters TableA data by items completion status
   - Detached, movable window using ResizableDraggablePanel
   - **Status Legend Filters**: Done, Pending (no progress bars)
-  - **Status Calculation**: `(totalItems === doneItems) && (totalItems > 0)` = Done, else Pending
-  - **Color-Coded Buttons**: Each subsystem button painted according to status
+  - **Items Status Calculation**: `(totalItems === doneItems) && (totalItems > 0)` = Done, else Pending
+  - **Color-Coded Buttons**: Each subsystem button painted according to items status
   - **Color Scheme**:
     - Done: #2F5249 (Dark green)
     - Pending: #E85C0D (Orange)
   - Bulk actions: Select All, Clear All, Invert
-  - Individual subsystem buttons with unique subsystem names and status colors
+  - Individual subsystem buttons with unique subsystem names and items status colors
   - Cascades filtering from TableA to TableB through bidirectional filter
   - **Performance Optimizations**:
     - Debounced filtering (100ms) to prevent CPU spikes
@@ -60,7 +60,7 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
     - Conditional mounting (only loads when visible)
     - Proper cleanup of timers to prevent memory leaks
 
-- **LoopStatusFilter.js** - High-performance loop status filter panel
+- **LoopStatusFilter.js** - High-performance loop status filter panel with propagation control
   - Path: `ReactApp/resources/ChartPipeline/src/components/filters/LoopStatusFilter.js`
   - Filters TableA data by loop completion status
   - Detached, movable window using ResizableDraggablePanel
@@ -70,9 +70,17 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - **Color Scheme**:
     - Done: #2F5249 (Dark green)
     - Pending: #E85C0D (Orange)
+  - **Propagation Control**: Small dropdown for selective filter propagation
+    - **Default**: "Nothing" (no propagation beyond TableA)
+    - **Table B Option**: Propagates filtering to TableB (Test Pack Details)
+    - **Future Ready**: Extensible for charts and additional tables
+    - **Immediate Response**: Instant propagation when dropdown selection changes
+    - **Proper Reset**: "Nothing" selection restores TableB to full dataset
   - Bulk actions: Select All, Clear All, Invert
   - Individual subsystem buttons with unique subsystem names and loop status colors
-  - Cascades filtering from TableA to TableB through bidirectional filter
+  - **Dual Filter Modes**:
+    - **Standard**: TableA → TableB (through bidirectional filter)
+    - **Propagation**: TableA → TableB (direct propagation based on dropdown selection)
   - **Performance Optimizations**:
     - Debounced filtering (100ms) to prevent CPU spikes
     - Memoized button rendering to reduce DOM updates
@@ -111,22 +119,31 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
 ## Filter Integration:
 - **Filter Toggle Buttons**: Three small icon buttons above SQL Query Interface
   - **Progress Filter**: Filter list icon (MdFilterList) for test pack progress filtering
-  - **Status Filter**: Check circle icon (MdCheckCircle) for subsystem status filtering
+  - **Items Status Filter**: Check circle icon (MdCheckCircle) for items status filtering
   - **Loop Filter**: Loop icon (MdLoop) for loop status filtering
 - **Triple Filter Flows**:
   - **ProgressFilter** → TableB → TableA (through useSubsystemBidirectionalFilter)
-  - **SubsystemStatusFilter** → TableA → TableB (through useSubsystemBidirectionalFilter)
-  - **LoopStatusFilter** → TableA → TableB (through useSubsystemBidirectionalFilter)
+  - **ItemsStatusFilter** → TableA → TableB (through useSubsystemBidirectionalFilter)
+  - **LoopStatusFilter** → TableA → TableB (through useSubsystemBidirectionalFilter + optional propagation)
+- **Enhanced Propagation System**:
+  - **LoopStatusFilter Propagation Control**: Dropdown-based selective propagation
+    - "Nothing": Standard bidirectional filtering only
+    - "Table B": Additional direct propagation to TableB based on filtered subsystems
+  - **Propagation Logic**: Extracts subsystems from filtered TableA and applies to target components
+  - **Reset Mechanism**: Proper restoration of target components when propagation is disabled
+  - **Future Extensibility**: Architecture ready for charts and additional visualization components
 - **Supporting Components**:
   - **ResizableDraggablePanel** - UI component for movable filter windows
     - Path: `ReactApp/resources/ChartPipeline/src/components/ui/ResizableDraggablePanel.js`
   - **useSubsystemBidirectionalFilter** - Hook for bidirectional filtering logic
     - Path: `ReactApp/resources/ChartPipeline/src/hooks/useSubsystemBidirectionalFilter.js`
 - **Advanced Filter Chaining**: 
-  - TableA filters (SubsystemStatusFilter + LoopStatusFilter) use intersection logic
+  - TableA filters (ItemsStatusFilter + LoopStatusFilter) use intersection logic
   - Subsystems must pass BOTH status and loop filters to be visible
   - TableB filter (ProgressFilter) operates independently
 - **State Management**: SummarySubsystemsContainer manages all three filter states independently
+  - **Propagation State**: Additional state management for LoopStatusFilter propagation targets
+  - **Reset Logic**: Automatic restoration of propagated components when propagation is disabled
 - **Independent Operation**: All three filters can be used simultaneously for comprehensive data filtering
 - **Performance Optimizations**:
   - Maintains existing virtualization and performance optimizations

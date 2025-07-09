@@ -14,10 +14,10 @@ import {
 import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import ProgressFilter from '../filters/ProgressFilter';
-import SubsystemStatusFilter from '../filters/SubsystemStatusFilter';
+import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange }) => {
   const [sqlQuery, setSqlQuery] = useState(`SELECT SUM(totalItems) AS "Total Items _Global"
 FROM "Control Instruments";
 
@@ -249,7 +249,7 @@ FROM "Control Instruments";`);
               variant="ghost"
               onClick={() => setIsSubsystemFilterVisible(!isSubsystemFilterVisible)}
               aria-label="Toggle subsystem status filter"
-              title="Subsystem Status Filter"
+              title="Items Status Filter"
             />
             <IconButton
               icon={<MdLoop />}
@@ -691,7 +691,7 @@ FROM "Control Instruments";`);
       )}
       
       {isSubsystemFilterVisible && (
-        <SubsystemStatusFilter
+        <ItemsStatusFilter
           data={controlData}
           onFilterChange={onFilteredControlDataChange || (() => {})}
           isVisible={isSubsystemFilterVisible}
@@ -705,6 +705,7 @@ FROM "Control Instruments";`);
           onFilterChange={onLoopFilteredControlDataChange || (() => {})}
           isVisible={isLoopFilterVisible}
           onClose={() => setIsLoopFilterVisible(false)}
+          onPropagationChange={onLoopPropagationChange || (() => {})}
         />
       )}
     </Box>
