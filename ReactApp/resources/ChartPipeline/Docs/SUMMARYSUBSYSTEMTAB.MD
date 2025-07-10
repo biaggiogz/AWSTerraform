@@ -32,6 +32,13 @@ Components in the "SUMMARY SUBSYSTEMS" Tab:
   - ReactApp/resources/ChartPipeline/Docs/COMPLETE_SQL_INTERFACE_DOCUMENTATION.md
 - **SummarySubsystemsMetricCards.js** - Dedicated metric cards component
   - Path: `ReactApp/resources/ChartPipeline/src/components/ui/SummarySubsystemsMetricCards.js`
+- **PersistentMetricCards.js** - Persistent saved SQL metrics display with hide/show functionality
+  - Path: `ReactApp/resources/ChartPipeline/src/components/ui/PersistentMetricCards.js`
+  - **Hide/Show Toggle**: Small chevron icon to collapse/expand the entire metrics box
+  - **Persistent Storage**: Displays saved SQL query results as metric cards
+  - **Individual Card Removal**: Delete icon on each saved metric card
+  - **State Age Display**: Shows how long ago metrics were saved
+  - **SAVED Badge**: Visual indicator for persistent metric cards
 
 ## Filter Components:
 - **ProgressFilter.js** - High-performance test pack progress filter panel with search, propagation control, color synchronization and smart visual feedback
