@@ -1,0 +1,15 @@
+import { defineConfig } from 'vite';
+import solidPlugin from 'vite-plugin-solid';
+
+export default defineConfig({
+  plugins: [solidPlugin()],
+  build: {
+    target: 'esnext',
+    rollupOptions: {
+      external: ['react', 'react-dom'] // Keep React for hybrid mode
+    }
+  },
+  server: {
+    port: 3001 // Different port for SolidJS dev server
+  }
+});

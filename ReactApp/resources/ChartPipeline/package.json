@@ -8,8 +8,12 @@
     "@duckdb/duckdb-wasm": "^1.29.1-dev132.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@react-buddy/ide-toolbox": "^2.4.0",
+    "@react-buddy/palette-chakra-ui": "^2.3.1",
+    "@solidjs/router": "^0.15.3",
     "@tanstack/react-table": "^8.11.8",
     "@tanstack/react-virtual": "^3.0.1",
+    "@tanstack/solid-virtual": "^3.13.12",
     "chart.js": "^4.3.3",
     "chartjs-plugin-datalabels": "^2.2.0",
     "d3": "^7.9.0",
@@ -28,9 +32,9 @@
     "react-select": "5.10.1",
     "react-virtualized-auto-sizer": "1.0.26",
     "react-window": "^1.8.8",
-    "xlsx": "^0.18.5",
-    "@react-buddy/ide-toolbox": "^2.4.0",
-    "@react-buddy/palette-chakra-ui": "^2.3.1"
+    "solid-js": "^1.9.7",
+    "vite-plugin-solid": "^2.11.7",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",

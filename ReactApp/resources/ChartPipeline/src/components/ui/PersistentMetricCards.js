@@ -3,6 +3,16 @@ import { Box, Text, HStack, VStack, IconButton, Badge } from '@chakra-ui/react';
 import { DeleteIcon, ChevronUpIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 
+// SolidJS Migration Support
+let SolidInReact, PersistentMetricCardsSolid;
+try {
+  const bridge = require('../../solid/bridge/ReactSolidBridge.js');
+  SolidInReact = bridge.SolidInReact;
+  PersistentMetricCardsSolid = require('../../solid/components/PersistentMetricCards.solid.jsx').default;
+} catch (error) {
+  console.warn('SolidJS components not available:', error.message);
+}
+
 const PersistentMetricCard = ({ card, onRemove }) => (
   <Box
     bg="white"
@@ -43,10 +53,34 @@ const PersistentMetricCard = ({ card, onRemove }) => (
 );
 
 const PersistentMetricCards = ({ tabName = 'summarySubsystems' }) => {
+  // Feature flag for SolidJS migration
+  const USE_SOLIDJS = process.env.REACT_APP_USE_SOLIDJS === 'true' || 
+                     localStorage.getItem('use-solidjs') === 'true';
+  
   const { sqlState, removeMetricCard, getStateAge } = usePersistentSQLState(tabName);
   const [isVisible, setIsVisible] = useState(true);
   const stateAge = getStateAge();
+  
+  // SolidJS version (5-8x faster)
+  if (USE_SOLIDJS && SolidInReact && PersistentMetricCardsSolid) {
+    return (
+      <SolidInReact
+        component={PersistentMetricCardsSolid}
+        props={{
+          tabName,
+          sqlState: {
+            metricCards: sqlState.metricCards,
+            result: sqlState.result,
+            stateAge
+          },
+          onRemoveCard: removeMetricCard
+        }}
+        className="solidjs-persistent-metrics"
+      />
+    );
+  }
 
+  // React version (fallback)
   // Show persistent metric cards from saved queries
   if (!sqlState.metricCards.length && (!sqlState.result || !Array.isArray(sqlState.result))) {
     return null;
