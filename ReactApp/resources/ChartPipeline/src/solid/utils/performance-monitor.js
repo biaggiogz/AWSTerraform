@@ -1,148 +1,409 @@
 /**
- * Performance monitoring utilities for SolidJS migration
- * Tracks performance improvements and memory usage
+ * Performance monitoring utilities for SolidJS + WASM integration
+ * Provides real-time performance tracking and framework comparison
  */
 
-export class PerformanceMonitor {
-  static measurements = new Map();
-  static isEnabled = process.env.REACT_APP_ENABLE_PERFORMANCE_MONITORING === 'true';
-  
-  static startMeasurement(name) {
-    if (!this.isEnabled) return;
-    
-    this.measurements.set(name, {
-      start: performance.now(),
-      memory: this.getMemoryUsage()
-    });
-  }
-  
-  static endMeasurement(name) {
-    if (!this.isEnabled) return;
-    
-    const measurement = this.measurements.get(name);
-    if (!measurement) return;
-    
-    const duration = performance.now() - measurement.start;
-    const currentMemory = this.getMemoryUsage();
-    
-    const result = {
-      name,
-      duration: Math.round(duration * 100) / 100,
-      memoryBefore: measurement.memory,
-      memoryAfter: currentMemory,
-      memoryDelta: currentMemory ? currentMemory.used - measurement.memory?.used : null
+class PerformanceMonitor {
+  constructor() {
+    this.metrics = {
+      react: {
+        renderTimes: [],
+        memoryUsage: [],
+        componentCount: 0,
+        totalOperations: 0
+      },
+      solidjs: {
+        renderTimes: [],
+        memoryUsage: [],
+        componentCount: 0,
+        totalOperations: 0
+      },
+      wasm: {
+        operationTimes: [],
+        totalOperations: 0,
+        failureCount: 0,
+        successRate: 100
+      }
     };
     
-    this.logMeasurement(result);
-    this.measurements.delete(name);
-    
-    return result;
+    this.isMonitoring = false;
+    this.monitoringInterval = null;
+    this.observers = [];
+    this.performanceThresholds = {
+      slowRender: 16, // 16ms (60fps)
+      memoryWarning: 100, // 100MB
+      wasmFailureRate: 10 // 10%
+    };
   }
-  
-  static getMemoryUsage() {
+
+  // Start performance monitoring
+  startMonitoring(interval = 1000) {
+    if (this.isMonitoring) return;
+    
+    this.isMonitoring = true;
+    console.log('🔍 Performance monitoring started');
+    
+    // Monitor memory usage
+    this.monitoringInterval = setInterval(() => {
+      this.collectMemoryMetrics();
+      this.checkPerformanceThresholds();
+      this.notifyObservers();
+    }, interval);
+    
+    // Monitor React/SolidJS component rendering
+    this.setupRenderMonitoring();
+    
+    // Monitor WASM operations
+    this.setupWasmMonitoring();
+  }
+
+  // Stop performance monitoring
+  stopMonitoring() {
+    if (!this.isMonitoring) return;
+    
+    this.isMonitoring = false;
+    
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+    }
+    
+    console.log('⏹️ Performance monitoring stopped');
+  }
+
+  // Record React component render time
+  recordReactRender(componentName, renderTime) {
+    this.metrics.react.renderTimes.push({
+      component: componentName,
+      time: renderTime,
+      timestamp: Date.now()
+    });
+    
+    this.metrics.react.totalOperations++;
+    
+    // Keep only last 100 measurements
+    if (this.metrics.react.renderTimes.length > 100) {
+      this.metrics.react.renderTimes.shift();
+    }
+    
+    if (renderTime > this.performanceThresholds.slowRender) {
+      console.warn(`⚠️ Slow React render: ${componentName} took ${renderTime.toFixed(2)}ms`);
+    }
+  }
+
+  // Record SolidJS component render time
+  recordSolidJSRender(componentName, renderTime) {
+    this.metrics.solidjs.renderTimes.push({
+      component: componentName,
+      time: renderTime,
+      timestamp: Date.now()
+    });
+    
+    this.metrics.solidjs.totalOperations++;
+    
+    // Keep only last 100 measurements
+    if (this.metrics.solidjs.renderTimes.length > 100) {
+      this.metrics.solidjs.renderTimes.shift();
+    }
+    
+    if (renderTime > this.performanceThresholds.slowRender) {
+      console.warn(`⚠️ Slow SolidJS render: ${componentName} took ${renderTime.toFixed(2)}ms`);
+    }
+  }
+
+  // Record WASM operation
+  recordWasmOperation(operationName, operationTime, success = true) {
+    this.metrics.wasm.operationTimes.push({
+      operation: operationName,
+      time: operationTime,
+      success,
+      timestamp: Date.now()
+    });
+    
+    this.metrics.wasm.totalOperations++;
+    
+    if (!success) {
+      this.metrics.wasm.failureCount++;
+    }
+    
+    // Update success rate
+    this.metrics.wasm.successRate = 
+      ((this.metrics.wasm.totalOperations - this.metrics.wasm.failureCount) / 
+       this.metrics.wasm.totalOperations) * 100;
+    
+    // Keep only last 100 measurements
+    if (this.metrics.wasm.operationTimes.length > 100) {
+      this.metrics.wasm.operationTimes.shift();
+    }
+  }
+
+  // Collect memory usage metrics
+  collectMemoryMetrics() {
     if (performance.memory) {
-      return {
-        used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
-        total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
-        limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024)
+      const memoryInfo = {
+        used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024), // MB
+        total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024), // MB
+        limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024), // MB
+        timestamp: Date.now()
+      };
+      
+      // Estimate React vs SolidJS memory usage based on component counts
+      const totalComponents = this.metrics.react.componentCount + this.metrics.solidjs.componentCount;
+      
+      if (totalComponents > 0) {
+        const reactRatio = this.metrics.react.componentCount / totalComponents;
+        const solidjsRatio = this.metrics.solidjs.componentCount / totalComponents;
+        
+        this.metrics.react.memoryUsage.push({
+          ...memoryInfo,
+          estimated: Math.round(memoryInfo.used * reactRatio)
+        });
+        
+        this.metrics.solidjs.memoryUsage.push({
+          ...memoryInfo,
+          estimated: Math.round(memoryInfo.used * solidjsRatio)
+        });
+      }
+      
+      // Keep only last 60 measurements (1 minute at 1s intervals)
+      if (this.metrics.react.memoryUsage.length > 60) {
+        this.metrics.react.memoryUsage.shift();
+      }
+      if (this.metrics.solidjs.memoryUsage.length > 60) {
+        this.metrics.solidjs.memoryUsage.shift();
+      }
+    }
+  }
+
+  // Setup render monitoring
+  setupRenderMonitoring() {
+    // Monitor React renders via React DevTools API (if available)
+    if (window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
+      const originalOnCommitFiberRoot = window.__REACT_DEVTOOLS_GLOBAL_HOOK__.onCommitFiberRoot;
+      
+      window.__REACT_DEVTOOLS_GLOBAL_HOOK__.onCommitFiberRoot = (id, root, ...args) => {
+        const startTime = performance.now();
+        
+        if (originalOnCommitFiberRoot) {
+          originalOnCommitFiberRoot(id, root, ...args);
+        }
+        
+        const endTime = performance.now();
+        this.recordReactRender('React Component', endTime - startTime);
+        
+        return originalOnCommitFiberRoot ? originalOnCommitFiberRoot(id, root, ...args) : undefined;
       };
     }
-    return null;
+    
+    // Monitor SolidJS renders via global hook
+    if (window.solidjsPerformanceHook) {
+      window.solidjsPerformanceHook.onRender = (componentName, renderTime) => {
+        this.recordSolidJSRender(componentName, renderTime);
+      };
+    }
   }
-  
-  static logMeasurement(result) {
-    const { name, duration, memoryBefore, memoryAfter, memoryDelta } = result;
+
+  // Setup WASM monitoring
+  setupWasmMonitoring() {
+    // Monitor ultra processor if available
+    if (window.ultraWasmProcessor) {
+      const originalFilterTable = window.ultraWasmProcessor.filterTable;
+      const originalSearchData = window.ultraWasmProcessor.searchData;
+      const originalCategorizeProgress = window.ultraWasmProcessor.categorizeProgress;
+      
+      window.ultraWasmProcessor.filterTable = async (...args) => {
+        const startTime = performance.now();
+        try {
+          const result = await originalFilterTable.apply(window.ultraWasmProcessor, args);
+          const endTime = performance.now();
+          this.recordWasmOperation('filterTable', endTime - startTime, true);
+          return result;
+        } catch (error) {
+          const endTime = performance.now();
+          this.recordWasmOperation('filterTable', endTime - startTime, false);
+          throw error;
+        }
+      };
+      
+      window.ultraWasmProcessor.searchData = async (...args) => {
+        const startTime = performance.now();
+        try {
+          const result = await originalSearchData.apply(window.ultraWasmProcessor, args);
+          const endTime = performance.now();
+          this.recordWasmOperation('searchData', endTime - startTime, true);
+          return result;
+        } catch (error) {
+          const endTime = performance.now();
+          this.recordWasmOperation('searchData', endTime - startTime, false);
+          throw error;
+        }
+      };
+      
+      window.ultraWasmProcessor.categorizeProgress = async (...args) => {
+        const startTime = performance.now();
+        try {
+          const result = await originalCategorizeProgress.apply(window.ultraWasmProcessor, args);
+          const endTime = performance.now();
+          this.recordWasmOperation('categorizeProgress', endTime - startTime, true);
+          return result;
+        } catch (error) {
+          const endTime = performance.now();
+          this.recordWasmOperation('categorizeProgress', endTime - startTime, false);
+          throw error;
+        }
+      };
+    }
+  }
+
+  // Check performance thresholds and issue warnings
+  checkPerformanceThresholds() {
+    // Check memory usage
+    const latestReactMemory = this.metrics.react.memoryUsage[this.metrics.react.memoryUsage.length - 1];
+    const latestSolidJSMemory = this.metrics.solidjs.memoryUsage[this.metrics.solidjs.memoryUsage.length - 1];
     
-    console.group(`🚀 Performance: ${name}`);
-    console.log(`⏱️  Duration: ${duration}ms`);
-    
-    if (memoryBefore && memoryAfter) {
-      console.log(`💾 Memory: ${memoryBefore.used}MB → ${memoryAfter.used}MB (${memoryDelta > 0 ? '+' : ''}${memoryDelta}MB)`);
+    if (latestReactMemory && latestReactMemory.used > this.performanceThresholds.memoryWarning) {
+      console.warn(`⚠️ High memory usage detected: ${latestReactMemory.used}MB`);
     }
     
-    // Performance thresholds
-    const threshold = parseInt(process.env.REACT_APP_PERFORMANCE_THRESHOLD_MS) || 16;
-    if (duration > threshold) {
-      console.warn(`⚠️  Performance warning: ${duration}ms > ${threshold}ms threshold`);
-    } else {
-      console.log(`✅ Performance good: ${duration}ms < ${threshold}ms threshold`);
+    // Check WASM failure rate
+    if (this.metrics.wasm.successRate < (100 - this.performanceThresholds.wasmFailureRate)) {
+      console.warn(`⚠️ High WASM failure rate: ${(100 - this.metrics.wasm.successRate).toFixed(1)}%`);
     }
-    
-    console.groupEnd();
   }
-  
-  static compareFrameworks(reactTime, solidTime, operation) {
-    if (!this.isEnabled) return;
+
+  // Get performance comparison
+  getPerformanceComparison() {
+    const reactAvgRender = this.getAverageRenderTime('react');
+    const solidjsAvgRender = this.getAverageRenderTime('solidjs');
+    const wasmAvgOperation = this.getAverageWasmTime();
     
-    const improvement = reactTime / solidTime;
-    const savings = reactTime - solidTime;
-    
-    console.group(`📊 Framework Comparison: ${operation}`);
-    console.log(`React:   ${reactTime}ms`);
-    console.log(`SolidJS: ${solidTime}ms`);
-    console.log(`Improvement: ${improvement.toFixed(1)}x faster`);
-    console.log(`Time saved: ${savings.toFixed(1)}ms`);
-    
-    if (improvement >= 2) {
-      console.log(`🎉 Excellent improvement: ${improvement.toFixed(1)}x faster!`);
-    } else if (improvement >= 1.5) {
-      console.log(`✅ Good improvement: ${improvement.toFixed(1)}x faster`);
-    } else {
-      console.log(`📈 Modest improvement: ${improvement.toFixed(1)}x faster`);
-    }
-    
-    console.groupEnd();
-  }
-  
-  static trackComponentRender(componentName, framework = 'Unknown') {
-    const measurementName = `${componentName}-${framework}`;
+    const reactMemory = this.getAverageMemoryUsage('react');
+    const solidjsMemory = this.getAverageMemoryUsage('solidjs');
     
     return {
-      start: () => this.startMeasurement(measurementName),
-      end: () => this.endMeasurement(measurementName)
+      rendering: {
+        react: {
+          averageTime: reactAvgRender,
+          operations: this.metrics.react.totalOperations,
+          components: this.metrics.react.componentCount
+        },
+        solidjs: {
+          averageTime: solidjsAvgRender,
+          operations: this.metrics.solidjs.totalOperations,
+          components: this.metrics.solidjs.componentCount
+        },
+        improvement: reactAvgRender > 0 ? (reactAvgRender / solidjsAvgRender) : 1
+      },
+      memory: {
+        react: reactMemory,
+        solidjs: solidjsMemory,
+        reduction: reactMemory > 0 ? ((reactMemory - solidjsMemory) / reactMemory) * 100 : 0
+      },
+      wasm: {
+        averageTime: wasmAvgOperation,
+        operations: this.metrics.wasm.totalOperations,
+        successRate: this.metrics.wasm.successRate
+      }
     };
   }
-  
-  static showSummary() {
-    if (!this.isEnabled) return;
+
+  // Helper methods
+  getAverageRenderTime(framework) {
+    const renderTimes = this.metrics[framework].renderTimes;
+    if (renderTimes.length === 0) return 0;
     
-    const memory = this.getMemoryUsage();
-    
-    console.group('📊 Performance Summary');
-    console.log(`Framework: SolidJS Migration Active`);
-    console.log(`Memory Usage: ${memory?.used}MB / ${memory?.total}MB`);
-    console.log(`Memory Limit: ${memory?.limit}MB`);
-    console.log(`Active Measurements: ${this.measurements.size}`);
-    console.groupEnd();
+    const sum = renderTimes.reduce((acc, item) => acc + item.time, 0);
+    return Math.round((sum / renderTimes.length) * 100) / 100;
   }
-  
-  // Automatic performance monitoring for SolidJS components
-  static wrapComponent(Component, name) {
-    return (props) => {
-      const tracker = this.trackComponentRender(name, 'SolidJS');
-      
-      // Start measurement
-      tracker.start();
-      
-      // Render component
-      const result = Component(props);
-      
-      // End measurement after next tick
-      setTimeout(() => tracker.end(), 0);
-      
-      return result;
+
+  getAverageMemoryUsage(framework) {
+    const memoryUsage = this.metrics[framework].memoryUsage;
+    if (memoryUsage.length === 0) return 0;
+    
+    const sum = memoryUsage.reduce((acc, item) => acc + (item.estimated || item.used), 0);
+    return Math.round((sum / memoryUsage.length) * 100) / 100;
+  }
+
+  getAverageWasmTime() {
+    const operationTimes = this.metrics.wasm.operationTimes;
+    if (operationTimes.length === 0) return 0;
+    
+    const sum = operationTimes.reduce((acc, item) => acc + item.time, 0);
+    return Math.round((sum / operationTimes.length) * 100) / 100;
+  }
+
+  // Observer pattern for real-time updates
+  addObserver(callback) {
+    this.observers.push(callback);
+  }
+
+  removeObserver(callback) {
+    this.observers = this.observers.filter(obs => obs !== callback);
+  }
+
+  notifyObservers() {
+    const comparison = this.getPerformanceComparison();
+    this.observers.forEach(callback => {
+      try {
+        callback(comparison);
+      } catch (error) {
+        console.error('Performance monitor observer error:', error);
+      }
+    });
+  }
+
+  // Update component counts
+  updateComponentCount(framework, count) {
+    this.metrics[framework].componentCount = count;
+  }
+
+  // Get current metrics
+  getCurrentMetrics() {
+    return {
+      ...this.metrics,
+      isMonitoring: this.isMonitoring,
+      thresholds: this.performanceThresholds
     };
+  }
+
+  // Reset all metrics
+  resetMetrics() {
+    this.metrics = {
+      react: {
+        renderTimes: [],
+        memoryUsage: [],
+        componentCount: 0,
+        totalOperations: 0
+      },
+      solidjs: {
+        renderTimes: [],
+        memoryUsage: [],
+        componentCount: 0,
+        totalOperations: 0
+      },
+      wasm: {
+        operationTimes: [],
+        totalOperations: 0,
+        failureCount: 0,
+        successRate: 100
+      }
+    };
+    
+    console.log('📊 Performance metrics reset');
   }
 }
 
-// Auto-enable in development
-if (process.env.NODE_ENV === 'development') {
-  PerformanceMonitor.isEnabled = true;
+// Create global instance
+const performanceMonitor = new PerformanceMonitor();
+
+// Auto-start monitoring if enabled
+if (typeof window !== 'undefined') {
+  window.solidjsPerformanceMonitor = performanceMonitor;
   
-  // Show summary every 30 seconds
-  setInterval(() => {
-    PerformanceMonitor.showSummary();
-  }, 30000);
+  // Check for auto-start flag
+  if (localStorage.getItem('solidjs-performance-monitoring') === 'true') {
+    performanceMonitor.startMonitoring();
+  }
 }
 
-export default PerformanceMonitor;
+export default performanceMonitor;
