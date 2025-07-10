@@ -3,6 +3,7 @@ import { Box, VStack, HStack, Button, Textarea, Text, Alert, AlertIcon, Code, Ic
 import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useSummarySubsystemsData } from '../../hooks/useSummarySubsystemsData';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
+import SQLIntellisense from '../ui/SQLIntellisense';
 
 const SummarySubsystemsSQLInterface = ({ filteredData, onMetricCardAdd }) => {
   const { executeMetricQuery } = useSummarySubsystemsData(filteredData);
@@ -121,13 +122,11 @@ const SummarySubsystemsSQLInterface = ({ filteredData, onMetricCardAdd }) => {
         {/* Query Input */}
         <Box>
           <Text fontSize="sm" fontWeight="semibold" mb={2}>SQL Query:</Text>
-          <Textarea
+          <SQLIntellisense
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter your SQL query here..."
+            placeholder="Enter your SQL query here... (Type to see suggestions)"
             rows={6}
-            fontFamily="monospace"
-            fontSize="sm"
           />
         </Box>
 
@@ -204,9 +203,10 @@ const SummarySubsystemsSQLInterface = ({ filteredData, onMetricCardAdd }) => {
 
         {/* Available Tables Info */}
         <Box fontSize="xs" color="gray.600">
-          <Text fontWeight="semibold">Available Tables:</Text>
-          <Text>• SummarySubsystemsTableA: subsystem, totalItems, doneItems, pendingItems, etc.</Text>
-          <Text>• SummarySubsystemsTableB: subsystem, testPack, testPackProgress, etc.</Text>
+          <Text fontWeight="semibold">Available Tables & Fields:</Text>
+          <Text>• <Text as="span" fontWeight="bold">SummarySubsystemsTableA</Text>: serialNumber, fluid, subsystem, totalItems, doneItems, pendingItems, description, numTestPacks, totalLoops, doneLoops, pendingLoops</Text>
+          <Text>• <Text as="span" fontWeight="bold">SummarySubsystemsTableB</Text>: subsystem, testPack, testPackProgress, traceados, priority, hito, teigaReinstatement, teigaInsulation, siemsa, technip</Text>
+          <Text mt={1} fontSize="xs" color="blue.600">💡 Start typing field names or SQL keywords to see intellisense suggestions</Text>
         </Box>
       </VStack>
     </Box>
