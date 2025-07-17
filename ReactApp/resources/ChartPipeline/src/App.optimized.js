@@ -141,7 +141,7 @@ function App() {
         <Heading mb={2} fontSize="16px">Pipeline Construction Dashboard</Heading>
 
         {/* Main layout with filter panel on left and charts on right */}
-        {activeDashboard === 'SUMMARY SUBSYSTEMS' ? (
+        {(activeDashboard === 'SUMMARY SUBSYSTEMS' || activeDashboard === 'VIEW SUBSYSTEMS') ? (
           <Box>
             <Suspense fallback={<Center p={4}><Spinner /></Center>}>
               <ChartSelector 
