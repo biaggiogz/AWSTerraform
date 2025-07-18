@@ -27,7 +27,6 @@ const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsT
 const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
-const ViewSubsystems = lazy(() => import('../panels/ViewSubsystems'));
 
 /**
  * ChartSelector component to switch between different charts
@@ -76,8 +75,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
     'INSULATION PROGRESS REPORT',
     'TEST PACK PROGRESS',
     'INSTRUMENTS REPORT',
-    'SUMMARY SUBSYSTEMS',
-    'VIEW SUBSYSTEMS'
+    'SUMMARY SUBSYSTEMS'
   ];
 
   // Find the index of the active dashboard
@@ -104,7 +102,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             <Tab>TEST PACK PROGRESS REPORT</Tab>
             <Tab>INSTRUMENTS REPORT</Tab>
             <Tab>SUMMARY SUBSYSTEMS</Tab>
-            <Tab>VIEW SUBSYSTEMS</Tab>
           </TabList>
           <TabPanels>
             <TabPanel p={0}>
@@ -197,12 +194,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
                 <SummarySubsystems data={data} />
-              </Suspense>
-            </TabPanel>
-            
-            <TabPanel p={0}>
-              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <ViewSubsystems data={data} />
               </Suspense>
             </TabPanel>
           </TabPanels>

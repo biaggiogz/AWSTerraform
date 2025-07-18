@@ -34,7 +34,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, isProgressFilterVisible }) => {
+const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, isProgressFilterVisible, isHitoFilterVisible }) => {
   const columns = useMemo(() => [
     {
       accessorKey: 'subsystem',
@@ -150,9 +150,41 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'hito',
       header: 'HITO',
       size: 60,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
-      )
+      cell: ({ getValue, row }) => {
+        const getHitoColor = () => {
+          if (!isHitoFilterVisible) return { bg: 'transparent', color: 'inherit' };
+          
+          const hito = getValue() || '';
+          if (!hito) return { bg: 'transparent', color: 'inherit' };
+          
+          // Generate a consistent color based on the hito string
+          const hash = hito.split('').reduce((acc, char) => {
+            return char.charCodeAt(0) + ((acc << 5) - acc);
+          }, 0);
+          
+          const h = Math.abs(hash) % 360;
+          const s = 60 + (Math.abs(hash) % 30); // 60-90%
+          const l = 35 + (Math.abs(hash) % 15); // 35-50%
+          
+          return { bg: `hsl(${h}, ${s}%, ${l}%)`, color: 'white' };
+        };
+        
+        const colors = getHitoColor();
+        
+        return (
+          <Text 
+            fontSize="xs" 
+            fontWeight="bold"
+            bg={colors.bg}
+            color={colors.color}
+            px={colors.bg !== 'transparent' ? 2 : 0}
+            py={colors.bg !== 'transparent' ? 1 : 0}
+            borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
+          >
+            {getValue()}
+          </Text>
+        );
+      }
     },
     {
       accessorKey: 'teigaReinstatement',

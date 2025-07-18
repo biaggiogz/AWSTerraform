@@ -11,14 +11,15 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop } from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop, MdFlag } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
+import HitoFilter from '../filters/HitoFilter';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onBringToFront }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
@@ -39,6 +40,7 @@ FROM "Control Instruments";`);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
+  const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const textareaRef = useRef(null);
 
   // Restore query from persistent state
@@ -304,6 +306,20 @@ FROM "Control Instruments";`);
               }}
               aria-label="Toggle loop status filter"
               title="Loop Status Filter"
+            />
+            <IconButton
+              icon={<MdFlag />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const newVisibility = !isHitoFilterVisible;
+                setIsHitoFilterVisible(newVisibility);
+                if (onHitoFilterVisibilityChange) {
+                  onHitoFilterVisibilityChange(newVisibility);
+                }
+              }}
+              aria-label="Toggle hito filter"
+              title="Hito Filter"
             />
             <IconButton
               icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}
@@ -771,6 +787,22 @@ FROM "Control Instruments";`);
             }
           }}
           onPropagationChange={onLoopPropagationChange || (() => {})}
+          onBringToFront={onBringToFront}
+        />
+      )}
+      
+      {isHitoFilterVisible && (
+        <HitoFilter
+          data={detailsData}
+          onFilterChange={onHitoFilteredDataChange || (() => {})}
+          isVisible={isHitoFilterVisible}
+          onClose={() => {
+            setIsHitoFilterVisible(false);
+            if (onHitoFilterVisibilityChange) {
+              onHitoFilterVisibilityChange(false);
+            }
+          }}
+          onPropagationChange={onHitoPropagationChange || (() => {})}
           onBringToFront={onBringToFront}
         />
       )}

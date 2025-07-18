@@ -14,12 +14,14 @@ const SummarySubsystemsContainer = ({
   const [progressFilteredData, setProgressFilteredData] = useState(tableBData);
   const [statusFilteredData, setStatusFilteredData] = useState(tableAData);
   const [loopFilteredData, setLoopFilteredData] = useState(tableAData);
+  const [hitoFilteredData, setHitoFilteredData] = useState(tableBData);
   const [isProgressFilterVisible, setIsProgressFilterVisible] = useState(false);
   const [isItemsFilterVisible, setIsItemsFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
+  const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [topZIndex, setTopZIndex] = useState(100);
   
-  // Apply both status and loop filters to TableA
+  // Apply status, loop, and hito filters
   const combinedFilteredTableAData = useMemo(() => {
     const statusFiltered = statusFilteredData;
     const loopFiltered = loopFilteredData;
@@ -33,13 +35,23 @@ const SummarySubsystemsContainer = ({
     );
   }, [tableAData, statusFilteredData, loopFilteredData]);
   
+  const combinedFilteredTableBData = useMemo(() => {
+    // Apply hito filter to progressFilteredData
+    if (hitoFilteredData.length === 0) {
+      return progressFilteredData;
+    }
+    
+    const hitoSubsystems = new Set(hitoFilteredData.map(row => row.subsystem));
+    return progressFilteredData.filter(row => hitoSubsystems.has(row.subsystem));
+  }, [progressFilteredData, hitoFilteredData]);
+  
   const {
     selectedSubsystem,
     filteredTableAData,
     filteredTableBData,
     handleSubsystemSelect,
     clearFilter
-  } = useSubsystemBidirectionalFilter(combinedFilteredTableAData, progressFilteredData);
+  } = useSubsystemBidirectionalFilter(combinedFilteredTableAData, combinedFilteredTableBData);
   
   React.useEffect(() => {
     setProgressFilteredData(tableBData);
@@ -53,6 +65,10 @@ const SummarySubsystemsContainer = ({
     setLoopFilteredData(tableAData);
   }, [tableAData]);
   
+  React.useEffect(() => {
+    setHitoFilteredData(tableBData);
+  }, [tableBData]);
+  
   const handleProgressFilterChange = (filteredData) => {
     setProgressFilteredData(filteredData);
   };
@@ -63,6 +79,10 @@ const SummarySubsystemsContainer = ({
   
   const handleLoopFilterChange = (filteredData) => {
     setLoopFilteredData(filteredData);
+  };
+  
+  const handleHitoFilterChange = (filteredData) => {
+    setHitoFilteredData(filteredData);
   };
   
   const handleLoopPropagationChange = (filteredData, target) => {
@@ -110,6 +130,21 @@ const SummarySubsystemsContainer = ({
     }
   };
   
+  const handleHitoPropagationChange = (filteredData, target) => {
+    if (target === 'tableA') {
+      // Extract subsystems from filtered TableB data
+      const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
+      // Filter TableA data based on subsystems
+      const propagatedTableAData = tableAData.filter(row => 
+        allowedSubsystems.has(row.subsystem)
+      );
+      setStatusFilteredData(propagatedTableAData);
+    } else if (target === 'nothing') {
+      // Reset TableA to original state when propagation is disabled
+      setHitoFilteredData(tableBData);
+    }
+  };
+  
   const handleBringToFront = () => {
     const newZIndex = topZIndex + 1;
     setTopZIndex(newZIndex);
@@ -137,6 +172,9 @@ const SummarySubsystemsContainer = ({
           onItemsFilterVisibilityChange={setIsItemsFilterVisible}
           onLoopFilterVisibilityChange={setIsLoopFilterVisible}
           onProgressPropagationChange={handleProgressPropagationChange}
+          onHitoFilteredDataChange={handleHitoFilterChange}
+          onHitoFilterVisibilityChange={setIsHitoFilterVisible}
+          onHitoPropagationChange={handleHitoPropagationChange}
           onBringToFront={handleBringToFront}
         />
       </Suspense>
@@ -177,6 +215,7 @@ const SummarySubsystemsContainer = ({
             selectedSubsystem={selectedSubsystem}
             onSubsystemSelect={handleSubsystemSelect}
             isProgressFilterVisible={isProgressFilterVisible}
+            isHitoFilterVisible={isHitoFilterVisible}
           />
         </ResizableDraggablePanel>
       </Box>
