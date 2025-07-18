@@ -149,6 +149,7 @@ PLEASE DO THE PROPERLY JON IDENTIFIED ALL COMPONENTS ARE ACTIVE "SUMMARY SUBSYST
 - **ProgressFilter.js** - Test Pack progress filtering
 - **ItemsStatusFilter.js** - Items status filtering
 - **LoopStatusFilter.js** - Loop status filtering
+- **HitoFilter.js** - Hitol Filter
 
 ## WASM Optimization Components
 - **ultra-processor.wasm.js** - Ultra-optimized data processing
@@ -191,6 +192,7 @@ GIVE ME THE PATH OF EACH COMPONENT
 - **ProgressFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/ProgressFilter.js`
 - **ItemsStatusFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/ItemsStatusFilter.js`
 - **LoopStatusFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/LoopStatusFilter.js`
+- **HitoFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/HitoFilter.js`
 
 ## Configuration Files
 - **activate-solidjs.js**: `ReactApp/resources/ChartPipeline/activate-solidjs.js`

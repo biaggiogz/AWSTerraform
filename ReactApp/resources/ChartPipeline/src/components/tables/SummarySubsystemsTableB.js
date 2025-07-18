@@ -35,6 +35,22 @@ const VirtualizedRow = ({ index, style, data }) => {
 };
 
 const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, isProgressFilterVisible, isHitoFilterVisible }) => {
+  // Force re-render when hito filter selection changes
+  const [, setForceUpdate] = React.useState(0);
+  
+  React.useEffect(() => {
+    // Initialize global state if needed
+    if (!window.hitoFilterState) {
+      window.hitoFilterState = { selectedHitos: {}, colors: {} };
+    }
+    
+    // Set up a timer to check for changes in the global hitoFilterState
+    const intervalId = setInterval(() => {
+      setForceUpdate(prev => prev + 1); // Force re-render periodically when filter is visible
+    }, 500); // Check every 500ms
+    
+    return () => clearInterval(intervalId);
+  }, [isHitoFilterVisible]);
   const columns = useMemo(() => [
     {
       accessorKey: 'subsystem',
@@ -157,7 +173,29 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
           const hito = getValue() || '';
           if (!hito) return { bg: 'transparent', color: 'inherit' };
           
-          // Generate a consistent color based on the hito string
+          // Check if any hitos are selected in the filter
+          const hasSelections = window.hitoFilterState && 
+                              window.hitoFilterState.selectedHitos && 
+                              Object.values(window.hitoFilterState.selectedHitos).some(v => v === true);
+          
+          // Check if this specific hito is selected in the filter
+          const isSelected = window.hitoFilterState && 
+                           window.hitoFilterState.selectedHitos && 
+                           window.hitoFilterState.selectedHitos[hito];
+          
+          // If we have selections but this one isn't selected, show with reduced opacity
+          if (hasSelections && !isSelected) {
+            return { bg: 'transparent', color: 'gray.400' };
+          }
+          
+          // Get the color from the global state if available
+          if (window.hitoFilterState && 
+              window.hitoFilterState.colors && 
+              window.hitoFilterState.colors[hito]) {
+            return { bg: window.hitoFilterState.colors[hito], color: 'white' };
+          }
+          
+          // Fallback: Generate color if not in global state
           const hash = hito.split('').reduce((acc, char) => {
             return char.charCodeAt(0) + ((acc << 5) - acc);
           }, 0);
@@ -166,7 +204,14 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
           const s = 60 + (Math.abs(hash) % 30); // 60-90%
           const l = 35 + (Math.abs(hash) % 15); // 35-50%
           
-          return { bg: `hsl(${h}, ${s}%, ${l}%)`, color: 'white' };
+          const color = `hsl(${h}, ${s}%, ${l}%)`;
+          
+          // Store for future use
+          if (!window.hitoFilterState) window.hitoFilterState = { colors: {} };
+          if (!window.hitoFilterState.colors) window.hitoFilterState.colors = {};
+          window.hitoFilterState.colors[hito] = color;
+          
+          return { bg: color, color: 'white' };
         };
         
         const colors = getHitoColor();
@@ -218,7 +263,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
     }
-  ], [selectedSubsystem, onSubsystemSelect, isProgressFilterVisible]);
+  ], [selectedSubsystem, onSubsystemSelect, isProgressFilterVisible, isHitoFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {
