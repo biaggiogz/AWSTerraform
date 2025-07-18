@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Heading, Text, Progress, HStack, Button, Input } from '@chakra-ui/react';
+import { Box, Heading, Text, Progress, HStack, Button, Select } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { FixedSizeList as List } from 'react-window';
 import { getFilteredRowModel } from '@tanstack/react-table';
@@ -36,6 +36,19 @@ const VirtualizedRow = ({ index, style, data }) => {
 };
 
 const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, isProgressFilterVisible }) => {
+  // Extract unique values for dropdown filters
+  const getUniqueValuesForColumn = (columnId) => {
+    if (!data || data.length === 0) return [];
+    
+    const uniqueValues = new Set();
+    data.forEach(row => {
+      if (row[columnId] !== undefined && row[columnId] !== null) {
+        uniqueValues.add(row[columnId].toString());
+      }
+    });
+    
+    return Array.from(uniqueValues).sort();
+  };
   const columns = useMemo(() => [
     {
       accessorKey: 'subsystem',
@@ -106,6 +119,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'PROGRESS TEST PACK',
       size: 110,
       enableColumnFilter: true,
+      filterFn: 'testPackProgress',
       cell: ({ getValue }) => {
         const progress = Math.round(getValue() || 0);
         return (
@@ -260,6 +274,24 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
     ];
   }, []);
   const [columnFilters, setColumnFilters] = React.useState([]);
+  
+  // Custom filter functions
+  const filterFunctions = React.useMemo(() => ({
+    testPackProgress: (row, columnId, filterValue) => {
+      if (!filterValue) return true;
+      const value = row.getValue(columnId);
+      
+      // Handle progress ranges
+      switch(filterValue) {
+        case 'complete': return value === 100;
+        case 'high': return value >= 70 && value < 100;
+        case 'medium': return value >= 40 && value < 70;
+        case 'low': return value < 40;
+        default: return value === parseFloat(filterValue);
+      }
+    }
+  }), []);
+  
   const table = useReactTable({
     data: data || [],
     columns,
@@ -272,6 +304,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       columnFilters,
     },
     onColumnFiltersChange: setColumnFilters,
+    filterFns: filterFunctions,
     defaultColumn: {
       minSize: 60,
       size: 100,
@@ -453,14 +486,30 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
                   borderColor="gray.100"
                 >
                   {column.getCanFilter() ? (
-                    <Input
+                    <Select
                       size="xs"
-                      placeholder={`Filter ${column.columnDef.header}`}
+                      placeholder={`All ${column.columnDef.header}`}
                       value={(column.getFilterValue() || '')}
                       onChange={e => column.setFilterValue(e.target.value)}
                       borderRadius="sm"
                       fontSize="xs"
-                    />
+                    >
+                      <option value="">All</option>
+                      {column.id === 'testPackProgress' ? (
+                        <>
+                          <option value="complete">Complete (100%)</option>
+                          <option value="high">High (70-99%)</option>
+                          <option value="medium">Medium (40-69%)</option>
+                          <option value="low">Low (0-39%)</option>
+                        </>
+                      ) : (
+                        getUniqueValuesForColumn(column.id).map(value => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))
+                      )}
+                    </Select>
                   ) : null}
                 </Box>
               );
