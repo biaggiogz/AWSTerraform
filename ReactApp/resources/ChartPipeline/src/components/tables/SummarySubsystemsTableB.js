@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { Box, Heading, Text, Progress, HStack, Button } from '@chakra-ui/react';
+import { Box, Heading, Text, Progress, HStack, Button, Input } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { FixedSizeList as List } from 'react-window';
+import { getFilteredRowModel } from '@tanstack/react-table';
 
 const VirtualizedRow = ({ index, style, data }) => {
   const { rows, table } = data;
@@ -40,6 +41,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'subsystem',
       header: 'SUBSYSTEM',
       size: 104,
+      enableColumnFilter: true,
       cell: ({ getValue }) => (
         <Button
           size="xs"
@@ -66,6 +68,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'testPack',
       header: "TP's INCLUDE",
       size: 60,
+      enableColumnFilter: true,
       cell: ({ getValue, row }) => {
         const getTestPackColor = () => {
           if (!isProgressFilterVisible) return { bg: 'transparent', color: 'inherit' };
@@ -102,6 +105,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'testPackProgress',
       header: 'PROGRESS TEST PACK',
       size: 110,
+      enableColumnFilter: true,
       cell: ({ getValue }) => {
         const progress = Math.round(getValue() || 0);
         return (
@@ -134,6 +138,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'traceados',
       header: 'TRACEADOS',
       size: 94,
+      enableColumnFilter: true,
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -142,6 +147,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'priority',
       header: 'PRIORITY',
       size: 72,
+      enableColumnFilter: true,
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -150,6 +156,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'hito',
       header: 'HITO',
       size: 60,
+      enableColumnFilter: true,
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -158,6 +165,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'teigaReinstatement',
       header: 'TEIGA REINSTATEMENT',
       size: 120,
+      enableColumnFilter: true,
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -166,6 +174,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'teigaInsulation',
       header: 'TEIGA INSULATION',
       size: 88,
+      enableColumnFilter: true,
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -174,6 +183,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'siemsa',
       header: 'SIEMSA',
       size: 64,
+      enableColumnFilter: true,
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -182,6 +192,7 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'technip',
       header: 'TECHNIP',
       size: 64,
+      enableColumnFilter: true,
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -248,14 +259,19 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       }
     ];
   }, []);
-
+  const [columnFilters, setColumnFilters] = React.useState([]);
   const table = useReactTable({
     data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
     debugTable: false,
+    state: {
+      columnFilters,
+    },
+    onColumnFiltersChange: setColumnFilters,
     defaultColumn: {
       minSize: 60,
       size: 100,
@@ -419,6 +435,36 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
               </Box>
             );
           })}
+          </Box>
+          
+          {/* Filter Row */}
+          <Box display="flex" width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content" borderBottom="1px solid" borderColor="gray.200" bg="white">
+            {headerGroups[0].headers.map(header => {
+              const column = header.column;
+              return (
+                <Box
+                  key={header.id}
+                  width={`${header.getSize()}px`}
+                  minWidth={`${header.getSize()}px`}
+                  maxWidth={`${header.getSize()}px`}
+                  px={1}
+                  py={1}
+                  borderRight="1px solid"
+                  borderColor="gray.100"
+                >
+                  {column.getCanFilter() ? (
+                    <Input
+                      size="xs"
+                      placeholder={`Filter ${column.columnDef.header}`}
+                      value={(column.getFilterValue() || '')}
+                      onChange={e => column.setFilterValue(e.target.value)}
+                      borderRadius="sm"
+                      fontSize="xs"
+                    />
+                  ) : null}
+                </Box>
+              );
+            })}
           </Box>
         </Box>
         
