@@ -486,30 +486,29 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
                   borderColor="gray.100"
                 >
                   {column.getCanFilter() ? (
-                    <Select
-                      size="xs"
-                      placeholder={`All ${column.columnDef.header}`}
-                      value={(column.getFilterValue() || '')}
-                      onChange={e => column.setFilterValue(e.target.value)}
-                      borderRadius="sm"
-                      fontSize="xs"
-                    >
-                      <option value="">All</option>
-                      {column.id === 'testPackProgress' ? (
-                        <>
-                          <option value="complete">Complete (100%)</option>
-                          <option value="high">High (70-99%)</option>
-                          <option value="medium">Medium (40-69%)</option>
-                          <option value="low">Low (0-39%)</option>
-                        </>
-                      ) : (
-                        getUniqueValuesForColumn(column.id).map(value => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))
-                      )}
-                    </Select>
+                      <Select
+                          size="xs"
+                          placeholder="All"
+                          value={(column.getFilterValue() || '')}
+                          onChange={e => column.setFilterValue(e.target.value)}
+                          borderRadius="sm"
+                          fontSize="xs"
+                      >
+                        {column.id === 'testPackProgress' ? (
+                            <>
+                              <option value="complete">Complete (100%)</option>
+                              <option value="high">High (70-99%)</option>
+                              <option value="medium">Medium (40-69%)</option>
+                              <option value="low">Low (0-39%)</option>
+                            </>
+                        ) : (
+                            getUniqueValuesForColumn(column.id).map(value => (
+                                <option key={value} value={value}>
+                                  {value}
+                                </option>
+                            ))
+                        )}
+                      </Select>
                   ) : null}
                 </Box>
               );
