@@ -70,18 +70,26 @@ const SummarySubsystemsContainer = ({
   }, [tableBData]);
   
   const handleProgressFilterChange = (filteredData) => {
+    // If we're receiving the original data, it means the filter is being reset
+    const isReset = filteredData === tableBData;
     setProgressFilteredData(filteredData);
   };
   
   const handleStatusFilterChange = (filteredData) => {
+    // If we're receiving the original data, it means the filter is being reset
+    const isReset = filteredData === tableAData;
     setStatusFilteredData(filteredData);
   };
   
   const handleLoopFilterChange = (filteredData) => {
+    // If we're receiving the original data, it means the filter is being reset
+    const isReset = filteredData === tableAData;
     setLoopFilteredData(filteredData);
   };
   
   const handleHitoFilterChange = (filteredData) => {
+    // If we're receiving the original data, it means the filter is being reset
+    const isReset = filteredData === tableBData;
     setHitoFilteredData(filteredData);
   };
   

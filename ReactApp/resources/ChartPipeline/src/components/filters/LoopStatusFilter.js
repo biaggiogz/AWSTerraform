@@ -212,6 +212,16 @@ const LoopStatusFilter = ({
     }), [filteredSubsystems, selectedSubsystems, exclusiveFilter, toggleSubsystem, getStatusColor]
   );
 
+  // Reset internal state when filter becomes invisible
+  React.useEffect(() => {
+    if (!isVisible) {
+      // No need to reset selectedSubsystems as they should persist
+      // But we should reset the exclusive filter and propagation
+      setExclusiveFilter(null);
+      setPropagationTarget('nothing');
+    }
+  }, [isVisible]);
+  
   if (!isVisible) return null;
 
   return (

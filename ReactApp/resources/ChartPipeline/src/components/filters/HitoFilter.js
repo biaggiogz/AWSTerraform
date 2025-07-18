@@ -188,6 +188,15 @@ const HitoFilter = ({
     }), [filteredHitos, selectedHitos, toggleHito, getHitoColor]
   );
 
+  // Reset internal state when filter becomes invisible
+  React.useEffect(() => {
+    if (!isVisible) {
+      // No need to reset selectedHitos as they should persist
+      // But we should reset the propagation
+      setPropagationTarget('nothing');
+    }
+  }, [isVisible]);
+  
   if (!isVisible) return null;
 
   return (

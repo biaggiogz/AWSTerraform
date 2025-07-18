@@ -222,6 +222,16 @@ const ProgressFilter = ({
     }), [filteredTestPacks, selectedTestPacks, exclusiveFilter, toggleTestPack, getProgressColor]
   );
 
+  // Reset internal state when filter becomes invisible
+  React.useEffect(() => {
+    if (!isVisible) {
+      // No need to reset selectedTestPacks as they should persist
+      // But we should reset the exclusive filter and propagation
+      setExclusiveFilter(null);
+      setPropagationTarget('nothing');
+    }
+  }, [isVisible]);
+  
   if (!isVisible) return null;
 
   return (

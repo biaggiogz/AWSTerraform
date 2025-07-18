@@ -753,6 +753,14 @@ FROM "Control Instruments";`);
             if (onProgressFilterVisibilityChange) {
               onProgressFilterVisibilityChange(false);
             }
+            // Reset this filter's effect by passing the original data
+            if (onFilteredDataChange) {
+              onFilteredDataChange(detailsData);
+            }
+            // Reset propagation if it was active
+            if (onProgressPropagationChange) {
+              onProgressPropagationChange([], 'nothing');
+            }
           }}
           onPropagationChange={onProgressPropagationChange || (() => {})}
           onBringToFront={onBringToFront}
@@ -768,6 +776,14 @@ FROM "Control Instruments";`);
             setIsSubsystemFilterVisible(false);
             if (onItemsFilterVisibilityChange) {
               onItemsFilterVisibilityChange(false);
+            }
+            // Reset this filter's effect by passing the original data
+            if (onFilteredControlDataChange) {
+              onFilteredControlDataChange(controlData);
+            }
+            // Reset propagation if it was active
+            if (onItemsPropagationChange) {
+              onItemsPropagationChange([], 'nothing');
             }
           }}
           onPropagationChange={onItemsPropagationChange || (() => {})}
@@ -785,6 +801,14 @@ FROM "Control Instruments";`);
             if (onLoopFilterVisibilityChange) {
               onLoopFilterVisibilityChange(false);
             }
+            // Reset this filter's effect by passing the original data
+            if (onLoopFilteredControlDataChange) {
+              onLoopFilteredControlDataChange(controlData);
+            }
+            // Reset propagation if it was active
+            if (onLoopPropagationChange) {
+              onLoopPropagationChange([], 'nothing');
+            }
           }}
           onPropagationChange={onLoopPropagationChange || (() => {})}
           onBringToFront={onBringToFront}
@@ -800,6 +824,14 @@ FROM "Control Instruments";`);
             setIsHitoFilterVisible(false);
             if (onHitoFilterVisibilityChange) {
               onHitoFilterVisibilityChange(false);
+            }
+            // Reset this filter's effect by passing the original data
+            if (onHitoFilteredDataChange) {
+              onHitoFilteredDataChange(detailsData);
+            }
+            // Reset propagation if it was active
+            if (onHitoPropagationChange) {
+              onHitoPropagationChange([], 'nothing');
             }
           }}
           onPropagationChange={onHitoPropagationChange || (() => {})}
