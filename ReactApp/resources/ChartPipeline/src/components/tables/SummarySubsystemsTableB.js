@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { Box, Heading, Text, Progress, HStack, Button, Checkbox, Menu, MenuButton, MenuList, MenuItem, MenuOptionGroup, MenuDivider } from '@chakra-ui/react';
+import { Box, Heading, Text, Progress, HStack, Button } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { FixedSizeList as List } from 'react-window';
-import { getFilteredRowModel } from '@tanstack/react-table';
 
 const VirtualizedRow = ({ index, style, data }) => {
   const { rows, table } = data;
@@ -36,35 +35,11 @@ const VirtualizedRow = ({ index, style, data }) => {
 };
 
 const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, isProgressFilterVisible }) => {
-  // Extract unique values for dropdown filters
-  const getUniqueValuesForColumn = (columnId) => {
-    if (!data || data.length === 0) return [];
-    
-    const uniqueValues = new Set();
-    let hasNullValues = false;
-    
-    data.forEach(row => {
-      if (row[columnId] !== undefined && row[columnId] !== null && row[columnId] !== '') {
-        uniqueValues.add(row[columnId].toString());
-      } else {
-        hasNullValues = true;
-      }
-    });
-    
-    const sortedValues = Array.from(uniqueValues).sort();
-    if (hasNullValues) {
-      sortedValues.unshift('null');
-    }
-    
-    return sortedValues;
-  };
   const columns = useMemo(() => [
     {
       accessorKey: 'subsystem',
       header: 'SUBSYSTEM',
       size: 104,
-      enableColumnFilter: true,
-      filterFn: 'multi',
       cell: ({ getValue }) => (
         <Button
           size="xs"
@@ -91,8 +66,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'testPack',
       header: "TP's INCLUDE",
       size: 60,
-      enableColumnFilter: true,
-      filterFn: 'multi',
       cell: ({ getValue, row }) => {
         const getTestPackColor = () => {
           if (!isProgressFilterVisible) return { bg: 'transparent', color: 'inherit' };
@@ -129,8 +102,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'testPackProgress',
       header: 'PROGRESS TEST PACK',
       size: 110,
-      enableColumnFilter: true,
-      filterFn: 'testPackProgress',
       cell: ({ getValue }) => {
         const progress = Math.round(getValue() || 0);
         return (
@@ -163,8 +134,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'traceados',
       header: 'TRACEADOS',
       size: 94,
-      enableColumnFilter: true,
-      filterFn: 'multi',
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -173,8 +142,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'priority',
       header: 'PRIORITY',
       size: 72,
-      enableColumnFilter: true,
-      filterFn: 'multi',
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -183,8 +150,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'hito',
       header: 'HITO',
       size: 60,
-      enableColumnFilter: true,
-      filterFn: 'multi',
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -193,8 +158,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'teigaReinstatement',
       header: 'TEIGA REINSTATEMENT',
       size: 120,
-      enableColumnFilter: true,
-      filterFn: 'multi',
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -203,8 +166,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'teigaInsulation',
       header: 'TEIGA INSULATION',
       size: 88,
-      enableColumnFilter: true,
-      filterFn: 'multi',
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -213,8 +174,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'siemsa',
       header: 'SIEMSA',
       size: 64,
-      enableColumnFilter: true,
-      filterFn: 'multi',
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -223,8 +182,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'technip',
       header: 'TECHNIP',
       size: 64,
-      enableColumnFilter: true,
-      filterFn: 'multi',
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold">{getValue()}</Text>
       )
@@ -291,69 +248,14 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
       }
     ];
   }, []);
-  const [columnFilters, setColumnFilters] = React.useState([]);
-  const [selectedFilters, setSelectedFilters] = React.useState({});
-  
-  // Handle multiselect filter changes
-  const handleFilterChange = (columnId, selectedValues) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [columnId]: selectedValues
-    }));
-    
-    if (selectedValues.length === 0) {
-      // Clear filter if nothing selected
-      const updatedFilters = columnFilters.filter(f => f.id !== columnId);
-      setColumnFilters(updatedFilters);
-    } else {
-      // Set filter with selected values
-      const updatedFilters = columnFilters.filter(f => f.id !== columnId);
-      updatedFilters.push({
-        id: columnId,
-        value: selectedValues
-      });
-      setColumnFilters(updatedFilters);
-    }
-  };
-  
-  // Custom filter functions
-  const filterFunctions = React.useMemo(() => ({
-    multi: (row, columnId, filterValues) => {
-      if (!filterValues || !filterValues.length) return true;
-      
-      const value = row.getValue(columnId);
-      const valueStr = value !== undefined && value !== null ? value.toString() : 'null';
-      
-      return filterValues.includes(valueStr);
-    },
-    testPackProgress: (row, columnId, filterValue) => {
-      if (!filterValue) return true;
-      const value = row.getValue(columnId);
-      
-      // Handle progress ranges
-      switch(filterValue) {
-        case 'complete': return value === 100;
-        case 'high': return value >= 70 && value < 100;
-        case 'medium': return value >= 40 && value < 70;
-        case 'low': return value < 40;
-        default: return value === parseFloat(filterValue);
-      }
-    }
-  }), []);
-  
+
   const table = useReactTable({
     data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
     debugTable: false,
-    state: {
-      columnFilters,
-    },
-    onColumnFiltersChange: setColumnFilters,
-    filterFns: filterFunctions,
     defaultColumn: {
       minSize: 60,
       size: 100,
@@ -517,137 +419,6 @@ const SummarySubsystemsTableB = ({ data, selectedSubsystem, onSubsystemSelect, i
               </Box>
             );
           })}
-          </Box>
-          
-          {/* Filter Row */}
-          <Box display="flex" width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content" borderBottom="1px solid" borderColor="gray.200" bg="white">
-            {headerGroups[0].headers.map(header => {
-              const column = header.column;
-              return (
-                <Box
-                  key={header.id}
-                  width={`${header.getSize()}px`}
-                  minWidth={`${header.getSize()}px`}
-                  maxWidth={`${header.getSize()}px`}
-                  px={1}
-                  py={1}
-                  borderRight="1px solid"
-                  borderColor="gray.100"
-                >
-                  {column.getCanFilter() ? (
-                    <Menu closeOnSelect={false}>
-                      <MenuButton
-                        as={Button}
-                        size="xs"
-                        fontSize="xs"
-                        width="100%"
-                        textAlign="left"
-                        borderRadius="sm"
-                        rightIcon={<span>▼</span>}
-                      >
-                        {selectedFilters[column.id]?.length > 0 
-                          ? `${selectedFilters[column.id].length} selected` 
-                          : `Filter`}
-                      </MenuButton>
-                      <MenuList fontSize="xs" maxHeight="200px" overflowY="auto">
-                        {column.id === 'testPackProgress' ? (
-                          <>
-                            <MenuItem closeOnSelect={false}>
-                              <Checkbox 
-                                isChecked={selectedFilters[column.id]?.includes('complete')}
-                                onChange={(e) => {
-                                  const newValues = [...(selectedFilters[column.id] || [])];
-                                  if (e.target.checked) {
-                                    newValues.push('complete');
-                                  } else {
-                                    const index = newValues.indexOf('complete');
-                                    if (index > -1) newValues.splice(index, 1);
-                                  }
-                                  handleFilterChange(column.id, newValues);
-                                }}
-                              >
-                                Complete (100%)
-                              </Checkbox>
-                            </MenuItem>
-                            <MenuItem closeOnSelect={false}>
-                              <Checkbox 
-                                isChecked={selectedFilters[column.id]?.includes('high')}
-                                onChange={(e) => {
-                                  const newValues = [...(selectedFilters[column.id] || [])];
-                                  if (e.target.checked) {
-                                    newValues.push('high');
-                                  } else {
-                                    const index = newValues.indexOf('high');
-                                    if (index > -1) newValues.splice(index, 1);
-                                  }
-                                  handleFilterChange(column.id, newValues);
-                                }}
-                              >
-                                High (70-99%)
-                              </Checkbox>
-                            </MenuItem>
-                            <MenuItem closeOnSelect={false}>
-                              <Checkbox 
-                                isChecked={selectedFilters[column.id]?.includes('medium')}
-                                onChange={(e) => {
-                                  const newValues = [...(selectedFilters[column.id] || [])];
-                                  if (e.target.checked) {
-                                    newValues.push('medium');
-                                  } else {
-                                    const index = newValues.indexOf('medium');
-                                    if (index > -1) newValues.splice(index, 1);
-                                  }
-                                  handleFilterChange(column.id, newValues);
-                                }}
-                              >
-                                Medium (40-69%)
-                              </Checkbox>
-                            </MenuItem>
-                            <MenuItem closeOnSelect={false}>
-                              <Checkbox 
-                                isChecked={selectedFilters[column.id]?.includes('low')}
-                                onChange={(e) => {
-                                  const newValues = [...(selectedFilters[column.id] || [])];
-                                  if (e.target.checked) {
-                                    newValues.push('low');
-                                  } else {
-                                    const index = newValues.indexOf('low');
-                                    if (index > -1) newValues.splice(index, 1);
-                                  }
-                                  handleFilterChange(column.id, newValues);
-                                }}
-                              >
-                                Low (0-39%)
-                              </Checkbox>
-                            </MenuItem>
-                          </>
-                        ) : (
-                          getUniqueValuesForColumn(column.id).map(value => (
-                            <MenuItem key={value} closeOnSelect={false}>
-                              <Checkbox 
-                                isChecked={selectedFilters[column.id]?.includes(value)}
-                                onChange={(e) => {
-                                  const newValues = [...(selectedFilters[column.id] || [])];
-                                  if (e.target.checked) {
-                                    newValues.push(value);
-                                  } else {
-                                    const index = newValues.indexOf(value);
-                                    if (index > -1) newValues.splice(index, 1);
-                                  }
-                                  handleFilterChange(column.id, newValues);
-                                }}
-                              >
-                                {value === 'null' ? '(Empty)' : value}
-                              </Checkbox>
-                            </MenuItem>
-                          ))
-                        )}
-                      </MenuList>
-                    </Menu>
-                  ) : null}
-                </Box>
-              );
-            })}
           </Box>
         </Box>
         
