@@ -23,8 +23,7 @@ const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressCh
 const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
 const ControlInstrumentsTable = lazy(() => import('../tables/ControlInstrumentsTable.optimized'));
-// Use the main entry point for DetailsInstrumentsTable (DuckDB-enabled by default)
-const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable'));
+const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable.wasm'));
 const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));

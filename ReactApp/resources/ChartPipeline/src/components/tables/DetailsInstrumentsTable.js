@@ -7,7 +7,7 @@ import { Box, Text, Spinner, Alert, AlertIcon, AlertTitle, AlertDescription, Clo
  * DuckDB is enabled by default for the INSTRUMENTS REPORT tab
  */
 const DetailsInstrumentsTable = (props) => {
-  const [implementation, setImplementation] = useState('duckdb'); // Default to DuckDB
+  const [implementation, setImplementation] = useState('wasm'); // Default to DuckDB
   const [Component, setComponent] = useState(null);
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
@@ -48,7 +48,7 @@ const DetailsInstrumentsTable = (props) => {
             break;
           case 'duckdb':
             // Use the DuckDB implementation with SQL-powered filtering
-            const { default: DuckDBTable } = await import('../hooks/useDetailsInstrumentsTable.duck.js');
+            const { default: DuckDBTable } = await import('../../hooks/useDetailsInstrumentsTable.duck.js');
             // Wrap the hook in a component
             const DuckDBComponent = async (props) => {
               const {data, loading, error, tableInfo} = DuckDBTable(props.data, {
