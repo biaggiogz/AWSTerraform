@@ -116,6 +116,7 @@ const MountingCell = ({ mountingValue, onMountingSelect, selectedMounting, isHig
         px={1}
         py={1}
         borderRadius="sm"
+        wordBreak="break-word"
         _hover={{ bg: 'blue.100', color: 'blue.700' }}
         onClick={() => onMountingSelect && onMountingSelect(mountingValue)}
       >
@@ -310,7 +311,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 80,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -322,7 +323,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 120,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontFamily="mono" textAlign="center">
+        <Text fontSize="xs" fontFamily="mono" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -334,7 +335,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 120,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontFamily="mono" textAlign="center">
+        <Text fontSize="xs" fontFamily="mono" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -346,7 +347,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 80,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -358,7 +359,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 150,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" noOfLines={2}>
+        <Text fontSize="xs" textAlign="center" noOfLines={2} wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -389,7 +390,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 80,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -421,7 +422,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 90,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -433,7 +434,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 80,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -445,7 +446,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 150,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -457,7 +458,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 150,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -469,7 +470,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 80,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -481,7 +482,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 80,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -513,7 +514,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 60,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" fontWeight="medium">
+        <Text fontSize="xs" textAlign="center" fontWeight="medium" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -525,7 +526,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 90,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" fontWeight="medium">
+        <Text fontSize="xs" textAlign="center" fontWeight="medium" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -537,7 +538,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 100,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -565,7 +566,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 80,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -641,7 +642,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 70,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -652,11 +653,14 @@ const DetailsInstrumentsTable = React.memo(({
       maxSize: 120,
       size: 70,
       enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+      cell: ({ getValue }) => {
+        const value = getValue();
+        return (
+            <Text fontSize="xs" textAlign="center" wordBreak="break-word">
+              {value != null ? Number(value).toFixed(2) : ''}
+            </Text>
+        );
+      }
     }),
     columnHelper.accessor('withWithoutSignal', {
       header: 'WITH/WITHOUT SIGNAL',
@@ -681,7 +685,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 120,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -693,7 +697,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 90,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -705,7 +709,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 80,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -717,7 +721,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 100,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
+        <Text fontSize="xs" textAlign="center" wordBreak="break-word">
           {getValue()}
         </Text>
       )
@@ -729,7 +733,7 @@ const DetailsInstrumentsTable = React.memo(({
       size: 150,
       enableResizing: true,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="left" noOfLines={2}>
+        <Text fontSize="xs" textAlign="left" noOfLines={2} wordBreak="break-word">
           {getValue()}
         </Text>
       )
