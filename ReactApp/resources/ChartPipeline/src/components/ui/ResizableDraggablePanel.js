@@ -74,18 +74,36 @@ const ResizableDraggablePanel = ({
       setDimensions(prev => {
         let newWidth = prev.width;
         let newHeight = prev.height;
+        let newX = prev.x;
+        let newY = prev.y;
         
         if (resizeDirection.includes('right')) {
           newWidth = Math.max(minWidth, resizeStart.width + deltaX);
         }
+        if (resizeDirection.includes('left')) {
+          const possibleWidth = resizeStart.width - deltaX;
+          if (possibleWidth >= minWidth) {
+            newWidth = possibleWidth;
+            newX = resizeStart.x + deltaX;
+          }
+        }
         if (resizeDirection.includes('bottom')) {
           newHeight = Math.max(minHeight, resizeStart.height + deltaY);
+        }
+        if (resizeDirection.includes('top')) {
+          const possibleHeight = resizeStart.height - deltaY;
+          if (possibleHeight >= minHeight) {
+            newHeight = possibleHeight;
+            newY = resizeStart.y + deltaY;
+          }
         }
         
         return {
           ...prev,
           width: newWidth,
-          height: newHeight
+          height: newHeight,
+          x: newX,
+          y: newY
         };
       });
     }
@@ -124,7 +142,7 @@ const ResizableDraggablePanel = ({
       zIndex={isDragging || isResizing ? zIndex + 1000 : zIndex}
       cursor={isDragging ? 'grabbing' : 'default'}
     >
-      {/* Drag Handle */}
+      {/* Drag Handle - Header */}
       <Box
         position="absolute"
         top="0"
@@ -159,7 +177,59 @@ const ResizableDraggablePanel = ({
         {children}
       </Box>
 
+      {/* Visible Drag Handles around the table */}
+      {/* Left border drag handle */}
+      <Box
+        position="absolute"
+        left="0"
+        top="30px"
+        bottom="0"
+        width="8px"
+        cursor="move"
+        onMouseDown={(e) => handleMouseDown(e, 'drag')}
+        _hover={{ bg: 'rgba(0, 117, 152, 0.1)' }}
+        zIndex={2}
+      />
+      
+      {/* Right border drag handle */}
+      <Box
+        position="absolute"
+        right="0"
+        top="30px"
+        bottom="0"
+        width="8px"
+        cursor="move"
+        onMouseDown={(e) => handleMouseDown(e, 'drag')}
+        _hover={{ bg: 'rgba(0, 117, 152, 0.1)' }}
+        zIndex={2}
+      />
+      
+      {/* Bottom border drag handle */}
+      <Box
+        position="absolute"
+        bottom="0"
+        left="0"
+        right="0"
+        height="8px"
+        cursor="move"
+        onMouseDown={(e) => handleMouseDown(e, 'drag')}
+        _hover={{ bg: 'rgba(0, 117, 152, 0.1)' }}
+        zIndex={2}
+      />
+
       {/* Resize Handles */}
+      {/* Left edge */}
+      <Box
+        position="absolute"
+        left="-3px"
+        top="30px"
+        bottom="0"
+        width="6px"
+        cursor="ew-resize"
+        onMouseDown={(e) => handleMouseDown(e, 'resize', 'left')}
+        _hover={{ bg: 'rgba(217, 154, 0, 0.2)' }}
+      />
+      
       {/* Right edge */}
       <Box
         position="absolute"
@@ -170,6 +240,19 @@ const ResizableDraggablePanel = ({
         cursor="ew-resize"
         onMouseDown={(e) => handleMouseDown(e, 'resize', 'right')}
         _hover={{ bg: 'rgba(217, 154, 0, 0.2)' }}
+      />
+      
+      {/* Top edge */}
+      <Box
+        position="absolute"
+        top="-3px"
+        left="0"
+        right="0"
+        height="6px"
+        cursor="ns-resize"
+        onMouseDown={(e) => handleMouseDown(e, 'resize', 'top')}
+        _hover={{ bg: 'rgba(217, 154, 0, 0.2)' }}
+        zIndex={2}
       />
       
       {/* Bottom edge */}
@@ -184,6 +267,49 @@ const ResizableDraggablePanel = ({
         _hover={{ bg: 'rgba(217, 154, 0, 0.2)' }}
       />
       
+      {/* Corner handles */}
+      {/* Top-left corner */}
+      <Box
+        position="absolute"
+        top="-3px"
+        left="-3px"
+        width="12px"
+        height="12px"
+        cursor="nwse-resize"
+        onMouseDown={(e) => handleMouseDown(e, 'resize', 'left top')}
+        _hover={{ bg: 'rgba(217, 154, 0, 0.2)' }}
+        borderTopLeftRadius="md"
+        zIndex={3}
+      />
+      
+      {/* Top-right corner */}
+      <Box
+        position="absolute"
+        top="-3px"
+        right="-3px"
+        width="12px"
+        height="12px"
+        cursor="nesw-resize"
+        onMouseDown={(e) => handleMouseDown(e, 'resize', 'right top')}
+        _hover={{ bg: 'rgba(217, 154, 0, 0.2)' }}
+        borderTopRightRadius="md"
+        zIndex={3}
+      />
+      
+      {/* Bottom-left corner */}
+      <Box
+        position="absolute"
+        bottom="-3px"
+        left="-3px"
+        width="12px"
+        height="12px"
+        cursor="nesw-resize"
+        onMouseDown={(e) => handleMouseDown(e, 'resize', 'left bottom')}
+        _hover={{ bg: 'rgba(217, 154, 0, 0.2)' }}
+        borderBottomLeftRadius="md"
+        zIndex={3}
+      />
+      
       {/* Bottom-right corner */}
       <Box
         position="absolute"
@@ -191,10 +317,11 @@ const ResizableDraggablePanel = ({
         right="-3px"
         width="12px"
         height="12px"
-        cursor="nw-resize"
+        cursor="nwse-resize"
         onMouseDown={(e) => handleMouseDown(e, 'resize', 'right bottom')}
         _hover={{ bg: 'rgba(217, 154, 0, 0.2)' }}
         borderBottomRightRadius="md"
+        zIndex={3}
       />
     </Box>
   );

@@ -2,7 +2,6 @@ import React, { lazy, Suspense, useState, useMemo } from 'react';
 import { Box, VStack, Center, Spinner } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
-import SummarySubsystemsTableC from '../tables/SummarySubsystemsTableC';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
 
@@ -191,69 +190,42 @@ const SummarySubsystemsContainer = ({
       {/* Draggable Tables */}
       <Box position="relative" width="100%" height="800px" overflow="hidden">
         <ResizableDraggablePanel
-          title="Subsystem Overview with Test Pack Details"
-          initialWidth={1000}
-          initialHeight={650}
+          title="Subsystem Overview"
+          initialWidth={700}
+          initialHeight={550}
           initialX={20}
           initialY={20}
-          minWidth={800}
-          minHeight={400}
+          minWidth={400}
+          minHeight={300}
           onBringToFront={handleBringToFront}
         >
-          <SummarySubsystemsTableC
-            subsystemData={filteredTableAData}
-            testPackData={filteredTableBData}
+          <SummarySubsystemsTableA
+            data={filteredTableAData}
             selectedSubsystem={selectedSubsystem}
             onSubsystemSelect={handleSubsystemSelect}
             isItemsFilterVisible={isItemsFilterVisible}
             isLoopFilterVisible={isLoopFilterVisible}
+          />
+        </ResizableDraggablePanel>
+        
+        <ResizableDraggablePanel
+          title="Test Pack Details"
+          initialWidth={700}
+          initialHeight={550}
+          initialX={750}
+          initialY={20}
+          minWidth={400}
+          minHeight={300}
+          onBringToFront={handleBringToFront}
+        >
+          <SummarySubsystemsTableB
+            data={filteredTableBData}
+            selectedSubsystem={selectedSubsystem}
+            onSubsystemSelect={handleSubsystemSelect}
             isProgressFilterVisible={isProgressFilterVisible}
             isHitoFilterVisible={isHitoFilterVisible}
           />
         </ResizableDraggablePanel>
-        
-        {/* Original tables can be kept for reference or removed */}
-        {false && (
-          <>
-            <ResizableDraggablePanel
-              title="Subsystem Overview"
-              initialWidth={700}
-              initialHeight={550}
-              initialX={20}
-              initialY={20}
-              minWidth={400}
-              minHeight={300}
-              onBringToFront={handleBringToFront}
-            >
-              <SummarySubsystemsTableA
-                data={filteredTableAData}
-                selectedSubsystem={selectedSubsystem}
-                onSubsystemSelect={handleSubsystemSelect}
-                isItemsFilterVisible={isItemsFilterVisible}
-                isLoopFilterVisible={isLoopFilterVisible}
-              />
-            </ResizableDraggablePanel>
-            
-            <ResizableDraggablePanel
-              title="Test Pack Details"
-              initialWidth={700}
-              initialHeight={550}
-              initialX={750}
-              initialY={20}
-              minWidth={400}
-              minHeight={300}
-              onBringToFront={handleBringToFront}
-            >
-              <SummarySubsystemsTableB
-                data={filteredTableBData}
-                selectedSubsystem={selectedSubsystem}
-                onSubsystemSelect={handleSubsystemSelect}
-                isProgressFilterVisible={isProgressFilterVisible}
-                isHitoFilterVisible={isHitoFilterVisible}
-              />
-            </ResizableDraggablePanel>
-          </>
-        )}
       </Box>
     </VStack>
   );
