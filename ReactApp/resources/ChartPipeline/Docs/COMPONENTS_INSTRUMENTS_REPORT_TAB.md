@@ -24,7 +24,7 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 
 **File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/hooks/useInstrumentsDataLoader.optimized.js`
 - **Lines 26-27:** Loads both control and details CSV files
-- **Function:** Specialized data loader that fetches `control_inst_by_isos.csv` and `details_inst.csv` simultaneously for the instruments report
+- **Function:** Specialized data loader that fetches `control_inst_by_isos.csv` and `master_subsystem.csv` simultaneously for the instruments report
 
 **File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/hooks/useInstrumentsFilter.js`
 - **Function:** Handles filtering logic specifically for instruments data, including mapping between control and details datasets
@@ -36,7 +36,8 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 - **Function:** Displays control instruments data with multi-level headers, progress bars, clickable cells for isometric/subsystem/test pack selection, and virtualized scrolling
 
 **File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/tables/DetailsInstrumentsTable.optimized.js`
-- **Function:** Displays detailed instruments information complementing the control table
+- **Function:** Displays detailed instruments information from master_subsystem.csv, filtering records where pid_isoinst is not null
+- **Features:** 32 columns of instrument data with color-coded headers, virtualized scrolling, and interactive filtering
 
 ### **6. Filter Components**
 
@@ -64,10 +65,9 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 **Files:**
 - `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/data/control_inst_by_isos.csv`
 - `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/public/data/control_inst_by_isos.csv`
-- `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/data/details_inst.csv`
-- `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/public/data/details_inst.csv`
+- `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/public/data/master_subsystem.csv`
 
-**Function:** Contains the actual data for instruments - control instruments by isometrics and detailed instrument information
+**Function:** Contains the actual data for instruments - control instruments by isometrics and detailed instrument information from the master subsystem dataset
 
 ### **9. Global Registry**
 
@@ -77,7 +77,7 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 
 ### **10. Key Features of INSTRUMENTS REPORT Tab**
 
-1. **Dual Dataset Integration:** Combines control instruments (`control_inst_by_isos.csv`) and details instruments (`details_inst.csv`)
+1. **Dual Dataset Integration:** Combines control instruments (`control_inst_by_isos.csv`) and details instruments from master subsystem data (`master_subsystem.csv`)
 2. **Triple Filtering System:** 
    - Isometric filtering with relationship chains
    - Test pack filtering
@@ -86,9 +86,58 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 4. **Interactive Elements:** Clickable cells for filters, progress bars, badges for status
 5. **Dynamic Calculations:** SQL-based metrics and calculations panel
 6. **Performance Optimization:** WASM-enhanced filtering, virtualized scrolling, memoized computations
-7. **Cross-Dataset Relationships:** Links between control and details data through isometric codes
+7. **Cross-Dataset Relationships:** Links between control and details data through isometric codes and P&ID references
+8. **Data Filtering:** Filters master_subsystem.csv to only show records with valid P&ID values
 
 The INSTRUMENTS REPORT tab is a sophisticated component that handles dual datasets with complex filtering relationships, providing detailed views of pipeline construction instrument data with advanced UI features and performance optimizations.
+
+### **11. Details Instruments Table SQL Query**
+
+The Details Instruments table uses the following SQL query structure to extract data from master_subsystem.csv:
+
+```sql
+SELECT 
+item_isoinst                         AS "ITEM",
+tag_inst_e3d_isoinst                 AS "TAG INST E3D",
+tag_inst_isoinst                     AS "TAG INST",
+pid_isoinst                          AS "P&ID",
+instrument_type_isoinst             AS "INSTRUMENT TYPE",
+subsystem                            AS "SUBSYSTEM",
+tp_include_isoinst                  AS "TP INCLUDE",
+tp_isoinst                           AS "TP",
+progress_tp_isoinst                  AS "PROGRESS TP",
+hito_isoinst                         AS "HITO",
+teiga_reinstatement_isoinst         AS "TEIGA REINSTATEMENT",
+teiga_insulation_isoinst            AS "TEIGA INSULATION",
+siemsa_isoinst                       AS "SIEMSA",
+ten_isoinst                          AS "TEN",
+mounting_on_isoequipack_isoinst     AS "MOUNTING ON ISOEQUIPACK",
+on_isoinst                           AS "ON",
+scope__by_isoinst                    AS "SCOPE BY",
+teigatmi_isoinst                     AS "TEIGATMI",
+installed_teigatmi_isoinst          AS "INSTALLED TEIGATMI",
+siemsa1_isoinst                      AS "SIEMSA 1",
+installed_isoinst                    AS "INSTALLED",
+wired_isoinst                        AS "WIRED",
+connected_isoinst                    AS "CONNECTED",
+cable_test_isoinst                   AS "CABLE TEST",
+qcf_isoinst                          AS "QCF",
+ok100_isoinst                        AS "OK100",
+with__without_signal_isoinst        AS "WITH/WITHOUT SIGNAL",
+warehouse_code_isoinst              AS "WAREHOUSE CODE",
+delivery_isoinst                     AS "DELIVERY",
+date_isoinst                         AS "DATE",
+vendor_isoinst                       AS "VENDOR",
+comments_isoinst                     AS "COMMENTS"
+FROM master_subsystem.csv
+WHERE pid_isoinst IS NOT NULL
+```
+
+This query is implemented in the code by:
+1. Loading data from master_subsystem.csv
+2. Filtering records where pid_isoinst is not null
+3. Mapping column names from the _isoinst suffix format to their display names
+4. Rendering the data in a virtualized table with interactive filtering
 
 
 ## SQL Query Interface Components Found

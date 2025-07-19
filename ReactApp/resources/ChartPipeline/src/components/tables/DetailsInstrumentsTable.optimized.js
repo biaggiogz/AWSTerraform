@@ -261,27 +261,108 @@ const DetailsInstrumentsTable = React.memo(({
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
     
-    return data.map((row, index) => ({
+    // Filter out records where pid_isoinst is null
+    const filteredData = data.filter(row => row.pid_isoinst);
+    
+    return filteredData.map((row, index) => ({
       id: index,
-      subsystem: row.SUBSYSTEM || '',
-      testPack: row.TESTPACK || '',
-      mountingOnIsoEquiPack: row['MOUNTING ON ISO/EQUI/PACK'] || '',
-      on: row.ON || '',
-      tagInst: row['TAG INST'] || '',
-      instrumentType: row['INSTRUMENT TYPE'] || '',
-      scopeBy: row['SCOPE BY'] || '',
-      teigaTmi: row['TEIGA-TMI'] || '',
-      installedTeigaTmi: row['INSTALLED (TEIGA-TMI)'] || '',
-      date1: row.DATE1 || '',
-      siemsa: row.SIEMSA || '',
-      installedSiemsa: row['INSTALLED (SIEMSA)'] || '',
-      date2: row.DATE2 || '',
-      itHasSignal: row['WITH & WITHOUT SIGNAL'] || ''
+      item: row.item_isoinst || '',
+      tagInstE3d: row.tag_inst_e3d_isoinst || '',
+      tagInst: row.tag_inst_isoinst || '',
+      pid: row.pid_isoinst || '',
+      instrumentType: row.instrument_type_isoinst || '',
+      subsystem: row.subsystem || '',
+      tpInclude: row.tp_include_isoinst || '',
+      tp: row.tp_isoinst || '',
+      progressTp: row.progress_tp_isoinst || '',
+      hito: row.hito_isoinst || '',
+      teigaReinstatement: row.teiga_reinstatement_isoinst || '',
+      teigaInsulation: row.teiga_insulation_isoinst || '',
+      siemsa: row.siemsa_isoinst || '',
+      ten: row.ten_isoinst || '',
+      mountingOnIsoEquiPack: row.mounting_on_isoequipack_isoinst || '',
+      on: row.on_isoinst || '',
+      scopeBy: row.scope__by_isoinst || '',
+      teigaTmi: row.teigatmi_isoinst || '',
+      installedTeigaTmi: row.installed_teigatmi_isoinst || '',
+      siemsa1: row.siemsa1_isoinst || '',
+      installed: row.installed_isoinst || '',
+      wired: row.wired_isoinst || '',
+      connected: row.connected_isoinst || '',
+      cableTest: row.cable_test_isoinst || '',
+      qcf: row.qcf_isoinst || '',
+      ok100: row.ok100_isoinst || '',
+      withWithoutSignal: row.with__without_signal_isoinst || '',
+      warehouseCode: row.warehouse_code_isoinst || '',
+      delivery: row.delivery_isoinst || '',
+      date: row.date_isoinst || '',
+      vendor: row.vendor_isoinst || '',
+      comments: row.comments_isoinst || ''
     }));
   }, [data]);
 
   // Define table columns with optimized sizing for viewport fit
   const columns = useMemo(() => [
+    columnHelper.accessor('item', {
+      header: 'ITEM',
+      minSize: 70,
+      maxSize: 150,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('tagInstE3d', {
+      header: 'TAG INST E3D',
+      minSize: 100,
+      maxSize: 200,
+      size: 120,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontFamily="mono" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('tagInst', {
+      header: 'TAG INST',
+      minSize: 80,
+      maxSize: 200,
+      size: 120,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontFamily="mono" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('pid', {
+      header: 'P&ID',
+      minSize: 70,
+      maxSize: 150,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('instrumentType', {
+      header: 'INSTRUMENT TYPE',
+      minSize: 100,
+      maxSize: 250,
+      size: 150,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center" noOfLines={2}>
+          {getValue()}
+        </Text>
+      )
+    }),
     columnHelper.accessor('subsystem', {
       header: 'SUBSYSTEM',
       minSize: 80,
@@ -301,8 +382,20 @@ const DetailsInstrumentsTable = React.memo(({
         );
       }
     }),
-    columnHelper.accessor('testPack', {
-      header: 'TEST PACK',
+    columnHelper.accessor('tpInclude', {
+      header: 'TP INCLUDE',
+      minSize: 70,
+      maxSize: 150,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('tp', {
+      header: 'TP',
       minSize: 70,
       maxSize: 180,
       size: 90,
@@ -321,8 +414,80 @@ const DetailsInstrumentsTable = React.memo(({
         );
       }
     }),
+    columnHelper.accessor('progressTp', {
+      header: 'PROGRESS TP',
+      minSize: 80,
+      maxSize: 150,
+      size: 90,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('hito', {
+      header: 'HITO',
+      minSize: 70,
+      maxSize: 150,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('teigaReinstatement', {
+      header: 'TEIGA REINSTATEMENT',
+      minSize: 120,
+      maxSize: 200,
+      size: 150,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('teigaInsulation', {
+      header: 'TEIGA INSULATION',
+      minSize: 120,
+      maxSize: 200,
+      size: 150,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('siemsa', {
+      header: 'SIEMSA',
+      minSize: 60,
+      maxSize: 150,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('ten', {
+      header: 'TEN',
+      minSize: 60,
+      maxSize: 150,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
     columnHelper.accessor('mountingOnIsoEquiPack', {
-      header: 'MOUNTING ON ISO/EQUI/PACK',
+      header: 'MOUNTING ON ISOEQUIPACK',
       minSize: 270,
       maxSize: 300,
       size: 180,
@@ -353,30 +518,6 @@ const DetailsInstrumentsTable = React.memo(({
         </Text>
       )
     }),
-    columnHelper.accessor('tagInst', {
-      header: 'TAG INST',
-      minSize: 80,
-      maxSize: 200,
-      size: 120,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontFamily="mono" textAlign="center">
-          {getValue()}
-        </Text>
-      )
-    }),
-    columnHelper.accessor('instrumentType', {
-      header: 'INSTRUMENT TYPE',
-      minSize: 100,
-      maxSize: 250,
-      size: 150,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" noOfLines={2}>
-          {getValue()}
-        </Text>
-      )
-    }),
     columnHelper.accessor('scopeBy', {
       header: 'SCOPE BY',
       minSize: 70,
@@ -390,7 +531,7 @@ const DetailsInstrumentsTable = React.memo(({
       )
     }),
     columnHelper.accessor('teigaTmi', {
-      header: 'TEIGA-TMI',
+      header: 'TEIGATMI',
       minSize: 80,
       maxSize: 180,
       size: 100,
@@ -402,7 +543,7 @@ const DetailsInstrumentsTable = React.memo(({
       )
     }),
     columnHelper.accessor('installedTeigaTmi', {
-      header: 'INSTALLED (TEIGA-TMI)',
+      header: 'INSTALLED TEIGATMI',
       minSize: 100,
       maxSize: 220,
       size: 140,
@@ -417,8 +558,8 @@ const DetailsInstrumentsTable = React.memo(({
         );
       }
     }),
-    columnHelper.accessor('date1', {
-      header: 'DATE1',
+    columnHelper.accessor('siemsa1', {
+      header: 'SIEMSA 1',
       minSize: 70,
       maxSize: 150,
       size: 80,
@@ -429,23 +570,11 @@ const DetailsInstrumentsTable = React.memo(({
         </Text>
       )
     }),
-    columnHelper.accessor('siemsa', {
-      header: 'SIEMSA',
-      minSize: 60,
+    columnHelper.accessor('installed', {
+      header: 'INSTALLED',
+      minSize: 80,
       maxSize: 150,
-      size: 80,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
-          {getValue()}
-        </Text>
-      )
-    }),
-    columnHelper.accessor('installedSiemsa', {
-      header: 'INSTALLED (SIEMSA)',
-      minSize: 100,
-      maxSize: 200,
-      size: 130,
+      size: 90,
       enableResizing: true,
       cell: ({ getValue }) => {
         const value = getValue();
@@ -457,8 +586,120 @@ const DetailsInstrumentsTable = React.memo(({
         );
       }
     }),
-    columnHelper.accessor('date2', {
-      header: 'DATE2',
+    columnHelper.accessor('wired', {
+      header: 'WIRED',
+      minSize: 70,
+      maxSize: 150,
+      size: 80,
+      enableResizing: true,
+      cell: ({ getValue }) => {
+        const value = getValue();
+        const colorScheme = value === 'YES' ? 'green' : value === 'NOT' ? 'red' : 'gray';
+        return (
+          <Badge colorScheme={colorScheme} fontSize="xs">
+            {value}
+          </Badge>
+        );
+      }
+    }),
+    columnHelper.accessor('connected', {
+      header: 'CONNECTED',
+      minSize: 80,
+      maxSize: 150,
+      size: 90,
+      enableResizing: true,
+      cell: ({ getValue }) => {
+        const value = getValue();
+        const colorScheme = value === 'YES' ? 'green' : value === 'NOT' ? 'red' : 'gray';
+        return (
+          <Badge colorScheme={colorScheme} fontSize="xs">
+            {value}
+          </Badge>
+        );
+      }
+    }),
+    columnHelper.accessor('cableTest', {
+      header: 'CABLE TEST',
+      minSize: 80,
+      maxSize: 150,
+      size: 90,
+      enableResizing: true,
+      cell: ({ getValue }) => {
+        const value = getValue();
+        const colorScheme = value === 'YES' ? 'green' : value === 'NOT' ? 'red' : 'gray';
+        return (
+          <Badge colorScheme={colorScheme} fontSize="xs">
+            {value}
+          </Badge>
+        );
+      }
+    }),
+    columnHelper.accessor('qcf', {
+      header: 'QCF',
+      minSize: 60,
+      maxSize: 120,
+      size: 70,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('ok100', {
+      header: 'OK100',
+      minSize: 60,
+      maxSize: 120,
+      size: 70,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('withWithoutSignal', {
+      header: 'WITH/WITHOUT SIGNAL',
+      minSize: 120,
+      maxSize: 180,
+      size: 150,
+      enableResizing: true,
+      cell: ({ getValue }) => {
+        const value = getValue();
+        const colorScheme = value === 'YES' ? 'green' : value === 'NOT' ? 'red' : 'gray';
+        return (
+          <Badge colorScheme={colorScheme} fontSize="xs">
+            {value}
+          </Badge>
+        );
+      }
+    }),
+    columnHelper.accessor('warehouseCode', {
+      header: 'WAREHOUSE CODE',
+      minSize: 100,
+      maxSize: 180,
+      size: 120,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('delivery', {
+      header: 'DELIVERY',
+      minSize: 70,
+      maxSize: 150,
+      size: 90,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('date', {
+      header: 'DATE',
       minSize: 70,
       maxSize: 150,
       size: 80,
@@ -469,21 +710,29 @@ const DetailsInstrumentsTable = React.memo(({
         </Text>
       )
     }),
-    columnHelper.accessor('itHasSignal', {
-      header: 'IT HAS SIGNAL',
-      minSize: 80,
+    columnHelper.accessor('vendor', {
+      header: 'VENDOR',
+      minSize: 70,
       maxSize: 180,
       size: 100,
       enableResizing: true,
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const colorScheme = value === 'YES' ? 'green' : value === 'NOT' ? 'red' : 'gray';
-        return (
-          <Badge colorScheme={colorScheme} fontSize="xs">
-            {value}
-          </Badge>
-        );
-      }
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="center">
+          {getValue()}
+        </Text>
+      )
+    }),
+    columnHelper.accessor('comments', {
+      header: 'COMMENTS',
+      minSize: 100,
+      maxSize: 300,
+      size: 150,
+      enableResizing: true,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" textAlign="left" noOfLines={2}>
+          {getValue()}
+        </Text>
+      )
     })
   ], []);
 
@@ -586,8 +835,8 @@ const DetailsInstrumentsTable = React.memo(({
                 _hover={header.column.getCanSort() ? { opacity: 0.8 } : {}}
                 minHeight="50px"
                 position="relative"
-                bg={header.column.columnDef.header === 'SUBSYSTEM' ? '#CEC19B' : header.column.columnDef.header === 'TEST PACK' ? '#7CA2C5'
-                    : header.column.columnDef.header === 'MOUNTING ON ISO/EQUI/PACK' ? '#007598'
+                bg={header.column.columnDef.header === 'SUBSYSTEM' ? '#CEC19B' : header.column.columnDef.header === 'TP' ? '#7CA2C5'
+                    : header.column.columnDef.header === 'MOUNTING ON ISOEQUIPACK' ? '#007598'
                     : header.column.columnDef.header === 'TAG INST' ? '#B3CDDF'
                     : header.column.columnDef.header === 'SCOPE BY' ? '#B3CDDF'
                     : '#BFB6B4'}
