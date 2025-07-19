@@ -1,0 +1,6 @@
+{
+  "use-wasm": true,
+  "disable-duckdb": false,
+  "use-solidjs": false,
+  "use-solidjs-tables": false
+}
