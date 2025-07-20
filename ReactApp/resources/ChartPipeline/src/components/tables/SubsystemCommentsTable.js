@@ -151,10 +151,10 @@ const SubsystemCommentsTable = () => {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 60, // increased default height estimate for wrapped text
+    estimateSize: () => 30, // reduced default height estimate
     overscan: 20, // Show more rows to prevent blank spaces during fast scrolling
     measureElement: typeof window !== 'undefined' && document.getElementById ? 
-      (element) => element?.getBoundingClientRect().height || 60 : 
+      (element) => element?.getBoundingClientRect().height || 30 : 
       undefined,
     // This is critical - ensure we always measure after render
     measureDependency: [tableData],
