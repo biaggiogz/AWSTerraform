@@ -8,6 +8,8 @@
     "@duckdb/duckdb-wasm": "^1.29.1-dev132.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "apache-arrow": "^14.0.2",
+    "parquetjs": "^0.11.2",
     "@react-buddy/ide-toolbox": "^2.4.0",
     "@react-buddy/palette-chakra-ui": "^2.3.1",
     "@solidjs/router": "^0.10.5",
@@ -45,7 +47,8 @@
     "transform": "node src/etl/transform_polars.js",
     "copy-wasm": "mkdir -p build/wasm && cp -r public/wasm/* build/wasm/ 2>/dev/null || true",
     "wasm:build": "echo 'WASM compilation would happen here - currently using JS fallbacks'",
-    "wasm:test": "node scripts/test-wasm-performance.js"
+    "wasm:test": "node scripts/test-wasm-performance.js",
+    "convert-csv": "node scripts/convert-csv-to-parquet.js"
   },
   "eslintConfig": {
     "extends": [

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import * as duckdb from '@duckdb/duckdb-wasm';
+import * as arrow from 'apache-arrow';
 
 // Use the jsDelivr bundles
 const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
@@ -127,12 +128,52 @@ const useDuckDB3 = () => {
         }
     };
 
+    /**
+     * Creates a table from Parquet data
+     */
+    const createTableFromParquet = async (tableName, parquetBuffer) => {
+        if (!connection || !db) {
+            console.error('DuckDB not ready:', { connection: !!connection, db: !!db });
+            throw new Error('DuckDB connection not ready');
+        }
+
+        try {
+            console.log('Creating table from Parquet:', { tableName, bufferSize: parquetBuffer.byteLength });
+
+            // Register the Parquet data as a buffer
+            console.log('Registering Parquet buffer...');
+            await db.registerFileBuffer(`${tableName}.parquet`, new Uint8Array(parquetBuffer));
+            console.log('Parquet buffer registered successfully');
+
+            // Create the table from the registered file
+            console.log('Creating table from Parquet file...');
+            const result = await connection.query(`
+                CREATE OR REPLACE TABLE ${tableName} AS 
+                SELECT * FROM read_parquet('${tableName}.parquet')
+            `);
+            
+            // Check if table was created successfully
+            const tableInfo = await connection.query(`DESCRIBE ${tableName}`);
+            console.log(`Table created successfully with ${tableInfo.length} columns`);
+            
+            // Get row count
+            const countResult = await connection.query(`SELECT COUNT(*) as count FROM ${tableName}`);
+            console.log(`Loaded ${countResult.get(0).count} rows from Parquet file`);
+
+            return true;
+        } catch (err) {
+            console.error('Error creating table from Parquet:', err);
+            throw err;
+        }
+    };
+
     return useMemo(() => ({
         db,
         connection,
         loading,
         error,
         createTableFromCSV,
+        createTableFromParquet,
         executeQuery,
     }), [db, connection, loading, error]);
 };

@@ -19,6 +19,7 @@ import useDuckDB from '../../hooks/useDuckDB3';
 const SubsystemCommentsTable = () => {
   const {
     createTableFromCSV,
+    createTableFromParquet,
     executeQuery,
     loading: dbLoading,
     error: dbError,
@@ -38,12 +39,35 @@ const SubsystemCommentsTable = () => {
           return;
         }
 
-        const res = await fetch('/data/master_subsystem.csv');
-        if (!res.ok) throw new Error(`Failed to fetch CSV: ${res.status}`);
-
-        const csvText = await res.text();
-
-        await createTableFromCSV('master_subsystem', csvText, { header: true, delimiter: ','});
+        // Try to fetch Parquet file first, fall back to CSV if not available
+        try {
+          console.log('Fetching Parquet file...');
+          const res = await fetch('/data/master_subsystem.parquet');
+          
+          console.log('Parquet fetch response:', { 
+            status: res.status, 
+            statusText: res.statusText,
+            contentType: res.headers.get('content-type'),
+            contentLength: res.headers.get('content-length')
+          });
+          
+          if (!res.ok) throw new Error(`Failed to fetch Parquet: ${res.status}`);
+          
+          console.log('Reading Parquet buffer...');
+          const parquetBuffer = await res.arrayBuffer();
+          console.log('Parquet buffer received:', { byteLength: parquetBuffer.byteLength });
+          
+          await createTableFromParquet('master_subsystem', parquetBuffer);
+        } catch (parquetError) {
+          console.log('Falling back to CSV:', parquetError);
+          
+          // Fall back to CSV
+          const res = await fetch('/data/master_subsystem.csv');
+          if (!res.ok) throw new Error(`Failed to fetch CSV: ${res.status}`);
+          
+          const csvText = await res.text();
+          await createTableFromCSV('master_subsystem', csvText, { header: true, delimiter: ','});
+        }
 
         // Log the table schema to debug column names
         const schemaResults = await executeQuery(`DESCRIBE master_subsystem`);
@@ -61,7 +85,7 @@ const SubsystemCommentsTable = () => {
             tag_inst_e3d_isoinst AS "TAG INST"
           FROM master_subsystem
           WHERE item_isoinst IS NOT NULL
-          LIMIT 50
+          LIMIT 100
         `);
         
         console.log('Query results:', results);
