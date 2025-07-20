@@ -57,7 +57,8 @@ const SubsystemCommentsTable = () => {
           SELECT
             item_isoinst AS "ITEM",
             subsystem AS "SUBSYSTEM",
-            instrument_type_isoinst AS "INSTRUMENT TYPE"
+            instrument_type_isoinst AS "INSTRUMENT TYPE",
+            tag_inst_e3d_isoinst AS "TAG INST"
           FROM master_subsystem
           WHERE item_isoinst IS NOT NULL
           LIMIT 50
@@ -132,6 +133,7 @@ const SubsystemCommentsTable = () => {
                 <Th color="white" textAlign="center">ITEM</Th>
                 <Th color="white" textAlign="center">SUBSYSTEM</Th>
                 <Th color="white" textAlign="center">INSTRUMENT TYPE</Th>
+                <Th color="white" textAlign="center">TAG INST</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -145,6 +147,9 @@ const SubsystemCommentsTable = () => {
                     </Td>
                     <Td textAlign="center">
                       <Text fontSize="xs">{row['INSTRUMENT TYPE']}</Text>
+                    </Td>
+                    <Td textAlign="center">
+                      <Text fontSize="xs">{row['TAG INST']}</Text>
                     </Td>
                   </Tr>
               ))}
