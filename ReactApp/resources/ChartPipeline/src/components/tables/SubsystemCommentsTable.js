@@ -256,12 +256,12 @@ const SubsystemCommentsTable = () => {
   if (loading || dbLoading) {
     return (
         <Box mt={6}>
-          <Heading size="md" color="gray.700" mb={4}>
+          <Heading size="xs" color="gray.700" mb={2}>
             Subsystem Instruments
           </Heading>
           <Center p={8}>
-            <Spinner size="xl" color="blue.500" />
-            <Text ml={4} color="gray.600">
+            <Spinner size="xs" color="blue.500" />
+            <Text ml={2} color="gray.600">
               Loading data with DuckDB...
             </Text>
           </Center>
@@ -326,10 +326,10 @@ const SubsystemCommentsTable = () => {
                               key={header.id}
                               bg="purple.600"
                               color="white"
-                              p={2}
+                              p={1}
                               textAlign="center"
                               fontWeight="bold"
-                              fontSize="sm"
+                              fontSize="xs"
                               borderRight="1px solid"
                               borderColor="purple.400"
                               style={{
