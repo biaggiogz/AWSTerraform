@@ -10,6 +10,7 @@ import {
   Stack,
   Tooltip,
   IconButton,
+  Button,
 } from '@chakra-ui/react';
 import { InfoIcon } from '@chakra-ui/icons';
 import { measurePerformance, analyzeTablePerformance, monitorTablePerformance } from '../../utils/tablePerformance';
@@ -32,6 +33,88 @@ const PerformanceMetric = ({ label, value, description }) => (
   </Tooltip>
 );
 
+// Test Pack Cell Component
+const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
+  if (!testPacks || testPacks.length === 0) {
+    return (
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="xs" color="gray.500">-</Text>
+      </Box>
+    );
+  }
+  
+  if (testPacks.length === 1) {
+    return (
+      <Box 
+        width="100%" 
+        height="100%" 
+        display="flex" 
+        alignItems="center" 
+        justifyContent="center"
+        border="1px solid"
+        borderColor="gray.300"
+        borderRadius="md"
+        p={1}
+      >
+        <Button
+          size="xs"
+          variant={selectedTestPack === testPacks[0] ? "solid" : "outline"}
+          onClick={() => onTestPackSelect && onTestPackSelect(testPacks[0])}
+          _hover={{ bg: selectedTestPack === testPacks[0] ? "green.200" : "blue.200" }}
+          fontSize="10px"
+          fontWeight="medium"
+          color={selectedTestPack === testPacks[0] ? "white" : "blue.600"}
+          bg={selectedTestPack === testPacks[0] ? "green.500" : "white"}
+          borderColor={selectedTestPack === testPacks[0] ? "green.500" : "blue.500"}
+          minWidth="30px"
+          height="18px"
+          px={2}
+          borderRadius="sm"
+        >
+          {testPacks[0]}
+        </Button>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <HStack spacing={1} wrap="wrap" justify="center">
+        {testPacks.map((testPack, index) => (
+          <Button
+            key={`${testPack}-${index}`}
+            size="xs"
+            variant={selectedTestPack === testPack ? "solid" : "outline"}
+            onClick={() => onTestPackSelect && onTestPackSelect(testPack)}
+            _hover={{ bg: selectedTestPack === testPack ? "green.200" : "blue.200" }}
+            fontSize="10px"
+            fontWeight="medium"
+            color={selectedTestPack === testPack ? "white" : "blue.600"}
+            bg={selectedTestPack === testPack ? "green.500" : "white"}
+            borderColor={selectedTestPack === testPack ? "green.500" : "blue.500"}
+            minWidth="30px"
+            height="18px"
+            px={2}
+            borderRadius="sm"
+          >
+            {testPack}
+          </Button>
+        ))}
+      </HStack>
+    </Box>
+  );
+};
+
 const SubsystemCommentsTable = () => {
   const {
     createTableFromCSV,
@@ -45,6 +128,7 @@ const SubsystemCommentsTable = () => {
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedTestPack, setSelectedTestPack] = useState(null);
   
   // Performance metrics
   const [loadTime, setLoadTime] = useState(null);
@@ -81,6 +165,17 @@ const SubsystemCommentsTable = () => {
     }
   };
   
+  // Split test pack function
+  const splitTestPack = (testPackStr) => {
+    if (!testPackStr || testPackStr === '' || testPackStr === 'NOT APPLY') return [];
+    return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v !== '');
+  };
+  
+  // Handle test pack selection
+  const handleTestPackSelect = (testPack) => {
+    setSelectedTestPack(prevSelected => prevSelected === testPack ? null : testPack);
+  };
+  
   // Define columns using TanStack's column helper
   const columnHelper = createColumnHelper();
   
@@ -108,6 +203,22 @@ const SubsystemCommentsTable = () => {
     columnHelper.accessor('SUBSYSTEM', {
       header: 'SUBSYSTEM',
       cell: info => <Badge colorScheme="orange" fontSize="xs">{info.getValue()}</Badge>,
+      size: 95,
+    }),
+    columnHelper.accessor('TPs', {
+      header: 'TPs',
+      cell: info => {
+        const testPackValue = info.getValue();
+        const testPacks = splitTestPack(testPackValue);
+        
+        return (
+          <TestPackCell 
+            testPacks={testPacks}
+            onTestPackSelect={handleTestPackSelect}
+            selectedTestPack={selectedTestPack}
+          />
+        );
+      },
       size: 95,
     }),
     columnHelper.accessor('HITO', {
@@ -294,6 +405,26 @@ const SubsystemCommentsTable = () => {
           console.log('Parquet buffer received:', { byteLength: parquetBuffer.byteLength });
           
           await createTableFromParquet('master_subsystem', parquetBuffer);
+          
+          // Load secondary source from tp.parquet (won't be rendered as table)
+          try {
+            console.log('Fetching secondary TP Parquet file...');
+            const tpRes = await fetch('/data/tp.parquet');
+            
+            if (tpRes.ok) {
+              console.log('Reading TP Parquet buffer...');
+              const tpParquetBuffer = await tpRes.arrayBuffer();
+              console.log('TP Parquet buffer received:', { byteLength: tpParquetBuffer.byteLength });
+              
+              await createTableFromParquet('tp_data', tpParquetBuffer);
+              console.log('Secondary TP data source loaded successfully');
+            } else {
+              console.warn(`Secondary TP Parquet file not available: ${tpRes.status}`);
+            }
+          } catch (tpError) {
+            console.warn('Error loading secondary TP data source:', tpError);
+            // Continue execution even if secondary source fails to load
+          }
         } catch (parquetError) {
           console.log('Falling back to CSV:', parquetError);
           
@@ -310,9 +441,10 @@ const SubsystemCommentsTable = () => {
         const { result: results, executionTime } = await measurePerformance(() => executeQuery(`
           SELECT
             item_isoinst AS "ITEM",
-            subsystem AS "SUBSYSTEM",
-            instrument_type_isoinst AS "INSTRUMENT TYPE",
             tag_inst_isoinst AS "TAG INST",
+            instrument_type_isoinst AS "INSTRUMENT TYPE",
+            subsystem AS "SUBSYSTEM",
+            tp_include_isoinst  AS "TPs",
             pid_isoinst AS "P&ID",
             hito_isoinst AS "HITO",
             teiga_reinstatement_isoinst AS "TEIGA REINSTATEMENT",
