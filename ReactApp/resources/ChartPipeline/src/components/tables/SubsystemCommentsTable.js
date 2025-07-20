@@ -1,19 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Box,
   Text,
   Badge,
   Heading,
   HStack,
+  Spinner,
+  Center,
   Table,
   Thead,
   Tbody,
   Tr,
   Th,
   Td,
-  Spinner,
-  Center,
 } from '@chakra-ui/react';
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import useDuckDB from '../../hooks/useDuckDB3';
 
 const SubsystemCommentsTable = () => {
@@ -28,6 +34,35 @@ const SubsystemCommentsTable = () => {
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Define columns using TanStack's column helper
+  const columnHelper = createColumnHelper();
+  
+  const columns = useMemo(() => [
+    columnHelper.accessor('ITEM', {
+      header: 'ITEM',
+      cell: info => <Text fontSize="xs" fontFamily="mono">{String(info.getValue())}</Text>,
+    }),
+    columnHelper.accessor('SUBSYSTEM', {
+      header: 'SUBSYSTEM',
+      cell: info => <Badge colorScheme="orange" fontSize="xs">{info.getValue()}</Badge>,
+    }),
+    columnHelper.accessor('INSTRUMENT TYPE', {
+      header: 'INSTRUMENT TYPE',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+    }),
+    columnHelper.accessor('TAG INST', {
+      header: 'TAG INST',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+    }),
+  ], []);
+
+  // Create table instance
+  const table = useReactTable({
+    data: tableData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -132,55 +167,64 @@ const SubsystemCommentsTable = () => {
   }
 
   return (
-      <Box mt={6}>
-        <HStack justify="space-between" align="center" mb={4}>
-          <Heading size="md" color="gray.700">
-            Subsystem Instruments
-          </Heading>
-          <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
-            {tableData.length} Records
-          </Badge>
-        </HStack>
+    <Box mt={6}>
+      <HStack justify="space-between" align="center" mb={4}>
+        <Heading size="md" color="gray.700">
+          Subsystem Instruments
+        </Heading>
+        <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
+          {tableData.length} Records
+        </Badge>
+      </HStack>
 
-        <Box
-            border="1px solid"
-            borderColor="gray.200"
-            borderRadius="lg"
-            overflow="hidden"
-            bg="white"
-            boxShadow="sm"
-            width="100%"
-        >
-          <Table variant="simple" size="sm">
-            <Thead bg="purple.600">
-              <Tr>
-                <Th color="white" textAlign="center">ITEM</Th>
-                <Th color="white" textAlign="center">SUBSYSTEM</Th>
-                <Th color="white" textAlign="center">INSTRUMENT TYPE</Th>
-                <Th color="white" textAlign="center">TAG INST</Th>
+      <Box
+        border="1px solid"
+        borderColor="gray.200"
+        borderRadius="lg"
+        overflow="hidden"
+        bg="white"
+        boxShadow="sm"
+        width="100%"
+      >
+        <Table variant="simple" size="sm">
+          <Thead bg="purple.600">
+            {table.getHeaderGroups().map(headerGroup => (
+              <Tr key={headerGroup.id}>
+                {headerGroup.headers.map(header => (
+                  <Th 
+                    key={header.id}
+                    color="white" 
+                    textAlign="center"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </Th>
+                ))}
               </Tr>
-            </Thead>
-            <Tbody>
-              {tableData.map((row, idx) => (
-                  <Tr key={idx} _hover={{ bg: 'gray.50' }}>
-                    <Td textAlign="center">
-                      <Text fontSize="xs" fontFamily="mono">{String(row.ITEM)}</Text>
-                    </Td>
-                    <Td textAlign="center">
-                      <Badge colorScheme="orange" fontSize="xs">{row.SUBSYSTEM}</Badge>
-                    </Td>
-                    <Td textAlign="center">
-                      <Text fontSize="xs">{row['INSTRUMENT TYPE']}</Text>
-                    </Td>
-                    <Td textAlign="center">
-                      <Text fontSize="xs">{row['TAG INST']}</Text>
-                    </Td>
-                  </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </Box>
+            ))}
+          </Thead>
+          <Tbody>
+            {table.getRowModel().rows.map(row => (
+              <Tr 
+                key={row.id}
+                _hover={{ bg: 'gray.50' }}
+              >
+                {row.getVisibleCells().map(cell => (
+                  <Td 
+                    key={cell.id}
+                    textAlign="center"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </Td>
+                ))}
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
       </Box>
+    </Box>
   );
 };
 
