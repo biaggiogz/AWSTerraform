@@ -225,6 +225,49 @@ const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
   );
 };
 
+// Subsystem Cell Component
+const SubsystemCell = ({ subsystem, onSubsystemSelect, selectedSubsystem }) => {
+  if (!subsystem || subsystem === '') {
+    return (
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="xs" color="gray.500">-</Text>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <Button
+        size="xs"
+        variant={selectedSubsystem === subsystem ? "solid" : "outline"}
+        onClick={() => onSubsystemSelect && onSubsystemSelect(subsystem)}
+        _hover={{ bg: selectedSubsystem === subsystem ? "green.200" : "blue.200" }}
+        fontSize="10px"
+        fontWeight="medium"
+        color={selectedSubsystem === subsystem ? "white" : "blue.600"}
+        bg={selectedSubsystem === subsystem ? "green.500" : "white"}
+        borderColor={selectedSubsystem === subsystem ? "green.500" : "blue.500"}
+        minWidth="30px"
+        height="18px"
+        px={2}
+        borderRadius="sm"
+      >
+        {subsystem}
+      </Button>
+    </Box>
+  );
+};
+
 const SubsystemCommentsTable = () => {
   const {
     createTableFromCSV,
@@ -239,6 +282,7 @@ const SubsystemCommentsTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTestPack, setSelectedTestPack] = useState(null);
+  const [selectedSubsystem, setSelectedSubsystem] = useState(null);
   
   // Performance metrics
   const [loadTime, setLoadTime] = useState(null);
@@ -286,6 +330,11 @@ const SubsystemCommentsTable = () => {
     setSelectedTestPack(prevSelected => prevSelected === testPack ? null : testPack);
   };
   
+  // Handle subsystem selection
+  const handleSubsystemSelect = (subsystem) => {
+    setSelectedSubsystem(prevSelected => prevSelected === subsystem ? null : subsystem);
+  };
+  
   // Define columns using TanStack's column helper
   const columnHelper = createColumnHelper();
   
@@ -312,7 +361,13 @@ const SubsystemCommentsTable = () => {
     }),
     columnHelper.accessor('SUBSYSTEM', {
       header: 'SUBSYSTEM',
-      cell: info => <Badge colorScheme="orange" fontSize="xs">{info.getValue()}</Badge>,
+      cell: info => (
+        <SubsystemCell 
+          subsystem={info.getValue()}
+          onSubsystemSelect={handleSubsystemSelect}
+          selectedSubsystem={selectedSubsystem}
+        />
+      ),
       size: 95,
     }),
     columnHelper.accessor('TPs', {
@@ -684,6 +739,16 @@ const SubsystemCommentsTable = () => {
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
               {table.getFilteredRowModel().rows.length} / {tableData.length} Records
             </Badge>
+            {selectedSubsystem && (
+              <Badge colorScheme="orange" fontSize="sm" px={3} py={1}>
+                Subsystem: {selectedSubsystem}
+              </Badge>
+            )}
+            {selectedTestPack && (
+              <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
+                Test Pack: {selectedTestPack}
+              </Badge>
+            )}
           </HStack>
         </HStack>
 
