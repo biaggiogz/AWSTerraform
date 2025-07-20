@@ -5,6 +5,7 @@ import {
   Badge,
   Heading,
   HStack,
+  VStack,
   Spinner,
   Center,
   Stack,
@@ -32,6 +33,115 @@ const PerformanceMetric = ({ label, value, description }) => (
     </Badge>
   </Tooltip>
 );
+
+// Test Pack Progress Cell Component
+const TestPackProgressCell = ({ testPacks, progressValues }) => {
+  if (!testPacks || testPacks.length === 0) {
+    return (
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="xs" color="gray.500">-</Text>
+      </Box>
+    );
+  }
+  
+  // Get progress values for each test pack
+  const progressData = testPacks.map((_, index) => {
+    const progressKey = `progress_ac_tp_${index + 1}`;
+    return progressValues && progressValues[progressKey] ? progressValues[progressKey] : 0;
+  });
+  
+  if (testPacks.length === 1) {
+    const progress = progressData[0];
+    const percentage = Math.round(progress * 100);
+    
+    return (
+      <Box 
+        width="100%" 
+        height="100%" 
+        display="flex" 
+        alignItems="center" 
+        justifyContent="center"
+        border="1px solid"
+        borderColor="gray.300"
+        borderRadius="md"
+        p={1}
+      >
+        <Box position="relative" width="100%" height="18px">
+          <Box 
+            height="18px" 
+            width={`${percentage}%`} 
+            bg="blue.500"
+            borderRadius="sm"
+          />
+          <Text 
+            fontSize="10px" 
+            position="absolute" 
+            top="0" 
+            left="0" 
+            right="0" 
+            height="18px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            color="white"
+            fontWeight="bold"
+            textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+          >
+            {percentage}%
+          </Text>
+        </Box>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <VStack spacing={1} width="100%">
+        {testPacks.map((testPack, index) => {
+          const progress = progressData[index] || 0;
+          const percentage = Math.round(progress * 100);
+          
+          return (
+            <Box key={`${testPack}-progress-${index}`} position="relative" width="100%" height="18px">
+              <Box 
+                height="18px" 
+                width={`${percentage}%`} 
+                bg="blue.500"
+                borderRadius="sm"
+              />
+              <Text 
+                fontSize="10px" 
+                position="absolute" 
+                top="0" 
+                left="0" 
+                right="0" 
+                height="18px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                color="white"
+                fontWeight="bold"
+                textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+              >
+                {percentage}%
+              </Text>
+            </Box>
+          );
+        })}
+      </VStack>
+    </Box>
+  );
+};
 
 // Test Pack Cell Component
 const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
@@ -216,6 +326,29 @@ const SubsystemCommentsTable = () => {
             testPacks={testPacks}
             onTestPackSelect={handleTestPackSelect}
             selectedTestPack={selectedTestPack}
+          />
+        );
+      },
+      size: 95,
+    }),
+    columnHelper.accessor('PROGRESS TP', {
+      header: 'PROGRESS TP',
+      cell: info => {
+        const row = info.row.original;
+        const testPackValue = row['TPs'];
+        const testPacks = splitTestPack(testPackValue);
+        
+        // Get progress values from the row
+        const progressValues = {
+          progress_ac_tp_1: row.progress_ac_tp_1,
+          progress_ac_tp_2: row.progress_ac_tp_2,
+          progress_ac_tp_3: row.progress_ac_tp_3
+        };
+        
+        return (
+          <TestPackProgressCell 
+            testPacks={testPacks}
+            progressValues={progressValues}
           />
         );
       },
@@ -445,6 +578,9 @@ const SubsystemCommentsTable = () => {
             instrument_type_isoinst AS "INSTRUMENT TYPE",
             subsystem AS "SUBSYSTEM",
             tp_include_isoinst  AS "TPs",
+            progress_ac_tp_1,
+            progress_ac_tp_2,
+            progress_ac_tp_3,
             pid_isoinst AS "P&ID",
             hito_isoinst AS "HITO",
             teiga_reinstatement_isoinst AS "TEIGA REINSTATEMENT",
