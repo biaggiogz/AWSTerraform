@@ -38,7 +38,7 @@ const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
   if (!testPacks || testPacks.length === 0) {
     return (
       <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
-        <Text fontSize="xs" color="gray.500">-</Text>
+        <Text fontSize="xs" color="gray.500">NOT APPLY</Text>
       </Box>
     );
   }
@@ -167,7 +167,7 @@ const SubsystemCommentsTable = () => {
   
   // Split test pack function
   const splitTestPack = (testPackStr) => {
-    if (!testPackStr || testPackStr === '' || testPackStr === 'NOT APPLY') return [];
+    if (!testPackStr || testPackStr === '' || testPackStr === 'NOT_APPLY') return [];
     return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v !== '');
   };
   
