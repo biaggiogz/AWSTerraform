@@ -128,13 +128,120 @@ const SubsystemCommentsTable = () => {
     columnHelper.accessor('SIEMSA', {
       header: 'SIEMSA',
       cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
-      size: 95,
+      size: 90,
     }),
     columnHelper.accessor('TEN', {
       header: 'TEN',
       cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 90,
+    }),
+    columnHelper.accessor('MOUNTING ON ISO/EQUI/PACK', {
+      header: 'MOUNTING ON ISO/EQUI/PACK',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
       size: 95,
     }),
+    columnHelper.accessor('ON', {
+      header: 'ON',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 70,
+    }),
+    columnHelper.accessor('SCOPE BY', {
+      header: 'SCOPE BY',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('TEIGA-TMI', {
+      header: 'TEIGA-TMI',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 70,
+    }),
+    columnHelper.accessor('SIEMSA_2', {
+      header: 'SIEMSA',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('INSTALLED', {
+      header: 'INSTALLED',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('WIRED', {
+      header: 'WIRED',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('CONNECTED', {
+      header: 'CONNECTED',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('CABLE TEST', {
+      header: 'CABLE TEST',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('QFC', {
+      header: 'QFC',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 70,
+    }),
+    columnHelper.accessor('OK=100%', {
+      header: 'OK=100%',
+      cell: info => {
+        const value = parseFloat(info.getValue()) || 0;
+        const percentage = Math.min(Math.max(value, 0), 1) * 100;
+        return (
+          <Box w="100%" position="relative">
+            <Box 
+              h="16px" 
+              w={`${percentage}%`} 
+              bg="green.500"
+              borderRadius="sm"
+            />
+            <Text 
+              fontSize="xs" 
+              position="absolute" 
+              top="0" 
+              left="0" 
+              right="0" 
+              textAlign="center"
+              color="white"
+              fontWeight="bold"
+              textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+            >
+              {percentage.toFixed(0)}%
+            </Text>
+          </Box>
+        );
+      },
+      size: 95,
+    }),
+    columnHelper.accessor('WITH & WITHOUT SIGNAL', {
+      header: 'WITH & WITHOUT SIGNAL',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('WAREHOUSE CODE', {
+      header: 'WAREHOUSE CODE',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('DELIVERY', {
+      header: 'DELIVERY',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 90,
+    }),
+    columnHelper.accessor('DATE', {
+      header: 'DATE',
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('VENDOR', {
+      header: 'VENDOR',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+
   ], []);
 
   // Create table instance
@@ -211,7 +318,23 @@ const SubsystemCommentsTable = () => {
             teiga_reinstatement_isoinst AS "TEIGA REINSTATEMENT",
             teiga_insulation_isoinst AS "TEIGA INSULATION",
             siemsa_isoinst AS "SIEMSA",
-            ten_isoinst AS "TEN"
+            ten_isoinst AS "TEN",
+            mounting_on_isoequipack_isoinst AS "MOUNTING ON ISO/EQUI/PACK",
+            on_isoinst AS "ON",
+            scope__by_isoinst AS "SCOPE BY",
+            teigatmi_isoinst AS "TEIGA-TMI",
+            siemsa1_isoinst AS "SIEMSA_2",
+            installed_isoinst AS "INSTALLED",
+            wired_isoinst AS "WIRED",
+            connected_isoinst AS "CONNECTED",
+            cable_test_isoinst AS "CABLE TEST",
+            qcf_isoinst AS "QFC",
+            ok100_isoinst AS "OK=100%",
+            with__without_signal_isoinst AS "WITH & WITHOUT SIGNAL",
+            warehouse_code_isoinst AS "WAREHOUSE CODE",
+            delivery_isoinst  AS "DELIVERY",
+            date_isoinst AS "DATE",
+            vendor_isoinst AS "VENDOR"
           FROM master_subsystem
           WHERE item_isoinst IS NOT NULL
           LIMIT 2000
