@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Heading, Text } from '@chakra-ui/react';
-import SubsystemCommentsTable from './components/tables/SubsystemCommentsTable';
+import DetailsInstrumentsTableOptimized from './components/tables/DetailsInstrumentsTable.optimized';
 
 /**
  * Test component to verify table performance
@@ -14,7 +14,7 @@ const TablePerformanceTest = () => {
         The table below should handle 22 columns and 2000 rows with good performance.
       </Text>
       
-      <SubsystemCommentsTable />
+      <DetailsInstrumentsTableOptimized />
     </Box>
   );
 };

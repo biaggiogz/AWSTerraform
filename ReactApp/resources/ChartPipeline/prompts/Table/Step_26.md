@@ -32,7 +32,7 @@ Level 4: Individual Records - Actual instrument records
 **MUST USE THESE EXACT COMPONENTS:**
 - `useInstrumentsFilter.js` - Extend this for sunburst state
 - `ControlInstrumentsTable.optimized.js` - Left table (TableA)
-- `DetailsInstrumentsTable.optimized.js` - Right table (TableB)
+- `DetailsInstrumentsTable.optimized.old.js` - Right table (TableB)
 - `IsometricRelationshipFilter.optimized.js` - Isometric filtering logic
 - `TestPackRelationshipFilter.optimized.js` - Test pack filtering logic
 - `SubsystemRelationshipFilter.optimized.js` - Subsystem filtering logic
@@ -104,7 +104,7 @@ Level 4: Individual Records - Actual instrument records
 // Maintain existing @tanstack/react-table structure
 ```
 
-**Modify: `DetailsInstrumentsTable.optimized.js`**
+**Modify: `DetailsInstrumentsTable.optimized.old.js`**
 ```javascript
 // Same enhancements as control table
 // Ensure filter synchronization
@@ -170,7 +170,7 @@ Level 4: Individual Records - Actual instrument records
 ### Files to Modify
 - [ ] `useInstrumentsFilter.js` - Add sunburst state
 - [ ] `ControlInstrumentsTable.optimized.js` - Add column dropdowns
-- [ ] `DetailsInstrumentsTable.optimized.js` - Add column dropdowns
+- [ ] `DetailsInstrumentsTable.optimized.old.js` - Add column dropdowns
 - [ ] `ChartSelector.optimized.js` - Add toggle button
 - [ ] `App.optimized.js` - Include sunburst component
 

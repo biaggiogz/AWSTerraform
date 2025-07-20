@@ -1,31 +1,59 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import {
   Box,
   Text,
   Badge,
   Heading,
   HStack,
+  VStack,
+  Spinner,
+  Center,
+  Stack,
+  Tooltip,
+  IconButton,
   Button,
 } from '@chakra-ui/react';
+import { InfoIcon } from '@chakra-ui/icons';
+import { measurePerformance, analyzeTablePerformance, monitorTablePerformance } from '../../utils/tablePerformance';
 import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
+  createColumnHelper,
   flexRender,
-  createColumnHelper
+  getCoreRowModel,
+  useReactTable,
+  getSortedRowModel,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import useDuckDB from '../../hooks/useDuckDB3';
 
-const columnHelper = createColumnHelper();
+// Performance measurement component
+const PerformanceMetric = ({ label, value, description }) => (
+  <Tooltip label={description} placement="top">
+    <Badge colorScheme="blue" fontSize="xs" px={2} py={1} mr={2} cursor="help">
+      {label}: {value}
+    </Badge>
+  </Tooltip>
+);
 
-// Subsystem Cell Component
-const SubsystemCell = ({ subsystems, onSubsystemSelect, selectedSubsystem }) => {
-  if (!subsystems || subsystems.length === 0) {
-    return null;
+// Test Pack Progress Cell Component
+const TestPackProgressCell = ({ testPacks, progressValues }) => {
+  if (!testPacks || testPacks.length === 0) {
+    return (
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="xs" color="gray.500">NOT APPLY</Text>
+      </Box>
+    );
   }
   
-  if (subsystems.length === 1) {
+  // Get progress values for each test pack
+  const progressData = testPacks.map((_, index) => {
+    const progressKey = `progress_ac_tp_${index + 1}`;
+    return progressValues && progressValues[progressKey] ? progressValues[progressKey] : 0;
+  });
+  
+  if (testPacks.length === 1) {
+    const progress = progressData[0];
+    const percentage = Math.round(progress * 100);
+    
     return (
       <Box 
         width="100%" 
@@ -38,23 +66,30 @@ const SubsystemCell = ({ subsystems, onSubsystemSelect, selectedSubsystem }) => 
         borderRadius="md"
         p={1}
       >
-        <Button
-          size="xs"
-          variant={selectedSubsystem === subsystems[0] ? "solid" : "outline"}
-          onClick={() => onSubsystemSelect && onSubsystemSelect(subsystems[0])}
-          fontSize="10px"
-          fontWeight="medium"
-          color={selectedSubsystem === subsystems[0] ? "white" : "blue.600"}
-          bg={selectedSubsystem === subsystems[0] ? "green.500" : "white"}
-          borderColor={selectedSubsystem === subsystems[0] ? "green.500" : "blue.500"}
-          minWidth="30px"
-          height="18px"
-          px={2}
-          borderRadius="sm"
-          _hover={{ bg: selectedSubsystem === subsystems[0] ? "green.200" : "blue.200" }}
-        >
-          {subsystems[0]}
-        </Button>
+        <Box position="relative" width="100%" height="18px">
+          <Box 
+            height="18px" 
+            width={`${percentage}%`} 
+            bg="blue.500"
+            borderRadius="sm"
+          />
+          <Text 
+            fontSize="10px" 
+            position="absolute" 
+            top="0" 
+            left="0" 
+            right="0" 
+            height="18px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            color="white"
+            fontWeight="bold"
+            textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+          >
+            {percentage}%
+          </Text>
+        </Box>
       </Box>
     );
   }
@@ -71,88 +106,39 @@ const SubsystemCell = ({ subsystems, onSubsystemSelect, selectedSubsystem }) => 
       borderRadius="md"
       p={1}
     >
-      <HStack spacing={1} wrap="wrap" justify="center">
-        {subsystems.map((subsystem, index) => (
-          <Button
-            key={`${subsystem}-${index}`}
-            size="xs"
-            variant={selectedSubsystem === subsystem ? "solid" : "outline"}
-            onClick={() => onSubsystemSelect && onSubsystemSelect(subsystem)}
-            fontSize="10px"
-            fontWeight="medium"
-            color={selectedSubsystem === subsystem ? "white" : "blue.600"}
-            bg={selectedSubsystem === subsystem ? "green.500" : "white"}
-            borderColor={selectedSubsystem === subsystem ? "green.500" : "blue.500"}
-            minWidth="30px"
-            height="18px"
-            px={2}
-            borderRadius="sm"
-            _hover={{ bg: selectedSubsystem === subsystem ? "green.200" : "blue.200" }}
-          >
-            {subsystem}
-          </Button>
-        ))}
-      </HStack>
-    </Box>
-  );
-};
-
-// Mounting Cell Component
-const MountingCell = ({ mountingValue, onMountingSelect, selectedMounting, isHighlighted }) => {
-  const pattern = /^(?:[^-]*-){5}[^-]*$/;
-  const matchesPattern = pattern.test(mountingValue);
-  
-  if (!mountingValue || !matchesPattern) {
-    const isSelected = selectedMounting === mountingValue;
-    return (
-      <Text 
-        fontSize="xs" 
-        textAlign="left"
-        noOfLines={2}
-        cursor="pointer"
-        color={isSelected ? 'blue.600' : 'inherit'}
-        fontWeight={isSelected || isHighlighted ? 'bold' : 'normal'}
-        bg={isSelected ? 'blue.50' : isHighlighted ? 'yellow.50' : 'transparent'}
-        px={1}
-        py={1}
-        borderRadius="sm"
-        _hover={{ bg: 'blue.100', color: 'blue.700' }}
-        onClick={() => onMountingSelect && onMountingSelect(mountingValue)}
-      >
-        {mountingValue}
-      </Text>
-    );
-  }
-  
-  return (
-    <Box 
-      width="100%" 
-      height="100%" 
-      display="flex" 
-      alignItems="center" 
-      justifyContent="center"
-      border="1px solid"
-      borderColor="gray.300"
-      borderRadius="md"
-      p={1}
-    >
-      <Button
-        size="xs"
-        variant={selectedMounting === mountingValue ? "solid" : "outline"}
-        onClick={() => onMountingSelect && onMountingSelect(mountingValue)}
-        fontSize="10px"
-        fontWeight="medium"
-        color={selectedMounting === mountingValue ? "white" : "blue.600"}
-        bg={selectedMounting === mountingValue ? "green.500" : "white"}
-        borderColor={selectedMounting === mountingValue ? "green.500" : "blue.500"}
-        minWidth="30px"
-        height="18px"
-        px={2}
-        borderRadius="sm"
-        _hover={{ bg: selectedMounting === mountingValue ? "green.200" : "blue.200" }}
-      >
-        {mountingValue}
-      </Button>
+      <VStack spacing={1} width="100%">
+        {testPacks.map((testPack, index) => {
+          const progress = progressData[index] || 0;
+          const percentage = Math.round(progress * 100);
+          
+          return (
+            <Box key={`${testPack}-progress-${index}`} position="relative" width="100%" height="18px">
+              <Box 
+                height="18px" 
+                width={`${percentage}%`} 
+                bg="blue.500"
+                borderRadius="sm"
+              />
+              <Text 
+                fontSize="10px" 
+                position="absolute" 
+                top="0" 
+                left="0" 
+                right="0" 
+                height="18px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                color="white"
+                fontWeight="bold"
+                textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+              >
+                {percentage}%
+              </Text>
+            </Box>
+          );
+        })}
+      </VStack>
     </Box>
   );
 };
@@ -184,6 +170,7 @@ const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
           size="xs"
           variant={selectedTestPack === testPacks[0] ? "solid" : "outline"}
           onClick={() => onTestPackSelect && onTestPackSelect(testPacks[0])}
+          _hover={{ bg: selectedTestPack === testPacks[0] ? "green.200" : "blue.200" }}
           fontSize="10px"
           fontWeight="medium"
           color={selectedTestPack === testPacks[0] ? "white" : "blue.600"}
@@ -193,7 +180,6 @@ const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
           height="18px"
           px={2}
           borderRadius="sm"
-          _hover={{ bg: selectedTestPack === testPacks[0] ? "green.200" : "blue.200" }}
         >
           {testPacks[0]}
         </Button>
@@ -220,6 +206,7 @@ const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
             size="xs"
             variant={selectedTestPack === testPack ? "solid" : "outline"}
             onClick={() => onTestPackSelect && onTestPackSelect(testPack)}
+            _hover={{ bg: selectedTestPack === testPack ? "green.200" : "blue.200" }}
             fontSize="10px"
             fontWeight="medium"
             color={selectedTestPack === testPack ? "white" : "blue.600"}
@@ -229,7 +216,6 @@ const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
             height="18px"
             px={2}
             borderRadius="sm"
-            _hover={{ bg: selectedTestPack === testPack ? "green.200" : "blue.200" }}
           >
             {testPack}
           </Button>
@@ -239,455 +225,636 @@ const TestPackCell = ({ testPacks, onTestPackSelect, selectedTestPack }) => {
   );
 };
 
-/**
- * DetailsInstrumentsTable component - Virtualized table for details instruments data
- * @param {Object} props - Component props
- * @param {Array} props.data - Filtered dataset from details_inst.csv
- * @param {string} props.selectedIsometric - Currently selected isometric ID
- * @param {Function} props.onMountingLocationClick - Handler for mounting location selection
- * @param {Set} props.highlightedRecords - Set of highlighted records
- */
-const DetailsInstrumentsTable = React.memo(({ 
-  data, 
-  selectedIsometric, 
-  onMountingLocationClick, 
-  highlightedRecords = new Set(),
-  selectedTestPack,
-  onTestPackClick,
-  selectedSubsystem,
-  onSubsystemClick
-}) => {
-  // Memoize processed data to avoid recalculations
-  const processedData = useMemo(() => {
-    if (!data || data.length === 0) return [];
-    
-    return data.map((row, index) => ({
-      id: index,
-      subsystem: row.SUBSYSTEM || '',
-      testPack: row.TESTPACK || '',
-      mountingOnIsoEquiPack: row['MOUNTING ON ISO/EQUI/PACK'] || '',
-      on: row.ON || '',
-      tagInst: row['TAG INST'] || '',
-      instrumentType: row['INSTRUMENT TYPE'] || '',
-      scopeBy: row['SCOPE BY'] || '',
-      teigaTmi: row['TEIGA-TMI'] || '',
-      installedTeigaTmi: row['INSTALLED (TEIGA-TMI)'] || '',
-      date1: row.DATE1 || '',
-      siemsa: row.SIEMSA || '',
-      installedSiemsa: row['INSTALLED (SIEMSA)'] || '',
-      date2: row.DATE2 || '',
-      itHasSignal: row['WITH & WITHOUT SIGNAL'] || ''
-    }));
-  }, [data]);
+// Subsystem Cell Component
+const SubsystemCell = ({ subsystem, onSubsystemSelect, selectedSubsystem }) => {
+  if (!subsystem || subsystem === '') {
+    return (
+      <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
+        <Text fontSize="xs" color="gray.500">-</Text>
+      </Box>
+    );
+  }
+  
+  return (
+    <Box 
+      width="100%" 
+      height="100%" 
+      display="flex" 
+      alignItems="center" 
+      justifyContent="center"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      p={1}
+    >
+      <Button
+        size="xs"
+        variant={selectedSubsystem === subsystem ? "solid" : "outline"}
+        onClick={() => onSubsystemSelect && onSubsystemSelect(subsystem)}
+        _hover={{ bg: selectedSubsystem === subsystem ? "green.200" : "blue.200" }}
+        fontSize="10px"
+        fontWeight="medium"
+        color={selectedSubsystem === subsystem ? "white" : "blue.600"}
+        bg={selectedSubsystem === subsystem ? "green.500" : "white"}
+        borderColor={selectedSubsystem === subsystem ? "green.500" : "blue.500"}
+        minWidth="30px"
+        height="18px"
+        px={2}
+        borderRadius="sm"
+      >
+        {subsystem}
+      </Button>
+    </Box>
+  );
+};
 
-  // Define table columns with optimized sizing for viewport fit
-  const columns = useMemo(() => [
-    columnHelper.accessor('subsystem', {
-      header: 'SUBSYSTEM',
-      minSize: 80,
-      maxSize: 200,
-      size: 100,
-      enableResizing: true,
-      cell: ({ getValue }) => {
-        const subsystemValue = getValue();
-        const subsystems = subsystemValue ? [subsystemValue] : []; // Single value, no splitting
-        
-        return (
-          <SubsystemCell 
-            subsystems={subsystems}
-            onSubsystemSelect={onSubsystemClick}
-            selectedSubsystem={selectedSubsystem}
-          />
-        );
+const DetailsInstrumentsTableOptimized = () => {
+  const {
+    createTableFromCSV,
+    createTableFromParquet,
+    executeQuery,
+    loading: dbLoading,
+    error: dbError,
+  } = useDuckDB();
+
+  // State declarations
+  const [tableData, setTableData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedTestPack, setSelectedTestPack] = useState(null);
+  const [selectedSubsystem, setSelectedSubsystem] = useState(null);
+  
+  // Performance metrics
+  const [loadTime, setLoadTime] = useState(null);
+  const [renderTime, setRenderTime] = useState(null);
+  const [queryTime, setQueryTime] = useState(null);
+  const [fps, setFps] = useState(null);
+  const [memoryUsage, setMemoryUsage] = useState(null);
+  const tableContainerRef = useRef(null);
+  
+  // Performance monitoring
+  useEffect(() => {
+    // Only start monitoring when data is loaded
+    if (tableData.length === 0) return;
+    
+    const stopMonitoring = monitorTablePerformance(metrics => {
+      setFps(metrics.fps);
+      if (metrics.memoryUsage) {
+        setMemoryUsage(metrics.memoryUsage);
       }
+    });
+    
+    return () => stopMonitoring();
+  }, [tableData]);
+  
+  // Helper function to format timestamp to date
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    // Convert timestamp to milliseconds if it's in seconds
+    const ts = timestamp > 9999999999 ? timestamp : timestamp * 1000;
+    try {
+      return new Date(ts).toLocaleDateString();
+    } catch (e) {
+      return 'Invalid date';
+    }
+  };
+  
+  // Split test pack function
+  const splitTestPack = (testPackStr) => {
+    if (!testPackStr || testPackStr === '' || testPackStr === 'NOT_APPLY') return [];
+    return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v !== '');
+  };
+  
+  // Handle test pack selection
+  const handleTestPackSelect = (testPack) => {
+    setSelectedTestPack(prevSelected => prevSelected === testPack ? null : testPack);
+  };
+  
+  // Handle subsystem selection
+  const handleSubsystemSelect = (subsystem) => {
+    setSelectedSubsystem(prevSelected => prevSelected === subsystem ? null : subsystem);
+  };
+  
+  // Define columns using TanStack's column helper
+  const columnHelper = createColumnHelper();
+  
+  const columns = useMemo(() => [
+    columnHelper.accessor('ITEM', {
+      header: 'ITEM',
+      cell: info => <Text fontSize="xs" fontFamily="mono">{String(info.getValue())}</Text>,
+      size: 60,
     }),
-    columnHelper.accessor('testPack', {
-      header: 'TEST PACK',
-      minSize: 70,
-      maxSize: 180,
+    columnHelper.accessor('TAG INST', {
+      header: 'TAG INST',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
       size: 90,
-      enableResizing: true,
-      cell: ({ getValue }) => {
-        const testPackValue = getValue();
-        const testPacks = testPackValue ? 
-          testPackValue.toString().split("|").map(v => v.trim()).filter(v => v !== '' && v !== '0' && v !== 'NOT_APPLY') : [];
+    }),
+    columnHelper.accessor('P&ID', {
+      header: 'P&ID',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 120,
+    }),
+    columnHelper.accessor('INSTRUMENT TYPE', {
+      header: 'INSTRUMENT TYPE',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 120,
+    }),
+    columnHelper.accessor('SUBSYSTEM', {
+      header: 'SUBSYSTEM',
+      cell: info => (
+        <SubsystemCell 
+          subsystem={info.getValue()}
+          onSubsystemSelect={handleSubsystemSelect}
+          selectedSubsystem={selectedSubsystem}
+        />
+      ),
+      size: 95,
+    }),
+    columnHelper.accessor('TPs', {
+      header: 'TPs',
+      cell: info => {
+        const testPackValue = info.getValue();
+        const testPacks = splitTestPack(testPackValue);
         
         return (
           <TestPackCell 
             testPacks={testPacks}
-            onTestPackSelect={onTestPackClick}
+            onTestPackSelect={handleTestPackSelect}
             selectedTestPack={selectedTestPack}
           />
         );
-      }
+      },
+      size: 95,
     }),
-    columnHelper.accessor('mountingOnIsoEquiPack', {
-      header: 'MOUNTING ON ISO/EQUI/PACK',
-      minSize: 270,
-      maxSize: 300,
-      size: 180,
-      enableResizing: true,
-      cell: ({ getValue, row }) => {
-        const mountingValue = getValue();
-        const isHighlighted = highlightedRecords.has(row.original);
+    columnHelper.accessor('PROGRESS TP', {
+      header: 'PROGRESS TP',
+      cell: info => {
+        const row = info.row.original;
+        const testPackValue = row['TPs'];
+        const testPacks = splitTestPack(testPackValue);
+        
+        // Get progress values from the row
+        const progressValues = {
+          progress_ac_tp_1: row.progress_ac_tp_1,
+          progress_ac_tp_2: row.progress_ac_tp_2,
+          progress_ac_tp_3: row.progress_ac_tp_3
+        };
         
         return (
-          <MountingCell 
-            mountingValue={mountingValue}
-            onMountingSelect={onMountingLocationClick}
-            selectedMounting={selectedIsometric}
-            isHighlighted={isHighlighted}
+          <TestPackProgressCell 
+            testPacks={testPacks}
+            progressValues={progressValues}
           />
         );
-      }
+      },
+      size: 95,
     }),
-    columnHelper.accessor('on', {
-      header: 'ON',
-      minSize: 50,
-      maxSize: 120,
-      size: 60,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" fontWeight="medium">
-          {getValue()}
-        </Text>
-      )
+    columnHelper.accessor('HITO', {
+      header: 'HITO',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
     }),
-    columnHelper.accessor('tagInst', {
-      header: 'TAG INST',
-      minSize: 80,
-      maxSize: 200,
-      size: 120,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontFamily="mono" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+    columnHelper.accessor('TEIGA REINSTATEMENT', {
+      header: 'TEIGA REINSTATEMENT',
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 95,
     }),
-    columnHelper.accessor('instrumentType', {
-      header: 'INSTRUMENT TYPE',
-      minSize: 100,
-      maxSize: 250,
-      size: 150,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" noOfLines={2}>
-          {getValue()}
-        </Text>
-      )
+    columnHelper.accessor('TEIGA INSULATION', {
+      header: 'TEIGA INSULATION',
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 95,
     }),
-    columnHelper.accessor('scopeBy', {
-      header: 'SCOPE BY',
-      minSize: 70,
-      maxSize: 150,
-      size: 90,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center" fontWeight="medium">
-          {getValue()}
-        </Text>
-      )
-    }),
-    columnHelper.accessor('teigaTmi', {
-      header: 'TEIGA-TMI',
-      minSize: 80,
-      maxSize: 180,
-      size: 100,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
-          {getValue()}
-        </Text>
-      )
-    }),
-    columnHelper.accessor('installedTeigaTmi', {
-      header: 'INSTALLED (TEIGA-TMI)',
-      minSize: 100,
-      maxSize: 220,
-      size: 140,
-      enableResizing: true,
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const colorScheme = value === 'YES' ? 'green' : value === 'NOT' ? 'red' : 'gray';
-        return (
-          <Badge colorScheme={colorScheme} fontSize="xs">
-            {value}
-          </Badge>
-        );
-      }
-    }),
-    columnHelper.accessor('date1', {
-      header: 'DATE1',
-      minSize: 70,
-      maxSize: 150,
-      size: 80,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
-          {getValue()}
-        </Text>
-      )
-    }),
-    columnHelper.accessor('siemsa', {
+    columnHelper.accessor('SIEMSA', {
       header: 'SIEMSA',
-      minSize: 60,
-      maxSize: 150,
-      size: 80,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 90,
     }),
-    columnHelper.accessor('installedSiemsa', {
-      header: 'INSTALLED (SIEMSA)',
-      minSize: 100,
-      maxSize: 200,
-      size: 130,
-      enableResizing: true,
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const colorScheme = value === 'YES' ? 'green' : value === 'NOT' ? 'red' : 'gray';
+    columnHelper.accessor('TEN', {
+      header: 'TEN',
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 90,
+    }),
+    columnHelper.accessor('MOUNTING ON ISO/EQUI/PACK', {
+      header: 'MOUNTING ON ISO/EQUI/PACK',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('ON', {
+      header: 'ON',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 70,
+    }),
+    columnHelper.accessor('SCOPE BY', {
+      header: 'SCOPE BY',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('TEIGA-TMI', {
+      header: 'TEIGA-TMI',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 70,
+    }),
+    columnHelper.accessor('SIEMSA_2', {
+      header: 'SIEMSA',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('INSTALLED', {
+      header: 'INSTALLED',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('WIRED', {
+      header: 'WIRED',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('CONNECTED', {
+      header: 'CONNECTED',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('CABLE TEST', {
+      header: 'CABLE TEST',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('QFC', {
+      header: 'QFC',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 70,
+    }),
+    columnHelper.accessor('OK=100%', {
+      header: 'OK=100%',
+      cell: info => {
+        const value = parseFloat(info.getValue()) || 0;
+        const percentage = Math.min(Math.max(value, 0), 1) * 100;
         return (
-          <Badge colorScheme={colorScheme} fontSize="xs">
-            {value}
-          </Badge>
+          <Box w="100%" position="relative">
+            <Box 
+              h="16px" 
+              w={`${percentage}%`} 
+              bg="green.500"
+              borderRadius="sm"
+            />
+            <Text 
+              fontSize="xs" 
+              position="absolute" 
+              top="0" 
+              left="0" 
+              right="0" 
+              textAlign="center"
+              color="white"
+              fontWeight="bold"
+              textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+            >
+              {percentage.toFixed(0)}%
+            </Text>
+          </Box>
         );
-      }
+      },
+      size: 95,
     }),
-    columnHelper.accessor('date2', {
-      header: 'DATE2',
-      minSize: 70,
-      maxSize: 150,
-      size: 80,
-      enableResizing: true,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" textAlign="center">
-          {getValue()}
-        </Text>
-      )
+    columnHelper.accessor('WITH & WITHOUT SIGNAL', {
+      header: 'WITH & WITHOUT SIGNAL',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
     }),
-    columnHelper.accessor('itHasSignal', {
-      header: 'IT HAS SIGNAL',
-      minSize: 80,
-      maxSize: 180,
-      size: 100,
-      enableResizing: true,
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const colorScheme = value === 'YES' ? 'green' : value === 'NOT' ? 'red' : 'gray';
-        return (
-          <Badge colorScheme={colorScheme} fontSize="xs">
-            {value}
-          </Badge>
-        );
-      }
-    })
+    columnHelper.accessor('WAREHOUSE CODE', {
+      header: 'WAREHOUSE CODE',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('DELIVERY', {
+      header: 'DELIVERY',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 90,
+    }),
+    columnHelper.accessor('DATE', {
+      header: 'DATE',
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('VENDOR', {
+      header: 'VENDOR',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 95,
+    }),
+
   ], []);
 
-  // Create table instance with memoization
+  // Create table instance
   const table = useReactTable({
-    data: processedData,
+    data: tableData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    enableColumnResizing: true,
-    columnResizeMode: 'onChange',
-    debugTable: false,
-    defaultColumn: {
-      minSize: 60,
-      size: 100,
-      maxSize: 400,
-    },
   });
-
-  // Get table rows
+  
+  // Set up virtualization
   const { rows } = table.getRowModel();
-
-  // Create refs for virtualization
-  const parentRef = React.useRef();
-  const headerRef = React.useRef();
-
-  // Create virtualizer
-  const virtualizer = useVirtualizer({
+  
+  const rowVirtualizer = useVirtualizer({
     count: rows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 50,
-    overscan: 10,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 30, // reduced default height estimate
+    overscan: 20, // Show more rows to prevent blank spaces during fast scrolling
+    measureElement: typeof window !== 'undefined' && document.getElementById ? 
+      (element) => element?.getBoundingClientRect().height || 30 : 
+      undefined,
+    // This is critical - ensure we always measure after render
+    measureDependency: [tableData],
   });
+  
 
-  // Memoize header rendering
-  const headerGroups = useMemo(() => table.getHeaderGroups(), [table]);
 
-  if (!data || data.length === 0) {
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Only proceed if not loading and no error
+        if (dbLoading || dbError) {
+          return;
+        }
+
+        // Start measuring load time
+        const startLoadTime = performance.now();
+
+        // Try to fetch Parquet file first, fall back to CSV if not available
+        try {
+          console.log('Fetching Parquet file...');
+          const res = await fetch('/data/master_subsystem.parquet');
+          
+          if (!res.ok) throw new Error(`Failed to fetch Parquet: ${res.status}`);
+          
+          console.log('Reading Parquet buffer...');
+          const parquetBuffer = await res.arrayBuffer();
+          console.log('Parquet buffer received:', { byteLength: parquetBuffer.byteLength });
+          
+          await createTableFromParquet('master_subsystem', parquetBuffer);
+          
+          // Load secondary source from tp.parquet (won't be rendered as table)
+          try {
+            console.log('Fetching secondary TP Parquet file...');
+            const tpRes = await fetch('/data/tp.parquet');
+            
+            if (tpRes.ok) {
+              console.log('Reading TP Parquet buffer...');
+              const tpParquetBuffer = await tpRes.arrayBuffer();
+              console.log('TP Parquet buffer received:', { byteLength: tpParquetBuffer.byteLength });
+              
+              await createTableFromParquet('tp_data', tpParquetBuffer);
+              console.log('Secondary TP data source loaded successfully');
+            } else {
+              console.warn(`Secondary TP Parquet file not available: ${tpRes.status}`);
+            }
+          } catch (tpError) {
+            console.warn('Error loading secondary TP data source:', tpError);
+            // Continue execution even if secondary source fails to load
+          }
+        } catch (parquetError) {
+          console.log('Falling back to CSV:', parquetError);
+          
+          // Fall back to CSV
+          const res = await fetch('/data/master_subsystem.csv');
+          if (!res.ok) throw new Error(`Failed to fetch CSV: ${res.status}`);
+          
+          const csvText = await res.text();
+          await createTableFromCSV('master_subsystem', csvText, { header: true, delimiter: ','});
+        }
+
+        // Execute optimized query with all needed columns
+        // Use a more efficient query that limits the data returned
+        const { result: results, executionTime } = await measurePerformance(() => executeQuery(`
+          SELECT
+            item_isoinst AS "ITEM",
+            tag_inst_isoinst AS "TAG INST",
+            instrument_type_isoinst AS "INSTRUMENT TYPE",
+            subsystem AS "SUBSYSTEM",
+            tp_include_isoinst  AS "TPs",
+            progress_ac_tp_1,
+            progress_ac_tp_2,
+            progress_ac_tp_3,
+            pid_isoinst AS "P&ID",
+            hito_isoinst AS "HITO",
+            teiga_reinstatement_isoinst AS "TEIGA REINSTATEMENT",
+            teiga_insulation_isoinst AS "TEIGA INSULATION",
+            siemsa_isoinst AS "SIEMSA",
+            ten_isoinst AS "TEN",
+            mounting_on_isoequipack_isoinst AS "MOUNTING ON ISO/EQUI/PACK",
+            on_isoinst AS "ON",
+            scope__by_isoinst AS "SCOPE BY",
+            teigatmi_isoinst AS "TEIGA-TMI",
+            siemsa1_isoinst AS "SIEMSA_2",
+            installed_isoinst AS "INSTALLED",
+            wired_isoinst AS "WIRED",
+            connected_isoinst AS "CONNECTED",
+            cable_test_isoinst AS "CABLE TEST",
+            qcf_isoinst AS "QFC",
+            ok100_isoinst AS "OK=100%",
+            with__without_signal_isoinst AS "WITH & WITHOUT SIGNAL",
+            warehouse_code_isoinst AS "WAREHOUSE CODE",
+            delivery_isoinst  AS "DELIVERY",
+            date_isoinst AS "DATE",
+            vendor_isoinst AS "VENDOR"
+          FROM master_subsystem
+          WHERE item_isoinst IS NOT NULL
+          LIMIT 2000
+        `));
+        
+        setQueryTime(executionTime.toFixed(2));
+        console.log(`Query execution time: ${executionTime.toFixed(2)}ms`);
+
+        // Measure render preparation time
+        const startRenderTime = performance.now();
+        setTableData(results);
+        setError(null);
+        
+        // Calculate and set load time
+        const endLoadTime = performance.now();
+        setLoadTime((endLoadTime - startLoadTime).toFixed(2));
+      } catch (err) {
+        console.error('DuckDB error:', err);
+        setError(err.message || 'Unknown error');
+        setTableData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [createTableFromCSV, createTableFromParquet, executeQuery, dbLoading, dbError]);
+  
+  // Measure render time after data is loaded
+  useEffect(() => {
+    if (tableData.length > 0) {
+      const startRenderTime = performance.now();
+      // This will run after the component has rendered with data
+      const timeoutId = setTimeout(() => {
+        const endRenderTime = performance.now();
+        setRenderTime((endRenderTime - startRenderTime).toFixed(2));
+      }, 0);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [tableData]);
+
+  if (loading || dbLoading) {
     return (
-      <Box p={6} textAlign="center">
-        <Text color="gray.500">No details instruments data available</Text>
-      </Box>
+        <Box mt={6}>
+          <Heading size="xs" color="gray.700" mb={2}>
+            Details Instruments
+          </Heading>
+          <Center p={8}>
+            <Spinner size="xs" color="blue.500" />
+            <Text ml={2} color="gray.600">
+              Loading data with DuckDB...
+            </Text>
+          </Center>
+        </Box>
+    );
+  }
+
+  if (error || dbError) {
+    return (
+        <Box mt={6} p={4} bg="red.50" borderRadius="md">
+          <Heading size="md" color="red.600" mb={2}>
+            Error
+          </Heading>
+          <Text color="red.700">{error || dbError}</Text>
+        </Box>
     );
   }
 
   return (
-    <Box mt={6}>
-      <HStack justify="space-between" align="center" mb={4}>
-        <Heading size="md" color="gray.700">
-          Details Instruments
-        </Heading>
-        <Badge colorScheme="blue" fontSize="sm" px={3} py={1}>
-          {processedData.length} Instruments
-        </Badge>
-      </HStack>
+      <Box mt={6}>
+        <HStack justify="space-between" align="center" mb={4}>
+          <Heading size="md" color="gray.700">Details Instruments</Heading>
+          <HStack>
+            {loadTime && <PerformanceMetric label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" />}
+            {queryTime && <PerformanceMetric label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
+            {renderTime && <PerformanceMetric label="Render" value={`${renderTime}ms`} description="Time to render table with data" />}
+            {fps && <PerformanceMetric label="FPS" value={fps} description="Frames per second during scrolling" />}
+            {memoryUsage && <PerformanceMetric label="Mem" value={`${memoryUsage.usedJSHeapSize}MB`} description={`Memory usage: ${memoryUsage.usedJSHeapSize}MB / ${memoryUsage.totalJSHeapSize}MB`} />}
+            <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
+              {table.getFilteredRowModel().rows.length} / {tableData.length} Records
+            </Badge>
+            {selectedSubsystem && (
+              <Badge colorScheme="orange" fontSize="sm" px={3} py={1}>
+                Subsystem: {selectedSubsystem}
+              </Badge>
+            )}
+            {selectedTestPack && (
+              <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
+                Test Pack: {selectedTestPack}
+              </Badge>
+            )}
+          </HStack>
+        </HStack>
 
-      <Box
-        border="1px solid"
-        borderColor="gray.200"
-        borderRadius="lg"
-        overflow="hidden"
-        bg="white"
-        boxShadow="sm"
-        width="100%"
-        height="auto"
-        maxWidth="100%"
-        position="relative"
-      >
-        {/* Table Header */}
+
+
         <Box
-          ref={headerRef}
-          overflowX="auto"
-          borderBottom="1px solid"
-          borderColor="gray.200"
-          bg="gray.50"
+            border="1px solid"
+            borderColor="gray.200"
+            borderRadius="lg"
+            overflow="hidden"
+            bg="white"
+            boxShadow="sm"
+            width="100%"
+            height="500px"
         >
-          <Box display="flex" width="100%" minWidth="fit-content">
-            {headerGroups[0].headers.map((header) => (
-              <Box
-                key={header.id}
-                width={`${header.getSize()}px`}
-                minWidth={`${header.getSize()}px`}
-                maxWidth={`${header.getSize()}px`}
-                textAlign="center"
-                fontSize="xs"
-                fontWeight="bold"
-                textTransform="uppercase"
-                letterSpacing="wide"
-                color="white"
-                py={3}
-                px={2}
-                borderRight="1px solid"
-                borderColor="gray.100"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                cursor={header.column.getCanSort() ? 'pointer' : 'default'}
-                onClick={header.column.getToggleSortingHandler()}
-                _hover={header.column.getCanSort() ? { opacity: 0.8 } : {}}
-                minHeight="50px"
-                position="relative"
-                bg={header.column.columnDef.header === 'SUBSYSTEM' ? '#CEC19B' : header.column.columnDef.header === 'TEST PACK' ? '#7CA2C5'
-                    : header.column.columnDef.header === 'MOUNTING ON ISO/EQUI/PACK' ? '#007598'
-                    : header.column.columnDef.header === 'TAG INST' ? '#B3CDDF'
-                    : header.column.columnDef.header === 'SCOPE BY' ? '#B3CDDF'
-                    : '#BFB6B4'}
-              >
-                <HStack spacing={1}>
-                  <Text fontSize="xs" noOfLines={3} textAlign="center">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </Text>
-                  {header.column.getIsSorted() && (
-                    <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
-                  )}
-                </HStack>
-                {header.column.getCanResize() && (
-                  <Box
-                    position="absolute"
-                    right="0"
-                    top="0"
-                    height="100%"
-                    width="4px"
-                    cursor="col-resize"
-                    bg="transparent"
-                    _hover={{ bg: 'blue.200' }}
-                    onMouseDown={header.getResizeHandler()}
-                    onTouchStart={header.getResizeHandler()}
-                  />
-                )}
+          <Box ref={tableContainerRef} style={{ height: '100%', overflow: 'auto' }}>
+            <Box
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
+                  position: 'relative',
+                  width: 'fit-content',
+                }}
+            >
+              {/* Header */}
+              <Box style={{ display: 'contents' }}>
+                {table.getHeaderGroups().map(headerGroup => (
+                    <React.Fragment key={headerGroup.id}>
+                      {headerGroup.headers.map(header => (
+                          <Box
+                              key={header.id}
+                              bg="purple.600"
+                              color="white"
+                              p={1}
+                              textAlign="center"
+                              fontWeight="bold"
+                              fontSize="xs"
+                              borderRight="1px solid"
+                              borderColor="purple.400"
+                              style={{
+                                position: 'sticky',
+                                top: 0,
+                                zIndex: 1,
+                              }}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </Box>
+                      ))}
+                    </React.Fragment>
+                ))}
               </Box>
-            ))}
-          </Box>
-        </Box>
 
-        {/* Virtualized Table Body */}
-        <Box
-          ref={parentRef}
-          height="500px"
-          overflowY="auto"
-          overflowX="hidden"
-          maxWidth="100%"
-          onScroll={(e) => {
-            if (headerRef.current) {
-              headerRef.current.scrollLeft = e.target.scrollLeft;
-            }
-          }}
-          borderTop="none"
-        >
-          <Box
-            height={`${virtualizer.getTotalSize()}px`}
-            position="relative"
-          >
-            {virtualizer.getVirtualItems().map(virtualRow => {
-              const row = rows[virtualRow.index];
-              return (
-                <Box
-                  key={row.id}
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  width="100%"
-                  height={`${virtualRow.size}px`}
-                  transform={`translateY(${virtualRow.start}px)`}
-                >
-                  <Box
-                    as="div"
-                    display="flex"
-                    width="100%"
-                    height="100%"
-                    _hover={{ bg: 'gray.50' }}
-                    borderBottom="1px solid"
-                    borderColor="gray.100"
-                    bg={highlightedRecords.has(row.original) ? 'yellow.50' : 'transparent'}
-                  >
-                    {row.getVisibleCells().map(cell => (
+              {/* Virtualized Rows */}
+              <Box
+                  style={{
+                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    width: '100%',
+                    position: 'relative',
+                  }}
+              >
+                {rowVirtualizer.getVirtualItems().map(virtualRow => {
+                  const row = rows[virtualRow.index];
+                  return (
                       <Box
-                        key={cell.id}
-                        width={`${cell.column.getSize()}px`}
-                        minWidth={`${cell.column.getSize()}px`}
-                        maxWidth={`${cell.column.getSize()}px`}
-                        borderRight="1px solid"
-                        borderColor="gray.100"
-                        py={2}
-                        px={2}
-                        textAlign="center"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
+                          key={row.id}
+                          data-index={virtualRow.index}
+                          ref={rowVirtualizer.measureElement}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            minHeight: `${virtualRow.size}px`,
+                            transform: `translateY(${virtualRow.start}px)`,
+                            display: 'grid',
+                            gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
+                            alignItems: 'stretch'
+                          }}
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {row.getVisibleCells().map(cell => (
+                            <Box
+                                key={cell.id}
+                                p={2}
+                                textAlign="center"
+                                borderBottom="1px solid"
+                                borderColor="gray.200"
+                                _hover={{ bg: 'gray.50' }}
+                                overflow="hidden"
+                                textOverflow="ellipsis"
+                                whiteSpace={cell.column.id.includes('INSTRUMENT TYPE') ? 'normal' : 'nowrap'}
+                                height={cell.column.id.includes('INSTRUMENT TYPE') ? 'auto' : undefined}
+                                maxHeight="none"
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </Box>
+                        ))}
                       </Box>
-                    ))}
-                  </Box>
-                </Box>
-              );
-            })}
+                  );
+                })}
+              </Box>
+            </Box>
           </Box>
         </Box>
       </Box>
-    </Box>
   );
-});
 
-DetailsInstrumentsTable.displayName = 'DetailsInstrumentsTable';
+};
 
-export default DetailsInstrumentsTable;
+export default DetailsInstrumentsTableOptimized;

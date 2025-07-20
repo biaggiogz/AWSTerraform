@@ -35,7 +35,7 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 - **Lines 200-983:** Complete table implementation for control instruments
 - **Function:** Displays control instruments data with multi-level headers, progress bars, clickable cells for isometric/subsystem/test pack selection, and virtualized scrolling
 
-**File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/tables/DetailsInstrumentsTable.optimized.js`
+**File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/tables/DetailsInstrumentsTable.optimized.old.js`
 - **Function:** Displays detailed instruments information complementing the control table
 
 ### **6. Filter Components**

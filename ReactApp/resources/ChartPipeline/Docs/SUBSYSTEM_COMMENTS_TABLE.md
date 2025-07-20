@@ -6,7 +6,7 @@ The Subsystem Comments Table is a third table component added to the INSTRUMENTS
 ## Implementation Details
 
 ### Component Structure
-- **File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/tables/SubsystemCommentsTable.js`
+- **File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/tables/DetailsInstrumentsTableOptimized.js`
 - **Styling:** Uses Chakra UI components for consistent styling with the rest of the application
 - **Data Source:** `master_subsystem.csv`
 

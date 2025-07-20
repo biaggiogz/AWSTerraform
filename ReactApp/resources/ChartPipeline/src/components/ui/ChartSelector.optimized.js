@@ -23,8 +23,8 @@ const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressCh
 const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
 const ControlInstrumentsTable = lazy(() => import('../tables/ControlInstrumentsTable.optimized'));
-const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable.optimized'));
-const SubsystemCommentsTable = lazy(() => import('../tables/SubsystemCommentsTable'));
+const DetailsInstrumentsTableold = lazy(() => import('../tables/DetailsInstrumentsTable.optimized.old'));
+const DetailsInstrumentsTable = lazy(() => import('../tables/./DetailsInstrumentsTable.optimized'));
 const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
@@ -189,7 +189,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/*  onSubsystemClick={subsystemFilter.handleSubsystemClick}*/}
                   {/*/>*/}
                   {/* New Subsystem Comments Table */}
-                  <SubsystemCommentsTable />
+                  <DetailsInstrumentsTable/>
                 </VStack>
               </Suspense>
             </TabPanel>
