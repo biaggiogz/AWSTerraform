@@ -69,6 +69,18 @@ const SubsystemCommentsTable = () => {
     return () => stopMonitoring();
   }, [tableData]);
   
+  // Helper function to format timestamp to date
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    // Convert timestamp to milliseconds if it's in seconds
+    const ts = timestamp > 9999999999 ? timestamp : timestamp * 1000;
+    try {
+      return new Date(ts).toLocaleDateString();
+    } catch (e) {
+      return 'Invalid date';
+    }
+  };
+  
   // Define columns using TanStack's column helper
   const columnHelper = createColumnHelper();
   
@@ -76,22 +88,52 @@ const SubsystemCommentsTable = () => {
     columnHelper.accessor('ITEM', {
       header: 'ITEM',
       cell: info => <Text fontSize="xs" fontFamily="mono">{String(info.getValue())}</Text>,
+      size: 60,
+    }),
+    columnHelper.accessor('TAG INST', {
+      header: 'TAG INST',
+      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      size: 90,
+    }),
+    columnHelper.accessor('P&ID', {
+      header: 'P&ID',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
+      size: 120,
+    }),
+    columnHelper.accessor('INSTRUMENT TYPE', {
+      header: 'INSTRUMENT TYPE',
+      cell: info => <Text fontSize="xs" whiteSpace="normal" wordBreak="break-word">{info.getValue()}</Text>,
       size: 120,
     }),
     columnHelper.accessor('SUBSYSTEM', {
       header: 'SUBSYSTEM',
       cell: info => <Badge colorScheme="orange" fontSize="xs">{info.getValue()}</Badge>,
-      size: 150,
+      size: 95,
     }),
-    columnHelper.accessor('INSTRUMENT TYPE', {
-      header: 'INSTRUMENT TYPE',
+    columnHelper.accessor('HITO', {
+      header: 'HITO',
       cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
-      size: 150,
+      size: 95,
     }),
-    columnHelper.accessor('TAG INST', {
-      header: 'TAG INST',
-      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
-      size: 120,
+    columnHelper.accessor('TEIGA REINSTATEMENT', {
+      header: 'TEIGA REINSTATEMENT',
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('TEIGA INSULATION', {
+      header: 'TEIGA INSULATION',
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('SIEMSA', {
+      header: 'SIEMSA',
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 95,
+    }),
+    columnHelper.accessor('TEN', {
+      header: 'TEN',
+      cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+      size: 95,
     }),
   ], []);
 
@@ -109,11 +151,13 @@ const SubsystemCommentsTable = () => {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 35, // approximate row height
+    estimateSize: () => 60, // increased default height estimate for wrapped text
     overscan: 20, // Show more rows to prevent blank spaces during fast scrolling
     measureElement: typeof window !== 'undefined' && document.getElementById ? 
-      (element) => element?.getBoundingClientRect().height || 35 : 
+      (element) => element?.getBoundingClientRect().height || 60 : 
       undefined,
+    // This is critical - ensure we always measure after render
+    measureDependency: [tableData],
   });
   
 
@@ -161,7 +205,13 @@ const SubsystemCommentsTable = () => {
             item_isoinst AS "ITEM",
             subsystem AS "SUBSYSTEM",
             instrument_type_isoinst AS "INSTRUMENT TYPE",
-            tag_inst_isoinst AS "TAG INST"
+            tag_inst_isoinst AS "TAG INST",
+            pid_isoinst AS "P&ID",
+            hito_isoinst AS "HITO",
+            teiga_reinstatement_isoinst AS "TEIGA REINSTATEMENT",
+            teiga_insulation_isoinst AS "TEIGA INSULATION",
+            siemsa_isoinst AS "SIEMSA",
+            ten_isoinst AS "TEN"
           FROM master_subsystem
           WHERE item_isoinst IS NOT NULL
           LIMIT 2000
@@ -309,15 +359,17 @@ const SubsystemCommentsTable = () => {
                       <Box
                           key={row.id}
                           data-index={virtualRow.index}
+                          ref={rowVirtualizer.measureElement}
                           style={{
                             position: 'absolute',
                             top: 0,
                             left: 0,
                             width: '100%',
-                            height: `${virtualRow.size}px`,
+                            minHeight: `${virtualRow.size}px`,
                             transform: `translateY(${virtualRow.start}px)`,
                             display: 'grid',
                             gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
+                            alignItems: 'stretch'
                           }}
                       >
                         {row.getVisibleCells().map(cell => (
@@ -330,7 +382,9 @@ const SubsystemCommentsTable = () => {
                                 _hover={{ bg: 'gray.50' }}
                                 overflow="hidden"
                                 textOverflow="ellipsis"
-                                whiteSpace="nowrap"
+                                whiteSpace={cell.column.id.includes('INSTRUMENT TYPE') ? 'normal' : 'nowrap'}
+                                height={cell.column.id.includes('INSTRUMENT TYPE') ? 'auto' : undefined}
+                                maxHeight="none"
                             >
                               {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </Box>
