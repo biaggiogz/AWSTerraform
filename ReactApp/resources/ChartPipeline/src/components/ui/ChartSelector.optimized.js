@@ -178,16 +178,16 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     selectedSubsystem={subsystemFilter.selectedSubsystem}
                     onSubsystemClick={subsystemFilter.handleSubsystemClick}
                   />
-                  <DetailsInstrumentsTable 
-                    data={finalDetailData || detailsData || data}
-                    selectedIsometric={isometricFilter.selectedIsometric}
-                    onMountingLocationClick={isometricFilter.onIsometricSelect}
-                    highlightedRecords={isometricFilter.highlightedDetailRecords}
-                    selectedTestPack={testPackFilter.selectedTestPack}
-                    onTestPackClick={testPackFilter.handleTestPackClick}
-                    selectedSubsystem={subsystemFilter.selectedSubsystem}
-                    onSubsystemClick={subsystemFilter.handleSubsystemClick}
-                  />
+                  {/*<DetailsInstrumentsTable */}
+                  {/*  data={finalDetailData || detailsData || data}*/}
+                  {/*  selectedIsometric={isometricFilter.selectedIsometric}*/}
+                  {/*  onMountingLocationClick={isometricFilter.onIsometricSelect}*/}
+                  {/*  highlightedRecords={isometricFilter.highlightedDetailRecords}*/}
+                  {/*  selectedTestPack={testPackFilter.selectedTestPack}*/}
+                  {/*  onTestPackClick={testPackFilter.handleTestPackClick}*/}
+                  {/*  selectedSubsystem={subsystemFilter.selectedSubsystem}*/}
+                  {/*  onSubsystemClick={subsystemFilter.handleSubsystemClick}*/}
+                  {/*/>*/}
                   {/* New Subsystem Comments Table */}
                   <SubsystemCommentsTable />
                 </VStack>
