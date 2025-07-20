@@ -19,8 +19,6 @@ import useDashboardConfig from './hooks/useDashboardConfig.optimized';
 import useMultiValueFilter from './hooks/useMultiValueFilter';
 import useInstrumentsFilter from './hooks/useInstrumentsFilter';
 import WasmPerformanceMonitor, { usePerformanceMonitor } from './components/ui/WasmPerformanceMonitor';
-// Import DuckDB initialization for INSTRUMENTS REPORT tab
-import './hooks/initDuckDB';
 
 // Lazy load chart components
 const ChartSelector = lazy(() => import('./components/ui/ChartSelector.optimized'));

@@ -24,7 +24,7 @@ const useInstrumentsDataLoader = (filterMappings = {}) => {
         // Load both datasets in parallel
         const [controlResponse, detailsResponse] = await Promise.all([
           fetch('/data/control_inst_by_isos.csv', { signal }),
-          fetch('/data/master_subsystem.csv', { signal })
+          fetch('/data/details_inst.csv', { signal })
         ]);
         
         const [controlText, detailsText] = await Promise.all([
@@ -68,7 +68,7 @@ const useInstrumentsDataLoader = (filterMappings = {}) => {
   }, [processedControlData, filterMappings.isometric]);
 
   const subsystems = useMemo(() => {
-    const subsystemColumn = filterMappings.subsystem || 'SUBSYSTEM';
+    const subsystemColumn = filterMappings.subsystem || 'SUSSYTEM';
     return getUniqueValues(processedControlData, subsystemColumn);
   }, [processedControlData, filterMappings.subsystem]);
 

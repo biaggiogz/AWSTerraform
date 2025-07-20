@@ -56,14 +56,11 @@ const useInstrumentsFilter = (controlData, detailsData, filterMappings) => {
     const mappedFilters = {};
     Object.keys(multiFilters).forEach(key => {
       if (key === 'ISOMETRIC') {
-        // Map ISOMETRIC to mounting_on_isoequipack_isoinst in details data
-        mappedFilters['mounting_on_isoequipack_isoinst'] = multiFilters[key];
-      } else if (key === 'subsystem') {
-        // Map to subsystem in details data
-        mappedFilters['subsystem'] = multiFilters[key];
-      } else if (key === 'tp_isoinst') {
-        // Map to tp_isoinst in details data
-        mappedFilters['tp_isoinst'] = multiFilters[key];
+        // Map ISOMETRIC to MOUNTING ON ISO/EQUI/PACK in details data
+        mappedFilters['MOUNTING ON ISO/EQUI/PACK'] = multiFilters[key];
+      } else if (key === 'SUBSYSTEM' || key === 'SUSSYTEM') {
+        // Map to SUBSYSTEM in details data
+        mappedFilters['SUBSYSTEM'] = multiFilters[key];
       } else {
         mappedFilters[key] = multiFilters[key];
       }
