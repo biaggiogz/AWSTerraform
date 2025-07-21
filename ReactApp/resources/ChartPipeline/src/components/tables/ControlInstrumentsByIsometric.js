@@ -479,6 +479,13 @@ const ControlInstrumentsByIsometric = () => {
       sortingFn: 'basic',
       filterFn: 'numericFilterFn',
     }),
+    columnHelper.accessor('PENDING', {
+      header: 'PENDING',
+      cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+      size: 90,
+      sortingFn: 'basic',
+      filterFn: 'numericFilterFn',
+    }),
   ], []);
 
   // Create table instance
@@ -609,6 +616,7 @@ const ControlInstrumentsByIsometric = () => {
             i.scope_siemsa AS "SCOPE BY SIEMSA",
             i.installed_teiga_tmi AS "INSTALLED BY TEIGA-TMI",
             i.installed_siemsa AS "INSTALLED BY SIEMSA",
+            i.qty_inst - i.installed_teiga_tmi - i.installed_siemsa AS "PENDING",
             i.progress_ac_tp_1,
             i.progress_ac_tp_2,
             i.progress_ac_tp_3
