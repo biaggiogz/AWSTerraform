@@ -183,6 +183,7 @@ const TestPackCell = ({ tp, onTestPackSelect, selectedTestPack }) => {
 const DynamicInstrumentsTable = () => {
   // Get filter context
   const {
+    selectedIsometric,
     selectedTestPack,
     selectedSubsystem,
     handleTestPackClick,

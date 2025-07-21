@@ -345,7 +345,29 @@ const ControlInstrumentsByIsometric = () => {
   const columns = useMemo(() => [
     columnHelper.accessor('ISOMETRIC', {
       header: 'ISOMETRIC',
-      cell: info => <Text fontSize="xs" fontFamily="mono">{String(info.getValue())}</Text>,
+      cell: info => {
+        const isometric = info.getValue();
+        return (
+          <Button
+            size="xs"
+            variant={selectedIsometric === isometric ? "solid" : "outline"}
+            onClick={() => onIsometricSelect && onIsometricSelect(isometric)}
+            _hover={{ bg: selectedIsometric === isometric ? "purple.200" : "blue.200" }}
+            fontSize="10px"
+            fontWeight="medium"
+            color={selectedIsometric === isometric ? "white" : "blue.600"}
+            bg={selectedIsometric === isometric ? "purple.500" : "white"}
+            borderColor={selectedIsometric === isometric ? "purple.500" : "blue.500"}
+            minWidth="30px"
+            height="18px"
+            px={2}
+            borderRadius="sm"
+            fontFamily="mono"
+          >
+            {String(isometric)}
+          </Button>
+        );
+      },
       size: 120,
     }),
     columnHelper.accessor('PROGRESS FW+SW', {

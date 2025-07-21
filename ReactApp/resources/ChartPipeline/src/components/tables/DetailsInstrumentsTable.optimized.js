@@ -443,7 +443,28 @@ const DetailsInstrumentsTableOptimized = () => {
     }),
     columnHelper.accessor('MOUNTING ON ISO/EQUI/PACK', {
       header: 'MOUNTING ON ISO/EQUI/PACK',
-      cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
+      cell: info => {
+        const isometric = info.getValue();
+        return (
+          <Button
+            size="xs"
+            variant={selectedIsometric === isometric ? "solid" : "outline"}
+            onClick={() => onIsometricSelect && onIsometricSelect(isometric)}
+            _hover={{ bg: selectedIsometric === isometric ? "purple.200" : "blue.200" }}
+            fontSize="10px"
+            fontWeight="medium"
+            color={selectedIsometric === isometric ? "white" : "blue.600"}
+            bg={selectedIsometric === isometric ? "purple.500" : "white"}
+            borderColor={selectedIsometric === isometric ? "purple.500" : "blue.500"}
+            minWidth="30px"
+            height="18px"
+            px={2}
+            borderRadius="sm"
+          >
+            {isometric}
+          </Button>
+        );
+      },
       size: 95,
     }),
     columnHelper.accessor('ON', {
