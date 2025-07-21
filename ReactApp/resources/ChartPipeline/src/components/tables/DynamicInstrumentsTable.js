@@ -240,8 +240,8 @@ const DynamicInstrumentsTable = () => {
         });
 
         // Average progress
-        node['PROGRESS'] = (
-          items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS']) || 0), 0) / items.length
+        node['PROGRESS TP'] = (
+          items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / items.length
         ).toFixed(2);
 
         const children = aggregateGroup(items, level + 1);
@@ -313,12 +313,18 @@ const DynamicInstrumentsTable = () => {
         size: 90,
         sortingFn: 'basic',
       }),
-      columnHelper.accessor('PROGRESS', {
-        header: 'PROGRESS',
-        cell: info => <ProgressCell progress={info.getValue()} />,
-        size: 120,
-      }),
     ];
+    
+    // Only show PROGRESS column when TP is in the groupBy array
+    if (groupBy.includes('TP')) {
+      common.push(
+        columnHelper.accessor('PROGRESS TP', {
+          header: 'PROGRESS TP',
+          cell: info => <ProgressCell progress={info.getValue()} />,
+          size: 120,
+        })
+      );
+    }
 
     const dynamicGroupColumns = groupBy.map(level =>
       columnHelper.accessor(level, {
@@ -494,7 +500,7 @@ const DynamicInstrumentsTable = () => {
                  SUM(installed_teiga_tmi) AS "INSTALLED BY TEIGA-TMI",
                  SUM(installed_siemsa)    AS "INSTALLED BY SIEMSA",
                  SUM(pending)             AS "PENDING",
-                 MAX(progress)            AS "PROGRESS"
+                 MAX(progress)            AS "PROGRESS TP"
           FROM exploded_tps
           GROUP BY subsystem, hito, tp
           ORDER BY subsystem, hito, tp;
