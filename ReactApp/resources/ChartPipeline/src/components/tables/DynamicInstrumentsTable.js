@@ -264,6 +264,16 @@ const DynamicInstrumentsTable = () => {
     }
   }, [rawData, groupBy, groupAndAggregate]);
 
+  // Handle subsystem selection
+  const handleSubsystemSelect = (subsystem) => {
+    setSelectedSubsystem(prevSelected => prevSelected === subsystem ? null : subsystem);
+  };
+
+  // Handle test pack selection
+  const handleTestPackSelect = (tp) => {
+    setSelectedTestPack(prevSelected => prevSelected === tp ? null : tp);
+  };
+
   // Handle grouping changes
   const handleAddGroupLevel = (field) => {
     if (!groupBy.includes(field)) {
@@ -334,6 +344,57 @@ const DynamicInstrumentsTable = () => {
           const value = info.getValue();
           const hasChildren = row.subRows?.length > 0;
           
+          // Use SubsystemCell component for SUBSYSTEM column
+          if (level === 'SUBSYSTEM') {
+            return (
+              <Flex alignItems="center">
+                {hasChildren && (
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    icon={row.getIsExpanded() ? <Text>-</Text> : <Text>+</Text>}
+                    onClick={() => row.toggleExpanded()}
+                    mr={1}
+                    aria-label={row.getIsExpanded() ? "Collapse row" : "Expand row"}
+                  />
+                )}
+                <Box pl={hasChildren ? 0 : 4} width="100%">
+                  <SubsystemCell
+                    subsystem={value}
+                    onSubsystemSelect={handleSubsystemSelect}
+                    selectedSubsystem={selectedSubsystem}
+                  />
+                </Box>
+              </Flex>
+            );
+          }
+          
+          // Use TestPackCell component for TP column
+          if (level === 'TP') {
+            return (
+              <Flex alignItems="center">
+                {hasChildren && (
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    icon={row.getIsExpanded() ? <Text>-</Text> : <Text>+</Text>}
+                    onClick={() => row.toggleExpanded()}
+                    mr={1}
+                    aria-label={row.getIsExpanded() ? "Collapse row" : "Expand row"}
+                  />
+                )}
+                <Box pl={hasChildren ? 0 : 4} width="100%">
+                  <TestPackCell
+                    tp={value}
+                    onTestPackSelect={handleTestPackSelect}
+                    selectedTestPack={selectedTestPack}
+                  />
+                </Box>
+              </Flex>
+            );
+          }
+          
+          // Default rendering for other columns
           return (
             <Flex alignItems="center">
               {hasChildren && (
@@ -357,7 +418,7 @@ const DynamicInstrumentsTable = () => {
     );
 
     return [...dynamicGroupColumns, ...common];
-  }, [groupBy]);
+  }, [groupBy, selectedSubsystem, selectedTestPack]);
 
   // Create table instance
   const table = useReactTable({
