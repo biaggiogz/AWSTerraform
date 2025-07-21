@@ -23,7 +23,7 @@ const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressCh
 const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
 const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric'));
-const DetailsInstrumentsTableold = lazy(() => import('../tables/DetailsInstrumentsTable.optimized.old'));
+const DynamicInstrumentsTable = lazy(() => import('../tables/DynamicInstrumentsTable'));
 const DetailsInstrumentsTable = lazy(() => import('../tables/./DetailsInstrumentsTable.optimized'));
 const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
@@ -178,6 +178,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/*  selectedSubsystem={subsystemFilter.selectedSubsystem}*/}
                   {/*  onSubsystemClick={subsystemFilter.handleSubsystemClick}*/}
                   {/*/>*/}
+                  <DynamicInstrumentsTable/>
                   <ControlInstrumentsByIsometric/>
                   <DetailsInstrumentsTable/>
                 </VStack>
