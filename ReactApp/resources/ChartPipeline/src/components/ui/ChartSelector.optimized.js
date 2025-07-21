@@ -24,9 +24,9 @@ const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationP
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
 const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
-const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric'));
-const DynamicInstrumentsTable = lazy(() => import('../tables/DynamicInstrumentsTable'));
-const DetailsInstrumentsTable = lazy(() => import('../tables/./DetailsInstrumentsTable.optimized'));
+const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric.optimized'));
+const DynamicInstrumentsTable = lazy(() => import('../tables/DynamicInstrumentsTable.optimized'));
+const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable.superoptimized'));
 const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
@@ -184,8 +184,8 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     <FilterStatusBar />
                     <DynamicInstrumentsTable/>
                     <DetailsInstrumentsTable/>
-                    <ControlInstrumentsByIsometric/>
-                  </InstrumentsTableFilterProvider>
+                    <ControlInstrumentsByIsometric/>nstrumentsByIsometric/>ByIsometric/>
+                  </InstrumentsTableFilterProvider>/InstrumentsTableFilterProvider>
                 </VStack>
               </Suspense>
             </TabPanel>
