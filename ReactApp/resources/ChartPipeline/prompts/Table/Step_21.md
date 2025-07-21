@@ -197,7 +197,6 @@ src/
 ├── components/
 │   ├── DynamicCalculationPanel.js      # New
 │   ├── ControlInstrumentsTable.optimized.js  # Unchanged
-│   ├── DetailsInstrumentsTable.optimized.old.js  # Unchanged
 │   └── ChartSelector.optimized.js      # Minor addition only
 └── workers/
     └── duckdb.worker.js                # New

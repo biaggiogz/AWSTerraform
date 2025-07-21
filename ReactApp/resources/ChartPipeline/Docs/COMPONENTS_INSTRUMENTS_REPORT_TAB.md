@@ -35,7 +35,6 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 - **Lines 200-983:** Complete table implementation for control instruments
 - **Function:** Displays control instruments data with multi-level headers, progress bars, clickable cells for isometric/subsystem/test pack selection, and virtualized scrolling
 
-**File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/tables/DetailsInstrumentsTable.optimized.old.js`
 - **Function:** Displays detailed instruments information complementing the control table
 
 ### **6. Filter Components**
@@ -151,8 +150,6 @@ The INSTRUMENTS REPORT tab is a sophisticated component that handles dual datase
 
 ### 4. **Cross-Tab Data Access Component**
 
-#### **CrossTabDataAccess.js**
-- **File Path**: `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/ui/CrossTabDataAccess.js`
 - **Lines**: 1-221 (complete component)
 - **Purpose**: Provides cross-tab query functionality
 - **Features**:

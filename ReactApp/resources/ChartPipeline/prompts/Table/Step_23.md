@@ -9,7 +9,6 @@
 - **Libraries**: @tanstack/react-table, @tanstack/react-virtual, @chakra-ui/react
 - **Performance**: Handles 1000+ rows with virtualization
 
-**DetailsInstrumentsTable.optimized.old.js**
 - **Function**: Secondary table showing detailed instrument information from `details_inst.csv`
 - **Features**: Virtualized rendering, interactive mounting location cells, badge status indicators
 - **Libraries**: @tanstack/react-table, @tanstack/react-virtual, @chakra-ui/react

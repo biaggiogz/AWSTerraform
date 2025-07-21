@@ -122,7 +122,6 @@ Core Components
 Main Tables
 ControlInstrumentsTable.optimized.js - Primary virtualized table displaying control instruments data with multi-level headers
 
-DetailsInstrumentsTable.optimized.old.js - Secondary table showing detailed instrument information
 
 Data Management
 useInstrumentsDataLoader.optimized.js - Loads control_inst_by_isos.csv and details_inst.csv datasets
