@@ -585,7 +585,7 @@ const DynamicInstrumentsTable = () => {
 
   // Render the grouping controls
   const renderGroupingControls = () => (
-    <Box mb={4} p={2} borderWidth="1px" borderRadius="md" bg="gray.50">
+    <Box mb={4} p={2} borderWidth="1px" borderRadius="md" bg="gray.50" width="500px">
       <VStack spacing={2} align="stretch">
         <HStack justify="space-between">
           <Text fontWeight="bold" fontSize="sm">Group By Hierarchy:</Text>
