@@ -86,7 +86,6 @@ ChartPipeline/
 │   │   └── multiValueFilter.wasm.js # WASM-enhanced multi-value filter
 │   ├── App.optimized.js    # Main application with responsive layout
 │   ├── App.multiValueFilter.js # Multi-value filter version of main app
-│   └── index.js            # Application entry point
 ├── .dockerignore           # Docker ignore patterns
 ├── .env                    # Environment configuration
 ├── Dockerfile              # Docker configuration
@@ -126,7 +125,6 @@ ChartPipeline/
 ### Main Application (Flexible Integration)
 
 - **App.optimized.js**: Orchestration component that dynamically integrates all modules, manages shared state, and implements responsive layout with context-aware rendering.
-- **index.js**: Entry point with strategic code splitting, dynamic imports, and performance monitoring.
 
 ## ✅ Enterprise Multi-Dashboard System (Production Ready)
 
