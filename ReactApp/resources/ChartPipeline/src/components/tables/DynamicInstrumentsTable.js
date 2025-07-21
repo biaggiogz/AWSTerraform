@@ -18,8 +18,8 @@ import {
   MenuList,
   MenuItem,
   Divider,
-  DragHandleIcon,
 } from '@chakra-ui/react';
+import { DragHandleIcon } from '@chakra-ui/icons';
 import { measurePerformance, analyzeTablePerformance, monitorTablePerformance } from '../../utils/tablePerformance';
 import {
   createColumnHelper,
@@ -545,11 +545,11 @@ const DynamicInstrumentsTable = () => {
   // Monitor performance during scrolling
   useEffect(() => {
     if (tableContainerRef.current) {
-      const { cleanup } = monitorTablePerformance(tableContainerRef.current, (metrics) => {
+      const cleanup = monitorTablePerformance((metrics) => {
         setFps(metrics.fps.toFixed(1));
         setMemoryUsage({
-          usedJSHeapSize: (metrics.memory.usedJSHeapSize / (1024 * 1024)).toFixed(1),
-          totalJSHeapSize: (metrics.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1),
+          usedJSHeapSize: metrics.memory?.usedJSHeapSize ? (metrics.memory.usedJSHeapSize / (1024 * 1024)).toFixed(1) : '0',
+          totalJSHeapSize: metrics.memory?.totalJSHeapSize ? (metrics.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1) : '0',
         });
       });
       return cleanup;
@@ -671,7 +671,7 @@ const DynamicInstrumentsTable = () => {
             overflow="hidden"
             bg="white"
             boxShadow="sm"
-            width="100%"
+            width="800px"
             height="500px"
         >
           <Box ref={tableContainerRef} style={{ height: '100%', overflow: 'auto' }}>
