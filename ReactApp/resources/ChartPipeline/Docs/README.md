@@ -54,7 +54,6 @@ ChartPipeline/
 │   │   └── README.md                   # WASM implementation documentation
 │   ├── components/         # Reusable UI components
 │   │   ├── ChartSelector.optimized.js # Tab-based chart selector with lazy loading
-│   │   ├── ControlInstrumentsTable.optimized.js # Control instruments table for Tab 4
 │   │   ├── FilterPanel.optimized.js # Dynamic filter panel with cross-filtering
 │   │   ├── GlobalMetricsDisplay.js # Global metrics display component
 │   │   ├── InsulationProgressTable.optimized.js # Table "Insulation Progress" for Tab 2

@@ -15,6 +15,8 @@ import {
 import { useIsometricRelationshipFilter } from '../filters/IsometricRelationshipFilter.wasm';
 import { useTestPackFilter } from '../filters/TestPackRelationshipFilter.optimized';
 import { useSubsystemFilter } from '../filters/SubsystemRelationshipFilter.optimized';
+import { InstrumentsTableFilterProvider } from '../filters/InstrumentsTableFilter';
+import FilterStatusBar from '../filters/FilterStatusBar';
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../../charts/LoopTestProgressChart.optimized'));
@@ -178,9 +180,12 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/*  selectedSubsystem={subsystemFilter.selectedSubsystem}*/}
                   {/*  onSubsystemClick={subsystemFilter.handleSubsystemClick}*/}
                   {/*/>*/}
-                  <DynamicInstrumentsTable/>
-                  <DetailsInstrumentsTable/>
-                  <ControlInstrumentsByIsometric/>
+                  <InstrumentsTableFilterProvider>
+                    <FilterStatusBar />
+                    <DynamicInstrumentsTable/>
+                    <DetailsInstrumentsTable/>
+                    <ControlInstrumentsByIsometric/>
+                  </InstrumentsTableFilterProvider>
                 </VStack>
               </Suspense>
             </TabPanel>

@@ -31,6 +31,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import useDuckDB from '../../hooks/useDuckDB3';
+import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 
 // Performance measurement component
 const PerformanceMetric = ({ label, value, description }) => (
@@ -180,6 +181,14 @@ const TestPackCell = ({ tp, onTestPackSelect, selectedTestPack }) => {
 };
 
 const DynamicInstrumentsTable = () => {
+  // Get filter context
+  const {
+    selectedTestPack,
+    selectedSubsystem,
+    handleTestPackClick,
+    handleSubsystemClick,
+    filterDynamicTable
+  } = useInstrumentsTableFilterContext();
   const {
     createTableFromCSV,
     createTableFromParquet,
@@ -191,10 +200,9 @@ const DynamicInstrumentsTable = () => {
   // State declarations
   const [tableData, setTableData] = useState([]);
   const [rawData, setRawData] = useState([]);
+  const [filteredRawData, setFilteredRawData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedTestPack, setSelectedTestPack] = useState(null);
-  const [selectedSubsystem, setSelectedSubsystem] = useState(null);
   const [selectedHito, setSelectedHito] = useState(null);
   
   // Grouping state
@@ -256,23 +264,17 @@ const DynamicInstrumentsTable = () => {
     return aggregateGroup(data);
   }, []);
 
-  // Update table data when grouping changes
+  // Apply filters when data or filter state changes
   useEffect(() => {
     if (rawData.length > 0) {
-      const grouped = groupAndAggregate(rawData, groupBy);
+      const filtered = filterDynamicTable(rawData);
+      setFilteredRawData(filtered);
+      const grouped = groupAndAggregate(filtered, groupBy);
       setTableData(grouped);
     }
-  }, [rawData, groupBy, groupAndAggregate]);
+  }, [rawData, filterDynamicTable, groupBy, groupAndAggregate]);
 
-  // Handle subsystem selection
-  const handleSubsystemSelect = (subsystem) => {
-    setSelectedSubsystem(prevSelected => prevSelected === subsystem ? null : subsystem);
-  };
-
-  // Handle test pack selection
-  const handleTestPackSelect = (tp) => {
-    setSelectedTestPack(prevSelected => prevSelected === tp ? null : tp);
-  };
+  // No need for local handlers as we're using the context handlers
 
   // Handle grouping changes
   const handleAddGroupLevel = (field) => {
@@ -361,7 +363,7 @@ const DynamicInstrumentsTable = () => {
                 <Box pl={hasChildren ? 0 : 4} width="100%">
                   <SubsystemCell
                     subsystem={value}
-                    onSubsystemSelect={handleSubsystemSelect}
+                    onSubsystemSelect={handleSubsystemClick}
                     selectedSubsystem={selectedSubsystem}
                   />
                 </Box>
@@ -386,7 +388,7 @@ const DynamicInstrumentsTable = () => {
                 <Box pl={hasChildren ? 0 : 4} width="100%">
                   <TestPackCell
                     tp={value}
-                    onTestPackSelect={handleTestPackSelect}
+                    onTestPackSelect={handleTestPackClick}
                     selectedTestPack={selectedTestPack}
                   />
                 </Box>
@@ -712,18 +714,8 @@ const DynamicInstrumentsTable = () => {
             {fps && <PerformanceMetric label="FPS" value={fps} description="Frames per second during scrolling" />}
             {memoryUsage && <PerformanceMetric label="Mem" value={`${memoryUsage.usedJSHeapSize}MB`} description={`Memory usage: ${memoryUsage.usedJSHeapSize}MB / ${memoryUsage.totalJSHeapSize}MB`} />}
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
-              {table.getFilteredRowModel().rows.length} / {tableData.length} Records
+              {table.getFilteredRowModel().rows.length} / {rawData.length} Records
             </Badge>
-            {selectedSubsystem && (
-                <Badge colorScheme="orange" fontSize="sm" px={3} py={1}>
-                  Subsystem: {selectedSubsystem}
-                </Badge>
-            )}
-            {selectedTestPack && (
-                <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
-                  Test Pack: {selectedTestPack}
-                </Badge>
-            )}
           </HStack>
         </HStack>
         

@@ -24,6 +24,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import useDuckDB from '../../hooks/useDuckDB3';
+import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 
 // Performance measurement component
 const PerformanceMetric = ({ label, value, description }) => (
@@ -269,6 +270,16 @@ const SubsystemCell = ({ subsystem, onSubsystemSelect, selectedSubsystem }) => {
 };
 
 const DetailsInstrumentsTableOptimized = () => {
+  // Get filter context
+  const {
+    selectedIsometric,
+    selectedTestPack,
+    selectedSubsystem,
+    onIsometricSelect,
+    handleTestPackClick,
+    handleSubsystemClick,
+    filterDetailsTable
+  } = useInstrumentsTableFilterContext();
   const {
     createTableFromCSV,
     createTableFromParquet,
@@ -279,10 +290,9 @@ const DetailsInstrumentsTableOptimized = () => {
 
   // State declarations
   const [tableData, setTableData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedTestPack, setSelectedTestPack] = useState(null);
-  const [selectedSubsystem, setSelectedSubsystem] = useState(null);
   
   // Performance metrics
   const [loadTime, setLoadTime] = useState(null);
@@ -325,15 +335,12 @@ const DetailsInstrumentsTableOptimized = () => {
     return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v !== '');
   };
   
-  // Handle test pack selection
-  const handleTestPackSelect = (testPack) => {
-    setSelectedTestPack(prevSelected => prevSelected === testPack ? null : testPack);
-  };
-  
-  // Handle subsystem selection
-  const handleSubsystemSelect = (subsystem) => {
-    setSelectedSubsystem(prevSelected => prevSelected === subsystem ? null : subsystem);
-  };
+  // Apply filters when data or filter state changes
+  useEffect(() => {
+    if (tableData.length > 0) {
+      setFilteredData(filterDetailsTable(tableData));
+    }
+  }, [tableData, filterDetailsTable]);
   
   // Define columns using TanStack's column helper
   const columnHelper = createColumnHelper();
@@ -364,7 +371,7 @@ const DetailsInstrumentsTableOptimized = () => {
       cell: info => (
         <SubsystemCell 
           subsystem={info.getValue()}
-          onSubsystemSelect={handleSubsystemSelect}
+          onSubsystemSelect={handleSubsystemClick}
           selectedSubsystem={selectedSubsystem}
         />
       ),
@@ -379,7 +386,7 @@ const DetailsInstrumentsTableOptimized = () => {
         return (
           <TestPackCell 
             testPacks={testPacks}
-            onTestPackSelect={handleTestPackSelect}
+            onTestPackSelect={handleTestPackClick}
             selectedTestPack={selectedTestPack}
           />
         );
@@ -545,7 +552,7 @@ const DetailsInstrumentsTableOptimized = () => {
 
   // Create table instance
   const table = useReactTable({
-    data: tableData,
+    data: filteredData.length > 0 ? filteredData : tableData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -739,16 +746,6 @@ const DetailsInstrumentsTableOptimized = () => {
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
               {table.getFilteredRowModel().rows.length} / {tableData.length} Records
             </Badge>
-            {selectedSubsystem && (
-              <Badge colorScheme="orange" fontSize="sm" px={3} py={1}>
-                Subsystem: {selectedSubsystem}
-              </Badge>
-            )}
-            {selectedTestPack && (
-              <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
-                Test Pack: {selectedTestPack}
-              </Badge>
-            )}
           </HStack>
         </HStack>
 
