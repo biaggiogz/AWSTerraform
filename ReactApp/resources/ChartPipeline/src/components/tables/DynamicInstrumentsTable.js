@@ -10,6 +10,15 @@ import {
   Center,
   Tooltip,
   Button,
+  Select,
+  Flex,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Divider,
+  DragHandleIcon,
 } from '@chakra-ui/react';
 import { measurePerformance, analyzeTablePerformance, monitorTablePerformance } from '../../utils/tablePerformance';
 import {
@@ -18,6 +27,7 @@ import {
   getCoreRowModel,
   useReactTable,
   getSortedRowModel,
+  getExpandedRowModel,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import useDuckDB from '../../hooks/useDuckDB3';
@@ -180,11 +190,17 @@ const DynamicInstrumentsTable = () => {
 
   // State declarations
   const [tableData, setTableData] = useState([]);
+  const [rawData, setRawData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTestPack, setSelectedTestPack] = useState(null);
   const [selectedSubsystem, setSelectedSubsystem] = useState(null);
   const [selectedHito, setSelectedHito] = useState(null);
+  
+  // Grouping state
+  const [availableFields, setAvailableFields] = useState(['SUBSYSTEM', 'HITO', 'TP']);
+  const [groupBy, setGroupBy] = useState(['SUBSYSTEM', 'HITO']);
+  const [expanded, setExpanded] = useState({});
 
   // Performance metrics
   const [loadTime, setLoadTime] = useState(null);
@@ -194,82 +210,161 @@ const DynamicInstrumentsTable = () => {
   const [memoryUsage, setMemoryUsage] = useState(null);
   const tableContainerRef = useRef(null);
 
+  // Grouping and aggregation function
+  const groupAndAggregate = useCallback((data, groupByFields) => {
+    const numericFields = [
+      'TOTAL INST',
+      'INSTALLED BY TEIGA-TMI',
+      'INSTALLED BY SIEMSA',
+      'PENDING',
+    ];
+
+    const aggregateGroup = (rows, level = 0) => {
+      if (level >= groupByFields.length) return [];
+
+      const key = groupByFields[level];
+      const groups = {};
+
+      rows.forEach(row => {
+        const val = row[key] || 'N/A';
+        if (!groups[val]) groups[val] = [];
+        groups[val].push(row);
+      });
+
+      return Object.entries(groups).map(([val, items]) => {
+        const node = { [key]: val };
+
+        // Sum numeric fields
+        numericFields.forEach(f => {
+          node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+        });
+
+        // Average progress
+        node['PROGRESS'] = (
+          items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS']) || 0), 0) / items.length
+        ).toFixed(2);
+
+        const children = aggregateGroup(items, level + 1);
+        if (children.length > 0) {
+          node.children = children;
+        }
+
+        return node;
+      });
+    };
+
+    return aggregateGroup(data);
+  }, []);
+
+  // Update table data when grouping changes
+  useEffect(() => {
+    if (rawData.length > 0) {
+      const grouped = groupAndAggregate(rawData, groupBy);
+      setTableData(grouped);
+    }
+  }, [rawData, groupBy, groupAndAggregate]);
+
+  // Handle grouping changes
+  const handleAddGroupLevel = (field) => {
+    if (!groupBy.includes(field)) {
+      setGroupBy([...groupBy, field]);
+    }
+  };
+
+  const handleRemoveGroupLevel = (field) => {
+    if (groupBy.includes(field)) {
+      setGroupBy(groupBy.filter(f => f !== field));
+    }
+  };
+
+  const handleReorderGrouping = (fromIndex, toIndex) => {
+    const newGroupBy = [...groupBy];
+    const [movedItem] = newGroupBy.splice(fromIndex, 1);
+    newGroupBy.splice(toIndex, 0, movedItem);
+    setGroupBy(newGroupBy);
+  };
+
   // Column definitions
   const columnHelper = createColumnHelper();
   
-  const columns = useMemo(() => [
-    columnHelper.accessor('SUBSYSTEM', {
-      header: 'SUBSYSTEM',
-      cell: info => (
-        <SubsystemCell 
-          subsystem={info.getValue()} 
-          onSubsystemSelect={setSelectedSubsystem}
-          selectedSubsystem={selectedSubsystem}
-        />
-      ),
-      size: 120,
-    }),
-    columnHelper.accessor('HITO', {
-      header: 'HITO',
-      cell: info => (
-        <Box px={2}>
-          <Text fontSize="sm">{info.getValue()}</Text>
-        </Box>
-      ),
-      size: 80,
-    }),
-    columnHelper.accessor('TP', {
-      header: 'TP',
-      cell: info => (
-        <TestPackCell 
-          tp={info.getValue()} 
-          onTestPackSelect={setSelectedTestPack}
-          selectedTestPack={selectedTestPack}
-        />
-      ),
-      size: 80,
-    }),
-    columnHelper.accessor('TOTAL INST', {
-      header: 'TOTAL INST',
+  const columns = useMemo(() => {
+    const common = [
+      columnHelper.accessor('TOTAL INST', {
+        header: 'TOTAL INST',
         cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
         sortingFn: 'basic',
-        filterFn: 'numericFilterFn',
-    }),
-    columnHelper.accessor('INSTALLED BY TEIGA-TMI', {
-      header: 'INSTALLED BY TEIGA-TMI',
+      }),
+      columnHelper.accessor('INSTALLED BY TEIGA-TMI', {
+        header: 'INSTALLED BY TEIGA-TMI',
         cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
         sortingFn: 'basic',
-        filterFn: 'numericFilterFn',
-    }),
-    columnHelper.accessor('INSTALLED BY SIEMSA', {
-      header: 'INSTALLED BY SIEMSA',
+      }),
+      columnHelper.accessor('INSTALLED BY SIEMSA', {
+        header: 'INSTALLED BY SIEMSA',
         cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
         sortingFn: 'basic',
-        filterFn: 'numericFilterFn',
-    }),
-    columnHelper.accessor('PENDING', {
-      header: 'PENDING',
+      }),
+      columnHelper.accessor('PENDING', {
+        header: 'PENDING',
         cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
         sortingFn: 'basic',
-        filterFn: 'numericFilterFn',
-    }),
-    columnHelper.accessor('PROGRESS', {
-      header: 'PROGRESS',
-      cell: info => <ProgressCell progress={info.getValue()} />,
-      size: 120,
-    }),
-  ], []);
+      }),
+      columnHelper.accessor('PROGRESS', {
+        header: 'PROGRESS',
+        cell: info => <ProgressCell progress={info.getValue()} />,
+        size: 120,
+      }),
+    ];
+
+    const dynamicGroupColumns = groupBy.map(level =>
+      columnHelper.accessor(level, {
+        header: level,
+        cell: info => {
+          const row = info.row;
+          const value = info.getValue();
+          const hasChildren = row.subRows?.length > 0;
+          
+          return (
+            <Flex alignItems="center">
+              {hasChildren && (
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  icon={row.getIsExpanded() ? <Text>-</Text> : <Text>+</Text>}
+                  onClick={() => row.toggleExpanded()}
+                  mr={1}
+                  aria-label={row.getIsExpanded() ? "Collapse row" : "Expand row"}
+                />
+              )}
+              <Text fontSize="xs" fontWeight="medium" pl={hasChildren ? 0 : 4}>
+                {value}
+              </Text>
+            </Flex>
+          );
+        },
+        size: 120,
+      })
+    );
+
+    return [...dynamicGroupColumns, ...common];
+  }, [groupBy]);
 
   // Create table instance
   const table = useReactTable({
     data: tableData,
     columns,
+    state: {
+      expanded,
+    },
+    onExpandedChange: setExpanded,
+    getSubRows: row => row.children,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
   });
 
   // Set up virtualization
@@ -286,6 +381,14 @@ const DynamicInstrumentsTable = () => {
     // This is critical - ensure we always measure after render
     measureDependency: [tableData],
   });
+
+  // Handle row expansion
+  const handleRowExpansion = (rowId) => {
+    setExpanded(prev => ({
+      ...prev,
+      [rowId]: !prev[rowId]
+    }));
+  };
 
   // Load data from DuckDB
   useEffect(() => {
@@ -401,9 +504,12 @@ const DynamicInstrumentsTable = () => {
         setQueryTime(executionTime.toFixed(2));
         console.log(`Query execution time: ${executionTime.toFixed(2)}ms`);
 
-        // Measure render preparation time
-        const startRenderTime = performance.now();
-        setTableData(results);
+        // Store raw data for grouping
+        setRawData(results);
+        
+        // Apply initial grouping
+        const grouped = groupAndAggregate(results, groupBy);
+        setTableData(grouped);
         setError(null);
 
         // Calculate and set load time
@@ -435,6 +541,20 @@ const DynamicInstrumentsTable = () => {
       return () => clearTimeout(timeoutId);
     }
   }, [tableData]);
+  
+  // Monitor performance during scrolling
+  useEffect(() => {
+    if (tableContainerRef.current) {
+      const { cleanup } = monitorTablePerformance(tableContainerRef.current, (metrics) => {
+        setFps(metrics.fps.toFixed(1));
+        setMemoryUsage({
+          usedJSHeapSize: (metrics.memory.usedJSHeapSize / (1024 * 1024)).toFixed(1),
+          totalJSHeapSize: (metrics.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1),
+        });
+      });
+      return cleanup;
+    }
+  }, [tableData]);
 
   if (loading || dbLoading) {
     return (
@@ -463,10 +583,61 @@ const DynamicInstrumentsTable = () => {
     );
   }
 
+  // Render the grouping controls
+  const renderGroupingControls = () => (
+    <Box mb={4} p={2} borderWidth="1px" borderRadius="md" bg="gray.50">
+      <VStack spacing={2} align="stretch">
+        <HStack justify="space-between">
+          <Text fontWeight="bold" fontSize="sm">Group By Hierarchy:</Text>
+          <Menu>
+            <MenuButton as={Button} size="xs" rightIcon={<Text>+</Text>}>
+              Add Level
+            </MenuButton>
+            <MenuList>
+              {availableFields.map(field => (
+                <MenuItem 
+                  key={field} 
+                  onClick={() => handleAddGroupLevel(field)}
+                  isDisabled={groupBy.includes(field)}
+                >
+                  {field}
+                </MenuItem>
+              ))}
+            </MenuList>
+          </Menu>
+        </HStack>
+        
+        <Flex wrap="wrap" gap={2}>
+          {groupBy.map((field, index) => (
+            <Flex 
+              key={field} 
+              borderWidth="1px" 
+              borderRadius="md" 
+              p={1} 
+              alignItems="center"
+              bg="blue.50"
+            >
+              <DragHandleIcon mr={1} cursor="grab" />
+              <Text fontSize="xs">{field}</Text>
+              <IconButton
+                icon={<Text>×</Text>}
+                size="xs"
+                variant="ghost"
+                ml={1}
+                onClick={() => handleRemoveGroupLevel(field)}
+                aria-label="Remove group level"
+              />
+            </Flex>
+          ))}
+        </Flex>
+      </VStack>
+    </Box>
+  );
+
   return (
       <Box mt={6}>
         <HStack justify="space-between" align="center" mb={4}>
-          <Heading size="md" color="gray.700">Agreggated</Heading>
+          <Heading size="md" color="gray.700">Dynamic Instruments Table</Heading>
           <HStack>
             {loadTime && <PerformanceMetric label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" />}
             {queryTime && <PerformanceMetric label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
@@ -488,6 +659,8 @@ const DynamicInstrumentsTable = () => {
             )}
           </HStack>
         </HStack>
+        
+        {renderGroupingControls()}
 
 
 
@@ -548,6 +721,7 @@ const DynamicInstrumentsTable = () => {
               >
                 {rowVirtualizer.getVirtualItems().map(virtualRow => {
                   const row = rows[virtualRow.index];
+                  const isGroupRow = row.original.children !== undefined;
                   return (
                       <Box
                           key={row.id}
@@ -562,7 +736,8 @@ const DynamicInstrumentsTable = () => {
                             transform: `translateY(${virtualRow.start}px)`,
                             display: 'grid',
                             gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
-                            alignItems: 'stretch'
+                            alignItems: 'stretch',
+                            backgroundColor: isGroupRow ? 'rgba(237, 242, 247, 0.5)' : 'white'
                           }}
                       >
                         {row.getVisibleCells().map(cell => (
@@ -575,8 +750,7 @@ const DynamicInstrumentsTable = () => {
                                 _hover={{ bg: 'gray.50' }}
                                 overflow="hidden"
                                 textOverflow="ellipsis"
-                                whiteSpace={cell.column.id.includes('INSTRUMENT TYPE') ? 'normal' : 'nowrap'}
-                                height={cell.column.id.includes('INSTRUMENT TYPE') ? 'auto' : undefined}
+                                whiteSpace="nowrap"
                                 maxHeight="none"
                             >
                               {flexRender(cell.column.columnDef.cell, cell.getContext())}
