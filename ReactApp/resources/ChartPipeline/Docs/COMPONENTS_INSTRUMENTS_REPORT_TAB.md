@@ -38,7 +38,6 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 
 ### **6. Filter Components**
 
-**File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/filters/IsometricRelationshipFilter.wasm.js`
 - **Lines 20-79:** WASM-optimized isometric filtering
 - **Function:** Handles filtering by isometric codes with performance optimization
 

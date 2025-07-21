@@ -58,7 +58,6 @@ ChartPipeline/
 │   │   ├── GlobalMetricsDisplay.js # Global metrics display component
 │   │   ├── InsulationProgressTable.optimized.js # Table "Insulation Progress" for Tab 2
 │   │   ├── IsometricRelationshipFilter.optimized.js # Isometric relationship filtering
-│   │   ├── IsometricRelationshipFilter.wasm.js # WASM-enhanced relationship filtering
 │   │   ├── IsometricRelationshipPanel.optimized.js # Relationship analysis panel for Tab 4
 │   │   ├── LazosTable.optimized.js # Virtualized resizable data table for Tab 1
 │   │   ├── MultiValueFilterPanel.js # Multi-value filter panel with relationship mapping
