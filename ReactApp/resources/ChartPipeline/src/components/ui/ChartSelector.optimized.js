@@ -22,7 +22,6 @@ const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationP
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
 const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
-const ControlInstrumentsTable = lazy(() => import('../tables/ControlInstrumentsTable.optimized'));
 const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric'));
 const DetailsInstrumentsTableold = lazy(() => import('../tables/DetailsInstrumentsTable.optimized.old'));
 const DetailsInstrumentsTable = lazy(() => import('../tables/./DetailsInstrumentsTable.optimized'));
@@ -169,16 +168,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                       selectedSubsystem: subsystemFilter.selectedSubsystem
                     }}
                   />
-                  <ControlInstrumentsTable 
-                    data={finalControlData || controlData || data}
-                    selectedIsometric={isometricFilter.selectedIsometric}
-                    onIsometricClick={isometricFilter.onIsometricSelect}
-                    highlightedRecords={isometricFilter.highlightedControlRecords}
-                    selectedTestPack={testPackFilter.selectedTestPack}
-                    onTestPackClick={testPackFilter.handleTestPackClick}
-                    selectedSubsystem={subsystemFilter.selectedSubsystem}
-                    onSubsystemClick={subsystemFilter.handleSubsystemClick}
-                  />
                   {/*<DetailsInstrumentsTable */}
                   {/*  data={finalDetailData || detailsData || data}*/}
                   {/*  selectedIsometric={isometricFilter.selectedIsometric}*/}
@@ -189,6 +178,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/*  selectedSubsystem={subsystemFilter.selectedSubsystem}*/}
                   {/*  onSubsystemClick={subsystemFilter.handleSubsystemClick}*/}
                   {/*/>*/}
+                  <ControlInstrumentsByIsometric/>
                   <DetailsInstrumentsTable/>
                 </VStack>
               </Suspense>

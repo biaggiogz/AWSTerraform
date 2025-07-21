@@ -70,7 +70,7 @@ const TestPackProgressCell = ({ testPacks, progressValues }) => {
           <Box 
             height="18px" 
             width={`${percentage}%`} 
-            bg="blue.500"
+            bg="green.500"
             borderRadius="sm"
           />
           <Text 
@@ -116,7 +116,7 @@ const TestPackProgressCell = ({ testPacks, progressValues }) => {
               <Box 
                 height="18px" 
                 width={`${percentage}%`} 
-                bg="blue.500"
+                bg="green.500"
                 borderRadius="sm"
               />
               <Text 
@@ -318,7 +318,7 @@ const DetailsInstrumentsTableOptimized = () => {
       return 'Invalid date';
     }
   };
-  
+
   // Split test pack function
   const splitTestPack = (testPackStr) => {
     if (!testPackStr || testPackStr === '' || testPackStr === 'NOT_APPLY') return [];
