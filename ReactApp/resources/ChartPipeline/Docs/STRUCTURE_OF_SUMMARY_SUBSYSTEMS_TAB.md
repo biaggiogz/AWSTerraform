@@ -93,7 +93,6 @@ console.log('✅ SolidJS activated for SUMMARY SUBSYSTEMS');
 
 This hybrid architecture represents Phase 1 of a migration plan to gradually move components from React to SolidJS for performance improvements.s`
 - **SummarySubsystemsTableB.js**: `ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableB.js`
-- **SummarySubsystemsSQLInterface.js**: `ReactApp/resources/ChartPipeline/src/components/panels/SummarySubsystemsSQLInterface.js`
 - **SummarySubsystemsMetricCards.js**: `ReactApp/resources/ChartPipeline/src/components/ui/SummarySubsystemsMetricCards.js`
 - **PersistentMetricCards.js**: `ReactApp/resources/ChartPipeline/src/components/ui/PersistentMetricCards.js`
 

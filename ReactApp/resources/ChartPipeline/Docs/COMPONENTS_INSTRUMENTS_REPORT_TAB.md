@@ -95,8 +95,6 @@ The INSTRUMENTS REPORT tab is a sophisticated component that handles dual datase
 
 ### 1. **Primary SQL Interface Components**
 
-#### **SummarySubsystemsSQLInterface.js**
-- **File Path**: `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/panels/SummarySubsystemsSQLInterface.js`
 - **Lines**: 1-216 (complete component)
 - **Purpose**: Dedicated SQL query interface for Summary Subsystems tab
 - **Features**:
