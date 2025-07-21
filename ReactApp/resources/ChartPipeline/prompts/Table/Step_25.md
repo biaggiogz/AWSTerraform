@@ -89,12 +89,10 @@ IsometricRelationshipFilter.wasm.js - WASM-optimized relationship filtering
 
 useDuckDB.wasm.js - WASM-optimized SQL engine
 
-dataProcessor.wasm.js - WASM-optimized data processing
 
 multiValueFilter.wasm.js - WASM-optimized filtering
 
 WASM Module Files
-data-processor.wasm.js - Data processing WASM module
 
 multi-filter.wasm.js - Multi-value filtering WASM module
 

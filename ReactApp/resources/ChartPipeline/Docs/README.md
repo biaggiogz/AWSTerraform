@@ -48,7 +48,6 @@ ChartPipeline/
 │   │   └── TestPackProgressChart.optimized.js # Adaptive test pack progress chart
 │   ├── wasm/               # WebAssembly optimization modules
 │   │   ├── wasm-loader.js              # WASM loading with fallback mechanism
-│   │   ├── data-processor.wasm.js      # CSV processing optimization (3-5x faster)
 │   │   ├── multi-filter.wasm.js        # Filtering operations optimization (2-4x faster)
 │   │   ├── relationship-engine.wasm.js # Relationship finding optimization (5-10x faster)
 │   │   ├── sql-engine.wasm.js          # SQL execution optimization (2-3x faster)
@@ -80,7 +79,6 @@ ChartPipeline/
 │   │   └── useMultiValueFilter.js # Multi-value filtering hook
 │   ├── utils/              # Utility functions
 │   │   ├── dataProcessor.optimized.js # Data transformation and processing utilities
-│   │   ├── dataProcessor.wasm.js   # WASM-enhanced data processor
 │   │   ├── multiValueFilter.js     # Multi-value filtering utilities
 │   │   └── multiValueFilter.wasm.js # WASM-enhanced multi-value filter
 │   ├── App.optimized.js    # Main application with responsive layout

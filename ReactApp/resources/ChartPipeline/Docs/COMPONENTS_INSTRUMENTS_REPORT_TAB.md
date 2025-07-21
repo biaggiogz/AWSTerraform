@@ -70,7 +70,6 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 
 ### **9. Global Registry**
 
-**File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/hooks/useGlobalTableRegistry.js`
 - **Lines 87-104:** Registers instruments data globally for cross-tab access
 - **Function:** Enables instruments data to be available across different dashboard tabs
 
