@@ -147,7 +147,6 @@ src/wasm/
 ├── subsystem-aggregator.wasm (new)
 ├── testpack-processor.wasm (new)
 ├── stats-calculator.wasm (new)
-└── wasm-loader.enhanced.js (enhanced)
 ```
 
 ### Component Architecture
