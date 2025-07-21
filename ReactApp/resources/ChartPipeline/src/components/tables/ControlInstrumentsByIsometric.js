@@ -691,7 +691,7 @@ const ControlInstrumentsByIsometric = () => {
   return (
       <Box mt={6}>
         <HStack justify="space-between" align="center" mb={4}>
-          <Heading size="md" color="gray.700">Details Instruments</Heading>
+          <Heading size="md" color="gray.700">Controls Instruments By Isometric</Heading>
           <HStack>
             {loadTime && <PerformanceMetric label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" />}
             {queryTime && <PerformanceMetric label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}

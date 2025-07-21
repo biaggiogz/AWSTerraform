@@ -179,8 +179,8 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/*  onSubsystemClick={subsystemFilter.handleSubsystemClick}*/}
                   {/*/>*/}
                   <DynamicInstrumentsTable/>
-                  <ControlInstrumentsByIsometric/>
                   <DetailsInstrumentsTable/>
+                  <ControlInstrumentsByIsometric/>
                 </VStack>
               </Suspense>
             </TabPanel>
