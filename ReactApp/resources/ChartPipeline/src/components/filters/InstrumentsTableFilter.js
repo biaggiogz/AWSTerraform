@@ -127,6 +127,10 @@ export const useInstrumentsTableFilter = () => {
       );
     }
     
+    // Note: DynamicInstrumentsTable doesn't have direct isometric column
+    // but we can filter it by joining with other tables if needed
+    // This would require additional SQL query modifications
+    
     return filteredData;
   }, [selectedTestPack, selectedSubsystem]);
   

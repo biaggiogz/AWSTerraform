@@ -529,6 +529,7 @@ const DynamicInstrumentsTable = () => {
                                     COUNT(scope__by_isoinst)           FILTER(WHERE scope__by_isoinst = 'TEIGA-TMI') AS scope_teiga_tmi, COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'SIEMSA') AS scope_siemsa, COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'TEIGA-TMI' AND ok100_isoinst = 1) AS installed_teiga_tmi, COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'SIEMSA' AND ok100_isoinst = 1) AS installed_siemsa
                              FROM master_subsystem
                              WHERE on_isoinst = 'PIP'
+                             ${selectedIsometric ? `AND mounting_on_isoequipack_isoinst = '${selectedIsometric}'` : ''}
                              GROUP BY mounting_on_isoequipack_isoinst),
 
                progress_data AS (SELECT isometricos_ifc3_isos     AS isometric,
@@ -595,7 +596,7 @@ const DynamicInstrumentsTable = () => {
     };
 
     loadData();
-  }, [createTableFromCSV, createTableFromParquet, executeQuery, dbLoading, dbError]);
+  }, [createTableFromCSV, createTableFromParquet, executeQuery, dbLoading, dbError, selectedIsometric]);
 
 
 

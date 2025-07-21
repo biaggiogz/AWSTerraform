@@ -25,30 +25,30 @@ const FilterStatusBar = () => {
   }
   
   return (
-    <Box mb={4} p={2} borderWidth="1px" borderRadius="md" bg="blue.50">
+    <Box mb={4} p={3} borderWidth="2px" borderRadius="md" bg="blue.50" boxShadow="sm">
       <HStack spacing={4} justify="space-between">
-        <HStack spacing={2}>
-          <Text fontWeight="bold" fontSize="sm">Active Filters:</Text>
+        <HStack spacing={3}>
+          <Text fontWeight="bold" fontSize="md">Active Filters:</Text>
           {selectedIsometric && (
-            <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
+            <Badge colorScheme="purple" fontSize="md" px={3} py={1} boxShadow="sm">
               ISOMETRIC: {selectedIsometric}
             </Badge>
           )}
           {selectedSubsystem && (
-            <Badge colorScheme="orange" fontSize="sm" px={3} py={1}>
+            <Badge colorScheme="orange" fontSize="md" px={3} py={1} boxShadow="sm">
               SUBSYSTEM: {selectedSubsystem}
             </Badge>
           )}
           {selectedTestPack && (
-            <Badge colorScheme="green" fontSize="sm" px={3} py={1}>
+            <Badge colorScheme="green" fontSize="md" px={3} py={1} boxShadow="sm">
               TEST PACK: {selectedTestPack}
             </Badge>
           )}
         </HStack>
         <Button 
-          size="xs" 
+          size="sm" 
           colorScheme="red" 
-          variant="outline" 
+          variant="solid" 
           onClick={clearAllFilters}
         >
           Clear All Filters
