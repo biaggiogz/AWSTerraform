@@ -231,59 +231,31 @@ const DynamicInstrumentsTable = () => {
     }),
     columnHelper.accessor('TOTAL INST', {
       header: 'TOTAL INST',
-      cell: info => (
-        <Box px={2} textAlign="center">
-          <Text fontSize="sm">{info.getValue()}</Text>
-        </Box>
-      ),
-      size: 100,
-    }),
-    columnHelper.accessor('SCOPE BY TEIGA-TMI', {
-      header: 'SCOPE BY TEIGA-TMI',
-      cell: info => (
-        <Box px={2} textAlign="center">
-          <Text fontSize="sm">{info.getValue()}</Text>
-        </Box>
-      ),
-      size: 150,
-    }),
-    columnHelper.accessor('SCOPE BY SIEMSA', {
-      header: 'SCOPE BY SIEMSA',
-      cell: info => (
-        <Box px={2} textAlign="center">
-          <Text fontSize="sm">{info.getValue()}</Text>
-        </Box>
-      ),
-      size: 150,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+        size: 90,
+        sortingFn: 'basic',
+        filterFn: 'numericFilterFn',
     }),
     columnHelper.accessor('INSTALLED BY TEIGA-TMI', {
       header: 'INSTALLED BY TEIGA-TMI',
-      cell: info => (
-        <Box px={2} textAlign="center">
-          <Text fontSize="sm">{info.getValue()}</Text>
-        </Box>
-      ),
-      size: 170,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+        size: 90,
+        sortingFn: 'basic',
+        filterFn: 'numericFilterFn',
     }),
     columnHelper.accessor('INSTALLED BY SIEMSA', {
       header: 'INSTALLED BY SIEMSA',
-      cell: info => (
-        <Box px={2} textAlign="center">
-          <Text fontSize="sm">{info.getValue()}</Text>
-        </Box>
-      ),
-      size: 170,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+        size: 90,
+        sortingFn: 'basic',
+        filterFn: 'numericFilterFn',
     }),
     columnHelper.accessor('PENDING', {
       header: 'PENDING',
-      cell: info => (
-        <Box px={2} textAlign="center">
-          <Text fontSize="sm" fontWeight="bold" color={info.getValue() > 0 ? "orange.500" : "green.500"}>
-            {info.getValue()}
-          </Text>
-        </Box>
-      ),
-      size: 100,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+        size: 90,
+        sortingFn: 'basic',
+        filterFn: 'numericFilterFn',
     }),
     columnHelper.accessor('PROGRESS', {
       header: 'PROGRESS',
@@ -416,8 +388,6 @@ const DynamicInstrumentsTable = () => {
                  hito                     AS "HITO",
                  tp                       AS "TP",
                  SUM(qty_inst)            AS "TOTAL INST",
-                 SUM(scope_teiga_tmi)     AS "SCOPE BY TEIGA-TMI",
-                 SUM(scope_siemsa)        AS "SCOPE BY SIEMSA",
                  SUM(installed_teiga_tmi) AS "INSTALLED BY TEIGA-TMI",
                  SUM(installed_siemsa)    AS "INSTALLED BY SIEMSA",
                  SUM(pending)             AS "PENDING",
@@ -452,32 +422,6 @@ const DynamicInstrumentsTable = () => {
   }, [createTableFromCSV, createTableFromParquet, executeQuery, dbLoading, dbError]);
 
 
-  // // Filter data based on selections
-  // const filteredData = useMemo(() => {
-  //   let filtered = [...tableData];
-  //
-  //   if (selectedSubsystem) {
-  //     filtered = filtered.filter(row => row.SUBSYSTEM === selectedSubsystem);
-  //   }
-  //
-  //   if (selectedTestPack) {
-  //     filtered = filtered.filter(row => row.TP === selectedTestPack);
-  //   }
-  //
-  //   if (selectedHito) {
-  //     filtered = filtered.filter(row => row.HITO === selectedHito);
-  //   }
-  //
-  //   return filtered;
-  // }, [tableData, selectedSubsystem, selectedTestPack, selectedHito]);
-  //
-  //
-  // // Reset filters
-  // const resetFilters = () => {
-  //   setSelectedSubsystem(null);
-  //   setSelectedTestPack(null);
-  //   setSelectedHito(null);
-  // };
 
   // Measure render time after data is loaded
   useEffect(() => {
@@ -522,7 +466,7 @@ const DynamicInstrumentsTable = () => {
   return (
       <Box mt={6}>
         <HStack justify="space-between" align="center" mb={4}>
-          <Heading size="md" color="gray.700">Details Instruments</Heading>
+          <Heading size="md" color="gray.700">Agreggated</Heading>
           <HStack>
             {loadTime && <PerformanceMetric label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" />}
             {queryTime && <PerformanceMetric label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
