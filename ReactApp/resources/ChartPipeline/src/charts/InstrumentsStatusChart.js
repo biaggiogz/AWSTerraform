@@ -46,7 +46,8 @@ const prepareChartData = (data, labelField) => {
   const pendingData = data.map(item => item['PENDING'] || 0);
   
   // Determine if we should show labels based on data density
-  const showLabels = data.length <= 10;
+  // Always show labels when there are filters applied
+  const showLabels = true;
   
   return {
     labels,
@@ -63,7 +64,7 @@ const prepareChartData = (data, labelField) => {
           display: showLabels,
           color: 'white',
           font: { weight: 'bold', size: 11 },
-          formatter: (value) => value || ''
+          formatter: (value) => value > 0 ? value.toString() : ''
         }
       },
       // INSTALLED BY TEIGA-TMI
@@ -78,7 +79,7 @@ const prepareChartData = (data, labelField) => {
           display: showLabels,
           color: 'white',
           font: { weight: 'bold', size: 11 },
-          formatter: (value) => value || ''
+          formatter: (value) => value > 0 ? value.toString() : ''
         }
       },
       // INSTALLED BY SIEMSA
@@ -93,7 +94,7 @@ const prepareChartData = (data, labelField) => {
           display: showLabels,
           color: 'white',
           font: { weight: 'bold', size: 11 },
-          formatter: (value) => value || ''
+          formatter: (value) => value > 0 ? value.toString() : ''
         }
       },
       // TOTAL INST - as a line to show the total
@@ -115,7 +116,7 @@ const prepareChartData = (data, labelField) => {
           borderRadius: 4,
           padding: 4,
           font: { weight: 'bold', size: 11 },
-          formatter: (value) => value || ''
+          formatter: (value) => value > 0 ? value.toString() : ''
         }
       }
     ]
@@ -195,7 +196,9 @@ const getChartOptions = (data, labelField) => {
 const InstrumentsStatusChart = () => {
   const {
     tableData,
-    groupBy
+    groupBy,
+    selectedSubsystem,
+    selectedTestPack
   } = useInstrumentsTableFilterContext();
   
   // Call hooks at the top level, before any conditional returns
@@ -220,7 +223,7 @@ const InstrumentsStatusChart = () => {
     const field = groupBy[0] || 'SUBSYSTEM';
     
     return { processedData: filtered, labelField: field };
-  }, [tableData, groupBy]);
+  }, [tableData, groupBy, selectedSubsystem, selectedTestPack]); // Add dependencies to trigger re-render
   
   // Prepare chart data and options
   const chartData = useMemo(() => {
@@ -249,12 +252,13 @@ const InstrumentsStatusChart = () => {
       <Flex direction="column">
         <Heading size="md" mb={4}>Instruments Installation Status</Heading>
         <Text fontSize="sm" mb={2} color="gray.500">
-          X represents: {groupBy.join(', ')}
+          GROUPING BY: {groupBy.join(', ')}
         </Text>
         <Box height="600px" width="100%">
           <Bar 
             data={chartData} 
             options={chartOptions}
+            key={`chart-${selectedSubsystem || 'none'}-${selectedTestPack || 'none'}-${processedData.length}`}
           />
         </Box>
       </Flex>

@@ -183,8 +183,15 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/*/>*/}
                   <InstrumentsTableFilterProvider>
                     <FilterStatusBar />
-                    <InstrumentsStatusChart />
-                    <DynamicInstrumentsTable/>
+                    {/* Place InstrumentsStatusChart beside DynamicInstrumentsTable with horizontal alignment */}
+                    <HStack spacing={4} align="start">
+                      <Box flex="1">
+                        <DynamicInstrumentsTable/>
+                      </Box>
+                      <Box flex="1">
+                        <InstrumentsStatusChart />
+                      </Box>
+                    </HStack>
                     <DetailsInstrumentsTable/>
                     <ControlInstrumentsByIsometric/>
                   </InstrumentsTableFilterProvider>
