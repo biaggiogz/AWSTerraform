@@ -20,18 +20,16 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
     if (!controlData || !detailsData) return;
     
     try {
-      await createTable('ControlInstrumentsByIsometric', controlData);
+      await createTable('Control Instruments', controlData);
       await createTable('Details Instruments', detailsData);
-      await createTable('DynamicInstrumentsTable', controlData);
       tablesInitialized.current = true;
       
       // Immediately update with filtered data if available
       const controlDataToUse = filteredControlData && filteredControlData.length > 0 ? filteredControlData : controlData;
       const detailsDataToUse = filteredDetailsData && filteredDetailsData.length > 0 ? filteredDetailsData : detailsData;
       
-      updateFilteredTable('ControlInstrumentsByIsometric', controlDataToUse);
+      updateFilteredTable('Control Instruments', controlDataToUse);
       updateFilteredTable('Details Instruments', detailsDataToUse);
-      updateFilteredTable('DynamicInstrumentsTable', controlDataToUse);
     } catch (error) {
       console.error('Failed to initialize tables:', error);
     }
@@ -45,8 +43,7 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
       const detailsDataToUse = filteredDetailsData && filteredDetailsData.length > 0 ? filteredDetailsData : detailsData;
       
       if (controlDataToUse) {
-        updateFilteredTable('ControlInstrumentsByIsometric', controlDataToUse);
-        updateFilteredTable('DynamicInstrumentsTable', controlDataToUse);
+        updateFilteredTable('Control Instruments', controlDataToUse);
       }
       if (detailsDataToUse) {
         updateFilteredTable('Details Instruments', detailsDataToUse);
@@ -88,7 +85,7 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
   const availableTables = useMemo(() => getAvailableTables(), [getAvailableTables]);
 
   const controlColumns = useMemo(() => {
-    return getTableFields('ControlInstrumentsByIsometric');
+    return getTableFields('Control Instruments');
   }, [getTableFields]);
 
   const detailColumns = useMemo(() => {

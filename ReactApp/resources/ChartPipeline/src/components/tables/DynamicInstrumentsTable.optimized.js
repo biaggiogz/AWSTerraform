@@ -52,7 +52,7 @@ const ProgressCell = React.memo(({ progress }) => {
       <Box
         height="18px"
         width={`${percentage}%`}
-        bg={percentage === 100 ? "#4CAF50" : "#ED7D31"}
+        bg="green.500"
         borderRadius="sm"
       />
       <Text
@@ -137,9 +137,7 @@ const DynamicInstrumentsTable = () => {
     selectedSubsystem,
     handleTestPackClick,
     handleSubsystemClick,
-    getSqlWhereClause,
-    setTableData: setContextTableData,
-    setGroupBy: setContextGroupBy
+    getSqlWhereClause
   } = useInstrumentsTableFilterContext();
   
   const {
@@ -174,112 +172,8 @@ const DynamicInstrumentsTable = () => {
       'INSTALLED BY TEIGA-TMI',
       'INSTALLED BY SIEMSA',
       'PENDING',
-      'DONE',
     ];
 
-    // Special case for SUBSYSTEM | HITO grouping
-    if (groupByFields.length === 2 && groupByFields[0] === 'SUBSYSTEM' && groupByFields[1] === 'HITO') {
-      // First group by SUBSYSTEM only
-      const subsystemGroups = {};
-      
-      data.forEach(row => {
-        const subsystem = row['SUBSYSTEM'] || 'N/A';
-        if (!subsystemGroups[subsystem]) subsystemGroups[subsystem] = [];
-        subsystemGroups[subsystem].push(row);
-      });
-      
-      // Create subsystem nodes with aggregated data
-      return Object.entries(subsystemGroups).map(([subsystem, items]) => {
-        const node = { 'SUBSYSTEM': subsystem };
-        
-        // Group by HITO within this subsystem
-        const hitoGroups = {};
-        items.forEach(row => {
-          const hito = row['HITO'] || 'N/A';
-          if (!hitoGroups[hito]) hitoGroups[hito] = [];
-          hitoGroups[hito].push(row);
-        });
-        
-        // If there's only one HITO, merge it with the parent row
-        if (Object.keys(hitoGroups).length === 1) {
-          const singleHito = Object.keys(hitoGroups)[0];
-          const hitoItems = hitoGroups[singleHito];
-          
-          // Add the HITO value to the parent node
-          node['HITO'] = singleHito;
-          
-          // Sum numeric fields directly into the parent node
-          numericFields.forEach(f => {
-            if (f === 'DONE') {
-              const total = hitoItems.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
-              const teiga = hitoItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
-              const siemsa = hitoItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
-              const installed = teiga + siemsa;
-              node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
-            } else {
-              node[f] = hitoItems.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
-            }
-          });
-          
-          // Average progress
-          node['PROGRESS TP'] = hitoItems.length > 0 ? 
-            (hitoItems.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / hitoItems.length) : 0;
-          
-          // No children needed since we merged the single HITO into the parent
-          return node;
-        } else {
-          // Multiple HITOs - use the standard approach
-          // Sum numeric fields for the subsystem
-          numericFields.forEach(f => {
-            if (f === 'DONE') {
-              const total = items.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
-              const teiga = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
-              const siemsa = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
-              const installed = teiga + siemsa;
-              node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
-            } else {
-              node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
-            }
-          });
-          
-          // Average progress for the subsystem
-          node['PROGRESS TP'] = items.length > 0 ? 
-            (items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / items.length) : 0;
-          
-          // Create HITO children
-          const children = Object.entries(hitoGroups).map(([hito, hitoItems]) => {
-            const hitoNode = { 'HITO': hito };
-            
-            // Sum numeric fields for this HITO
-            numericFields.forEach(f => {
-              if (f === 'DONE') {
-                const total = hitoItems.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
-                const teiga = hitoItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
-                const siemsa = hitoItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
-                const installed = teiga + siemsa;
-                hitoNode[f] = Math.abs(total - installed) < 0.01 ? total : 0;
-              } else {
-                hitoNode[f] = hitoItems.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
-              }
-            });
-            
-            // Average progress for this HITO
-            hitoNode['PROGRESS TP'] = hitoItems.length > 0 ? 
-              (hitoItems.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / hitoItems.length) : 0;
-            
-            return hitoNode;
-          });
-          
-          if (children.length > 0) {
-            node.children = children;
-          }
-          
-          return node;
-        }
-      });
-    }
-    
-    // Standard grouping for other combinations
     const aggregateGroup = (rows, level = 0) => {
       if (level >= groupByFields.length) return [];
 
@@ -294,102 +188,22 @@ const DynamicInstrumentsTable = () => {
 
       return Object.entries(groups).map(([val, items]) => {
         const node = { [key]: val };
-        
-        // Check if we're not at the last level and should process children
-        if (level < groupByFields.length - 1) {
-          // Process next level to check if there's only one child
-          const nextKey = groupByFields[level + 1];
-          const nextGroups = {};
-          
-          items.forEach(row => {
-            const nextVal = row[nextKey] || 'N/A';
-            if (!nextGroups[nextVal]) nextGroups[nextVal] = [];
-            nextGroups[nextVal].push(row);
-          });
-          
-          // If there's only one child at the next level, merge it with this node
-          if (Object.keys(nextGroups).length === 1) {
-            const singleChildKey = Object.keys(nextGroups)[0];
-            const singleChildItems = nextGroups[singleChildKey];
-            
-            // Add the child's key-value to the parent node
-            node[nextKey] = singleChildKey;
-            
-            // If we're not at the second-to-last level, recursively check for more single children
-            if (level < groupByFields.length - 2) {
-              // Process the single child's items recursively
-              const mergedChildren = aggregateGroup(singleChildItems, level + 2);
-              if (mergedChildren.length > 0) {
-                node.children = mergedChildren;
-              }
-            }
-            
-            // Sum numeric fields for this merged node
-            numericFields.forEach(f => {
-              if (f === 'DONE') {
-                const total = singleChildItems.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
-                const teiga = singleChildItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
-                const siemsa = singleChildItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
-                const installed = teiga + siemsa;
-                node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
-              } else {
-                node[f] = singleChildItems.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
-              }
-            });
-            
-            // Average progress
-            node['PROGRESS TP'] = singleChildItems.length > 0 ? 
-              (singleChildItems.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / singleChildItems.length) : 0;
-            
-            return node;
-          } else {
-            // Multiple children - standard approach
-            // Sum numeric fields
-            numericFields.forEach(f => {
-              if (f === 'DONE') {
-                const total = items.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
-                const teiga = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
-                const siemsa = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
-                const installed = teiga + siemsa;
-                node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
-              } else {
-                node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
-              }
-            });
-            
-            // Average progress
-            node['PROGRESS TP'] = items.length > 0 ? 
-              (items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / items.length) : 0;
-            
-            // Process children normally
-            const children = aggregateGroup(items, level + 1);
-            if (children.length > 0) {
-              node.children = children;
-            }
-            
-            return node;
-          }
-        } else {
-          // Last level - no children to process
-          // Sum numeric fields
-          numericFields.forEach(f => {
-            if (f === 'DONE') {
-              const total = items.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
-              const teiga = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
-              const siemsa = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
-              const installed = teiga + siemsa;
-              node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
-            } else {
-              node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
-            }
-          });
-          
-          // Average progress
-          node['PROGRESS TP'] = items.length > 0 ? 
-            (items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / items.length) : 0;
-          
-          return node;
+
+        // Sum numeric fields
+        numericFields.forEach(f => {
+          node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+        });
+
+        // Average progress
+        node['PROGRESS TP'] = items.length > 0 ? 
+          (items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / items.length) : 0;
+
+        const children = aggregateGroup(items, level + 1);
+        if (children.length > 0) {
+          node.children = children;
         }
+
+        return node;
       });
     };
 
@@ -401,12 +215,8 @@ const DynamicInstrumentsTable = () => {
     if (rawData.length > 0) {
       const grouped = groupAndAggregate(rawData, groupBy);
       setTableData(grouped);
-      
-      // Update the context with the table data and groupBy for the chart component
-      setContextTableData(grouped);
-      setContextGroupBy(groupBy);
     }
-  }, [rawData, groupBy, groupAndAggregate, setContextTableData, setContextGroupBy]);
+  }, [rawData, groupBy, groupAndAggregate]);
 
   // Handle grouping changes
   const handleAddGroupLevel = useCallback((field) => {
@@ -419,15 +229,6 @@ const DynamicInstrumentsTable = () => {
     setGroupBy(prev => prev.filter(f => f !== field));
   }, []);
 
-  // Define chart colors for consistency with InstrumentsStatusChart
-  const chartColors = {
-    'TOTAL INST': '#FFE9D6',
-    'INSTALLED BY TEIGA-TMI': '#A55B4B',
-    'INSTALLED BY SIEMSA': '#6C5F5B',
-    'PENDING': '#ED7D31',
-    'DONE': '#4CAF50'
-  };
-
   // Column definitions
   const columnHelper = createColumnHelper();
   
@@ -435,32 +236,22 @@ const DynamicInstrumentsTable = () => {
     const common = [
       columnHelper.accessor('TOTAL INST', {
         header: 'TOTAL INST',
-        cell: info => <Text fontSize="xs" bg={chartColors['TOTAL INST']} px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('INSTALLED BY TEIGA-TMI', {
         header: 'INSTALLED BY TEIGA-TMI',
-        cell: info => <Text fontSize="xs" bg={chartColors['INSTALLED BY TEIGA-TMI']} color="white" px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('INSTALLED BY SIEMSA', {
         header: 'INSTALLED BY SIEMSA',
-        cell: info => <Text fontSize="xs" bg={chartColors['INSTALLED BY SIEMSA']} color="white" px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('PENDING', {
         header: 'PENDING',
-        cell: info => <Text fontSize="xs" bg={chartColors['PENDING']} color="white" px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
-        size: 90,
-      }),
-      columnHelper.accessor('DONE', {
-        header: 'DONE',
-        cell: info => {
-          const value = Number(info.getValue());
-          return value > 0 ? 
-            <Text fontSize="xs" bg={chartColors['DONE']} color="white" px={2} py={1} borderRadius="sm">{value}</Text> : 
-            <Text fontSize="xs" color="gray.400">{0}</Text>
-        },
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
     ];
@@ -672,11 +463,6 @@ const DynamicInstrumentsTable = () => {
             SUM(installed_teiga_tmi) AS "INSTALLED BY TEIGA-TMI",
             SUM(installed_siemsa) AS "INSTALLED BY SIEMSA",
             SUM(pending) AS "PENDING",
-            CASE 
-              WHEN ABS(SUM(qty_inst) - SUM(installed_teiga_tmi) - SUM(installed_siemsa)) < 0.01 AND SUM(qty_inst) > 0 
-              THEN SUM(qty_inst) 
-              ELSE 0 
-            END AS "DONE",
             MAX(progress) AS "PROGRESS TP"
           FROM exploded_tps
           GROUP BY subsystem, hito, tp
@@ -832,8 +618,8 @@ const DynamicInstrumentsTable = () => {
                   {headerGroup.headers.map(header => (
                     <Box
                       key={header.id}
-                      bg={chartColors[header.column.id] || "purple.600"}
-                      color={['TOTAL INST'].includes(header.column.id) ? "black" : "white"}
+                      bg="purple.600"
+                      color="white"
                       p={1}
                       textAlign="center"
                       fontWeight="bold"

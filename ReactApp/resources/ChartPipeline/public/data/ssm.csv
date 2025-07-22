@@ -1,0 +1,140 @@
+subsystem,total_insulation,done_insulation,pending_insulation,total_loop,done_loop,pending_loop,n_tps,total_inst,total_installed,PENDING,DONE,total_tracing,done_tracing,pending_tracing,total_punch,pending_punch,close_punch,open_punch,s_n,description,hito_isos
+ACL-00000-01,9.0,0.0,9.0,5.0,4.0,1.0,2.0,4.0,4.0,0.0,4.0,9.0,0.0,9.0,,,,,1.0,Distribucion agua caliente de lavados,HITO 3
+ACL-10001-01,34.0,0.0,34.0,9.0,0.0,9.0,13.0,13.0,0.0,13.0,0.0,34.0,0.0,34.0,,,,,2.0,Agua caliente de lavados A10001,HITO 3
+ACL-10001-02,3.0,0.0,3.0,3.0,0.0,3.0,4.0,4.0,0.0,4.0,0.0,3.0,0.0,3.0,,,,,3.0,Agua caliente de lavados A10001 (2),HITO 3
+ACL-10003-01,11.0,0.0,11.0,,,,,,,,,11.0,0.0,11.0,,,,,4.0,Agua caliente de lavados A10003,HITO 3
+ACL-10005-01,6.0,0.0,6.0,,,,,,,,,6.0,0.0,6.0,,,,,5.0,Agua caliente de lavados A10005,HITO 3
+ACL-A6001-01,1.0,0.0,1.0,,,,,,,,,1.0,1.0,0.0,,,,,6.0,Agua caliente de lavados A6000,HITO 3
+ACL-PR18-01,5.0,0.0,5.0,,,,1.0,1.0,1.0,0.0,1.0,6.0,0.0,6.0,,,,,7.0,Agua caliente de lavados PR18/19,HITO 3
+AGL-10005-01,30.0,0.0,30.0,42.0,21.0,21.0,27.0,27.0,5.0,22.0,0.0,,,,,,,,8.0,Agua glicolada y lineas asociadas,HITO 6
+AP-00000-01,23.0,0.0,23.0,1.0,0.0,1.0,,,,,,22.0,0.0,22.0,,,,,9.0,Agua potable (colector),HITO 5
+AP-PR19-01,1.0,0.0,1.0,1.0,1.0,0.0,2.0,2.0,1.0,1.0,0.0,1.0,0.0,1.0,,,,,10.0,Agua potable (PR19),HITO 4
+AR-00000-01,13.0,9.0,4.0,9.0,0.0,9.0,12.0,12.0,0.0,12.0,0.0,,,,,,,,11.0,Agua refrigeracion (colector),HITO 2
+AR-00000-02,12.0,4.0,8.0,4.0,0.0,4.0,8.0,8.0,0.0,8.0,0.0,,,,,,,,12.0,"Agua refrigeracion 
+(subcolectores A10001 alto)",HITO 8
+AR-00000-04,1.0,0.0,1.0,,,,,,,,,,,,,,,,14.0,"Agua refrigeracion 
+(subcolectores A10003)",HITO 5
+AR-00000-05,4.0,0.0,4.0,,,,2.0,2.0,0.0,2.0,0.0,,,,,,,,15.0,"Agua refrigeracion 
+(subcolectores A10005)",HITO 8
+AR-PR11-01,12.0,0.0,12.0,,,,1.0,1.0,0.0,1.0,0.0,,,,,,,,17.0,Agua refrigeracion PR11,HITO 2
+ASUN-A1200-01,3.0,0.0,3.0,9.0,0.0,9.0,,,,,,3.0,3.0,0.0,,,,,31.0,Ácido sulfúrico A1200,HITO 5
+ASUN-PR18-01,4.0,0.0,4.0,3.0,0.0,3.0,15.0,12.0,0.0,12.0,0.0,4.0,0.0,4.0,,,,,32.0,Ácido sulfúrico PR18,HITO 7
+AT-00000-01,4.0,0.0,4.0,,,,,,,,,4.0,3.0,1.0,,,,,33.0,Agua tratada colector,HITO 3
+AT-10001-01,9.0,0.0,9.0,,,,,,,,,9.0,0.0,9.0,,,,,34.0,Agua tratada A10001,HITO 3
+AT-10003-01,5.0,0.0,5.0,,,,,,,,,5.0,5.0,0.0,,,,,35.0,Agua tratada A10003,HITO 3
+AT-PR19-01,2.0,0.0,2.0,1.0,1.0,0.0,2.0,2.0,1.0,1.0,0.0,2.0,2.0,0.0,,,,,36.0,Agua tratada PR19,HITO 3
+AT97-A6001-01,16.0,4.0,12.0,45.0,26.0,19.0,24.0,19.0,8.0,11.0,0.0,10.0,5.0,5.0,1.0,0.0,0.0,1.0,37.0,Importacion AT97,HITO 5
+C6-00000-01,10.0,0.0,10.0,,,,,,,,,,,,,,,,38.0,Condensados general,HITO 6
+C6-10001-01,6.0,0.0,6.0,,,,,,,,,,,,,,,,39.0,Condensados A10001,HITO 6
+C6-10001-02,17.0,0.0,17.0,20.0,8.0,12.0,9.0,9.0,0.0,9.0,0.0,1.0,0.0,1.0,,,,,40.0,Estabilizacion condensados antes de exportacion,HITO 3
+C6-10001-03,4.0,0.0,4.0,,,,,,,,,,,,,,,,41.0,Condensados A10001 (2),HITO 6
+C6-PR18-01,1.0,0.0,1.0,7.0,6.0,1.0,11.0,11.0,6.0,5.0,0.0,,,,,,,,42.0,Condensados interconexion,HITO 3
+CHMB-10001-01,13.0,0.0,13.0,37.0,0.0,37.0,26.0,26.0,0.0,26.0,0.0,,,,,,,,43.0,HMBI crudo A10001 reactor 1,HITO 8
+CHMB-10001-02,19.0,0.0,19.0,70.0,9.0,61.0,45.0,45.0,0.0,45.0,0.0,1.0,0.0,1.0,,,,,44.0,HMBI crudo A10001 reactor 2,HITO 8
+CHMB-10001-03,4.0,0.0,4.0,19.0,6.0,13.0,17.0,17.0,6.0,11.0,0.0,3.0,0.0,3.0,,,,,45.0,HMBI crudo A10001 reciclo pesados a esterificacion,HITO 7
+CHMB-10001-04,21.0,0.0,21.0,36.0,8.0,28.0,32.0,27.0,0.0,27.0,0.0,,,,,,,,46.0,Recipiente HMBI bruto,HITO 8
+CIPA-10001-01,19.0,0.0,19.0,24.0,8.0,16.0,11.0,11.0,0.0,11.0,0.0,,,,,,,,47.0,Recipiente recoleccion IPA a destilacion,HITO 8
+CIPA-10001-03,1.0,0.0,1.0,13.0,0.0,13.0,,,,,,,,,,,,,49.0,Paquete Z-1049,HITO 8
+CYH-10003-01,5.0,0.0,5.0,15.0,0.0,15.0,9.0,6.0,0.0,6.0,0.0,5.0,0.0,5.0,,,,,50.0,Caseta Ciclohexano,HITO 7
+CYH-10004-01,6.0,0.0,6.0,21.0,18.0,3.0,21.0,19.0,17.0,2.0,0.0,5.0,0.0,5.0,4.0,4.0,0.0,0.0,51.0,Bomba carga IPA / CYH,HITO 4
+EFL-10001-01,35.0,0.0,35.0,,,,,,,,,1.0,0.0,1.0,,,,,58.0,Sistema de drenajes EFL-1,HITO 7
+EFL-10001-02,32.0,0.0,32.0,,,,,,,,,1.0,0.0,1.0,,,,,59.0,Sistema de drenajes EFL-2,HITO 6
+EFL-10001-03,15.0,0.0,15.0,1.0,0.0,1.0,3.0,1.0,0.0,1.0,0.0,2.0,0.0,2.0,,,,,61.0,Drenajes abiertos de edificio HMBI,HITO 7
+EFL-10003-01,16.0,0.0,16.0,6.0,6.0,0.0,7.0,7.0,6.0,1.0,0.0,,,,,,,,54.0,Sistema de drenajes EFL-3,HITO 6
+EFL-10003-02,8.0,0.0,8.0,3.0,0.0,3.0,6.0,6.0,0.0,6.0,0.0,4.0,0.0,4.0,,,,,53.0,NEW (last sub-system version),HITO 5
+EFL-10003-05,3.0,0.0,3.0,,,,,,,,,,,,,,,,64.0,Drenajes abiertos de edificio IPA,HITO 5
+EFL-10003-06,22.0,6.0,16.0,53.0,20.0,33.0,29.0,26.0,9.0,17.0,0.0,3.0,0.0,3.0,,,,,55.0,Segunda columna de destilacion y elementos asociados,HITO 7
+EFL-10005-01,3.0,0.0,3.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,0.0,,,,,,,,60.0,Bomba B-10886 y elementos asociados,HITO 6
+EFL-A2001-01,3.0,3.0,0.0,6.0,0.0,6.0,3.0,3.0,0.0,3.0,0.0,3.0,3.0,0.0,,,,,68.0,Recipiente R-8353 y elementos asociados,HITO 2
+EFL-A6001-01,3.0,1.0,2.0,,,,,,,,,,,,,,,,65.0,Lineas de efluentes en area 6000,HITO 4
+EFL-A6001-02,2.0,2.0,0.0,,,,,,,,,2.0,2.0,0.0,,,,,52.0,Not Found,HITO 2
+EFL-A8001-01,3.0,1.0,2.0,7.0,0.0,7.0,9.0,9.0,0.0,9.0,0.0,4.0,1.0,3.0,,,,,70.0,Recogida efluentes UXX838,HITO 5
+EFL-A8004-01,3.0,1.0,2.0,8.0,0.0,8.0,9.0,8.0,0.0,8.0,0.0,3.0,3.0,0.0,,,,,67.0,Empuje neumatico desde UXX837/UXX838,HITO 4
+EFL-A8004-02,3.0,2.0,1.0,7.0,6.0,1.0,8.0,9.0,6.0,3.0,0.0,5.0,5.0,0.0,,,,,71.0,Recogida efluentes UXX837,HITO 5
+HMBC-10001-01,17.0,2.0,15.0,33.0,8.0,25.0,29.0,23.0,0.0,23.0,0.0,,,,,,,,72.0,Evaporador IPA,HITO 8
+HMBH-10005-01,16.0,6.0,10.0,38.0,26.0,12.0,30.0,25.0,13.0,12.0,0.0,4.0,0.0,4.0,,,,,73.0,Almacenamiento pesados,HITO 7
+HMBI-10001-01,21.0,3.0,18.0,42.0,6.0,36.0,40.0,34.0,2.0,32.0,0.0,5.0,0.0,5.0,,,,,78.0,Sistema de acumulacion temporal de HMBI y lineas asociadas,HITO 6
+HMBI-10001-02,29.0,3.0,26.0,65.0,15.0,50.0,48.0,41.0,2.0,39.0,0.0,4.0,0.0,4.0,,,,,76.0,Filtro rotativo; recipiente filtrato; recipiente torta; y lineas asociadas,HITO 7
+HMBI-10001-03,31.0,4.0,27.0,59.0,12.0,47.0,41.0,35.0,3.0,32.0,0.0,3.0,0.0,3.0,,,,,74.0,Evaporador de pelicula fina; condensador; pesados; y lineas asociadas,HITO 7
+HMBI-10001-04,14.0,0.0,14.0,72.0,3.0,69.0,36.0,21.0,0.0,21.0,0.0,5.0,0.0,5.0,,,,,75.0,Paquete Z-1032 y lineas asociadas,HITO 7
+HMBI-10005-01,20.0,6.0,14.0,62.0,20.0,42.0,51.0,43.0,8.0,35.0,0.0,11.0,0.0,11.0,,,,,77.0,Almacenamiento de HMBI off-spec y lineas asociadas,HITO 7
+HMBI-10005-02,3.0,0.0,3.0,19.0,7.0,12.0,8.0,4.0,4.0,0.0,4.0,,,,,,,,79.0,Brazo de carga de HMBI off-spec/pesados,HITO 5
+HMBI-10005-03,18.0,3.0,15.0,67.0,42.0,25.0,36.0,31.0,17.0,14.0,0.0,2.0,0.0,2.0,,,,,80.0,Almacenamiento de HMBI y lineas asociadas,HITO 5
+HMBI-PR11-01,9.0,1.0,8.0,7.0,0.0,7.0,10.0,10.0,0.0,10.0,0.0,9.0,1.0,8.0,,,,,81.0,Linea de HMBI sobre PR11,HITO 5
+HMBN-10001-01,15.0,4.0,11.0,46.0,8.0,38.0,19.0,19.0,0.0,19.0,0.0,1.0,0.0,1.0,,,,,83.0,Reactor neutralizacion,HITO 7
+HMBN-10001-02,14.0,3.0,11.0,65.0,11.0,54.0,18.0,18.0,0.0,18.0,0.0,,,,,,,,84.0,Recipiente evaporacion agua,HITO 8
+INC-10001-01,12.0,0.0,12.0,5.0,0.0,5.0,12.0,12.0,0.0,12.0,0.0,,,,,,,,88.0,Venteos gaseosos con blanketing,HITO 6
+INC-10001-02,14.0,3.0,11.0,32.0,12.0,20.0,16.0,16.0,5.0,11.0,0.0,1.0,0.0,1.0,,,,,86.0,Recipiente recogida efluentes gaseosos y lineas asociadas,HITO 7
+INC-10001-04,11.0,3.0,8.0,12.0,0.0,12.0,11.0,11.0,0.0,11.0,0.0,,,,,,,,85.0,Condensacion de IPA en evaporacion IPA/agua,HITO 6
+IPA-10001-01,2.0,1.0,1.0,17.0,6.0,11.0,3.0,3.0,0.0,3.0,0.0,,,,,,,,89.0,Linea IPA hacia filtro S-10390,HITO 5
+IPA-10004-01,2.0,0.0,2.0,43.0,26.0,17.0,46.0,36.0,27.0,9.0,0.0,1.0,0.0,1.0,,,,,90.0,Tanque IPA,HITO 4
+RIPA-10001-01,3.0,0.0,3.0,12.0,8.0,4.0,11.0,11.0,8.0,3.0,0.0,,,,,,,,111.0,Linea de IPA hacia esterificacion,HITO 5
+RIPA-10003-01,21.0,3.0,18.0,24.0,14.0,10.0,15.0,14.0,4.0,10.0,0.0,,,,,,,,110.0,Recipiente IPA reciclado y lineas asociadas,HITO 6
+RIPA-10003-02,19.0,2.0,17.0,49.0,29.0,20.0,26.0,26.0,9.0,17.0,0.0,2.0,2.0,0.0,,,,,109.0,Decantador y lineas asociadas,HITO 7
+RIPA-10003-03,15.0,4.0,11.0,25.0,16.0,9.0,15.0,15.0,5.0,10.0,0.0,,,,,,,,114.0,Recipiente reflujo segunda columna y lineas asociadas,HITO 6
+RIPA-10003-04,3.0,2.0,1.0,4.0,0.0,4.0,3.0,3.0,0.0,3.0,0.0,,,,1.0,0.0,0.0,1.0,113.0,Condensador segunda columna y lineas asociadas,HITO 5
+RIPA-10003-05,31.0,4.0,27.0,54.0,29.0,25.0,39.0,39.0,17.0,22.0,0.0,,,,1.0,0.0,0.0,1.0,112.0,Primera columna de destilacion y elementos asociados,HITO 8
+SSAM-10004-01,16.0,0.0,16.0,29.0,22.0,7.0,29.0,27.0,18.0,9.0,0.0,6.0,0.0,6.0,,,,,116.0,Tanque solucion sulfato,HITO 5
+V6-00000-01,11.0,0.0,11.0,16.0,6.0,10.0,47.0,25.0,14.0,11.0,0.0,,,,,,,,118.0,Distribucion general vapor,HITO 6
+V6-10001-01,3.0,0.0,3.0,10.0,0.0,10.0,15.0,10.0,0.0,10.0,0.0,,,,,,,,119.0,Distribucion interna vapor A10001,HITO 7
+V6-10001-02,1.0,0.0,1.0,,,,,,,,,,,,,,,,,,
+VE1-10001-01,1.0,0.0,1.0,33.0,16.0,17.0,21.0,21.0,15.0,6.0,0.0,,,,,,,,120.0,Venteos gaseosos sin blanketing,HITO 6
+AR-9000-01,,,,19.0,0.0,19.0,,,,,,,,,,,,,,,
+ARC-00000-01,,,,9.0,4.0,5.0,17.0,11.0,3.0,8.0,0.0,,,,,,,,18.0,Aire de servicio (colector),HITO 1
+ARI-00000-01,,,,3.0,3.0,0.0,,,,,,,,,,,,,27.0,Aire de instrumentos colector,HITO 1
+CIPA-10001-02,,,,37.0,0.0,37.0,,,,,,,,,,,,,48.0,Paquete Z-1049,HITO 8
+CT13-10002-03,,,,14.0,0.0,14.0,,,,,,,,,,,,,,,
+CT13-10002-04,,,,11.0,0.0,11.0,,,,,,,,,,,,,,,
+CT13-10002-05,,,,13.0,13.0,0.0,,,,,,,,,12.0,12.0,0.0,0.0,,,
+CT13-10002-08,,,,5.0,5.0,0.0,,,,,,,,,4.0,2.0,0.0,2.0,,,
+CT13-10002-10,,,,3.0,0.0,3.0,,,,,,,,,3.0,0.0,0.0,3.0,,,
+CT13-10002-14,,,,4.0,0.0,4.0,,,,,,,,,7.0,0.0,0.0,7.0,,,
+CYH-10004-02,,,,10.0,9.0,1.0,,,,,,,,,,,,,,,
+EFL-10001-04,,,,25.0,18.0,7.0,10.0,10.0,4.0,6.0,0.0,,,,,,,,62.0,Recipiente enterrado efluentes HMBI y lineas asociadas,HITO 6
+EFL-10001-05,,,,14.0,7.0,7.0,11.0,7.0,0.0,7.0,0.0,,,,,,,,57.0,Recipiente enterrado efluentes HMBI y lineas asociadas 2,HITO 6
+EFL-10003-03,,,,11.0,5.0,6.0,5.0,3.0,0.0,3.0,0.0,,,,,,,,63.0,Pit drenajes abierto IPA y lineas asociadas,HITO 5
+EFL-10003-04,,,,12.0,4.0,8.0,8.0,8.0,0.0,8.0,0.0,,,,,,,,56.0,Recipiente enterrado efluentes IPA y lineas asociadas,HITO 6
+EFL-10004-01,,,,6.0,5.0,1.0,1.0,1.0,1.0,0.0,1.0,,,,,,,,66.0,Bomba B-1558 y elementos asociados,HITO 4
+FF-10001-01,,,,39.0,0.0,39.0,,,,,,,,,,,,,,,
+FF-10003-01,,,,31.0,0.0,31.0,,,,,,,,,,,,,,,
+FF-10004-01,,,,15.0,1.0,14.0,,,,,,,,,,,,,,,
+FF-10005-01,,,,3.0,0.0,3.0,,,,,,,,,,,,,,,
+HMBI-10005-04,,,,5.0,4.0,1.0,,,,,,,,,,,,,82.0,Brazo de carga de HMBI,HITO 5
+INC-10001-03,,,,15.0,0.0,15.0,,,,,,,,,,,,,87.0,Paquete Z-1019 y lineas asociadas,HITO 6
+NHOH-PR18-01,,,,6.0,0.0,6.0,5.0,5.0,0.0,5.0,0.0,,,,,,,,91.0,Linea solucion amoniaco PR18,HITO 5
+NI-00000-01,,,,13.0,1.0,12.0,34.0,20.0,0.0,20.0,0.0,,,,,,,,100.0,Distribucion general de nitrogeno de baja presion para SPEAR,HITO 4
+NI-00000-02,,,,2.0,0.0,2.0,,,,,,,,,,,,,94.0,Distribucion general de nitrogeno de alta presion para SPEAR,HITO 4
+NI-10001-01,,,,13.0,13.0,0.0,19.0,19.0,13.0,6.0,0.0,,,,,,,,92.0,Distribucion interna de nitrogeno para area 10001; primer grupo de subcolectores,HITO 4
+NI-10001-04,,,,3.0,0.0,3.0,12.0,12.0,0.0,12.0,0.0,,,,,,,,93.0,Distribucion interna de nitrogeno para area 10001; cuarto grupo de subcolectores,HITO 4
+NI-10004-01,,,,6.0,6.0,0.0,7.0,7.0,6.0,1.0,0.0,2.0,0.0,2.0,,,,,102.0,Estacion de nitrogeno para brazos de carga area 10004,HITO 2
+NI-A6001-01,,,,3.0,3.0,0.0,4.0,4.0,3.0,1.0,0.0,,,,2.0,2.0,0.0,0.0,103.0,Distribucion interna de nitrogeno para area 6000,HITO 1
+NI-PR12-01,,,,1.0,0.0,1.0,4.0,4.0,1.0,3.0,0.0,,,,,,,,104.0,Linea de nitrogeno sobre PR12,HITO 2
+NOT,,,,1.0,0.0,1.0,,,,,,,,,,,,,,,
+SSAM-10004-02,,,,9.0,8.0,1.0,,,,,,,,,2.0,0.0,0.0,2.0,117.0,Brazo carga solucion sulfato,HITO 1
+ARC-10001-01,,,,,,,3.0,3.0,0.0,3.0,0.0,,,,,,,,19.0,Aire de servicio A10001,HITO 2
+ARC-10005-01,,,,,,,4.0,4.0,0.0,4.0,0.0,,,,5.0,5.0,0.0,0.0,21.0,Aire de servicio A10005,HITO 1
+ARC-A6001-01,,,,,,,2.0,2.0,0.0,2.0,0.0,,,,5.0,5.0,0.0,0.0,22.0,Aire de servicio A6000,HITO 1
+ARC-A8001-02,,,,,,,1.0,1.0,0.0,1.0,0.0,,,,4.0,4.0,0.0,0.0,24.0,Aire de servicio UXX811,HITO 1
+ARC-PR19-01,,,,,,,6.0,3.0,1.0,2.0,0.0,,,,4.0,4.0,0.0,0.0,26.0,Aire de servicio PR19,HITO 1
+ARI-10001-01,,,,,,,1.0,1.0,0.0,1.0,0.0,,,,,,,,28.0,Aire de instrumentos A10001,HITO 1
+ARI-10003-01,,,,,,,1.0,1.0,0.0,1.0,0.0,,,,,,,,29.0,Aire de instrumentos A10003,HITO 1
+ARI-PR19-01,,,,,,,3.0,3.0,2.0,1.0,0.0,,,,,,,,30.0,Aire de instrumentos PR19,HITO 1
+NI-10001-02,,,,,,,5.0,5.0,0.0,5.0,0.0,,,,,,,,97.0,Distribucion interna de nitrogeno para area 10001; segundo grupo de subcolectores,HITO 8
+NI-10001-03,,,,,,,2.0,2.0,0.0,2.0,0.0,,,,,,,,98.0,Distribucion interna de nitrogeno para area 10001; tercer grupo de subcolectores,HITO 2
+NI-10001-05,,,,,,,5.0,4.0,0.0,4.0,0.0,,,,,,,,95.0,Distribucion interna de nitrogeno para area 10001; quinto grupo de subcolectores,HITO 4
+NI-10003-02,,,,,,,2.0,2.0,0.0,2.0,0.0,,,,,,,,101.0,Distribucion interna de nitrogeno para area 10003; segundo grupo de subcolectores,HITO 2
+NI-10003-03,,,,,,,1.0,1.0,0.0,1.0,0.0,,,,,,,,,,
+NI-10005-01,,,,,,,1.0,1.0,0.0,1.0,0.0,,,,,,,,108.0,Distribucion interna de nitrogeno para area 10005,HITO 2
+ARC-10003-01,,,,,,,,,,,,,,,2.0,2.0,0.0,0.0,20.0,Aire de servicio A10003,HITO 2
+ARC-8004-01,,,,,,,,,,,,,,,2.0,2.0,0.0,0.0,,,
+ARC-A8001-01,,,,,,,,,,,,,,,2.0,2.0,0.0,0.0,23.0,Aire de servicio UXX838,HITO 1
+AT97-A6001-01/EFL-A6001-01,,,,,,,,,,,,,,,2.0,0.0,0.0,2.0,,,
+CT13-10002-01,,,,,,,,,,,,,,,3.0,0.0,0.0,3.0,,,
+CT13-10002-02,,,,,,,,,,,,,,,6.0,2.0,0.0,0.0,,,
+CT13-10002-06,,,,,,,,,,,,,,,2.0,0.0,0.0,2.0,,,
+CT13-10002-07,,,,,,,,,,,,,,,5.0,5.0,0.0,0.0,,,
+CT13-10002-09,,,,,,,,,,,,,,,5.0,0.0,0.0,5.0,,,
+CT13-10002-12,,,,,,,,,,,,,,,4.0,0.0,0.0,4.0,,,
+CT13-10002-15,,,,,,,,,,,,,,,1.0,1.0,0.0,0.0,,,
+CT2-8003-01,,,,,,,,,,,,,,,4.0,4.0,0.0,0.0,,,
+EFL-A2001-02,,,,,,,,,,,,,,,4.0,4.0,0.0,0.0,69.0,Flauta drenajes asociada al R-8353,HITO 2

@@ -35,9 +35,15 @@ const VirtualizedRow = ({ index, style, data }) => {
 };
 
 const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible }) => {
+  // Log the data structure to help with debugging
+  React.useEffect(() => {
+    if (data && data.length > 0) {
+      console.log('Table A data sample:', data[0]);
+    }
+  }, [data]);
   const columns = useMemo(() => [
     {
-      accessorKey: 'serialNumber',
+      accessorKey: 's_n',
       header: 'S/N',
       size: 60,
       cell: ({ getValue }) => (
@@ -45,12 +51,17 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
-      accessorKey: 'fluid',
+      // Extract fluid from subsystem (first part before the dash)
+      accessorKey: 'subsystem',
       header: 'FLUID',
       size: 60,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
-      )
+      cell: ({ getValue }) => {
+        const subsystem = getValue() || '';
+        const fluid = subsystem.split('-')[0] || '';
+        return (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{fluid}</Text>
+        );
+      }
     },
     {
       accessorKey: 'subsystem',
@@ -79,15 +90,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
-      accessorKey: 'totalItems',
+      accessorKey: 'total_insulation',
       header: 'TOTAL ITEMS',
       size: 60,
       cell: ({ getValue, row }) => {
         const getItemsStatusColor = () => {
           if (!isItemsFilterVisible) return { bg: 'transparent', color: 'inherit' };
           
-          const totalItems = row.original.totalItems || 0;
-          const doneItems = row.original.doneItems || 0;
+          const totalItems = getValue() || 0;
+          const doneItems = row.original.done_insulation || 0;
           const isDone = (totalItems === doneItems) && (totalItems > 0);
           
           const bgColor = isDone ? '#2F5249' : '#E85C0D';
@@ -113,7 +124,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       }
     },
     {
-      accessorKey: 'doneItems',
+      accessorKey: 'done_insulation',
       header: 'DONE ITEMS',
       size: 60,
       cell: ({ getValue }) => (
@@ -121,7 +132,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
-      accessorKey: 'pendingItems',
+      accessorKey: 'pending_insulation',
       header: 'PENDING ITEMS',
       size: 60,
       cell: ({ getValue }) => (
@@ -137,7 +148,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
-      accessorKey: 'numTestPacks',
+      accessorKey: 'n_tps',
       header: 'N°TP',
       size: 60,
       cell: ({ getValue }) => (
@@ -145,15 +156,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
-      accessorKey: 'totalLoops',
+      accessorKey: 'total_loop',
       header: 'TOTAL LOOP',
       size: 60,
       cell: ({ getValue, row }) => {
         const getLoopStatusColor = () => {
           if (!isLoopFilterVisible) return { bg: 'transparent', color: 'inherit' };
           
-          const totalLoops = row.original.totalLoops || 0;
-          const doneLoops = row.original.doneLoops || 0;
+          const totalLoops = getValue() || 0;
+          const doneLoops = row.original.done_loop || 0;
           const isDone = (totalLoops === doneLoops) && (totalLoops > 0);
           
           const bgColor = isDone ? '#2F5249' : '#E85C0D';
@@ -179,7 +190,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       }
     },
     {
-      accessorKey: 'doneLoops',
+      accessorKey: 'done_loop',
       header: 'LOOP DONE',
       size: 60,
       cell: ({ getValue }) => (
@@ -187,13 +198,78 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
-      accessorKey: 'pendingLoops',
+      accessorKey: 'pending_loop',
       header: 'LOOP PENDING',
       size: 60,
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
+    },
+    {
+      accessorKey: 'total_inst',
+      header: 'TOTAL INST',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'DONE',
+      header: 'TOTAL DONE',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'PENDING',
+      header: 'TOTAL PENDING',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'total_tracing',
+      header: 'TOTAL TRACING',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'done_tracing',
+      header: 'TOTAL DONE TRACING',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'total_punch',
+      header: 'TOTAL PUNCH',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'pending_punch',
+      header: 'TOTAL PENDING PUNCH',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'close_punch',
+      header: 'TOTAL CLOSE PUNCH',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
     }
+
   ], [selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible]);
 
   // Define multi-level header structure
@@ -230,6 +306,20 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             colspan: 3, 
             startCol: 8,
             color: '#8AB3DB'
+          },
+          { 
+            id: 'instruments', 
+            title: 'INSTRUMENTS', 
+            colspan: 3, 
+            startCol: 11,
+            color: '#8AB3DB'
+          },
+          { 
+            id: 'tracing', 
+            title: 'TRACING', 
+            colspan: 3, 
+            startCol: 14,
+            color: '#6FC1B2'
           }
         ]
       },
@@ -252,6 +342,20 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             colspan: 3, 
             startCol: 8,
             color: '#7CA2C5'
+          },
+          { 
+            id: 'instrument_metrics', 
+            title: 'INSTRUMENT METRICS', 
+            colspan: 3, 
+            startCol: 11,
+            color: '#7CA2C5'
+          },
+          { 
+            id: 'tracing_metrics', 
+            title: 'TRACING METRICS', 
+            colspan: 3, 
+            startCol: 14,
+            color: '#63AEA1'
           }
         ]
       }
@@ -363,17 +467,31 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           <Box display="flex" width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
           {headerGroups[0].headers.map((header, index) => {
             const columnColors = {
-              serialNumber: '#007598',
-              fluid: '#007598', 
-              subsystem: '#007598',
-              totalItems: '#CEC19B',
-              doneItems: '#CEC19B',
-              pendingItems: '#CEC19B',
-              description: '#63AEA1',
-              numTestPacks: '#63AEA1',
-              totalLoops: '#7CA2C5',
-              doneLoops: '#7CA2C5',
-              pendingLoops: '#7CA2C5'
+              // Subsystem information
+              's_n': '#007598',
+              'subsystem': '#007598', // Both subsystem and fluid use the same accessor
+              
+              // Items progress
+              'total_insulation': '#CEC19B',
+              'done_insulation': '#CEC19B',
+              'pending_insulation': '#CEC19B',
+              
+              // Description & Test Packs
+              'description': '#63AEA1',
+              'n_tps': '#63AEA1',
+              
+              // Loop Signal Progress
+              'total_loop': '#7CA2C5',
+              'done_loop': '#7CA2C5',
+              'pending_loop': '#7CA2C5',
+              
+              // Additional columns
+              'total_inst': '#8AB3DB',
+              'DONE': '#8AB3DB',
+              'PENDING': '#8AB3DB',
+              'total_tracing': '#6FC1B2',
+              'done_tracing': '#6FC1B2',
+              'pending_tracing': '#6FC1B2'
             };
             const columnId = header.column.id;
             const bgColor = columnColors[columnId] || '#F7FAFC';

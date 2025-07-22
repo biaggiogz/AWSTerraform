@@ -18,20 +18,10 @@ import { useSubsystemFilter } from '../filters/SubsystemRelationshipFilter.optim
 import { InstrumentsTableFilterProvider } from '../filters/InstrumentsTableFilter';
 import FilterStatusBar from '../filters/FilterStatusBar';
 
-// Define chart colors for consistency with InstrumentsStatusChart
-const chartColors = {
-  'TOTAL INST': '#FFE9D6',
-  'INSTALLED BY TEIGA-TMI': '#A55B4B',
-  'INSTALLED BY SIEMSA': '#6C5F5B',
-  'PENDING': '#ED7D31',
-  'DONE': '#4CAF50'
-};
-
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../../charts/LoopTestProgressChart.optimized'));
 const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationProgressControlChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
-const InstrumentsStatusChart = lazy(() => import('../../charts/InstrumentsStatusChart'));
 const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
 const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric.optimized'));
@@ -40,7 +30,6 @@ const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsT
 const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
-const InstrumentsReportContainer = lazy(() => import('../panels/InstrumentsReportContainer'));
 
 /**
  * ChartSelector component to switch between different charts
@@ -105,21 +94,10 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
         <Tabs
             isFitted
             variant="enclosed"
-            colorScheme="green"
+            colorScheme="blue"
             lazyBehavior="keepMounted"
             index={activeIndex !== -1 ? activeIndex : 0} // Default to LOOP SIGNAL PROGRESS REPORT if not found
             onChange={handleTabChange}
-            sx={{
-              '.chakra-tabs__tab': {
-                fontWeight: 'bold'
-              },
-              '.chakra-tabs__tab-panel': {
-                borderWidth: '1px',
-                borderColor: 'gray.200',
-                borderRadius: 'md',
-                p: 4
-              }
-            }}
         >
           <TabList mb="1em">
             <Tab>LOOP SIGNAL PROGRESS REPORT</Tab>
@@ -163,18 +141,13 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/* Triple Filter Status */}
                   <HStack spacing={4} justify="center">
                     {isometricFilter.selectedIsometric && (
-                      <Badge fontSize="sm" px={3} py={1}>
+                      <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
                         ISOMETRIC: {isometricFilter.selectedIsometric}
                       </Badge>
                     )}
                     {subsystemFilter.selectedSubsystem && (
-                      <Badge fontSize="sm" px={3} py={1}>
+                      <Badge colorScheme="orange" fontSize="sm" px={3} py={1}>
                         SUBSYSTEM: {subsystemFilter.selectedSubsystem}
-                      </Badge>
-                    )}
-                    {testPackFilter.selectedTestPack && (
-                      <Badge fontSize="sm" px={3} py={1}>
-                        TEST PACK: {testPackFilter.selectedTestPack}
                       </Badge>
                     )}
                   </HStack>
@@ -186,8 +159,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     onChainSelect={isometricFilter.onChainSelect}
                     selectedChainIndex={isometricFilter.selectedChainIndex}
                   />
-                  {/* Use the new InstrumentsReportContainer instead of DynamicCalculationPanel */}
-                  <InstrumentsReportContainer
+                  <DynamicCalculationPanel
                     controlData={controlData}
                     detailsData={detailsData}
                     filteredControlData={finalControlData}
@@ -210,24 +182,10 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/*/>*/}
                   <InstrumentsTableFilterProvider>
                     <FilterStatusBar />
-                    {/* InstrumentsStatusChart is now included in InstrumentsReportContainer beside DynamicInstrumentsTable with horizontal alignment */}
-                    <HStack spacing={4} align="stretch" minH="600px" width="100%" maxWidth="100%" overflow="hidden">
-                      <Box flex="1" display="flex" flexDirection="column">
-                        <DynamicInstrumentsTable 
-                          data={finalControlData}
-                          selectedIsometric={isometricFilter.selectedIsometric}
-                          onIsometricSelect={isometricFilter.onIsometricSelect}
-                        />
-                      </Box>
-                      <Box flex="1" display="flex" flexDirection="column" maxWidth="50%" overflow="hidden">
-                        <InstrumentsStatusChart 
-                          data={finalControlData}
-                        />
-                      </Box>
-                    </HStack>
+                    <DynamicInstrumentsTable/>
                     <DetailsInstrumentsTable/>
-                    <ControlInstrumentsByIsometric/>
-                  </InstrumentsTableFilterProvider>
+                    <ControlInstrumentsByIsometric/>nstrumentsByIsometric/>ByIsometric/>
+                  </InstrumentsTableFilterProvider>/InstrumentsTableFilterProvider>
                 </VStack>
               </Suspense>
             </TabPanel>

@@ -75,6 +75,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
         if (filteredData && filteredData.length > 0) {
           setData(filteredData);
         } else {
+          // Load data for Table B
           const response = await fetch('/data/pipelinedata.csv');
           const csvText = await response.text();
           
@@ -85,20 +86,33 @@ export const useSummarySubsystemsData = (filteredData = []) => {
           });
         }
         
-        // Load supporting datasets
-        const [aislResponse, loopResponse, subsystemsInfoResponse] = await Promise.all([
+        // Load supporting datasets including ssm.csv for Table A
+        const [ssmResponse, aislResponse, loopResponse, subsystemsInfoResponse] = await Promise.all([
+          fetch('/data/ssm.csv'), // This should point to the public folder path
           fetch('/data/aislamientos.csv'),
           fetch('/data/test_of_lazos_updated.csv'),
           fetch('/data/subsystems_info.csv')
         ]);
 
-        const [aislCsvText, loopCsvText, subsystemsInfoCsvText] = await Promise.all([
+        const [ssmCsvText, aislCsvText, loopCsvText, subsystemsInfoCsvText] = await Promise.all([
+          ssmResponse.text(),
           aislResponse.text(),
           loopResponse.text(),
           subsystemsInfoResponse.text()
         ]);
 
         // Parse all CSV files
+        let ssmData = [];
+        Papa.parse(ssmCsvText, {
+          header: true,
+          dynamicTyping: true, // Convert numeric strings to numbers
+          complete: (results) => {
+            console.log('SSM CSV data sample:', results.data[0]);
+            ssmData = results.data;
+          },
+          error: (error) => setError(`Error parsing SSM CSV: ${error.message}`)
+        });
+
         Papa.parse(aislCsvText, {
           header: true,
           complete: (results) => setAislData(results.data),
@@ -115,6 +129,8 @@ export const useSummarySubsystemsData = (filteredData = []) => {
           header: true,
           complete: (results) => {
             setSubsystemsInfoData(results.data);
+            // Store the SSM data in the component state for Table A
+            window.ssmData = ssmData;
             setLoading(false);
           },
           error: (error) => {
@@ -142,113 +158,44 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     }
   }, [data, aislData, loopData, subsystemsInfoData, createTable]);
 
-  // Process data for TableA (Subsystem Overview) using SQL specification
+  // Use SSM CSV data directly for TableA
   const tableAData = useMemo(() => {
-    if (!data.length || !aislData.length || !loopData.length || !subsystemsInfoData.length) return [];
+    // Use the SSM data from window object (set during data loading)
+    const ssmData = window.ssmData || [];
+    if (!ssmData.length) return [];
 
     const startTime = performance.now();
     
-    // Get all unique subsystems from both loop_data and main_dataset
-    const allSubsystems = new Set();
-    loopData.forEach(item => {
-      if (item['SUBS_PRE']) allSubsystems.add(item['SUBS_PRE']);
-    });
-    data.forEach(item => {
-      if (item['SUBSYSTEM']) allSubsystems.add(item['SUBSYSTEM']);
-    });
-
-    // Create metadata lookup
-    const metadataMap = new Map();
-    subsystemsInfoData.forEach(item => {
-      if (item['SUBSYSTEM']) {
-        metadataMap.set(item['SUBSYSTEM'], {
-          fluid: item['SUBSYSTEM'].split('-')[0] || ''
-        });
-      }
-    });
-
-    // Process insulation data
-    const insulationMap = new Map();
-    aislData.forEach(item => {
-      const subsystem = item['SUBSYSTEM'];
-      if (!subsystem) return;
+    // Log the field names from the first item to help with debugging
+    if (ssmData.length > 0) {
+      console.log('SSM data fields:', Object.keys(ssmData[0]));
+    }
+    
+    // Use the SSM data directly without transformation
+    // Just make sure numeric fields are properly converted
+    const result = ssmData.map(item => {
+      // Convert string values to numbers where needed
+      const numericFields = ['total_insulation', 'done_insulation', 'pending_insulation', 
+                            'total_loop', 'done_loop', 'pending_loop', 'n_tps'];
       
-      if (!insulationMap.has(subsystem)) {
-        insulationMap.set(subsystem, { totalItems: 0, doneItems: 0 });
-      }
+      const processedItem = { ...item };
       
-      const stats = insulationMap.get(subsystem);
-      stats.totalItems += 1;
-      if (item['DONE'] === 'YES') stats.doneItems += 1;
-    });
-
-    // Process loop data
-    const loopMap = new Map();
-    loopData.forEach(item => {
-      const subsystem = item['SUBS_PRE'];
-      if (!subsystem) return;
-      
-      if (!loopMap.has(subsystem)) {
-        loopMap.set(subsystem, { totalLoop: 0, loopDone: 0, loopPending: 0 });
-      }
-      
-      const stats = loopMap.get(subsystem);
-      stats.totalLoop += 1;
-      if (item['OK=100%'] === '100.00%') {
-        stats.loopDone += 1;
-      } else {
-        stats.loopPending += 1;
-      }
-    });
-
-    // Process test pack data
-    const testPackMap = new Map();
-    data.forEach(item => {
-      const subsystem = item['SUBSYSTEM'];
-      if (!subsystem || !item['TEST PACK']) return;
-
-      if (!testPackMap.has(subsystem)) {
-        testPackMap.set(subsystem, {
-          serialNumber: item['S/N'] || '',
-          testPacks: new Set(),
-          description: item['DESCRIPTION'] || ''
-        });
-      }
-
-      const stats = testPackMap.get(subsystem);
-      item['TEST PACK'].split('|').forEach(tp => {
-        const trimmedTp = tp.trim();
-        if (trimmedTp) stats.testPacks.add(trimmedTp);
+      // Convert numeric fields from strings to numbers
+      numericFields.forEach(field => {
+        if (processedItem[field] && typeof processedItem[field] === 'string') {
+          processedItem[field] = parseFloat(processedItem[field]) || 0;
+        }
       });
-    });
-
-    // Create final result following SQL specification
-    const result = Array.from(allSubsystems).map(subsystem => {
-      const metadata = metadataMap.get(subsystem) || { fluid: ''};
-      const insulation = insulationMap.get(subsystem) || { totalItems: 0, doneItems: 0 };
-      const loop = loopMap.get(subsystem) || { totalLoop: 0, loopDone: 0, loopPending: 0 };
-      const testPack = testPackMap.get(subsystem) || { serialNumber: '', testPacks: new Set() , description: ''  };
-
-      return {
-        serialNumber: testPack.serialNumber,
-        subsystem,
-        fluid: metadata.fluid,
-        totalItems: insulation.totalItems,
-        doneItems: insulation.doneItems,
-        pendingItems: insulation.totalItems - insulation.doneItems,
-        description: testPack.description,
-        numTestPacks: testPack.testPacks.size,
-        totalLoops: loop.totalLoop,
-        doneLoops: loop.loopDone,
-        pendingLoops: loop.loopPending
-      };
-    }).sort((a, b) => b.totalItems - a.totalItems);
+      
+      return processedItem;
+    }).sort((a, b) => (b.total_insulation || 0) - (a.total_insulation || 0));
 
     const processingTime = performance.now() - startTime;
     console.log(`TableA processing time: ${processingTime.toFixed(2)}ms`);
+    console.log('Processed TableA data sample:', result[0]);
 
     return result;
-  }, [data, aislData, loopData, subsystemsInfoData]);
+  }, [loading]); // Depend on loading to ensure we have the data
 
   // Process data for TableB (Test Pack Details) using SQL specification
   const tableBData = useMemo(() => {
@@ -340,19 +287,21 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     const uniqueSubsystems = new Set(tableAData.map(item => item.subsystem)).size;
     const uniqueTestPacks = new Set(tableBData.map(item => item.testPack)).size;
     
-    const totalItemsSum = tableAData.reduce((sum, item) => sum + item.totalItems, 0);
-    const totalDoneItemsSum = tableAData.reduce((sum, item) => sum + item.doneItems, 0);
-    const totalPendingItemsSum = tableAData.reduce((sum, item) => sum + item.pendingItems, 0);
+    const totalItemsSum = tableAData.reduce((sum, item) => sum + (item.total_insulation || 0), 0);
+    const totalDoneItemsSum = tableAData.reduce((sum, item) => sum + (item.done_insulation || 0), 0);
+    const totalPendingItemsSum = tableAData.reduce((sum, item) => sum + (item.pending_insulation || 0), 0);
     
-    const totalLoopsSum = tableAData.reduce((sum, item) => sum + item.totalLoops, 0);
-    const totalPendingLoopsSum = tableAData.reduce((sum, item) => sum + item.pendingLoops, 0);
+    const totalLoopsSum = tableAData.reduce((sum, item) => sum + (item.total_loop || 0), 0);
+    const totalPendingLoopsSum = tableAData.reduce((sum, item) => sum + (item.pending_loop || 0), 0);
     
     const doneTestPacks = tableBData.filter(item => item.testPackProgress === 100).length;
     const pendingTestPacks = tableBData.filter(item => item.testPackProgress < 100).length;
     
     const avgProgressItemsPercent = tableAData.length > 0 ? 
       Math.round(tableAData.reduce((sum, item) => {
-        const progress = item.totalItems > 0 ? (item.doneItems / item.totalItems) * 100 : 0;
+        const totalItems = item.total_insulation || 0;
+        const doneItems = item.done_insulation || 0;
+        const progress = totalItems > 0 ? (doneItems / totalItems) * 100 : 0;
         return sum + progress;
       }, 0) / tableAData.length) : 0;
 
