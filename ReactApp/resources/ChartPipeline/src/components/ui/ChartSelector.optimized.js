@@ -31,6 +31,7 @@ const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsT
 const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
+const InstrumentsReportContainer = lazy(() => import('../panels/InstrumentsReportContainer'));
 
 /**
  * ChartSelector component to switch between different charts
@@ -160,7 +161,8 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     onChainSelect={isometricFilter.onChainSelect}
                     selectedChainIndex={isometricFilter.selectedChainIndex}
                   />
-                  <DynamicCalculationPanel
+                  {/* Use the new InstrumentsReportContainer instead of DynamicCalculationPanel */}
+                  <InstrumentsReportContainer
                     controlData={controlData}
                     detailsData={detailsData}
                     filteredControlData={finalControlData}
@@ -183,7 +185,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/*/>*/}
                   <InstrumentsTableFilterProvider>
                     <FilterStatusBar />
-                    {/* Place InstrumentsStatusChart beside DynamicInstrumentsTable with horizontal alignment */}
+                    {/* InstrumentsStatusChart is now included in InstrumentsReportContainer beside DynamicInstrumentsTable with horizontal alignment */}
                     <HStack spacing={4} align="stretch" minH="600px" width="100%" maxWidth="100%" overflow="hidden">
                       <Box flex="1" display="flex" flexDirection="column">
                         <DynamicInstrumentsTable 

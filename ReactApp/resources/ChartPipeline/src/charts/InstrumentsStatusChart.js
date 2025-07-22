@@ -37,8 +37,8 @@ const ChartLegend = ({ datasets, hiddenDatasets, onToggleDataset }) => (
         zIndex="10"
         background="inherit"
         py={1}
-        mb={2}
-        gap={3}
+        mb={1}
+        gap={4}
         justifyContent="center"
         width="100%"
     >

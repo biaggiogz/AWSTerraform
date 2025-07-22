@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { Box, VStack } from '@chakra-ui/react';
 import InstrumentsReportSQLPanel from './InstrumentsReportSQLPanel';
 import InstrumentsStatusChart from '../../charts/InstrumentsStatusChart';
+import InstrumentsReportMetricCards from '../ui/InstrumentsReportMetricCards';
+import InstrumentsReportStateNotification from '../ui/InstrumentsReportStateNotification';
+import { InstrumentsTableFilterProvider } from '../filters/InstrumentsTableFilter';
+import FilterStatusBar from '../filters/FilterStatusBar';
 
-const InstrumentsReportContainer = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters }) => {
+const InstrumentsReportContainer = ({ controlData, detailsData, filteredControlData: initialFilteredControlData, filteredDetailsData: initialFilteredDetailsData, filters }) => {
   // State for filter visibility and propagation
-  const [filteredData, setFilteredData] = useState(detailsData);
-  const [filteredControlData, setFilteredControlData] = useState(controlData);
+  const [filteredData, setFilteredData] = useState(initialFilteredDetailsData || detailsData);
+  const [filteredControlData, setFilteredControlData] = useState(initialFilteredControlData || controlData);
   const [loopFilteredControlData, setLoopFilteredControlData] = useState(controlData);
   const [progressFilterVisible, setProgressFilterVisible] = useState(false);
   const [itemsFilterVisible, setItemsFilterVisible] = useState(false);
@@ -25,7 +29,9 @@ const InstrumentsReportContainer = ({ controlData, detailsData, filteredControlD
 
   return (
     <Box width="100%">
+      <InstrumentsReportStateNotification />
       <VStack spacing={4} align="stretch">
+        <InstrumentsReportMetricCards />
         <InstrumentsReportSQLPanel
           controlData={controlData}
           detailsData={detailsData}
@@ -46,8 +52,11 @@ const InstrumentsReportContainer = ({ controlData, detailsData, filteredControlD
           onBringToFront={handleBringToFront}
         />
         
-        {/* Add InstrumentsStatusChart here */}
-        <InstrumentsStatusChart />
+        {/* Wrap InstrumentsStatusChart with InstrumentsTableFilterProvider */}
+        <InstrumentsTableFilterProvider>
+          <FilterStatusBar />
+          <InstrumentsStatusChart />
+        </InstrumentsTableFilterProvider>
       </VStack>
     </Box>
   );
