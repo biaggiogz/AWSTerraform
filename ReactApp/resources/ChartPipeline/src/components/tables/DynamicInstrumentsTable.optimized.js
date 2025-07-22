@@ -294,33 +294,102 @@ const DynamicInstrumentsTable = () => {
 
       return Object.entries(groups).map(([val, items]) => {
         const node = { [key]: val };
-
-        // Sum numeric fields
-        numericFields.forEach(f => {
-          if (f === 'DONE') {
-            // For DONE field, recalculate based on the aggregated values
-            const total = items.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
-            const teiga = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
-            const siemsa = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
-            const installed = teiga + siemsa;
+        
+        // Check if we're not at the last level and should process children
+        if (level < groupByFields.length - 1) {
+          // Process next level to check if there's only one child
+          const nextKey = groupByFields[level + 1];
+          const nextGroups = {};
+          
+          items.forEach(row => {
+            const nextVal = row[nextKey] || 'N/A';
+            if (!nextGroups[nextVal]) nextGroups[nextVal] = [];
+            nextGroups[nextVal].push(row);
+          });
+          
+          // If there's only one child at the next level, merge it with this node
+          if (Object.keys(nextGroups).length === 1) {
+            const singleChildKey = Object.keys(nextGroups)[0];
+            const singleChildItems = nextGroups[singleChildKey];
             
-            // Only show DONE when fully installed (total = installed)
-            node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
+            // Add the child's key-value to the parent node
+            node[nextKey] = singleChildKey;
+            
+            // If we're not at the second-to-last level, recursively check for more single children
+            if (level < groupByFields.length - 2) {
+              // Process the single child's items recursively
+              const mergedChildren = aggregateGroup(singleChildItems, level + 2);
+              if (mergedChildren.length > 0) {
+                node.children = mergedChildren;
+              }
+            }
+            
+            // Sum numeric fields for this merged node
+            numericFields.forEach(f => {
+              if (f === 'DONE') {
+                const total = singleChildItems.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
+                const teiga = singleChildItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
+                const siemsa = singleChildItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
+                const installed = teiga + siemsa;
+                node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
+              } else {
+                node[f] = singleChildItems.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+              }
+            });
+            
+            // Average progress
+            node['PROGRESS TP'] = singleChildItems.length > 0 ? 
+              (singleChildItems.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / singleChildItems.length) : 0;
+            
+            return node;
           } else {
-            node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+            // Multiple children - standard approach
+            // Sum numeric fields
+            numericFields.forEach(f => {
+              if (f === 'DONE') {
+                const total = items.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
+                const teiga = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
+                const siemsa = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
+                const installed = teiga + siemsa;
+                node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
+              } else {
+                node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+              }
+            });
+            
+            // Average progress
+            node['PROGRESS TP'] = items.length > 0 ? 
+              (items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / items.length) : 0;
+            
+            // Process children normally
+            const children = aggregateGroup(items, level + 1);
+            if (children.length > 0) {
+              node.children = children;
+            }
+            
+            return node;
           }
-        });
-
-        // Average progress
-        node['PROGRESS TP'] = items.length > 0 ? 
-          (items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / items.length) : 0;
-
-        const children = aggregateGroup(items, level + 1);
-        if (children.length > 0) {
-          node.children = children;
+        } else {
+          // Last level - no children to process
+          // Sum numeric fields
+          numericFields.forEach(f => {
+            if (f === 'DONE') {
+              const total = items.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
+              const teiga = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
+              const siemsa = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
+              const installed = teiga + siemsa;
+              node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
+            } else {
+              node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+            }
+          });
+          
+          // Average progress
+          node['PROGRESS TP'] = items.length > 0 ? 
+            (items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / items.length) : 0;
+          
+          return node;
         }
-
-        return node;
       });
     };
 
