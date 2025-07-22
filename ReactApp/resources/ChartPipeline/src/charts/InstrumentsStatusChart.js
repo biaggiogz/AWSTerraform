@@ -61,7 +61,7 @@ const prepareChartData = (data, labelField) => {
         backgroundColor: '#ED7D31', // Orange
         borderColor: '#D35400',
         borderWidth: 1,
-        stack: 'stack1',
+        stack: 'pending',
         datalabels: {
           display: showLabels,
           color: 'white',
@@ -76,7 +76,7 @@ const prepareChartData = (data, labelField) => {
         backgroundColor: '#A55B4B', // Reddish brown
         borderColor: '#8B4513',
         borderWidth: 1,
-        stack: 'stack2',
+        stack: 'installed',
         datalabels: {
           display: showLabels,
           color: 'white',
@@ -91,7 +91,7 @@ const prepareChartData = (data, labelField) => {
         backgroundColor: '#6C5F5B', // Dark gray
         borderColor: '#4A4A4A',
         borderWidth: 1,
-        stack: 'stack3',
+        stack: 'installed',
         datalabels: {
           display: showLabels,
           color: 'white',
@@ -134,7 +134,6 @@ const getChartOptions = (data, labelField) => {
   return {
     indexAxis: 'y', // Horizontal bar chart
     responsive: true,
-    maintainAspectRatio: false,
     responsiveAnimationDuration: 0,
     maintainAspectRatio: false,
     // Set a fixed height per bar to enable scrolling
@@ -142,6 +141,14 @@ const getChartOptions = (data, labelField) => {
     barPercentage: 0.6,
     categoryPercentage: 0.8,
     plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          padding: 10,
+          boxWidth: 15,
+          font: { size: 11 }
+        }
+      },
       tooltip: {
         callbacks: {
           title: (context) => {
@@ -154,14 +161,6 @@ const getChartOptions = (data, labelField) => {
           }
         }
       },
-      legend: {
-        position: 'bottom',
-        labels: {
-          padding: 20,
-          boxWidth: 15,
-          font: { size: 12 }
-        }
-      },
       title: {
         display: false
       },
@@ -171,7 +170,7 @@ const getChartOptions = (data, labelField) => {
     },
     scales: {
       x: {
-        stacked: false,
+        stacked: true,
         grid: {
           display: true,
           drawBorder: true,
@@ -182,7 +181,7 @@ const getChartOptions = (data, labelField) => {
         suggestedMax: maxValue * 1.1 // Add some padding
       },
       y: {
-        stacked: false,
+        stacked: true,
         grid: {
           display: false,
           drawBorder: true,
@@ -211,6 +210,10 @@ const chartContainerStyle = `
   .chart-container {
     max-width: 100%;
     overflow-x: hidden;
+  }
+  .chart-js-legend {
+    position: relative;
+    z-index: 10;
   }
 `;
 
@@ -280,15 +283,17 @@ const InstrumentsStatusChart = () => {
         <Text fontSize="sm" mb={2} color="gray.500">
           GROUPING BY: {groupBy.join(', ')}
         </Text>
-        <Box height="500px" width="100%" overflowY="auto" overflowX="hidden" className="chart-container">
-          <Box height={`${Math.max(500, processedData.length * 30)}px`} width="100%" maxWidth="100%">
+        <Flex direction="column" height="450px">
+          <Box flex="1" width="100%" overflowY="auto" overflowX="hidden" className="chart-container">
+            <Box height={`${Math.max(400, processedData.length * 30)}px`} width="100%" maxWidth="100%">
             <Bar 
               data={chartData} 
               options={chartOptions}
               key={`chart-${selectedSubsystem || 'none'}-${selectedTestPack || 'none'}-${processedData.length}`}
             />
+            </Box>
           </Box>
-        </Box>
+        </Flex>
       </Flex>
     </Box>
   );
