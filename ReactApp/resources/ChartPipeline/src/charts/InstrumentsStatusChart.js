@@ -12,8 +12,8 @@ import {
   LinearScale,
   BarElement,
   Title,
-  Tooltip as ChartTooltip,
-  Legend
+  Tooltip,
+  Legend,
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Bar } from 'react-chartjs-2';
@@ -25,70 +25,172 @@ ChartJS.register(
   LinearScale,
   BarElement,
   Title,
-  ChartTooltip,
+  Tooltip,
   Legend,
   ChartDataLabels
 );
 
-// Chart options configuration
-const getChartOptions = (groupByField) => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  indexAxis: 'y',
-  scales: {
-    x: {
-      stacked: true,
-      title: {
-        display: true,
-        text: 'Number of Instruments'
-      }
-    },
-    y: {
-      stacked: true,
-      title: {
-        display: true,
-        text: groupByField
-      }
-    }
-  },
-  plugins: {
-    tooltip: {
-      callbacks: {
-        footer: (tooltipItems) => {
-          const item = tooltipItems[0];
-          const dataIndex = item.dataIndex;
-          const dataset = item.chart.data.datasets;
-          
-          // Calculate total for this item
-          let total = 0;
-          dataset.forEach(ds => {
-            total += ds.data[dataIndex] || 0;
-          });
-          
-          return `Total: ${total}`;
+// Prepare chart data for Chart.js
+const prepareChartData = (data, labelField) => {
+  if (!data || data.length === 0) {
+    return { labels: [], datasets: [] };
+  }
+  
+  // Extract labels (Y-axis categories)
+  const labels = data.map(item => item[labelField] || 'N/A');
+  
+  // Extract data for each series
+  const totalInstData = data.map(item => item['TOTAL INST'] || 0);
+  const installedTeigaData = data.map(item => item['INSTALLED BY TEIGA-TMI'] || 0);
+  const installedSiemsaData = data.map(item => item['INSTALLED BY SIEMSA'] || 0);
+  const pendingData = data.map(item => item['PENDING'] || 0);
+  
+  // Determine if we should show labels based on data density
+  const showLabels = data.length <= 10;
+  
+  return {
+    labels,
+    datasets: [
+      // PENDING
+      {
+        label: 'PENDING',
+        data: pendingData,
+        backgroundColor: '#ED7D31', // Orange
+        borderColor: '#D35400',
+        borderWidth: 1,
+        stack: 'pending',
+        datalabels: {
+          display: showLabels,
+          color: 'white',
+          font: { weight: 'bold', size: 11 },
+          formatter: (value) => value || ''
+        }
+      },
+      // INSTALLED BY TEIGA-TMI
+      {
+        label: 'INSTALLED BY TEIGA-TMI',
+        data: installedTeigaData,
+        backgroundColor: '#A55B4B', // Reddish brown
+        borderColor: '#8B4513',
+        borderWidth: 1,
+        stack: 'installed',
+        datalabels: {
+          display: showLabels,
+          color: 'white',
+          font: { weight: 'bold', size: 11 },
+          formatter: (value) => value || ''
+        }
+      },
+      // INSTALLED BY SIEMSA
+      {
+        label: 'INSTALLED BY SIEMSA',
+        data: installedSiemsaData,
+        backgroundColor: '#6C5F5B', // Dark gray
+        borderColor: '#4A4A4A',
+        borderWidth: 1,
+        stack: 'installed',
+        datalabels: {
+          display: showLabels,
+          color: 'white',
+          font: { weight: 'bold', size: 11 },
+          formatter: (value) => value || ''
+        }
+      },
+      // TOTAL INST - as a line to show the total
+      {
+        type: 'line',
+        label: 'TOTAL INST',
+        data: totalInstData,
+        backgroundColor: '#FFE9D6', // Light beige
+        borderColor: '#FFD8A8',
+        borderWidth: 2,
+        pointBackgroundColor: '#FFE9D6',
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        fill: false,
+        datalabels: {
+          display: showLabels,
+          color: '#000',
+          backgroundColor: '#FFE9D6',
+          borderRadius: 4,
+          padding: 4,
+          font: { weight: 'bold', size: 11 },
+          formatter: (value) => value || ''
         }
       }
-    },
-    legend: {
-      position: 'bottom',
-    },
-    title: {
-      display: true,
-      text: 'Instruments Installation Status',
-      font: {
-        size: 16,
-        weight: 'bold'
+    ]
+  };
+};
+
+// Chart.js options configuration
+const getChartOptions = (data, labelField) => {
+  // Find max value for scaling
+  const maxValue = data.length > 0 ? 
+    Math.max(...data.map(item => item['TOTAL INST'] || 0)) : 0;
+  
+  return {
+    indexAxis: 'y', // Horizontal bar chart
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          title: (context) => {
+            return context[0].label;
+          },
+          afterBody: (context) => {
+            const index = context[0].dataIndex;
+            const item = data[index];
+            return `TOTAL INST: ${item['TOTAL INST'] || 0}`;
+          }
+        }
+      },
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          boxWidth: 15,
+          font: { size: 12 }
+        }
+      },
+      title: {
+        display: false
+      },
+      datalabels: {
+        // Global datalabels options are set per dataset
       }
     },
-    datalabels: {
-      color: 'white',
-      font: {
-        weight: 'bold'
+    scales: {
+      x: {
+        stacked: true,
+        grid: {
+          display: true,
+          drawBorder: true,
+        },
+        ticks: {
+          font: { size: 11 }
+        },
+        suggestedMax: maxValue * 1.1 // Add some padding
       },
-      formatter: (value) => value > 0 ? value : ''
+      y: {
+        stacked: true,
+        grid: {
+          display: false,
+          drawBorder: true,
+        },
+        ticks: {
+          font: { size: 12 }
+        },
+        title: {
+          display: true,
+          text: labelField,
+          font: { size: 12, weight: 'bold' }
+        }
+      }
     }
-  }
-});
+  };
+};
+
 
 const InstrumentsStatusChart = () => {
   const {
@@ -99,55 +201,37 @@ const InstrumentsStatusChart = () => {
   // Call hooks at the top level, before any conditional returns
   const bgColor = useColorModeValue('white', 'gray.800');
   
-  // Filter out items with zero total and prepare chart data
-  const chartData = useMemo(() => {
-    if (!tableData || tableData.length === 0) return { labels: [], datasets: [] };
+  // Process data for the chart
+  const { processedData, labelField } = useMemo(() => {
+    if (!tableData || tableData.length === 0) {
+      return { processedData: [], labelField: 'SUBSYSTEM' };
+    }
     
     // Filter items with non-zero totals
-    const filteredData = tableData.filter(item => (item['TOTAL INST'] || 0) > 0);
-    if (filteredData.length === 0) return { labels: [], datasets: [] };
+    let filtered = tableData.filter(item => (item['TOTAL INST'] || 0) > 0);
+    
+    // Sort by total for better visualization
+    filtered = filtered.sort((a, b) => (b['TOTAL INST'] || 0) - (a['TOTAL INST'] || 0));
+    
+    // Limit to 12 items for better visualization
+    filtered = filtered.slice(0, 12);
     
     // Get the field to use as labels (first groupBy field)
-    const labelField = groupBy[0] || 'SUBSYSTEM';
+    const field = groupBy[0] || 'SUBSYSTEM';
     
-    // Extract labels and data
-    const labels = filteredData.map(item => item[labelField] || 'N/A');
-    
-    // Create datasets
-    const datasets = [
-      {
-        label: 'PENDING',
-        data: filteredData.map(item => item['PENDING'] || 0),
-        backgroundColor: 'rgba(245, 158, 11, 0.8)', // orange
-        borderColor: 'rgba(245, 158, 11, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'INSTALLED BY TEIGA-TMI',
-        data: filteredData.map(item => item['INSTALLED BY TEIGA-TMI'] || 0),
-        backgroundColor: 'rgba(59, 130, 246, 0.8)', // blue
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 1,
-      },
-      {
-        label: 'INSTALLED BY SIEMSA',
-        data: filteredData.map(item => item['INSTALLED BY SIEMSA'] || 0),
-        backgroundColor: 'rgba(34, 197, 94, 0.8)', // green
-        borderColor: 'rgba(34, 197, 94, 1)',
-        borderWidth: 1,
-      },
-    ];
-    
-    return { labels, datasets };
+    return { processedData: filtered, labelField: field };
   }, [tableData, groupBy]);
   
-  // Get chart options
+  // Prepare chart data and options
+  const chartData = useMemo(() => {
+    return prepareChartData(processedData, labelField);
+  }, [processedData, labelField]);
+  
   const chartOptions = useMemo(() => {
-    const labelField = groupBy[0] || 'SUBSYSTEM';
-    return getChartOptions(labelField);
-  }, [groupBy]);
+    return getChartOptions(processedData, labelField);
+  }, [processedData, labelField]);
 
-  if (!chartData.labels.length) {
+  if (!processedData.length) {
     return (
       <Box p={4} borderWidth="1px" borderRadius="md">
         <Text>No data available for chart visualization.</Text>
@@ -167,8 +251,11 @@ const InstrumentsStatusChart = () => {
         <Text fontSize="sm" mb={2} color="gray.500">
           X represents: {groupBy.join(', ')}
         </Text>
-        <Box height="500px">
-          <Bar data={chartData} options={chartOptions} />
+        <Box height="600px" width="100%">
+          <Bar 
+            data={chartData} 
+            options={chartOptions}
+          />
         </Box>
       </Flex>
     </Box>
