@@ -278,22 +278,81 @@ const getChartOptions = (data, labelField) => {
 
 // Custom style to ensure proper chart rendering with scrolling and proper width constraints
 const chartContainerStyle = `
-  .chart-container canvas {
-    height: 100% !important; /* Ensure canvas fills the container */
-    max-width: 100% !important;
+  .chart-scroll-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
   }
   .chart-container {
-    max-width: 100%;
+    flex: 1;
+    overflow-y: auto;
     overflow-x: hidden;
-    overflow-y: auto; /* Enable vertical scrolling */
-    height: calc(100% - 30px); /* Subtract legend height */
+    position: relative;
+    scrollbar-width: thin;
+  }
+  .chart-container canvas {
+    height: 100% !important;
+    max-width: 100% !important;
   }
   .chart-js-legend {
     position: sticky;
     top: 0;
     background-color: white;
     z-index: 10;
-    height: 30px; /* Fixed height for legend */
+    height: 30px;
+    padding: 5px 0;
+  }
+  .x-axis-container {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: white;
+    border-top: 1px solid #eee;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+  }
+  .x-axis-ticks {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 40px;
+  }
+  .x-axis-tick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .x-axis-tick-line {
+    height: 8px;
+    width: 1px;
+    background-color: #ccc;
+  }
+  .x-axis-tick-label {
+    font-size: 11px;
+    color: #666;
+    font-weight: 500;
+  }
+  .x-axis-grid {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 40px;
+    right: 40px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .x-axis-grid-line {
+    width: 1px;
+    height: 100%;
+    background-color: rgba(0,0,0,0.05);
   }
 `;
 
@@ -376,6 +435,21 @@ const InstrumentsStatusChart = () => {
     return getChartOptions(processedData, labelField);
   }, [processedData, labelField]);
 
+  // Calculate tick values for the sticky X-axis
+  const xAxisTicks = useMemo(() => {
+    if (!processedData.length) return [0, 0, 0, 0, 0, 0];
+    
+    const maxValue = Math.max(...processedData.map(item => item['TOTAL INST'] || 0)) * 1.1;
+    
+    // Create 5 evenly spaced ticks
+    const tickCount = 5;
+    const ticks = [];
+    for (let i = 0; i <= tickCount; i++) {
+      ticks.push(Math.round(maxValue * (i / tickCount)));
+    }
+    return ticks;
+  }, [processedData]);
+
   if (!processedData.length) {
     return (
         <Box p={4} borderWidth="1px" borderRadius="md">
@@ -396,37 +470,52 @@ const InstrumentsStatusChart = () => {
           overflow="hidden"
       >
         <style>{chartContainerStyle}</style>
-        <Flex direction="column" height="100%" position="relative">
-          <Box
-              flex="1"
-              width="100%"
-              overflowY="auto" /* Enable vertical scrolling */
-              overflowX="hidden"
-              className="chart-container"
-              position="relative"
-              minHeight="400px" /* Ensure minimum height */
-          >
+        <Box className="chart-scroll-container">
+          <Box className="chart-container">
             <ChartLegend 
               datasets={chartData.datasets} 
               hiddenDatasets={hiddenDatasets}
               onToggleDataset={handleToggleDataset}
             />
             <Box
-                height={processedData.length > 10 ? `${processedData.length * 50}px` : "calc(100% - 10px)"} /* Increased height per bar for better spacing */
+                height={processedData.length > 10 ? `${processedData.length * 50}px` : "calc(100% - 10px)"} /* Dynamic height based on data */
                 width="100%"
                 maxWidth="100%"
                 mb="20px" /* Add margin to ensure X-axis is visible */
                 position="relative" /* Ensure proper positioning */
-                paddingBottom="20px"
+                paddingBottom="50px" /* Add padding for the fixed X-axis */
             >
               <Bar
                   data={chartData}
-                  options={chartOptions}
+                  options={{
+                    ...chartOptions,
+                    scales: {
+                      ...chartOptions.scales,
+                      x: {
+                        ...chartOptions.scales.x,
+                        display: false // Hide the original X-axis since we're using our custom one
+                      }
+                    }
+                  }}
                   key={`chart-${selectedSubsystem || 'none'}-${selectedTestPack || 'none'}-${processedData.length}`}
               />
             </Box>
           </Box>
-        </Flex>
+          
+          {/* Sticky X-axis that stays at the bottom */}
+          <Box className="x-axis-container">
+            <Flex direction="column" width="100%" position="relative">
+              <Flex className="x-axis-ticks">
+                {xAxisTicks.map((tick, index) => (
+                  <Box key={`tick-${index}`} className="x-axis-tick">
+                    <Box className="x-axis-tick-line" />
+                    <Text className="x-axis-tick-label">{tick}</Text>
+                  </Box>
+                ))}
+              </Flex>
+            </Flex>
+          </Box>
+        </Box>
       </Box>
   );
 };
