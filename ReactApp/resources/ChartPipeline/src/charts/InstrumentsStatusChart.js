@@ -185,7 +185,7 @@ const getChartOptions = (data, labelField) => {
     barPercentage: 0.9, // Percentage of the category width
     categoryPercentage: 0.7, // Percentage of the available width
     // Set the height to match the container
-    height: 460, // 500px container - padding
+    height: 640, // 680px container - padding
     plugins: {
       legend: {
         display: false,
@@ -382,7 +382,7 @@ const InstrumentsStatusChart = () => {
           borderWidth="1px"
           borderRadius="md"
           bg={bgColor}
-          height="500px" /* Match the height of the return box in DynamicInstrumentsTable */
+          height="680px" /* Match the height of the return box in DynamicInstrumentsTable */
           width="100%"
           maxWidth="100%"
           overflow="hidden"
