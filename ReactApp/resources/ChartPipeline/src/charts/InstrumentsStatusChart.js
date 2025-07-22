@@ -118,12 +118,22 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
       },
       label: {
         show: field !== 'DONE' ? true : false, // Hide label for DONE to avoid clutter
-        position: field === 'PENDING' ? 'insideLeft' : 'insideRight'
+        position: field === 'PENDING' ? 'insideLeft' : 'insideRight',
+        formatter: function(params) {
+          // Don't show label if value is 0 or '-'
+          return params.value === 0 || params.value === '-' ? '' : params.value;
+        }
       },
-      data: seriesData[field].map((value, index) => value),
+      data: seriesData[field].map((value, index) => value === 0 ? '-' : value),
       // Use dynamic z-index based on actual values for each category
       renderItem: function(params, api) {
         const value = api.value(0);
+        
+        // Don't render if value is 0 or '-'
+        if (value === 0 || value === '-') {
+          return { type: 'group' }; // Return empty group
+        }
+        
         const categoryIndex = params.dataIndex;
         const zIndex = zIndexMap[categoryIndex][field];
         
