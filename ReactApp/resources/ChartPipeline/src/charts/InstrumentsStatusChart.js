@@ -71,8 +71,8 @@ const ChartLegend = ({ datasets, hiddenDatasets, onToggleDataset }) => (
 
 // Prepare chart data for Chart.js
 const prepareChartData = (data, labelField) => {
-  // Limit to 15 items for better visualization
-  data = data.slice(0, 15);
+  // Don't limit the data - we'll handle scrolling
+  // data = data.slice(0, 15);
   if (!data || data.length === 0) {
     return { labels: [], datasets: [] };
   }
@@ -170,7 +170,7 @@ const prepareChartData = (data, labelField) => {
 const getChartOptions = (data, labelField) => {
   // Find max value for scaling
   const maxValue = data.length > 0 ?
-      Math.max(...data.map(item => item['TOTAL INST'] || 0)) : 0;
+      Math.max(...data.map(item => item['TOTAL INST'] || 0)) * 1.1 : 10; // Add 10% padding
 
   // Calculate how many bars we can fit in the chart
   const visibleBars = Math.min(data.length, 15); // Show max 15 bars at a time
@@ -181,11 +181,11 @@ const getChartOptions = (data, labelField) => {
     responsiveAnimationDuration: 0,
     maintainAspectRatio: false,
     // Set a fixed height per bar to enable scrolling
-    barThickness: null, // Let Chart.js calculate this automatically
+    barThickness: 20, // Fixed bar thickness for better visibility
     barPercentage: 0.9, // Percentage of the category width
-    categoryPercentage: 0.7, // Percentage of the available width
+    categoryPercentage: 0.8, // Percentage of the available width
     // Set the height to match the container
-    height: 640, // 680px container - padding
+    height: data.length * 40, // Dynamic height based on number of bars
     plugins: {
       legend: {
         display: false,
@@ -224,9 +224,14 @@ const getChartOptions = (data, labelField) => {
         },
         ticks: {
           font: { size: 11 },
-          padding: 16 // 👈 Add this line (increase to move axis further down)
+          padding: 16, // 👈 Add this line (increase to move axis further down)
+          callback: function(value) {
+            // Format the tick values to avoid decimals
+            return Math.round(value);
+          }
         },
-        suggestedMax: maxValue  // Add some padding
+        max: maxValue, // Set explicit maximum value
+        min: 0 // Start from zero
       },
       y: {
         stacked: true,
@@ -280,6 +285,7 @@ const chartContainerStyle = `
   .chart-container {
     max-width: 100%;
     overflow-x: hidden;
+    overflow-y: auto; /* Enable vertical scrolling */
     height: calc(100% - 30px); /* Subtract legend height */
   }
   .chart-js-legend {
@@ -335,6 +341,8 @@ const InstrumentsStatusChart = () => {
 
     // Get the field to use as labels (first groupBy field)
     const field = groupBy[0] || 'SUBSYSTEM';
+
+    console.log('Chart data:', filtered); // Debug data
 
     return { processedData: filtered, labelField: field };
   }, [tableData, groupBy, selectedSubsystem, selectedTestPack]); // Add dependencies to trigger re-render
@@ -392,10 +400,11 @@ const InstrumentsStatusChart = () => {
           <Box
               flex="1"
               width="100%"
-              overflowY="auto" /* Change to auto to enable scrolling */
+              overflowY="auto" /* Enable vertical scrolling */
               overflowX="hidden"
               className="chart-container"
               position="relative"
+              minHeight="400px" /* Ensure minimum height */
           >
             <ChartLegend 
               datasets={chartData.datasets} 
@@ -403,12 +412,12 @@ const InstrumentsStatusChart = () => {
               onToggleDataset={handleToggleDataset}
             />
             <Box
-                height="calc(100% - 10px)" /* Subtract a bit for padding */
+                height={processedData.length > 10 ? `${processedData.length * 40}px` : "calc(100% - 10px)"} /* Dynamic height based on data */
                 width="100%"
                 maxWidth="100%"
-                mb="0px" /* Use margin instead of padding to ensure X-axis is visible */
+                mb="20px" /* Add margin to ensure X-axis is visible */
                 position="relative" /* Ensure proper positioning */
-                paddingBottom="0px"
+                paddingBottom="20px"
             >
               <Bar
                   data={chartData}
