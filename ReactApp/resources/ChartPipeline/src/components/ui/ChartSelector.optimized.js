@@ -12,6 +12,15 @@ import {
   HStack,
   Badge
 } from '@chakra-ui/react';
+
+// Define chart colors for consistency with InstrumentsStatusChart
+const chartColors = {
+  'TOTAL INST': '#FFE9D6',
+  'INSTALLED BY TEIGA-TMI': '#A55B4B',
+  'INSTALLED BY SIEMSA': '#6C5F5B',
+  'PENDING': '#ED7D31',
+  'DONE': '#4CAF50'
+};
 import { useIsometricRelationshipFilter } from '../filters/IsometricRelationshipFilter.optimized';
 import { useTestPackFilter } from '../filters/TestPackRelationshipFilter.optimized';
 import { useSubsystemFilter } from '../filters/SubsystemRelationshipFilter.optimized';
@@ -96,17 +105,32 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
         <Tabs
             isFitted
             variant="enclosed"
-            colorScheme="blue"
+            colorScheme="green"
             lazyBehavior="keepMounted"
             index={activeIndex !== -1 ? activeIndex : 0} // Default to LOOP SIGNAL PROGRESS REPORT if not found
             onChange={handleTabChange}
+            sx={{
+              '.chakra-tabs__tab': {
+                fontWeight: 'bold',
+                _hover: {
+                  bg: chartColors['TOTAL INST'],
+                  color: 'black'
+                }
+              },
+              '.chakra-tabs__tab-panel': {
+                borderWidth: '1px',
+                borderColor: 'gray.200',
+                borderRadius: 'md',
+                p: 4
+              }
+            }}
         >
           <TabList mb="1em">
-            <Tab>LOOP SIGNAL PROGRESS REPORT</Tab>
-            <Tab>INSULATION PROGRESS REPORT</Tab>
-            <Tab>TEST PACK PROGRESS REPORT</Tab>
-            <Tab>INSTRUMENTS REPORT</Tab>
-            <Tab>SUMMARY SUBSYSTEMS</Tab>
+            <Tab _selected={{ color: 'white', bg: chartColors['INSTALLED BY TEIGA-TMI'] }}>LOOP SIGNAL PROGRESS REPORT</Tab>
+            <Tab _selected={{ color: 'white', bg: chartColors['INSTALLED BY SIEMSA'] }}>INSULATION PROGRESS REPORT</Tab>
+            <Tab _selected={{ color: 'white', bg: chartColors['PENDING'] }}>TEST PACK PROGRESS REPORT</Tab>
+            <Tab _selected={{ color: 'white', bg: chartColors['DONE'] }}>INSTRUMENTS REPORT</Tab>
+            <Tab _selected={{ color: 'black', bg: chartColors['TOTAL INST'] }}>SUMMARY SUBSYSTEMS</Tab>
           </TabList>
           <TabPanels>
             <TabPanel p={0}>
@@ -143,13 +167,18 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/* Triple Filter Status */}
                   <HStack spacing={4} justify="center">
                     {isometricFilter.selectedIsometric && (
-                      <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
+                      <Badge bg={chartColors['INSTALLED BY TEIGA-TMI']} color="white" fontSize="sm" px={3} py={1}>
                         ISOMETRIC: {isometricFilter.selectedIsometric}
                       </Badge>
                     )}
                     {subsystemFilter.selectedSubsystem && (
-                      <Badge colorScheme="orange" fontSize="sm" px={3} py={1}>
+                      <Badge bg={chartColors['INSTALLED BY SIEMSA']} color="white" fontSize="sm" px={3} py={1}>
                         SUBSYSTEM: {subsystemFilter.selectedSubsystem}
+                      </Badge>
+                    )}
+                    {testPackFilter.selectedTestPack && (
+                      <Badge bg={chartColors['PENDING']} color="white" fontSize="sm" px={3} py={1}>
+                        TEST PACK: {testPackFilter.selectedTestPack}
                       </Badge>
                     )}
                   </HStack>

@@ -52,7 +52,7 @@ const ProgressCell = React.memo(({ progress }) => {
       <Box
         height="18px"
         width={`${percentage}%`}
-        bg="green.500"
+        bg={percentage === 100 ? "#4CAF50" : "#ED7D31"}
         borderRadius="sm"
       />
       <Text
@@ -174,6 +174,7 @@ const DynamicInstrumentsTable = () => {
       'INSTALLED BY TEIGA-TMI',
       'INSTALLED BY SIEMSA',
       'PENDING',
+      'DONE',
     ];
 
     const aggregateGroup = (rows, level = 0) => {
@@ -193,7 +194,18 @@ const DynamicInstrumentsTable = () => {
 
         // Sum numeric fields
         numericFields.forEach(f => {
-          node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+          if (f === 'DONE') {
+            // For DONE field, recalculate based on the aggregated values
+            const total = items.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
+            const teiga = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
+            const siemsa = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
+            const installed = teiga + siemsa;
+            
+            // Only show DONE when fully installed (total = installed)
+            node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
+          } else {
+            node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+          }
         });
 
         // Average progress
@@ -235,6 +247,15 @@ const DynamicInstrumentsTable = () => {
     setGroupBy(prev => prev.filter(f => f !== field));
   }, []);
 
+  // Define chart colors for consistency with InstrumentsStatusChart
+  const chartColors = {
+    'TOTAL INST': '#FFE9D6',
+    'INSTALLED BY TEIGA-TMI': '#A55B4B',
+    'INSTALLED BY SIEMSA': '#6C5F5B',
+    'PENDING': '#ED7D31',
+    'DONE': '#4CAF50'
+  };
+
   // Column definitions
   const columnHelper = createColumnHelper();
   
@@ -242,22 +263,32 @@ const DynamicInstrumentsTable = () => {
     const common = [
       columnHelper.accessor('TOTAL INST', {
         header: 'TOTAL INST',
-        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs" bg={chartColors['TOTAL INST']} px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('INSTALLED BY TEIGA-TMI', {
         header: 'INSTALLED BY TEIGA-TMI',
-        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs" bg={chartColors['INSTALLED BY TEIGA-TMI']} color="white" px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('INSTALLED BY SIEMSA', {
         header: 'INSTALLED BY SIEMSA',
-        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs" bg={chartColors['INSTALLED BY SIEMSA']} color="white" px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('PENDING', {
         header: 'PENDING',
-        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs" bg={chartColors['PENDING']} color="white" px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        size: 90,
+      }),
+      columnHelper.accessor('DONE', {
+        header: 'DONE',
+        cell: info => {
+          const value = Number(info.getValue());
+          return value > 0 ? 
+            <Text fontSize="xs" bg={chartColors['DONE']} color="white" px={2} py={1} borderRadius="sm">{value}</Text> : 
+            <Text fontSize="xs" color="gray.400">-</Text>;
+        },
         size: 90,
       }),
     ];
@@ -469,6 +500,11 @@ const DynamicInstrumentsTable = () => {
             SUM(installed_teiga_tmi) AS "INSTALLED BY TEIGA-TMI",
             SUM(installed_siemsa) AS "INSTALLED BY SIEMSA",
             SUM(pending) AS "PENDING",
+            CASE 
+              WHEN ABS(SUM(qty_inst) - SUM(installed_teiga_tmi) - SUM(installed_siemsa)) < 0.01 AND SUM(qty_inst) > 0 
+              THEN SUM(qty_inst) 
+              ELSE 0 
+            END AS "DONE",
             MAX(progress) AS "PROGRESS TP"
           FROM exploded_tps
           GROUP BY subsystem, hito, tp
@@ -624,8 +660,8 @@ const DynamicInstrumentsTable = () => {
                   {headerGroup.headers.map(header => (
                     <Box
                       key={header.id}
-                      bg="purple.600"
-                      color="white"
+                      bg={chartColors[header.column.id] || "purple.600"}
+                      color={['TOTAL INST'].includes(header.column.id) ? "black" : "white"}
                       p={1}
                       textAlign="center"
                       fontWeight="bold"
