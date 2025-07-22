@@ -104,7 +104,7 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
     },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     dataZoom: [
-      { type: 'slider', yAxisIndex: 0, zoomLock: false, start: 0, end: 40 }
+      { type: 'slider', yAxisIndex: 0, zoomLock: true, start: 0, end: 16 }
     ],
     xAxis: { type: 'value' },
     yAxis: { type: 'category', axisTick: { show: false }, data: categories },

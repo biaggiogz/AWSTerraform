@@ -12,6 +12,11 @@ import {
   HStack,
   Badge
 } from '@chakra-ui/react';
+import { useIsometricRelationshipFilter } from '../filters/IsometricRelationshipFilter.optimized';
+import { useTestPackFilter } from '../filters/TestPackRelationshipFilter.optimized';
+import { useSubsystemFilter } from '../filters/SubsystemRelationshipFilter.optimized';
+import { InstrumentsTableFilterProvider } from '../filters/InstrumentsTableFilter';
+import FilterStatusBar from '../filters/FilterStatusBar';
 
 // Define chart colors for consistency with InstrumentsStatusChart
 const chartColors = {
@@ -21,11 +26,6 @@ const chartColors = {
   'PENDING': '#ED7D31',
   'DONE': '#4CAF50'
 };
-import { useIsometricRelationshipFilter } from '../filters/IsometricRelationshipFilter.optimized';
-import { useTestPackFilter } from '../filters/TestPackRelationshipFilter.optimized';
-import { useSubsystemFilter } from '../filters/SubsystemRelationshipFilter.optimized';
-import { InstrumentsTableFilterProvider } from '../filters/InstrumentsTableFilter';
-import FilterStatusBar from '../filters/FilterStatusBar';
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../../charts/LoopTestProgressChart.optimized'));
@@ -111,11 +111,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             onChange={handleTabChange}
             sx={{
               '.chakra-tabs__tab': {
-                fontWeight: 'bold',
-                _hover: {
-                  bg: chartColors['TOTAL INST'],
-                  color: 'black'
-                }
+                fontWeight: 'bold'
               },
               '.chakra-tabs__tab-panel': {
                 borderWidth: '1px',
@@ -126,11 +122,11 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             }}
         >
           <TabList mb="1em">
-            <Tab _selected={{ color: 'white', bg: chartColors['INSTALLED BY TEIGA-TMI'] }}>LOOP SIGNAL PROGRESS REPORT</Tab>
-            <Tab _selected={{ color: 'white', bg: chartColors['INSTALLED BY SIEMSA'] }}>INSULATION PROGRESS REPORT</Tab>
-            <Tab _selected={{ color: 'white', bg: chartColors['PENDING'] }}>TEST PACK PROGRESS REPORT</Tab>
-            <Tab _selected={{ color: 'white', bg: chartColors['DONE'] }}>INSTRUMENTS REPORT</Tab>
-            <Tab _selected={{ color: 'black', bg: chartColors['TOTAL INST'] }}>SUMMARY SUBSYSTEMS</Tab>
+            <Tab>LOOP SIGNAL PROGRESS REPORT</Tab>
+            <Tab>INSULATION PROGRESS REPORT</Tab>
+            <Tab>TEST PACK PROGRESS REPORT</Tab>
+            <Tab>INSTRUMENTS REPORT</Tab>
+            <Tab>SUMMARY SUBSYSTEMS</Tab>
           </TabList>
           <TabPanels>
             <TabPanel p={0}>
@@ -167,17 +163,17 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/* Triple Filter Status */}
                   <HStack spacing={4} justify="center">
                     {isometricFilter.selectedIsometric && (
-                      <Badge bg={chartColors['INSTALLED BY TEIGA-TMI']} color="white" fontSize="sm" px={3} py={1}>
+                      <Badge fontSize="sm" px={3} py={1}>
                         ISOMETRIC: {isometricFilter.selectedIsometric}
                       </Badge>
                     )}
                     {subsystemFilter.selectedSubsystem && (
-                      <Badge bg={chartColors['INSTALLED BY SIEMSA']} color="white" fontSize="sm" px={3} py={1}>
+                      <Badge fontSize="sm" px={3} py={1}>
                         SUBSYSTEM: {subsystemFilter.selectedSubsystem}
                       </Badge>
                     )}
                     {testPackFilter.selectedTestPack && (
-                      <Badge bg={chartColors['PENDING']} color="white" fontSize="sm" px={3} py={1}>
+                      <Badge fontSize="sm" px={3} py={1}>
                         TEST PACK: {testPackFilter.selectedTestPack}
                       </Badge>
                     )}
