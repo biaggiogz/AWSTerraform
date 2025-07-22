@@ -72,7 +72,7 @@ const ChartLegend = ({ datasets, hiddenDatasets, onToggleDataset }) => (
 // Prepare chart data for Chart.js
 const prepareChartData = (data, labelField) => {
   // Limit to 15 items for better visualization
-  data = data.slice(0, 25);
+  data = data.slice(0, 15);
   if (!data || data.length === 0) {
     return { labels: [], datasets: [] };
   }
@@ -157,7 +157,7 @@ const prepareChartData = (data, labelField) => {
           color: '#000',
           backgroundColor: '#FFE9D6',
           borderRadius: 4,
-          padding: 4,
+          padding: 2,
           font: { weight: 'bold', size: 11 },
           formatter: (value) => value > 0 ? value.toString() : ''
         }
@@ -172,15 +172,20 @@ const getChartOptions = (data, labelField) => {
   const maxValue = data.length > 0 ?
       Math.max(...data.map(item => item['TOTAL INST'] || 0)) : 0;
 
+  // Calculate how many bars we can fit in the chart
+  const visibleBars = Math.min(data.length, 15); // Show max 15 bars at a time
+
   return {
     indexAxis: 'y', // Horizontal bar chart
     responsive: true,
     responsiveAnimationDuration: 0,
     maintainAspectRatio: false,
     // Set a fixed height per bar to enable scrolling
-    barThickness: 25,
-    barPercentage: 0.6,
-    categoryPercentage: 0.8,
+    barThickness: null, // Let Chart.js calculate this automatically
+    barPercentage: 0.9, // Percentage of the category width
+    categoryPercentage: 0.7, // Percentage of the available width
+    // Set the height to match the container
+    height: 460, // 500px container - padding
     plugins: {
       legend: {
         display: false,
@@ -218,9 +223,10 @@ const getChartOptions = (data, labelField) => {
           drawBorder: true,
         },
         ticks: {
-          font: { size: 11 }
+          font: { size: 11 },
+          padding: 16 // 👈 Add this line (increase to move axis further down)
         },
-        suggestedMax: maxValue * 1.1 // Add some padding
+        suggestedMax: maxValue  // Add some padding
       },
       y: {
         stacked: true,
@@ -229,16 +235,38 @@ const getChartOptions = (data, labelField) => {
           drawBorder: true,
         },
         ticks: {
-          font: { size: 12 }
+          font: { size: 12 },
+          autoSkip: false, // Don't skip labels
+          maxRotation: 0, // Don't rotate labels
+          padding: 8 // Add padding between labels
         },
         title: {
           display: true,
           text: labelField,
           font: { size: 12, weight: 'bold' }
         },
-        // Remove the afterFit function as we're handling scrolling differently
+        afterFit: function(scaleInstance) {
+          // Ensure there's enough space between bars
+          const dataLength = data.length;
+          if (dataLength > 0) {
+            // Calculate minimum height per bar
+            const minHeightPerBar = 30; // Minimum height in pixels per bar
+            const totalMinHeight = dataLength * minHeightPerBar;
+            
+            // If the scale height is less than what we need, set it manually
+            if (scaleInstance.height < totalMinHeight) {
+              scaleInstance.height = totalMinHeight;
+            }
+          }
+        }
+      }
+    },
+    layout: {
+      padding: {
+        bottom: 0 // Increased padding to ensure X-axis is visible
       }
     }
+
   };
 };
 
@@ -246,19 +274,20 @@ const getChartOptions = (data, labelField) => {
 // Custom style to ensure proper chart rendering with scrolling and proper width constraints
 const chartContainerStyle = `
   .chart-container canvas {
-    height: 100% !important;
+    height: 100% !important; /* Ensure canvas fills the container */
     max-width: 100% !important;
   }
   .chart-container {
     max-width: 100%;
     overflow-x: hidden;
+    height: calc(100% - 30px); /* Subtract legend height */
   }
   .chart-js-legend {
     position: sticky;
     top: 0;
     background-color: white;
     z-index: 10;
-    padding-bottom: 8px;
+    height: 30px; /* Fixed height for legend */
   }
 `;
 
@@ -346,17 +375,17 @@ const InstrumentsStatusChart = () => {
           borderWidth="1px"
           borderRadius="md"
           bg={bgColor}
-          height="100%"
+          height="500px" /* Match the height of the return box in DynamicInstrumentsTable */
           width="100%"
           maxWidth="100%"
           overflow="hidden"
       >
         <style>{chartContainerStyle}</style>
-        <Flex direction="column" height="450px">
+        <Flex direction="column" height="100%" position="relative">
           <Box
               flex="1"
               width="100%"
-              overflowY="auto"
+              overflowY="auto" /* Change to auto to enable scrolling */
               overflowX="hidden"
               className="chart-container"
               position="relative"
@@ -367,9 +396,12 @@ const InstrumentsStatusChart = () => {
               onToggleDataset={handleToggleDataset}
             />
             <Box
-                height={`${Math.max(400, processedData.length * 20)}px`}
+                height="calc(100% - 10px)" /* Subtract a bit for padding */
                 width="100%"
                 maxWidth="100%"
+                mb="0px" /* Use margin instead of padding to ensure X-axis is visible */
+                position="relative" /* Ensure proper positioning */
+                paddingBottom="0px"
             >
               <Bar
                   data={chartData}
