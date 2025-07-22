@@ -31,11 +31,19 @@ FROM detailsInstrumentsTable;
  * @returns {string} SQL query string
  */
 export const getTotalInstQuery = () => `
+-- For controlInstrumentsByIsometric table
 SELECT SUM("QTY INST") AS "TOTAL INST _Global"
 FROM controlInstrumentsByIsometric;
 
 SELECT SUM("QTY INST") AS "TOTAL INST _Local"
 FROM controlInstrumentsByIsometric;
+
+-- For dynamicInstrumentTable
+SELECT SUM("TOTAL INST") AS "TOTAL INST DYNAMIC _Global"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("TOTAL INST") AS "TOTAL INST DYNAMIC _Local"
+FROM dynamicInstrumentTable;
 `;
 
 /**
@@ -72,6 +80,19 @@ FROM controlInstrumentsByIsometric;
 
 SELECT SUM("INSTALLED BY SIEMSA") AS "TOTAL INSTALLED SIEMSA _Local"
 FROM controlInstrumentsByIsometric;
+`;
+
+/**
+ * Generates a SQL query for dynamic instrument table total done
+ * @returns {string} SQL query string
+ */
+export const getDynamicTotalDoneQuery = () => `
+-- Query for dynamicInstrumentTable directly
+SELECT SUM("DONE") AS "TOTAL INST DONE _Global"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("DONE") AS "TOTAL INST DONE _Local"
+FROM dynamicInstrumentTable;
 `;
 
 /**
@@ -121,12 +142,53 @@ FROM controlInstrumentsByIsometric;
 SELECT SUM("INSTALLED BY SIEMSA") AS "TOTAL INSTALLED SIEMSA _Local"
 FROM controlInstrumentsByIsometric;
 
--- Dynamic Table Example
-SELECT SUM("TOTAL DONE") AS "TOTAL INST DONE _Global"
-FROM dynamicInstrumentReadingTable;
+-- Dynamic Table Example with correct column names
+SELECT SUM("TOTAL INST") AS "TOTAL INST DYNAMIC _Global"
+FROM dynamicInstrumentTable;
 
-SELECT SUM("TOTAL DONE") AS "TOTAL INST DONE _Local"
-FROM dynamicInstrumentReadingTable;
+SELECT SUM("TOTAL INST") AS "TOTAL INST DYNAMIC _Local"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("INSTALLED BY TEIGA-TMI") AS "INSTALLED BY TEIGA-TMI DYNAMIC _Global"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("INSTALLED BY SIEMSA") AS "INSTALLED BY SIEMSA DYNAMIC _Global"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("DONE") AS "DONE DYNAMIC _Global"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("PENDING") AS "PENDING DYNAMIC _Global"
+FROM dynamicInstrumentTable;
+
+-- Fallback to master_subsystem if available
+SELECT COUNT(*) AS "MASTER SUBSYSTEM COUNT _Global"
+FROM master_subsystem;
+
+-- Test table query (always works if DuckDB is functioning)
+SELECT id, name FROM master_table AS "TEST TABLE _Global";
+`;
+
+/**
+ * Generates a SQL query specifically for the dynamicInstrumentTable
+ * @returns {string} SQL query string
+ */
+export const getDynamicTableQuery = () => `
+-- Query for dynamicInstrumentTable directly
+SELECT SUM("TOTAL INST") AS "TOTAL INST _Global"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("INSTALLED BY TEIGA-TMI") AS "INSTALLED BY TEIGA-TMI _Global"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("INSTALLED BY SIEMSA") AS "INSTALLED BY SIEMSA _Global"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("PENDING") AS "PENDING _Global"
+FROM dynamicInstrumentTable;
+
+SELECT SUM("DONE") AS "DONE _Global"
+FROM dynamicInstrumentTable;
 `;
 
 /**
@@ -140,5 +202,7 @@ export const getAvailableMetricQueries = () => [
   { name: 'Total Done', query: getTotalDoneQuery() },
   { name: 'Total Installed by TEIGA-TMI', query: getTotalInstalledTeigaTmiQuery() },
   { name: 'Total Installed by SIEMSA', query: getTotalInstalledSiemsaQuery() },
+  { name: 'Dynamic Total Done', query: getDynamicTotalDoneQuery() },
+  { name: 'Dynamic Table Query', query: getDynamicTableQuery() },
   { name: 'All Metrics', query: getAllMetricsQuery() }
 ];

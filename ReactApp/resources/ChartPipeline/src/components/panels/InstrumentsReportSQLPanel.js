@@ -357,6 +357,9 @@ FROM controlInstrumentsByIsometric;`);
                 <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstalledSiemsaQuery())}>
                   Total Installed SIEMSA
                 </Button>
+                <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getDynamicTableQuery())}>
+                  Dynamic Table Query
+                </Button>
                 <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getAllMetricsQuery())}>
                   All Metrics
                 </Button>

@@ -54,3 +54,22 @@ Users can now:
 3. Use filters that won't affect the SUMMARY SUBSYSTEMS tab
 
 This separation provides a better user experience by keeping the contexts of the two tabs completely independent.
+
+## Table Column References
+
+When writing SQL queries, refer to the following documentation for column names:
+
+- [Dynamic Instrument Table Columns](./DYNAMIC_INSTRUMENT_TABLE_COLUMNS.md) - Column names for the dynamicInstrumentTable
+
+### Common Column Naming Issues
+
+If you encounter an error like:
+
+```
+Binder Error: Referenced column "total_inst" not found in FROM clause!
+Candidate bindings: "TOTAL INST", "INSTALLED BY TEIGA-TMI", "INSTALLED BY SIEMSA", "PENDING", "DONE"
+```
+
+This indicates that you're using the wrong case for the column names. The column names in the dynamicInstrumentTable are case-sensitive and must be used exactly as they appear in the table.
+
+For example, use `"TOTAL INST"` (uppercase) instead of `"total_inst"` (lowercase).

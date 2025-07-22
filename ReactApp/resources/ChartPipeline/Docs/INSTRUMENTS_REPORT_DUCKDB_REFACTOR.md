@@ -24,7 +24,7 @@ The refactored architecture uses DuckDB to enable SQL queries across the followi
 
 - `controlInstrumentsByIsometric` (from `ControlInstrumentsByIsometric.optimized.js`)
 - `detailsInstrumentsTable` (from `DetailsInstrumentsTable.superoptimized.js`)
-- `dynamicInstrumentReadingTable` (from `DynamicInstrumentsTable.optimized.js`)
+- `dynamicInstrumentTable` (from `DynamicInstrumentsTable.optimized.js`)
 
 ### Data Flow
 
@@ -37,15 +37,56 @@ The refactored architecture uses DuckDB to enable SQL queries across the followi
 
 ### Special Case: Hierarchical Table
 
-For the `dynamicInstrumentReadingTable`, which supports row expansion (hierarchy), the implementation flattens the hierarchy and extracts only the top-level rows to ensure accurate query results.
+For the `dynamicInstrumentTable`, which supports row expansion (hierarchy), the implementation flattens the hierarchy and extracts only the top-level rows to ensure accurate query results.
 
 ## Usage Examples
 
 Users can run SQL queries like:
 
 ```sql
-SELECT SUM("TOTAL DONE") FROM dynamicInstrumentReadingTable AS "TOTAL INST _Global"
+SELECT SUM("TOTAL DONE") FROM dynamicInstrumentTable AS "TOTAL INST _Global"
 ```
+
+### Fallback to master_subsystem
+
+If you encounter issues with the custom tables, you can use the master_subsystem table which is provided by DuckDB3.js:
+
+```sql
+SELECT COUNT(*) AS "MASTER SUBSYSTEM COUNT _Global" FROM master_subsystem;
+```
+
+## Troubleshooting
+
+If you encounter errors like "Table does not exist", check the following:
+
+1. Make sure data is properly loaded in the tables
+2. Check the browser console for initialization errors
+3. Try refreshing the page to reinitialize the DuckDB instance
+4. Use the SHOW TABLES command to see available tables
+
+### Known Issues and Solutions
+
+- **Invalid Input Error: No magic bytes found at end of file**: This error occurs when trying to use Parquet format with JavaScript data. The solution is to use direct SQL table creation instead of Parquet files.
+
+- **Table creation failures**: If one table fails to create, all subsequent operations might fail. The implementation now includes better error handling and a fallback test table to verify DuckDB is working properly.
+
+- **Parser Error: syntax error at or near "LIMIT"**: This error occurs for two reasons:
+  1. When column names contain special characters like `&`, parentheses, or spaces. The implementation now normalizes column names by converting them to lowercase, replacing spaces with underscores, and removing special characters.
+  2. When DuckDB automatically adds LIMIT clauses to DDL statements. The implementation now uses a custom `safeExecuteQuery` function that detects DDL statements and prevents LIMIT clauses from being added.
+
+- **Referenced column not found**: This error occurs when the column name in the SQL query doesn't match any column in the table. The implementation now:
+  1. Logs the actual column names in the table for debugging
+  2. Uses table-specific column mappings to handle different naming conventions across tables:
+     - In controlInstrumentsByIsometric: "TOTAL DONE" maps to "installed_by_teigatmi" + "installed_by_siemsa"
+     - In dynamicInstrumentTable: "TOTAL DONE" maps to "total_installed"
+     - In detailsInstrumentsTable: "TAG" maps to "tag_inst"
+  3. Provides a helpful error message showing the available columns
+
+- **Table-specific column handling**: Each table has its own column naming conventions. The implementation now uses a table-specific mapping approach to ensure queries work correctly regardless of which table is being queried.
+
+- **Scaling issue with total_installed values**: The values in the "total_installed" column in the dynamicInstrumentTable are stored as 1000 times their actual value. The implementation now automatically scales these values in the metric card display component when the metric title contains "TOTAL DONE".
+
+- **Scaling issue with total_installed values**: The values in the "total_installed" column in the dynamicInstrumentTable are stored as 1000 times their actual value. The implementation now divides these values by 1000 in the SQL queries to display the correct values.
 
 ## Constraints Maintained
 

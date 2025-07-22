@@ -32,7 +32,11 @@ const InstrumentsReportMetricCard = ({ card, onRemove }) => (
       </HStack>
       <Box textAlign="center">
         <Text fontSize="2xl" fontWeight="bold" color="blue.600">
-          {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+          {typeof card.value === 'number' 
+            ? (card.title.includes('TOTAL INST DONE') && card.value > 1000 
+                ? Math.round(card.value / 1000).toLocaleString() 
+                : card.value.toLocaleString())
+            : card.value}
         </Text>
       </Box>
       <Text fontSize="xs" color="gray.500" noOfLines={2} title={card.query}>

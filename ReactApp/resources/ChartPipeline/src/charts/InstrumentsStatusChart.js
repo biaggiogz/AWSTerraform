@@ -67,7 +67,6 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
       });
     } else {
       seriesData[field] = flatData.map(item => {
-        if (field === 'PENDING') return -Math.abs(item[field]); // Pending negative
         return item[field];
       });
     }
@@ -90,6 +89,28 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
     };
   });
 
+  // Calculate stack positions for each category
+  const stackData = flatData.map(item => {
+    const total = item['TOTAL INST'] || 0;
+    const pending = item['PENDING'] || 0;
+    const teiga = item['INSTALLED BY TEIGA-TMI'] || 0;
+    const siemsa = item['INSTALLED BY SIEMSA'] || 0;
+    
+    return {
+      total,
+      pending,
+      teiga,
+      siemsa,
+      // Calculate positions for stacked layout
+      pendingStart: 0,
+      pendingEnd: pending,
+      teigaStart: pending,
+      teigaEnd: pending + teiga,
+      siemsaStart: pending + teiga,
+      siemsaEnd: pending + teiga + siemsa
+    };
+  });
+
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     legend: {
@@ -102,63 +123,121 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
     ],
     xAxis: { type: 'value' },
     yAxis: { type: 'category', axisTick: { show: false }, data: categories },
-    series: numericFields.map((field) => ({
-      name: field,
-      type: 'bar',
-      barWidth: 30,
-      barGap: field === 'TOTAL INST' ? '0%' : '-100%',
-      itemStyle: {
-        color: {
-          'TOTAL INST': '#FFE9D6',
-          'INSTALLED BY TEIGA-TMI': '#A55B4B',
-          'INSTALLED BY SIEMSA': '#6C5F5B',
-          'PENDING': '#ED7D31',
-          'DONE': '#4CAF50', // Green color for DONE
-        }[field] || '#000'
+    series: [
+      // TOTAL INST as background bar - hide when equals DONE
+      {
+        name: 'TOTAL INST',
+        type: 'bar',
+        barWidth: 30,
+        z: 1,
+        itemStyle: { color: '#FFE9D6' },
+        data: flatData.map((item, index) => {
+          const total = item['TOTAL INST'] || 0;
+          const teiga = item['INSTALLED BY TEIGA-TMI'] || 0;
+          const siemsa = item['INSTALLED BY SIEMSA'] || 0;
+          const installed = teiga + siemsa;
+          
+          // Hide TOTAL INST when fully installed (total = installed)
+          return Math.abs(total - installed) < 0.01 ? '-' : total;
+        })
       },
-      label: {
-        show: field !== 'DONE' ? true : false, // Hide label for DONE to avoid clutter
-        position: field === 'PENDING' ? 'insideLeft' : 'insideRight',
-        formatter: function(params) {
-          // Don't show label if value is 0 or '-'
-          return params.value === 0 || params.value === '-' ? '' : params.value;
-        }
+      // PENDING on the left side - hide when any installer equals TOTAL INST
+      {
+        name: 'PENDING',
+        type: 'bar',
+        stack: 'stack',
+        barWidth: 30,
+        z: 2,
+        itemStyle: { color: '#ED7D31' },
+        label: {
+          show: true,
+          position: 'insideLeft',
+          color:'#FFFFFF',
+          formatter: function(params) {
+            return params.value === 0 ? '' : params.value;
+          }
+        },
+        data: flatData.map((item, index) => {
+          const value = item['PENDING'] || 0;
+          const total = item['TOTAL INST'] || 0;
+          const teiga = item['INSTALLED BY TEIGA-TMI'] || 0;
+          const siemsa = item['INSTALLED BY SIEMSA'] || 0;
+          
+          // Hide PENDING when either installer equals TOTAL INST
+          if (Math.abs(teiga - total) < 0.01 && total > 0) return '-';
+          if (Math.abs(siemsa - total) < 0.01 && total > 0) return '-';
+          
+          return value === 0 ? '-' : value;
+        })
       },
-      data: seriesData[field].map((value, index) => value === 0 ? '-' : value),
-      // Use dynamic z-index based on actual values for each category
-      renderItem: function(params, api) {
-        const value = api.value(0);
-        
-        // Don't render if value is 0 or '-'
-        if (value === 0 || value === '-') {
-          return { type: 'group' }; // Return empty group
-        }
-        
-        const categoryIndex = params.dataIndex;
-        const zIndex = zIndexMap[categoryIndex][field];
-        
-        const coordSys = api.coordinateSystem();
-        const width = api.size([0, 1])[0];
-        
-        const point = api.coord([value, api.value(1)]);
-        
-        return {
-          type: 'rect',
-          shape: {
-            x: field === 'PENDING' ? point[0] : coordSys.x,
-            y: point[1] - 15,
-            width: Math.abs(point[0] - coordSys.x),
-            height: 30
-          },
-          style: api.style(),
-          z: zIndex
-        };
+      // TEIGA-TMI in the middle - hide when equals TOTAL INST
+      {
+        name: 'INSTALLED BY TEIGA-TMI',
+        type: 'bar',
+        stack: 'stack',
+        barWidth: 30,
+        z: 2,
+        itemStyle: { color: '#A55B4B' },
+        label: {
+          show: true,
+          position: 'inside',
+          formatter: function(params) {
+            return params.value === 0 ? '' : params.value;
+          }
+        },
+        data: flatData.map((item, index) => {
+          const value = item['INSTALLED BY TEIGA-TMI'] || 0;
+          const total = item['TOTAL INST'] || 0;
+          
+          // Hide TEIGA-TMI when it equals TOTAL INST
+          return Math.abs(value - total) < 0.01 && total > 0 ? '-' : value;
+        })
       },
-      encode: {
-        x: 0,
-        y: 1
+      // SIEMSA on the right side - hide when equals TOTAL INST
+      {
+        name: 'INSTALLED BY SIEMSA',
+        type: 'bar',
+        stack: 'stack',
+        barWidth: 30,
+        z: 2,
+        itemStyle: { color: '#6C5F5B' },
+        label: {
+          show: true,
+          position: 'insideRight',
+          formatter: function(params) {
+            return params.value === 0 ? '' : params.value;
+          }
+        },
+        data: flatData.map((item, index) => {
+          const value = item['INSTALLED BY SIEMSA'] || 0;
+          const total = item['TOTAL INST'] || 0;
+          
+          // Hide SIEMSA when it equals TOTAL INST
+          return Math.abs(value - total) < 0.01 && total > 0 ? '-' : value;
+        })
+      },
+      // DONE indicator
+      {
+        name: 'DONE',
+        type: 'bar',
+        barWidth: 30,
+        barGap: '-100%',
+        z: 3,
+        itemStyle: {
+          color: '#4CAF50',
+          opacity: 1
+        },
+        label: {
+          show: true,
+          position: 'insideRight',
+          color: '#FFFFFF',
+          formatter: function(params) {
+            return params.value === '-' ? '' : params.value;
+          }
+        },
+        data: seriesData['DONE'].map(value => value === 0 ? '-' : value)
       }
-    }))
+    ]
   };
 };
 
