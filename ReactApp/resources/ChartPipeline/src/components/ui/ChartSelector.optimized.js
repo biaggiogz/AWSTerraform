@@ -184,12 +184,18 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   <InstrumentsTableFilterProvider>
                     <FilterStatusBar />
                     {/* Place InstrumentsStatusChart beside DynamicInstrumentsTable with horizontal alignment */}
-                    <HStack spacing={4} align="start">
-                      <Box flex="1">
-                        <DynamicInstrumentsTable/>
+                    <HStack spacing={4} align="stretch" minH="600px">
+                      <Box flex="1" display="flex" flexDirection="column">
+                        <DynamicInstrumentsTable 
+                          data={finalControlData}
+                          selectedIsometric={isometricFilter.selectedIsometric}
+                          onIsometricSelect={isometricFilter.onIsometricSelect}
+                        />
                       </Box>
-                      <Box flex="1">
-                        <InstrumentsStatusChart />
+                      <Box flex="1" display="flex" flexDirection="column">
+                        <InstrumentsStatusChart 
+                          data={finalControlData}
+                        />
                       </Box>
                     </HStack>
                     <DetailsInstrumentsTable/>

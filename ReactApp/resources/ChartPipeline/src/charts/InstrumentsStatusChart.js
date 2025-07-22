@@ -32,6 +32,8 @@ ChartJS.register(
 
 // Prepare chart data for Chart.js
 const prepareChartData = (data, labelField) => {
+  // Limit to 15 items for better visualization
+  data = data.slice(0, 25);
   if (!data || data.length === 0) {
     return { labels: [], datasets: [] };
   }
@@ -59,7 +61,7 @@ const prepareChartData = (data, labelField) => {
         backgroundColor: '#ED7D31', // Orange
         borderColor: '#D35400',
         borderWidth: 1,
-        stack: 'pending',
+        stack: 'stack1',
         datalabels: {
           display: showLabels,
           color: 'white',
@@ -74,7 +76,7 @@ const prepareChartData = (data, labelField) => {
         backgroundColor: '#A55B4B', // Reddish brown
         borderColor: '#8B4513',
         borderWidth: 1,
-        stack: 'installed',
+        stack: 'stack2',
         datalabels: {
           display: showLabels,
           color: 'white',
@@ -89,7 +91,7 @@ const prepareChartData = (data, labelField) => {
         backgroundColor: '#6C5F5B', // Dark gray
         borderColor: '#4A4A4A',
         borderWidth: 1,
-        stack: 'installed',
+        stack: 'stack3',
         datalabels: {
           display: showLabels,
           color: 'white',
@@ -133,6 +135,10 @@ const getChartOptions = (data, labelField) => {
     indexAxis: 'y', // Horizontal bar chart
     responsive: true,
     maintainAspectRatio: false,
+    // Set a fixed height per bar to enable scrolling
+    barThickness: 25,
+    barPercentage: 0.6,
+    categoryPercentage: 0.8,
     plugins: {
       tooltip: {
         callbacks: {
@@ -163,7 +169,7 @@ const getChartOptions = (data, labelField) => {
     },
     scales: {
       x: {
-        stacked: true,
+        stacked: false,
         grid: {
           display: true,
           drawBorder: true,
@@ -174,7 +180,7 @@ const getChartOptions = (data, labelField) => {
         suggestedMax: maxValue * 1.1 // Add some padding
       },
       y: {
-        stacked: true,
+        stacked: false,
         grid: {
           display: false,
           drawBorder: true,
@@ -186,12 +192,20 @@ const getChartOptions = (data, labelField) => {
           display: true,
           text: labelField,
           font: { size: 12, weight: 'bold' }
-        }
+        },
+        // Remove the afterFit function as we're handling scrolling differently
       }
     }
   };
 };
 
+
+// Custom style to ensure proper chart rendering with scrolling
+const chartContainerStyle = `
+  .chart-container canvas {
+    height: 100% !important;
+  }
+`;
 
 const InstrumentsStatusChart = () => {
   const {
@@ -216,8 +230,8 @@ const InstrumentsStatusChart = () => {
     // Sort by total for better visualization
     filtered = filtered.sort((a, b) => (b['TOTAL INST'] || 0) - (a['TOTAL INST'] || 0));
     
-    // Limit to 12 items for better visualization
-    filtered = filtered.slice(0, 12);
+    // Don't limit the number of items - we'll use scrolling instead
+    // filtered = filtered.slice(0, 12);
     
     // Get the field to use as labels (first groupBy field)
     const field = groupBy[0] || 'SUBSYSTEM';
@@ -248,18 +262,22 @@ const InstrumentsStatusChart = () => {
       borderWidth="1px" 
       borderRadius="md" 
       bg={bgColor}
+      height="100%"
     >
+      <style>{chartContainerStyle}</style>
       <Flex direction="column">
         <Heading size="md" mb={4}>Instruments Installation Status</Heading>
         <Text fontSize="sm" mb={2} color="gray.500">
           GROUPING BY: {groupBy.join(', ')}
         </Text>
-        <Box height="600px" width="100%">
-          <Bar 
-            data={chartData} 
-            options={chartOptions}
-            key={`chart-${selectedSubsystem || 'none'}-${selectedTestPack || 'none'}-${processedData.length}`}
-          />
+        <Box height="500px" width="100%" overflowY="auto" className="chart-container">
+          <Box height={`${Math.max(500, processedData.length * 30)}px`} width="100%">
+            <Bar 
+              data={chartData} 
+              options={chartOptions}
+              key={`chart-${selectedSubsystem || 'none'}-${selectedTestPack || 'none'}-${processedData.length}`}
+            />
+          </Box>
         </Box>
       </Flex>
     </Box>
