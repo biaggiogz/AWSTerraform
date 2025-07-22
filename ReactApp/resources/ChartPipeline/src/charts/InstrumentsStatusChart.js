@@ -367,7 +367,7 @@ const InstrumentsStatusChart = () => {
               onToggleDataset={handleToggleDataset}
             />
             <Box
-                height={`${Math.max(400, processedData.length * 30)}px`}
+                height={`${Math.max(400, processedData.length * 20)}px`}
                 width="100%"
                 maxWidth="100%"
             >
