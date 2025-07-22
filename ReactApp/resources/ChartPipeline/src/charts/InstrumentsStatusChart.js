@@ -181,6 +181,7 @@ const getChartOptions = (data, labelField) => {
     categoryPercentage: 0.8,
     plugins: {
       legend: {
+        display: false,
         position: 'top',
         labels: {
           padding: 10,
