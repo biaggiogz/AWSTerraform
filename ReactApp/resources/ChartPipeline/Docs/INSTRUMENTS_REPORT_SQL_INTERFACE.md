@@ -19,6 +19,8 @@ The following components were created or modified to implement this separation:
 2. `InstrumentsReportContainer.js` - A container component that manages the INSTRUMENTS REPORT tab's layout
 3. `InstrumentsReportMetricCards.js` - A component to display saved metric cards specific to the INSTRUMENTS REPORT tab
 4. `InstrumentsReportStateNotification.js` - A notification component for the INSTRUMENTS REPORT tab
+5. `useDynamicCalculations.js`
+6. `useInstrumentsReportCalculation.sj`
 
 ### Modified Components
 

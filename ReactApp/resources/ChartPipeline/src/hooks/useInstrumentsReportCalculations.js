@@ -1,7 +1,11 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import useDuckDB from './useDuckDB';
 
-const useDynamicCalculations = (controlData, detailsData, filteredControlData, filteredDetailsData, filters = {}) => {
+/**
+ * Custom hook for handling dynamic calculations specifically for the INSTRUMENTS REPORT tab
+ * This hook provides SQL query capabilities for the INSTRUMENTS REPORT tab's tables
+ */
+const useInstrumentsReportCalculations = (controlData, detailsData, filteredControlData, filteredDetailsData, filters = {}) => {
   const { 
     executeQuery, 
     createTable, 
@@ -12,14 +16,17 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
     lastQueryResult,
     loading: dbLoading 
   } = useDuckDB();
+  
   const [calculations, setCalculations] = useState([]);
   const [loading, setLoading] = useState(false);
   const tablesInitialized = useRef(false);
 
+  // Initialize tables with data
   const initializeTables = useCallback(async () => {
     if (!controlData || !detailsData) return;
     
     try {
+      // Create tables for the three main data sources
       await createTable('ControlInstrumentsByIsometric', controlData);
       await createTable('Details Instruments', detailsData);
       await createTable('DynamicInstrumentsTable', controlData);
@@ -33,7 +40,7 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
       updateFilteredTable('Details Instruments', detailsDataToUse);
       updateFilteredTable('DynamicInstrumentsTable', controlDataToUse);
     } catch (error) {
-      console.error('Failed to initialize tables:', error);
+      console.error('Failed to initialize tables for INSTRUMENTS REPORT:', error);
     }
   }, [controlData, detailsData, filteredControlData, filteredDetailsData, createTable, updateFilteredTable]);
 
@@ -61,6 +68,7 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
     }
   }, [lastQueryResult]);
 
+  // Execute SQL query function
   const executeSQLQuery = useCallback(async (sqlQuery) => {
     if (dbLoading) return;
     
@@ -75,7 +83,7 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
       setCalculations(result);
       return result;
     } catch (error) {
-      console.error('SQL Query failed:', error);
+      console.error('SQL Query failed in INSTRUMENTS REPORT:', error);
       setCalculations([{ 'Error': 'Query failed' }]);
       return [];
     } finally {
@@ -83,10 +91,13 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
     }
   }, [dbLoading, executeQuery, initializeTables]);
 
+  // Get table information
   const tableInfo = useMemo(() => getTableInfo(), [getTableInfo]);
   
+  // Get available tables
   const availableTables = useMemo(() => getAvailableTables(), [getAvailableTables]);
 
+  // Get columns for each table
   const controlColumns = useMemo(() => {
     return getTableFields('ControlInstrumentsByIsometric');
   }, [getTableFields]);
@@ -95,15 +106,20 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
     return getTableFields('Details Instruments');
   }, [getTableFields]);
 
+  const dynamicColumns = useMemo(() => {
+    return getTableFields('DynamicInstrumentsTable');
+  }, [getTableFields]);
+
   return {
     calculations,
     loading: loading || dbLoading,
     executeSQLQuery,
     controlColumns,
     detailColumns,
+    dynamicColumns,
     availableTables,
     tableInfo
   };
 };
 
-export default useDynamicCalculations;
+export default useInstrumentsReportCalculations;

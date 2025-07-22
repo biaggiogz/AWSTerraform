@@ -177,6 +177,79 @@ const DynamicInstrumentsTable = () => {
       'DONE',
     ];
 
+    // Special case for SUBSYSTEM | HITO grouping
+    if (groupByFields.length === 2 && groupByFields[0] === 'SUBSYSTEM' && groupByFields[1] === 'HITO') {
+      // First group by SUBSYSTEM only
+      const subsystemGroups = {};
+      
+      data.forEach(row => {
+        const subsystem = row['SUBSYSTEM'] || 'N/A';
+        if (!subsystemGroups[subsystem]) subsystemGroups[subsystem] = [];
+        subsystemGroups[subsystem].push(row);
+      });
+      
+      // Create subsystem nodes with aggregated data
+      return Object.entries(subsystemGroups).map(([subsystem, items]) => {
+        const node = { 'SUBSYSTEM': subsystem };
+        
+        // Sum numeric fields for the subsystem
+        numericFields.forEach(f => {
+          if (f === 'DONE') {
+            const total = items.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
+            const teiga = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
+            const siemsa = items.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
+            const installed = teiga + siemsa;
+            node[f] = Math.abs(total - installed) < 0.01 ? total : 0;
+          } else {
+            node[f] = items.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+          }
+        });
+        
+        // Average progress for the subsystem
+        node['PROGRESS TP'] = items.length > 0 ? 
+          (items.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / items.length) : 0;
+        
+        // Group by HITO within this subsystem
+        const hitoGroups = {};
+        items.forEach(row => {
+          const hito = row['HITO'] || 'N/A';
+          if (!hitoGroups[hito]) hitoGroups[hito] = [];
+          hitoGroups[hito].push(row);
+        });
+        
+        // Create HITO children
+        const children = Object.entries(hitoGroups).map(([hito, hitoItems]) => {
+          const hitoNode = { 'HITO': hito };
+          
+          // Sum numeric fields for this HITO
+          numericFields.forEach(f => {
+            if (f === 'DONE') {
+              const total = hitoItems.reduce((sum, r) => sum + (parseFloat(r['TOTAL INST']) || 0), 0);
+              const teiga = hitoItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY TEIGA-TMI']) || 0), 0);
+              const siemsa = hitoItems.reduce((sum, r) => sum + (parseFloat(r['INSTALLED BY SIEMSA']) || 0), 0);
+              const installed = teiga + siemsa;
+              hitoNode[f] = Math.abs(total - installed) < 0.01 ? total : 0;
+            } else {
+              hitoNode[f] = hitoItems.reduce((sum, r) => sum + (parseFloat(r[f]) || 0), 0);
+            }
+          });
+          
+          // Average progress for this HITO
+          hitoNode['PROGRESS TP'] = hitoItems.length > 0 ? 
+            (hitoItems.reduce((sum, r) => sum + (parseFloat(r['PROGRESS TP']) || 0), 0) / hitoItems.length) : 0;
+          
+          return hitoNode;
+        });
+        
+        if (children.length > 0) {
+          node.children = children;
+        }
+        
+        return node;
+      });
+    }
+    
+    // Standard grouping for other combinations
     const aggregateGroup = (rows, level = 0) => {
       if (level >= groupByFields.length) return [];
 

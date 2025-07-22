@@ -12,7 +12,8 @@ import {
   IconButton
 } from '@chakra-ui/react';
 import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop, MdFlag } from 'react-icons/md';
-import useDynamicCalculations from '../../hooks/useDynamicCalculations';
+import useInstrumentsReportCalculations from '../../hooks/useInstrumentsReportCalculations';
+import * as instrumentsReportQueries from '../../utils/instrumentsReportQueries';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
@@ -25,10 +26,10 @@ const InstrumentsReportSQLPanel = ({ controlData, detailsData, filteredControlDa
   
   const { sqlState, updateQuery } = usePersistentSQLState(tabName);
   const [sqlQuery, setSqlQuery] = useState(sqlState.query || `SELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Global"
-FROM "Control Instruments";
+FROM "ControlInstrumentsByIsometric";
 
 SELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Local"
-FROM "Control Instruments";`);
+FROM "ControlInstrumentsByIsometric";`);
   const [metricCards, setMetricCards] = useState([]);
   const [lockedCards, setLockedCards] = useState(new Set());
   const [deletedCards, setDeletedCards] = useState(new Set());
@@ -54,9 +55,10 @@ FROM "Control Instruments";`);
     executeSQLQuery, 
     controlColumns, 
     detailColumns,
+    dynamicColumns,
     availableTables,
     tableInfo
-  } = useDynamicCalculations(
+  } = useInstrumentsReportCalculations(
     controlData, 
     detailsData,
     filteredControlData,
@@ -340,25 +342,28 @@ FROM "Control Instruments";`);
               <Text fontSize="sm" fontWeight="semibold" mb={2}>Default Quick Metrics:</Text>
               <VStack spacing={2} align="stretch">
                 <HStack spacing={2} wrap="wrap">
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Global"\nFROM "Control Instruments";\n\nSELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Local"\nFROM "Control Instruments";')}>
+                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalIsometricsQuery())}>
                     Total Isos
                   </Button>
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT("TAG INST") AS "TOTAL TAG INST _Global"\nFROM "Details Instruments";\n\nSELECT COUNT("TAG INST") AS "TOTAL TAG INST _Local"\nFROM "Details Instruments";')}>
+                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalTagInstQuery())}>
                     Total Tag Inst
                   </Button>
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM("TOTAL INST") AS "TOTAL INST _Global"\nFROM "Control Instruments";\n\nSELECT SUM("TOTAL INST") AS "TOTAL INST _Local"\nFROM "Control Instruments";')}>
+                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstQuery())}>
                     Total Inst
                   </Button>
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM("TOTAL DONE") AS "TOTAL DONE _Global"\nFROM "Control Instruments";\n\nSELECT SUM("TOTAL DONE") AS "TOTAL DONE _Local"\nFROM "Control Instruments";')}>
+                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalDoneQuery())}>
                     Total Done
                   </Button>
                 </HStack>
                 <HStack spacing={2} wrap="wrap">
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM("TOTAL INSTALLED TEIGA-TMI") AS "TOTAL INSTALLED TEIGA-TMI _Global"\nFROM "Control Instruments";\n\nSELECT SUM("TOTAL INSTALLED TEIGA-TMI") AS "TOTAL INSTALLED TEIGA-TMI _Local"\nFROM "Control Instruments";')}>
+                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstalledTeigaTmiQuery())}>
                     Total Installed TEIGA-TMI
                   </Button>
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM("TOTAL INSTALLED SIEMSA") AS "TOTAL INSTALLED SIEMSA _Global"\nFROM "Control Instruments";\n\nSELECT SUM("TOTAL INSTALLED SIEMSA") AS "TOTAL INSTALLED SIEMSA _Local"\nFROM "Control Instruments";')}>
+                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstalledSiemsaQuery())}>
                     Total Installed SIEMSA
+                  </Button>
+                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getAllMetricsQuery())}>
+                    All Metrics
                   </Button>
                 </HStack>
               </VStack>
