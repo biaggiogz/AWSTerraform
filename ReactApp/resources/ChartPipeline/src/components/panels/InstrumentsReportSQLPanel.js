@@ -245,215 +245,205 @@ FROM "ControlInstrumentsByIsometric";`);
   const otherMetrics = metricCards.filter(card => !card.scope);
 
   return (
-    <Box 
-      bg={bgColor} 
-      border="1px" 
-      borderColor={borderColor} 
-      borderRadius="md" 
-      p={2} 
-      mt={2}
-    >
-      <VStack spacing={2} align="stretch">
-        <HStack justify="space-between" align="center">
-          <Text fontSize="sm" fontWeight="bold" color="blue.600">
-            INSTRUMENTS REPORT SQL Query Interface
-          </Text>
-          <HStack spacing={2}>
-            <IconButton
-              icon={<MdFilterList />}
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                const newVisibility = !isFilterVisible;
-                setIsFilterVisible(newVisibility);
-                if (onProgressFilterVisibilityChange) {
-                  onProgressFilterVisibilityChange(newVisibility);
-                }
-              }}
-              aria-label="Toggle progress filter"
-              title="Test Pack Progress Filter"
-            />
-            <IconButton
-              icon={<MdCheckCircle />}
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                const newVisibility = !isSubsystemFilterVisible;
-                setIsSubsystemFilterVisible(newVisibility);
-                if (onItemsFilterVisibilityChange) {
-                  onItemsFilterVisibilityChange(newVisibility);
-                }
-              }}
-              aria-label="Toggle subsystem status filter"
-              title="Items Status Filter"
-            />
-            <IconButton
-              icon={<MdLoop />}
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                const newVisibility = !isLoopFilterVisible;
-                setIsLoopFilterVisible(newVisibility);
-                if (onLoopFilterVisibilityChange) {
-                  onLoopFilterVisibilityChange(newVisibility);
-                }
-              }}
-              aria-label="Toggle loop status filter"
-              title="Loop Status Filter"
-            />
-            <IconButton
-              icon={<MdFlag />}
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                const newVisibility = !isHitoFilterVisible;
-                setIsHitoFilterVisible(newVisibility);
-                if (onHitoFilterVisibilityChange) {
-                  onHitoFilterVisibilityChange(newVisibility);
-                }
-              }}
-              aria-label="Toggle hito filter"
-              title="Hito Filter"
-            />
-            <IconButton
-              icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsInterfaceVisible(!isInterfaceVisible)}
-              aria-label={isInterfaceVisible ? "Hide interface" : "Show interface"}
-            />
-          </HStack>
+    <>
+      <HStack justify="space-between" align="center">
+        <Text fontSize="sm" fontWeight="bold" color="blue.600">
+          INSTRUMENTS REPORT SQL Query Interface
+        </Text>
+        <HStack spacing={2}>
+          <IconButton
+            icon={<MdFilterList />}
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              const newVisibility = !isFilterVisible;
+              setIsFilterVisible(newVisibility);
+              if (onProgressFilterVisibilityChange) {
+                onProgressFilterVisibilityChange(newVisibility);
+              }
+            }}
+            aria-label="Toggle progress filter"
+            title="Test Pack Progress Filter"
+          />
+          <IconButton
+            icon={<MdCheckCircle />}
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              const newVisibility = !isSubsystemFilterVisible;
+              setIsSubsystemFilterVisible(newVisibility);
+              if (onItemsFilterVisibilityChange) {
+                onItemsFilterVisibilityChange(newVisibility);
+              }
+            }}
+            aria-label="Toggle subsystem status filter"
+            title="Items Status Filter"
+          />
+          <IconButton
+            icon={<MdLoop />}
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              const newVisibility = !isLoopFilterVisible;
+              setIsLoopFilterVisible(newVisibility);
+              if (onLoopFilterVisibilityChange) {
+                onLoopFilterVisibilityChange(newVisibility);
+              }
+            }}
+            aria-label="Toggle loop status filter"
+            title="Loop Status Filter"
+          />
+          <IconButton
+            icon={<MdFlag />}
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              const newVisibility = !isHitoFilterVisible;
+              setIsHitoFilterVisible(newVisibility);
+              if (onHitoFilterVisibilityChange) {
+                onHitoFilterVisibilityChange(newVisibility);
+              }
+            }}
+            aria-label="Toggle hito filter"
+            title="Hito Filter"
+          />
+          <IconButton
+            icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsInterfaceVisible(!isInterfaceVisible)}
+            aria-label={isInterfaceVisible ? "Hide interface" : "Show interface"}
+          />
         </HStack>
-        
-        {isInterfaceVisible && (
-          <>
-            {/* Schema Reference */}
-            <VStack spacing={2} align="stretch" fontSize="xs" color="gray.600">
-              {Object.entries(tableInfo).map(([tableName, info]) => (
-                <Box key={tableName} pl={4} borderLeft="2px solid" borderColor="blue.200">
-                  <Text fontWeight="bold">"{tableName}" ({info.filteredRows}/{info.totalRows} rows)</Text>
-                  <Text><strong>Fields:</strong> {info.fields.slice(0, 8).join(', ')}{info.fields.length > 8 ? '...' : ''}</Text>
-                </Box>
-              ))}
-            </VStack>
-
-            {/* Default Quick Metrics - INSTRUMENTS REPORT specific */}
-            <Box>
-              <Text fontSize="sm" fontWeight="semibold" mb={2}>Default Quick Metrics:</Text>
-              <VStack spacing={2} align="stretch">
-                <HStack spacing={2} wrap="wrap">
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalIsometricsQuery())}>
-                    Total Isos
-                  </Button>
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalTagInstQuery())}>
-                    Total Tag Inst
-                  </Button>
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstQuery())}>
-                    Total Inst
-                  </Button>
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalDoneQuery())}>
-                    Total Done
-                  </Button>
-                </HStack>
-                <HStack spacing={2} wrap="wrap">
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstalledTeigaTmiQuery())}>
-                    Total Installed TEIGA-TMI
-                  </Button>
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstalledSiemsaQuery())}>
-                    Total Installed SIEMSA
-                  </Button>
-                  <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getAllMetricsQuery())}>
-                    All Metrics
-                  </Button>
-                </HStack>
-              </VStack>
-            </Box>
-
-            {/* SQL Editor with Intellisense */}
-            <Box>
-              <Text fontSize="sm" mb={2} fontWeight="semibold">SQL Query:</Text>
-              <Box position="relative">
-                <Textarea 
-                  ref={textareaRef}
-                  value={sqlQuery}
-                  onChange={handleSqlQueryChange}
-                  onFocus={() => setShowFieldSuggestions(false)}
-                  placeholder='Enter your SQL query here... Use "field_name" for field suggestions'
-                  fontFamily="monospace"
-                  fontSize="sm"
-                  minH="120px"
-                  resize="vertical"
-                />
-                
-                {/* Field Suggestions Popup */}
-                {showFieldSuggestions && (
-                  <Box
-                    position="absolute"
-                    top="100%"
-                    left="0"
-                    right="0"
-                    bg={bgColor}
-                    border="1px solid"
-                    borderColor={borderColor}
-                    borderRadius="md"
-                    maxH="200px"
-                    overflowY="auto"
-                    zIndex={1000}
-                    boxShadow="lg"
-                  >
-                    <Text fontSize="xs" p={2} fontWeight="bold" borderBottom="1px solid" borderColor={borderColor}>
-                      Available Fields:
-                    </Text>
-                    {getAllFieldNames().map(field => (
-                      <Box
-                        key={field}
-                        p={2}
-                        fontSize="xs"
-                        cursor="pointer"
-                        _hover={{ bg: 'blue.50' }}
-                        onClick={() => insertFieldName(field)}
-                      >
-                        {field}
-                      </Box>
-                    ))}
-                  </Box>
-                )}
+      </HStack>
+      
+      {isInterfaceVisible && (
+        <>
+          {/* Schema Reference */}
+          <VStack spacing={2} align="stretch" fontSize="xs" color="gray.600">
+            {Object.entries(tableInfo).map(([tableName, info]) => (
+              <Box key={tableName} pl={4} borderLeft="2px solid" borderColor="blue.200">
+                <Text fontWeight="bold">"{tableName}" ({info.filteredRows}/{info.totalRows} rows)</Text>
+                <Text><strong>Fields:</strong> {info.fields.slice(0, 8).join(', ')}{info.fields.length > 8 ? '...' : ''}</Text>
               </Box>
-              <Text fontSize="xs" color="gray.500" mt={1}>
-                💡 Type + to see field suggestions
-              </Text>
-            </Box>
-            
-            <HStack justify="space-between">
-              <Button 
-                colorScheme="blue" 
-                onClick={handleExecute}
-                isDisabled={!sqlQuery.trim() || loading}
-                isLoading={loading}
-              >
-                Execute Query
-              </Button>
-              
-              {/* Active Filters Display */}
-              {(filters.selectedIsometric || filters.selectedTestPack || filters.selectedSubsystem) && (
-                <HStack spacing={2}>
-                  <Text fontSize="xs" color="gray.600">Active Filters:</Text>
-                  {filters.selectedIsometric && (
-                    <Badge colorScheme="purple" fontSize="xs">ISO: {filters.selectedIsometric}</Badge>
-                  )}
-                  {filters.selectedTestPack && (
-                    <Badge colorScheme="blue" fontSize="xs">PACK: {filters.selectedTestPack}</Badge>
-                  )}
-                  {filters.selectedSubsystem && (
-                    <Badge colorScheme="orange" fontSize="xs">SUB: {filters.selectedSubsystem}</Badge>
-                  )}
-                </HStack>
-              )}
-            </HStack>
-          </>
-        )}
+            ))}
+          </VStack>
 
-      </VStack>
+          {/* Default Quick Metrics - INSTRUMENTS REPORT specific */}
+          <Box>
+            <Text fontSize="sm" fontWeight="semibold" mb={2}>Default Quick Metrics:</Text>
+            <VStack spacing={2} align="stretch">
+              <HStack spacing={2} wrap="wrap">
+                <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalIsometricsQuery())}>
+                  Total Isos
+                </Button>
+                <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalTagInstQuery())}>
+                  Total Tag Inst
+                </Button>
+                <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstQuery())}>
+                  Total Inst
+                </Button>
+                <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalDoneQuery())}>
+                  Total Done
+                </Button>
+              </HStack>
+              <HStack spacing={2} wrap="wrap">
+                <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstalledTeigaTmiQuery())}>
+                  Total Installed TEIGA-TMI
+                </Button>
+                <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getTotalInstalledSiemsaQuery())}>
+                  Total Installed SIEMSA
+                </Button>
+                <Button size="xs" variant="outline" onClick={() => addMetricQuery(instrumentsReportQueries.getAllMetricsQuery())}>
+                  All Metrics
+                </Button>
+              </HStack>
+            </VStack>
+          </Box>
+
+          {/* SQL Editor with Intellisense */}
+          <Box>
+            <Text fontSize="sm" mb={2} fontWeight="semibold">SQL Query:</Text>
+            <Box position="relative">
+              <Textarea 
+                ref={textareaRef}
+                value={sqlQuery}
+                onChange={handleSqlQueryChange}
+                onFocus={() => setShowFieldSuggestions(false)}
+                placeholder='Enter your SQL query here... Use "field_name" for field suggestions'
+                fontFamily="monospace"
+                fontSize="sm"
+                minH="120px"
+                resize="vertical"
+              />
+              
+              {/* Field Suggestions Popup */}
+              {showFieldSuggestions && (
+                <Box
+                  position="absolute"
+                  top="100%"
+                  left="0"
+                  right="0"
+                  bg={bgColor}
+                  border="1px solid"
+                  borderColor={borderColor}
+                  borderRadius="md"
+                  maxH="200px"
+                  overflowY="auto"
+                  zIndex={1000}
+                  boxShadow="lg"
+                >
+                  <Text fontSize="xs" p={2} fontWeight="bold" borderBottom="1px solid" borderColor={borderColor}>
+                    Available Fields:
+                  </Text>
+                  {getAllFieldNames().map(field => (
+                    <Box
+                      key={field}
+                      p={2}
+                      fontSize="xs"
+                      cursor="pointer"
+                      _hover={{ bg: 'blue.50' }}
+                      onClick={() => insertFieldName(field)}
+                    >
+                      {field}
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+            <Text fontSize="xs" color="gray.500" mt={1}>
+              💡 Type + to see field suggestions
+            </Text>
+          </Box>
+          
+          <HStack justify="space-between">
+            <Button 
+              colorScheme="blue" 
+              onClick={handleExecute}
+              isDisabled={!sqlQuery.trim() || loading}
+              isLoading={loading}
+            >
+              Execute Query
+            </Button>
+            
+            {/* Active Filters Display */}
+            {(filters.selectedIsometric || filters.selectedTestPack || filters.selectedSubsystem) && (
+              <HStack spacing={2}>
+                <Text fontSize="xs" color="gray.600">Active Filters:</Text>
+                {filters.selectedIsometric && (
+                  <Badge colorScheme="purple" fontSize="xs">ISO: {filters.selectedIsometric}</Badge>
+                )}
+                {filters.selectedTestPack && (
+                  <Badge colorScheme="blue" fontSize="xs">PACK: {filters.selectedTestPack}</Badge>
+                )}
+                {filters.selectedSubsystem && (
+                  <Badge colorScheme="orange" fontSize="xs">SUB: {filters.selectedSubsystem}</Badge>
+                )}
+              </HStack>
+            )}
+          </HStack>
+        </>
+      )}
       
       {/* Results as Metric Cards - Always Visible */}
       {loading && (
@@ -786,7 +776,7 @@ FROM "ControlInstrumentsByIsometric";`);
           onBringToFront={onBringToFront}
         />
       )}
-    </Box>
+    </>
   );
 };
 

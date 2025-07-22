@@ -3,7 +3,6 @@ import { Box, VStack, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui
 import InstrumentsReportSQLPanel from './InstrumentsReportSQLPanel';
 import InstrumentsStatusChart from '../../charts/InstrumentsStatusChart';
 import InstrumentsReportStateNotification from '../ui/InstrumentsReportStateNotification';
-import InstrumentsReportMetrics from '../metrics/InstrumentsReportMetrics';
 import { InstrumentsTableFilterProvider } from '../filters/InstrumentsTableFilter';
 import FilterStatusBar from '../filters/FilterStatusBar';
 
@@ -31,51 +30,25 @@ const InstrumentsReportContainer = ({ controlData, detailsData, filteredControlD
     <Box width="100%">
       <InstrumentsReportStateNotification />
       <VStack spacing={4} align="stretch">
-        <Tabs variant="enclosed" colorScheme="blue">
-          <TabList>
-            <Tab>SQL Interface</Tab>
-            <Tab>Metrics Dashboard</Tab>
-            <Tab>Charts</Tab>
-          </TabList>
-          <TabPanels>
-            <TabPanel p={0} pt={4}>
-              <InstrumentsReportSQLPanel
-                controlData={controlData}
-                detailsData={detailsData}
-                filteredControlData={filteredControlData}
-                filteredDetailsData={filteredData}
-                filters={filters}
-                onFilteredDataChange={setFilteredData}
-                onFilteredControlDataChange={setFilteredControlData}
-                onLoopFilteredControlDataChange={setLoopFilteredControlData}
-                onProgressFilterVisibilityChange={setProgressFilterVisible}
-                onItemsFilterVisibilityChange={setItemsFilterVisible}
-                onLoopFilterVisibilityChange={setLoopFilterVisible}
-                onHitoFilterVisibilityChange={setHitoFilterVisible}
-                onProgressPropagationChange={(ids, type) => setProgressPropagation({ ids, type })}
-                onItemsPropagationChange={(ids, type) => setItemsPropagation({ ids, type })}
-                onLoopPropagationChange={(ids, type) => setLoopPropagation({ ids, type })}
-                onHitoPropagationChange={(ids, type) => setHitoPropagation({ ids, type })}
-                onBringToFront={handleBringToFront}
-              />
-            </TabPanel>
-            <TabPanel>
-              <InstrumentsReportMetrics
-                controlData={controlData}
-                detailsData={detailsData}
-                filteredControlData={filteredControlData}
-                filteredDetailsData={filteredData}
-                filters={filters}
-              />
-            </TabPanel>
-            <TabPanel>
-              <InstrumentsTableFilterProvider>
-                <FilterStatusBar />
-                <InstrumentsStatusChart />
-              </InstrumentsTableFilterProvider>
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
+        <InstrumentsReportSQLPanel
+          controlData={controlData}
+          detailsData={detailsData}
+          filteredControlData={filteredControlData}
+          filteredDetailsData={filteredData}
+          filters={filters}
+          onFilteredDataChange={setFilteredData}
+          onFilteredControlDataChange={setFilteredControlData}
+          onLoopFilteredControlDataChange={setLoopFilteredControlData}
+          onProgressFilterVisibilityChange={setProgressFilterVisible}
+          onItemsFilterVisibilityChange={setItemsFilterVisible}
+          onLoopFilterVisibilityChange={setLoopFilterVisible}
+          onHitoFilterVisibilityChange={setHitoFilterVisible}
+          onProgressPropagationChange={(ids, type) => setProgressPropagation({ ids, type })}
+          onItemsPropagationChange={(ids, type) => setItemsPropagation({ ids, type })}
+          onLoopPropagationChange={(ids, type) => setLoopPropagation({ ids, type })}
+          onHitoPropagationChange={(ids, type) => setHitoPropagation({ ids, type })}
+          onBringToFront={handleBringToFront}
+        />
         {/* Filters will be shown when activated from any tab */}
       </VStack>
     </Box>
