@@ -306,8 +306,10 @@ const InstrumentsStatusChart = () => {
   const handleToggleDataset = (datasetLabel) => {
     setHiddenDatasets(prev => {
       if (prev.includes(datasetLabel)) {
+        // Remove from hidden datasets (show it)
         return prev.filter(label => label !== datasetLabel);
       } else {
+        // Add to hidden datasets (hide it)
         return [...prev, datasetLabel];
       }
     });
@@ -345,9 +347,14 @@ const InstrumentsStatusChart = () => {
     if (hiddenDatasets.length > 0) {
       data.datasets = data.datasets.map(dataset => {
         if (hiddenDatasets.includes(dataset.label)) {
+          // Instead of just setting hidden:true, replace data with empty array
           return {
             ...dataset,
-            hidden: true
+            data: new Array(dataset.data.length).fill(0),
+            datalabels: {
+              ...dataset.datalabels,
+              display: false
+            }
           };
         }
         return dataset;
