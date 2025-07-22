@@ -11,12 +11,12 @@ import { useInstrumentsTableFilterContext } from '../components/filters/Instrume
 
 // Custom legend component is not needed as ECharts handles it internally
 
-// Flatten hierarchical data for chart display
+// Flatten hierarchical data for chart display - only process top level nodes
 const flattenData = (data, labelField, numericFields) => {
   const result = [];
 
-  const processNode = (node) => {
-    // Flatten this node, mapping labelField and numericFields
+  // Only process top-level nodes, ignoring children
+  data.forEach(node => {
     const entry = {
       category: node[labelField] || 'N/A'
     };
@@ -26,14 +26,8 @@ const flattenData = (data, labelField, numericFields) => {
     });
 
     result.push(entry);
+  });
 
-    // Recursively process children if exist
-    if (node.children && node.children.length > 0) {
-      node.children.forEach(child => processNode(child));
-    }
-  };
-
-  data.forEach(node => processNode(node));
   return result;
 };
 // Prepare chart options for ECharts
@@ -190,10 +184,10 @@ const InstrumentsStatusChart = () => {
       return { processedData: [], labelField: 'SUBSYSTEM' };
     }
 
-    // Get the field to use as labels (first groupBy field)
-    const field = groupBy[groupBy.length - 1] || 'SUBSYSTEM';
-
-    // We'll use the raw data as is - the flattening happens in getEChartsOption
+    // Always use only the first groupBy field
+    const field = groupBy.length > 0 ? groupBy[0] : 'SUBSYSTEM';
+    
+    // Use only top-level data, ignoring any hierarchical structure
     return { processedData: tableData, labelField: field };
   }, [tableData, groupBy, selectedSubsystem, selectedTestPack]);
 
