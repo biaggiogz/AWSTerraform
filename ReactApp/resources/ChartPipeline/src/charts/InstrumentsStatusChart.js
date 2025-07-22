@@ -51,8 +51,8 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
   // Flatten hierarchical data accordingly
   const flatData = flattenData(data, labelField, numericFields);
 
-  // Sort by TOTAL INST descending for clarity
-  flatData.sort((a, b) => b['TOTAL INST'] - a['TOTAL INST']);
+  // Sort by TOTAL INST ascending to put smaller values at the top
+  flatData.sort((a, b) => a['TOTAL INST'] - b['TOTAL INST']);
 
   const categories = flatData.map(item => item.category);
 
@@ -63,6 +63,19 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
       if (field === 'PENDING') return -Math.abs(item[field]); // Pending negative
       return item[field];
     });
+  });
+  
+  // Create z-index map for each category based on actual values
+  const zIndexMap = flatData.map(item => {
+    const teigaValue = item['INSTALLED BY TEIGA-TMI'] || 0;
+    const siemsaValue = item['INSTALLED BY SIEMSA'] || 0;
+    
+    return {
+      'TOTAL INST': 1,
+      'INSTALLED BY TEIGA-TMI': teigaValue >= siemsaValue ? 3 : 2,
+      'INSTALLED BY SIEMSA': siemsaValue > teigaValue ? 3 : 2,
+      'PENDING': 0
+    };
   });
 
   return {
@@ -77,7 +90,7 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
     ],
     xAxis: { type: 'value' },
     yAxis: { type: 'category', axisTick: { show: false }, data: categories },
-    series: numericFields.map((field, i) => ({
+    series: numericFields.map((field) => ({
       name: field,
       type: 'bar',
       barWidth: 30,
@@ -94,8 +107,34 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
         show: true,
         position: field === 'PENDING' ? 'insideLeft' : 'insideRight'
       },
-      data: seriesData[field],
-      z: numericFields.length - i
+      data: seriesData[field].map((value, index) => value),
+      // Use dynamic z-index based on actual values for each category
+      renderItem: function(params, api) {
+        const value = api.value(0);
+        const categoryIndex = params.dataIndex;
+        const zIndex = zIndexMap[categoryIndex][field];
+        
+        const coordSys = api.coordinateSystem();
+        const width = api.size([0, 1])[0];
+        
+        const point = api.coord([value, api.value(1)]);
+        
+        return {
+          type: 'rect',
+          shape: {
+            x: field === 'PENDING' ? point[0] : coordSys.x,
+            y: point[1] - 15,
+            width: Math.abs(point[0] - coordSys.x),
+            height: 30
+          },
+          style: api.style(),
+          z: zIndex
+        };
+      },
+      encode: {
+        x: 0,
+        y: 1
+      }
     }))
   };
 };
@@ -133,7 +172,7 @@ const InstrumentsStatusChart = () => {
     }
 
     // Get the field to use as labels (first groupBy field)
-    const field = groupBy[0] || 'SUBSYSTEM';
+    const field = groupBy[groupBy.length - 1] || 'SUBSYSTEM';
 
     // We'll use the raw data as is - the flattening happens in getEChartsOption
     return { processedData: tableData, labelField: field };
