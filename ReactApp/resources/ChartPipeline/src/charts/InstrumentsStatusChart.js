@@ -135,6 +135,8 @@ const getChartOptions = (data, labelField) => {
     indexAxis: 'y', // Horizontal bar chart
     responsive: true,
     maintainAspectRatio: false,
+    responsiveAnimationDuration: 0,
+    maintainAspectRatio: false,
     // Set a fixed height per bar to enable scrolling
     barThickness: 25,
     barPercentage: 0.6,
@@ -200,10 +202,15 @@ const getChartOptions = (data, labelField) => {
 };
 
 
-// Custom style to ensure proper chart rendering with scrolling
+// Custom style to ensure proper chart rendering with scrolling and proper width constraints
 const chartContainerStyle = `
   .chart-container canvas {
     height: 100% !important;
+    max-width: 100% !important;
+  }
+  .chart-container {
+    max-width: 100%;
+    overflow-x: hidden;
   }
 `;
 
@@ -263,6 +270,9 @@ const InstrumentsStatusChart = () => {
       borderRadius="md" 
       bg={bgColor}
       height="100%"
+      width="100%"
+      maxWidth="100%"
+      overflow="hidden"
     >
       <style>{chartContainerStyle}</style>
       <Flex direction="column">
@@ -270,8 +280,8 @@ const InstrumentsStatusChart = () => {
         <Text fontSize="sm" mb={2} color="gray.500">
           GROUPING BY: {groupBy.join(', ')}
         </Text>
-        <Box height="500px" width="100%" overflowY="auto" className="chart-container">
-          <Box height={`${Math.max(500, processedData.length * 30)}px`} width="100%">
+        <Box height="500px" width="100%" overflowY="auto" overflowX="hidden" className="chart-container">
+          <Box height={`${Math.max(500, processedData.length * 30)}px`} width="100%" maxWidth="100%">
             <Bar 
               data={chartData} 
               options={chartOptions}
