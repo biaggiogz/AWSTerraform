@@ -181,9 +181,9 @@ const getChartOptions = (data, labelField) => {
     responsiveAnimationDuration: 0,
     maintainAspectRatio: false,
     // Set a fixed height per bar to enable scrolling
-    barThickness: 20, // Fixed bar thickness for better visibility
-    barPercentage: 0.9, // Percentage of the category width
-    categoryPercentage: 0.8, // Percentage of the available width
+    barThickness: 16, // Reduced bar thickness for better spacing
+    barPercentage: 0.7, // Reduced percentage for more space between bars
+    categoryPercentage: 0.6, // Reduced percentage for more space between categories
     // Set the height to match the container
     height: data.length * 40, // Dynamic height based on number of bars
     plugins: {
@@ -255,7 +255,7 @@ const getChartOptions = (data, labelField) => {
           const dataLength = data.length;
           if (dataLength > 0) {
             // Calculate minimum height per bar
-            const minHeightPerBar = 30; // Minimum height in pixels per bar
+            const minHeightPerBar = 45; // Increased minimum height per bar for better spacing
             const totalMinHeight = dataLength * minHeightPerBar;
             
             // If the scale height is less than what we need, set it manually
@@ -412,7 +412,7 @@ const InstrumentsStatusChart = () => {
               onToggleDataset={handleToggleDataset}
             />
             <Box
-                height={processedData.length > 10 ? `${processedData.length * 40}px` : "calc(100% - 10px)"} /* Dynamic height based on data */
+                height={processedData.length > 10 ? `${processedData.length * 50}px` : "calc(100% - 10px)"} /* Increased height per bar for better spacing */
                 width="100%"
                 maxWidth="100%"
                 mb="20px" /* Add margin to ensure X-axis is visible */
