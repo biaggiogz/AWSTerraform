@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Text,
@@ -29,7 +29,7 @@ ChartJS.register(
     Legend,
     ChartDataLabels
 );
-const ChartLegend = ({ datasets }) => (
+const ChartLegend = ({ datasets, hiddenDatasets, onToggleDataset }) => (
     <Flex
         className="chart-js-legend"
         position="sticky"
@@ -42,7 +42,14 @@ const ChartLegend = ({ datasets }) => (
     >
       {datasets.map((ds) =>
           ds.label ? (
-              <Flex align="center" key={ds.label}>
+              <Flex 
+                align="center" 
+                key={ds.label} 
+                onClick={() => onToggleDataset(ds.label)}
+                cursor="pointer"
+                opacity={hiddenDatasets.includes(ds.label) ? 0.5 : 1}
+                _hover={{ opacity: 0.8 }}
+              >
                 <Box
                     width="14px"
                     height="14px"
@@ -259,6 +266,20 @@ const InstrumentsStatusChart = () => {
     selectedSubsystem,
     selectedTestPack
   } = useInstrumentsTableFilterContext();
+  
+  // State to track hidden datasets
+  const [hiddenDatasets, setHiddenDatasets] = useState([]);
+  
+  // Function to toggle dataset visibility
+  const handleToggleDataset = (datasetLabel) => {
+    setHiddenDatasets(prev => {
+      if (prev.includes(datasetLabel)) {
+        return prev.filter(label => label !== datasetLabel);
+      } else {
+        return [...prev, datasetLabel];
+      }
+    });
+  };
 
   // Call hooks at the top level, before any conditional returns
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -286,8 +307,23 @@ const InstrumentsStatusChart = () => {
 
   // Prepare chart data and options
   const chartData = useMemo(() => {
-    return prepareChartData(processedData, labelField);
-  }, [processedData, labelField]);
+    const data = prepareChartData(processedData, labelField);
+    
+    // Apply visibility filter to datasets
+    if (hiddenDatasets.length > 0) {
+      data.datasets = data.datasets.map(dataset => {
+        if (hiddenDatasets.includes(dataset.label)) {
+          return {
+            ...dataset,
+            hidden: true
+          };
+        }
+        return dataset;
+      });
+    }
+    
+    return data;
+  }, [processedData, labelField, hiddenDatasets]);
 
   const chartOptions = useMemo(() => {
     return getChartOptions(processedData, labelField);
@@ -322,7 +358,11 @@ const InstrumentsStatusChart = () => {
               className="chart-container"
               position="relative"
           >
-            <ChartLegend datasets={chartData.datasets} />
+            <ChartLegend 
+              datasets={chartData.datasets} 
+              hiddenDatasets={hiddenDatasets}
+              onToggleDataset={handleToggleDataset}
+            />
             <Box
                 height={`${Math.max(400, processedData.length * 30)}px`}
                 width="100%"
