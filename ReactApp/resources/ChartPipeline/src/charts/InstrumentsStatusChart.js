@@ -11,120 +11,92 @@ import { useInstrumentsTableFilterContext } from '../components/filters/Instrume
 
 // Custom legend component is not needed as ECharts handles it internally
 
+// Flatten hierarchical data for chart display
+const flattenData = (data, labelField, numericFields) => {
+  const result = [];
+
+  const processNode = (node) => {
+    // Flatten this node, mapping labelField and numericFields
+    const entry = {
+      category: node[labelField] || 'N/A'
+    };
+
+    numericFields.forEach(field => {
+      entry[field] = node[field] || 0;
+    });
+
+    result.push(entry);
+
+    // Recursively process children if exist
+    if (node.children && node.children.length > 0) {
+      node.children.forEach(child => processNode(child));
+    }
+  };
+
+  data.forEach(node => processNode(node));
+  return result;
+};
 // Prepare chart options for ECharts
 const getEChartsOption = (data, labelField, hiddenSeries = []) => {
-  if (!data || data.length === 0) {
-    return {};
-  }
+  if (!data || data.length === 0) return {};
 
-  // Extract labels (Y-axis categories)
-  const categories = data.map(item => item[labelField] || 'N/A');
+  // Define numeric fields
+  const numericFields = [
+    'TOTAL INST',
+    'INSTALLED BY TEIGA-TMI',
+    'INSTALLED BY SIEMSA',
+    'PENDING',
+  ];
 
-  // Extract data for each series
-  const totalInstData = data.map(item => item['TOTAL INST'] || 0);
-  const installedTeigaData = data.map(item => item['INSTALLED BY TEIGA-TMI'] || 0);
-  const installedSiemsaData = data.map(item => item['INSTALLED BY SIEMSA'] || 0);
-  const pendingData = data.map(item => item['PENDING'] || 0).map(val => -Math.abs(val)); // Make pending negative for left side display
+  // Flatten hierarchical data accordingly
+  const flatData = flattenData(data, labelField, numericFields);
+
+  // Sort by TOTAL INST descending for clarity
+  flatData.sort((a, b) => b['TOTAL INST'] - a['TOTAL INST']);
+
+  const categories = flatData.map(item => item.category);
+
+  // Map series data dynamically from numericFields
+  const seriesData = {};
+  numericFields.forEach(field => {
+    seriesData[field] = flatData.map(item => {
+      if (field === 'PENDING') return -Math.abs(item[field]); // Pending negative
+      return item[field];
+    });
+  });
 
   return {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     legend: {
-      data: ['PENDING', 'TOTAL INST', 'INSTALLED BY TEIGA-TMI', 'INSTALLED BY SIEMSA'],
-      selected: hiddenSeries.reduce((acc, series) => {
-        acc[series] = false;
-        return acc;
-      }, {})
+      data: numericFields,
+      selected: hiddenSeries.reduce((acc, s) => { acc[s] = false; return acc; }, {})
     },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     dataZoom: [
-      {
-        type: 'slider',
-        yAxisIndex: 0,     // Enable vertical scroll
-        zoomLock: false,   // Prevent zoom interaction, scroll only
-        start: 0,          // Show from top
-        end: 40            // Show ~40% of items initially
-      }
+      { type: 'slider', yAxisIndex: 0, zoomLock: false, start: 0, end: 40 }
     ],
-    xAxis: {
-      type: 'value'
-    },
-    yAxis: {
-      type: 'category',
-      axisTick: { show: false },
-      data: categories
-    },
-    series: [
-      {
-        name: 'TOTAL INST',
-        type: 'bar',
-        barWidth: 30,
-        barGap: '0%',
-        itemStyle: {
-          color: '#FFE9D6'
-        },
-        label: {
-          show: true,
-          position: 'insideRight'
-        },
-        data: totalInstData,
-        z: 1
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', axisTick: { show: false }, data: categories },
+    series: numericFields.map((field, i) => ({
+      name: field,
+      type: 'bar',
+      barWidth: 30,
+      barGap: field === 'TOTAL INST' ? '0%' : '-100%',
+      itemStyle: {
+        color: {
+          'TOTAL INST': '#FFE9D6',
+          'INSTALLED BY TEIGA-TMI': '#A55B4B',
+          'INSTALLED BY SIEMSA': '#6C5F5B',
+          'PENDING': '#ED7D31',
+        }[field] || '#000'
       },
-      {
-        name: 'INSTALLED BY TEIGA-TMI',
-        type: 'bar',
-        barWidth: 30,
-        barGap: '-100%',
-        itemStyle: {
-          color: '#A55B4B'
-        },
-        label: {
-          show: true,
-          position: 'insideRight'
-        },
-        data: installedTeigaData,
-        z: 2
+      label: {
+        show: true,
+        position: field === 'PENDING' ? 'insideLeft' : 'insideRight'
       },
-      {
-        name: 'INSTALLED BY SIEMSA',
-        type: 'bar',
-        barWidth: 30,
-        barGap: '-100%',
-        itemStyle: {
-          color: '#6C5F5B'
-        },
-        label: {
-          show: true,
-          position: 'insideRight'
-        },
-        data: installedSiemsaData,
-        z: 3
-      },
-      {
-        name: 'PENDING',
-        type: 'bar',
-        barWidth: 30,
-        barGap: '-100%',
-        itemStyle: {
-          color: '#ED7D31'
-        },
-        label: {
-          show: true,
-          position: 'insideLeft'
-        },
-        data: pendingData,
-        z: 0
-      }
-    ]
+      data: seriesData[field],
+      z: numericFields.length - i
+    }))
   };
 };
 
@@ -160,16 +132,11 @@ const InstrumentsStatusChart = () => {
       return { processedData: [], labelField: 'SUBSYSTEM' };
     }
 
-    // Filter items with non-zero totals
-    let filtered = tableData.filter(item => (item['TOTAL INST'] || 0) > 0);
-
-    // Sort by total for better visualization
-    filtered = filtered.sort((a, b) => (b['TOTAL INST'] || 0) - (a['TOTAL INST'] || 0));
-
     // Get the field to use as labels (first groupBy field)
     const field = groupBy[0] || 'SUBSYSTEM';
 
-    return { processedData: filtered, labelField: field };
+    // We'll use the raw data as is - the flattening happens in getEChartsOption
+    return { processedData: tableData, labelField: field };
   }, [tableData, groupBy, selectedSubsystem, selectedTestPack]);
 
   // Get ECharts options
@@ -197,6 +164,7 @@ const InstrumentsStatusChart = () => {
       </Box>
     );
   }
+
 
   return (
     <Box
