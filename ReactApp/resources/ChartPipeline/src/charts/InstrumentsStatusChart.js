@@ -39,6 +39,8 @@ const ChartLegend = ({ datasets, hiddenDatasets, onToggleDataset }) => (
         py={1}
         mb={2}
         gap={3}
+        justifyContent="center"
+        width="100%"
     >
       {datasets.map((ds) =>
           ds.label ? (
