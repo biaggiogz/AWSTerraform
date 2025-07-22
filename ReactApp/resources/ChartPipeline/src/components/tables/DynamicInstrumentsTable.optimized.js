@@ -390,7 +390,7 @@ const DynamicInstrumentsTable = () => {
           const value = Number(info.getValue());
           return value > 0 ? 
             <Text fontSize="xs" bg={chartColors['DONE']} color="white" px={2} py={1} borderRadius="sm">{value}</Text> : 
-            <Text fontSize="xs" color="gray.400">-</Text>;
+            <Text fontSize="xs" color="gray.400">{0}</Text>
         },
         size: 90,
       }),
