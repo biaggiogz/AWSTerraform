@@ -46,6 +46,7 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
     'INSTALLED BY TEIGA-TMI',
     'INSTALLED BY SIEMSA',
     'PENDING',
+    'DONE',
   ];
 
   // Flatten hierarchical data accordingly
@@ -59,22 +60,39 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
   // Map series data dynamically from numericFields
   const seriesData = {};
   numericFields.forEach(field => {
-    seriesData[field] = flatData.map(item => {
-      if (field === 'PENDING') return -Math.abs(item[field]); // Pending negative
-      return item[field];
-    });
+    if (field === 'DONE') {
+      // Calculate DONE values - when total equals sum of installed
+      seriesData[field] = flatData.map(item => {
+        const total = item['TOTAL INST'] || 0;
+        const teiga = item['INSTALLED BY TEIGA-TMI'] || 0;
+        const siemsa = item['INSTALLED BY SIEMSA'] || 0;
+        const installed = teiga + siemsa;
+        
+        // Only show DONE when fully installed (total = installed)
+        return Math.abs(total - installed) < 0.01 ? total : 0;
+      });
+    } else {
+      seriesData[field] = flatData.map(item => {
+        if (field === 'PENDING') return -Math.abs(item[field]); // Pending negative
+        return item[field];
+      });
+    }
   });
   
   // Create z-index map for each category based on actual values
   const zIndexMap = flatData.map(item => {
     const teigaValue = item['INSTALLED BY TEIGA-TMI'] || 0;
     const siemsaValue = item['INSTALLED BY SIEMSA'] || 0;
+    const total = item['TOTAL INST'] || 0;
+    const installed = teigaValue + siemsaValue;
+    const isDone = Math.abs(total - installed) < 0.01 && total > 0;
     
     return {
       'TOTAL INST': 1,
-      'INSTALLED BY TEIGA-TMI': teigaValue >= siemsaValue ? 3 : 2,
-      'INSTALLED BY SIEMSA': siemsaValue > teigaValue ? 3 : 2,
-      'PENDING': 0
+      'INSTALLED BY TEIGA-TMI': isDone ? 2 : (teigaValue >= siemsaValue ? 3 : 2),
+      'INSTALLED BY SIEMSA': isDone ? 2 : (siemsaValue > teigaValue ? 3 : 2),
+      'PENDING': 0,
+      'DONE': 4 // Highest z-index to appear on top
     };
   });
 
@@ -101,10 +119,11 @@ const getEChartsOption = (data, labelField, hiddenSeries = []) => {
           'INSTALLED BY TEIGA-TMI': '#A55B4B',
           'INSTALLED BY SIEMSA': '#6C5F5B',
           'PENDING': '#ED7D31',
+          'DONE': '#4CAF50', // Green color for DONE
         }[field] || '#000'
       },
       label: {
-        show: true,
+        show: field !== 'DONE' ? true : false, // Hide label for DONE to avoid clutter
         position: field === 'PENDING' ? 'insideLeft' : 'insideRight'
       },
       data: seriesData[field].map((value, index) => value),
