@@ -8,10 +8,10 @@
  */
 export const getTotalIsometricsQuery = () => `
 SELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 `;
 
 /**
@@ -20,10 +20,10 @@ FROM "ControlInstrumentsByIsometric";
  */
 export const getTotalTagInstQuery = () => `
 SELECT COUNT("TAG INST") AS "TOTAL TAG INST _Global"
-FROM "Details Instruments";
+FROM detailsInstrumentsTable;
 
 SELECT COUNT("TAG INST") AS "TOTAL TAG INST _Local"
-FROM "Details Instruments";
+FROM detailsInstrumentsTable;
 `;
 
 /**
@@ -32,10 +32,10 @@ FROM "Details Instruments";
  */
 export const getTotalInstQuery = () => `
 SELECT SUM("QTY INST") AS "TOTAL INST _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT SUM("QTY INST") AS "TOTAL INST _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 `;
 
 /**
@@ -44,10 +44,10 @@ FROM "ControlInstrumentsByIsometric";
  */
 export const getTotalDoneQuery = () => `
 SELECT SUM("INSTALLED BY TEIGA-TMI") + SUM("INSTALLED BY SIEMSA") AS "TOTAL DONE _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT SUM("INSTALLED BY TEIGA-TMI") + SUM("INSTALLED BY SIEMSA") AS "TOTAL DONE _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 `;
 
 /**
@@ -56,10 +56,10 @@ FROM "ControlInstrumentsByIsometric";
  */
 export const getTotalInstalledTeigaTmiQuery = () => `
 SELECT SUM("INSTALLED BY TEIGA-TMI") AS "TOTAL INSTALLED TEIGA-TMI _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT SUM("INSTALLED BY TEIGA-TMI") AS "TOTAL INSTALLED TEIGA-TMI _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 `;
 
 /**
@@ -68,10 +68,10 @@ FROM "ControlInstrumentsByIsometric";
  */
 export const getTotalInstalledSiemsaQuery = () => `
 SELECT SUM("INSTALLED BY SIEMSA") AS "TOTAL INSTALLED SIEMSA _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT SUM("INSTALLED BY SIEMSA") AS "TOTAL INSTALLED SIEMSA _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 `;
 
 /**
@@ -81,45 +81,52 @@ FROM "ControlInstrumentsByIsometric";
 export const getAllMetricsQuery = () => `
 -- Total Isometrics
 SELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 -- Total Tag Instruments
 SELECT COUNT("TAG INST") AS "TOTAL TAG INST _Global"
-FROM "Details Instruments";
+FROM detailsInstrumentsTable;
 
 SELECT COUNT("TAG INST") AS "TOTAL TAG INST _Local"
-FROM "Details Instruments";
+FROM detailsInstrumentsTable;
 
 -- Total Instruments
 SELECT SUM("QTY INST") AS "TOTAL INST _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT SUM("QTY INST") AS "TOTAL INST _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 -- Total Done
 SELECT SUM("INSTALLED BY TEIGA-TMI") + SUM("INSTALLED BY SIEMSA") AS "TOTAL DONE _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT SUM("INSTALLED BY TEIGA-TMI") + SUM("INSTALLED BY SIEMSA") AS "TOTAL DONE _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 -- Total Installed by TEIGA-TMI
 SELECT SUM("INSTALLED BY TEIGA-TMI") AS "TOTAL INSTALLED TEIGA-TMI _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT SUM("INSTALLED BY TEIGA-TMI") AS "TOTAL INSTALLED TEIGA-TMI _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 -- Total Installed by SIEMSA
 SELECT SUM("INSTALLED BY SIEMSA") AS "TOTAL INSTALLED SIEMSA _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT SUM("INSTALLED BY SIEMSA") AS "TOTAL INSTALLED SIEMSA _Local"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
+
+-- Dynamic Table Example
+SELECT SUM("TOTAL DONE") AS "TOTAL INST DONE _Global"
+FROM dynamicInstrumentReadingTable;
+
+SELECT SUM("TOTAL DONE") AS "TOTAL INST DONE _Local"
+FROM dynamicInstrumentReadingTable;
 `;
 
 /**

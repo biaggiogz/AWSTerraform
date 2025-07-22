@@ -12,7 +12,7 @@ import {
   IconButton
 } from '@chakra-ui/react';
 import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop, MdFlag } from 'react-icons/md';
-import useInstrumentsReportCalculations from '../../hooks/useInstrumentsReportCalculations';
+import useInstrumentsReportDuckDB from '../../hooks/useInstrumentsReportDuckDB';
 import * as instrumentsReportQueries from '../../utils/instrumentsReportQueries';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import ProgressFilter from '../filters/ProgressFilter';
@@ -26,10 +26,10 @@ const InstrumentsReportSQLPanel = ({ controlData, detailsData, filteredControlDa
   
   const { sqlState, updateQuery } = usePersistentSQLState(tabName);
   const [sqlQuery, setSqlQuery] = useState(sqlState.query || `SELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Global"
-FROM "ControlInstrumentsByIsometric";
+FROM controlInstrumentsByIsometric;
 
 SELECT COUNT(DISTINCT "ISOMETRIC") AS "TOTAL ISOS _Local"
-FROM "ControlInstrumentsByIsometric";`);
+FROM controlInstrumentsByIsometric;`);
   const [metricCards, setMetricCards] = useState([]);
   const [lockedCards, setLockedCards] = useState(new Set());
   const [deletedCards, setDeletedCards] = useState(new Set());
@@ -49,21 +49,22 @@ FROM "ControlInstrumentsByIsometric";`);
     }
   }, [sqlState.query]);
   
+  // Get dynamic data from controlData if available
+  const dynamicData = controlData;
+  
   const { 
     calculations, 
     loading, 
     executeSQLQuery, 
-    controlColumns, 
-    detailColumns,
-    dynamicColumns,
-    availableTables,
-    tableInfo
-  } = useInstrumentsReportCalculations(
+    tableInfo,
+    availableTables
+  } = useInstrumentsReportDuckDB(
     controlData, 
     detailsData,
+    dynamicData,
     filteredControlData,
     filteredDetailsData,
-    filters
+    filteredControlData // Use filtered control data for dynamic table too
   );
 
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -133,7 +134,9 @@ FROM "ControlInstrumentsByIsometric";`);
   const getAllFieldNames = () => {
     const fields = new Set();
     Object.values(tableInfo).forEach(info => {
-      info.fields.forEach(field => fields.add(field));
+      if (info && Array.isArray(info.fields)) {
+        info.fields.forEach(field => fields.add(field));
+      }
     });
     return Array.from(fields).sort();
   };
@@ -323,7 +326,7 @@ FROM "ControlInstrumentsByIsometric";`);
           <VStack spacing={2} align="stretch" fontSize="xs" color="gray.600">
             {Object.entries(tableInfo).map(([tableName, info]) => (
               <Box key={tableName} pl={4} borderLeft="2px solid" borderColor="blue.200">
-                <Text fontWeight="bold">"{tableName}" ({info.filteredRows}/{info.totalRows} rows)</Text>
+                <Text fontWeight="bold">{tableName} ({info.totalRows} rows)</Text>
                 <Text><strong>Fields:</strong> {info.fields.slice(0, 8).join(', ')}{info.fields.length > 8 ? '...' : ''}</Text>
               </Box>
             ))}

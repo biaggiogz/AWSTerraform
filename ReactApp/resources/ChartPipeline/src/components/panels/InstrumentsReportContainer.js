@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, VStack, Tabs, TabList, TabPanels, Tab, TabPanel } from '@chakra-ui/react';
 import InstrumentsReportSQLPanel from './InstrumentsReportSQLPanel';
 import InstrumentsStatusChart from '../../charts/InstrumentsStatusChart';
@@ -11,6 +11,7 @@ const InstrumentsReportContainer = ({ controlData, detailsData, filteredControlD
   const [filteredData, setFilteredData] = useState(initialFilteredDetailsData || detailsData);
   const [filteredControlData, setFilteredControlData] = useState(initialFilteredControlData || controlData);
   const [loopFilteredControlData, setLoopFilteredControlData] = useState(controlData);
+  const [dynamicFilteredData, setDynamicFilteredData] = useState(controlData); // For dynamic table
   const [progressFilterVisible, setProgressFilterVisible] = useState(false);
   const [itemsFilterVisible, setItemsFilterVisible] = useState(false);
   const [loopFilterVisible, setLoopFilterVisible] = useState(false);
@@ -20,6 +21,19 @@ const InstrumentsReportContainer = ({ controlData, detailsData, filteredControlD
   const [loopPropagation, setLoopPropagation] = useState({ ids: [], type: 'nothing' });
   const [hitoPropagation, setHitoPropagation] = useState({ ids: [], type: 'nothing' });
   const [frontFilter, setFrontFilter] = useState(null);
+  
+  // Track data changes to update DuckDB tables
+  const dataRef = useRef({
+    controlData,
+    detailsData,
+    filteredControlData: initialFilteredControlData,
+    filteredDetailsData: initialFilteredDetailsData
+  });
+  
+  // Update dynamic filtered data when control data changes
+  useEffect(() => {
+    setDynamicFilteredData(loopFilteredControlData || filteredControlData || controlData);
+  }, [loopFilteredControlData, filteredControlData, controlData]);
 
   // Handle bringing a filter to front
   const handleBringToFront = (filterName) => {
