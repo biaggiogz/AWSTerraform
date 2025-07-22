@@ -22,6 +22,7 @@ import FilterStatusBar from '../filters/FilterStatusBar';
 const LoopTestProgressChart = lazy(() => import('../../charts/LoopTestProgressChart.optimized'));
 const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationProgressControlChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
+const InstrumentsStatusChart = lazy(() => import('../../charts/InstrumentsStatusChart'));
 const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
 const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
 const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric.optimized'));
@@ -182,10 +183,11 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   {/*/>*/}
                   <InstrumentsTableFilterProvider>
                     <FilterStatusBar />
+                    <InstrumentsStatusChart />
                     <DynamicInstrumentsTable/>
                     <DetailsInstrumentsTable/>
-                    <ControlInstrumentsByIsometric/>nstrumentsByIsometric/>ByIsometric/>
-                  </InstrumentsTableFilterProvider>/InstrumentsTableFilterProvider>
+                    <ControlInstrumentsByIsometric/>
+                  </InstrumentsTableFilterProvider>
                 </VStack>
               </Suspense>
             </TabPanel>

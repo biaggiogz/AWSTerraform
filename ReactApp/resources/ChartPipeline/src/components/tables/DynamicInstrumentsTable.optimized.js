@@ -137,7 +137,9 @@ const DynamicInstrumentsTable = () => {
     selectedSubsystem,
     handleTestPackClick,
     handleSubsystemClick,
-    getSqlWhereClause
+    getSqlWhereClause,
+    setTableData: setContextTableData,
+    setGroupBy: setContextGroupBy
   } = useInstrumentsTableFilterContext();
   
   const {
@@ -215,8 +217,12 @@ const DynamicInstrumentsTable = () => {
     if (rawData.length > 0) {
       const grouped = groupAndAggregate(rawData, groupBy);
       setTableData(grouped);
+      
+      // Update the context with the table data and groupBy for the chart component
+      setContextTableData(grouped);
+      setContextGroupBy(groupBy);
     }
-  }, [rawData, groupBy, groupAndAggregate]);
+  }, [rawData, groupBy, groupAndAggregate, setContextTableData, setContextGroupBy]);
 
   // Handle grouping changes
   const handleAddGroupLevel = useCallback((field) => {

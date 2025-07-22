@@ -16,6 +16,10 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
   const [selectedTestPack, setSelectedTestPack] = useState(null);
   const [selectedSubsystem, setSelectedSubsystem] = useState(null);
   
+  // Table data for chart visualization
+  const [tableData, setTableData] = useState([]);
+  const [groupBy, setGroupBy] = useState(['SUBSYSTEM', 'HITO']);
+  
   // Handle isometric selection
   const onIsometricSelect = useCallback((isoId) => {
     setSelectedIsometric(prev => prev === isoId ? null : isoId);
@@ -154,7 +158,13 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
     filterDynamicTable,
     
     // SQL helpers
-    getSqlWhereClause
+    getSqlWhereClause,
+    
+    // Table data for chart visualization
+    tableData,
+    setTableData,
+    groupBy,
+    setGroupBy
   }), [
     selectedIsometric, 
     selectedTestPack, 
@@ -166,7 +176,11 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
     filterDetailsTable, 
     filterControlTable, 
     filterDynamicTable,
-    getSqlWhereClause
+    getSqlWhereClause,
+    tableData,
+    setTableData,
+    groupBy,
+    setGroupBy
   ]);
   
   return (
