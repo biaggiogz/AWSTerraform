@@ -236,7 +236,6 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'total_inst',
       header: 'TOTAL INST',
-      color: '#E8988A',
       size: 60,
       cell: ({ getValue }) => (
           <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
@@ -245,7 +244,6 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'done_inst',
       header: 'DONE INST',
-      color: '#E8988A',
       size: 60,
       cell: ({ getValue }) => (
           <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
@@ -335,7 +333,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             title: 'INSTRUMENTS (INST)',
             colspan: 3, 
             startCol: 12,
-            color: '#E8988A'
+            color: '#A888B5'
           },
           { 
             id: 'tracing', 
@@ -370,7 +368,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             title: 'INSTRUMENT STATUS',
             colspan: 3, 
             startCol: 12,
-            color: '#D1897C'
+            color: '#977AA3'
           },
           { 
             id: 'tracing_metrics', 
@@ -507,10 +505,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'done_loop': '#7CA2C5',
               'pending_loop': '#7CA2C5',
               
-              // Additional columns
-              'total_inst': '#8AB3DB',
-              'done_inst': '#8AB3DB',
-              'pending_inst': '#8AB3DB',
+              // Instruments (INST)
+              'total_inst': '#A888B5',
+              'done_inst': '#A888B5',
+              'pending_inst': '#A888B5',
               'total_tracing': '#6FC1B2',
               'done_tracing': '#6FC1B2',
               'pending_tracing': '#6FC1B2'
