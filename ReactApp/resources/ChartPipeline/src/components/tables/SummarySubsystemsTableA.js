@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Heading, Text, HStack, Button, Tooltip, Grid, Progress } from '@chakra-ui/react';
+import { Box, Heading, Text, HStack, Button, Tooltip, Grid, Progress, VStack } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { VariableSizeList as List } from 'react-window';
 
@@ -172,86 +172,116 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
 
         // Determine grid layout based on number of TPs
         const useGrid = tpIds.length > 2;
-        const columnCount = tpIds.length > 4 ? 3 : 2;
+        let columnCount = 2; // Default 2 columns
+        if (tpIds.length > 6) {
+          columnCount = 4; // 4 columns for more than 6 TPs
+        } else if (tpIds.length > 4) {
+          columnCount = 3; // 3 columns for 5-6 TPs
+        }
+        
+        // Calculate the height needed for the TP boxes
+        let boxHeight;
+        if (tpIds.length > 6) {
+          const rowsNeeded = Math.ceil(tpIds.length / 4);
+          boxHeight = (rowsNeeded * 31) + 20;
+        } else if (tpIds.length > 4) {
+          const rowsNeeded = Math.ceil(tpIds.length / 3);
+          boxHeight = (rowsNeeded * 31) + 20;
+        } else if (tpIds.length > 2) {
+          const rowsNeeded = Math.ceil(tpIds.length / 2);
+          boxHeight = (rowsNeeded * 31) + 20;
+        } else if (tpIds.length > 0) {
+          boxHeight = (tpIds.length * 31) + 10;
+        } else {
+          boxHeight = 40;
+        }
         
         return (
-            <Box width="100%" maxWidth="100px" overflow="hidden" mx="auto">
-              <Box 
-                borderWidth="1px" 
-                borderRadius="md" 
-                bg="white" 
-                width="100%"
-                p={1}
+            <Box width="100%" maxWidth="100px" mx="auto" height={`${boxHeight}px`}>
+              <Box
+                  borderWidth="1px"
+                  borderRadius="md"
+                  bg="white"
+                  width="100%"
+                  height="100%"
+                  overflowY="auto" // allows scrolling if content ever overflows
+                  p={1}
               >
                 {useGrid ? (
-                  <Grid templateColumns={`repeat(${columnCount}, 1fr)`} gap={1}>
-                    {tpIds.map((id, idx) => {
-                      const progress = progressValues[idx] ?? 0;
-                      return (
-                        <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
-                          <Box 
-                            p={1}
-                            bg="gray.50"
-                            borderRadius="sm"
-                            mb={1}
-                          >
-                            <Text fontSize="8px" fontWeight="bold" textAlign="center">{id}</Text>
-                            <Progress
-                              value={progress * 100}
-                              size="xs"
-                              mt={1}
-                              colorScheme={
-                                progress >= 1 ? 'green' :
-                                progress >= 0.7 ? 'green' :
-                                progress >= 0.4 ? 'orange' : 'red'
-                              }
-                              borderRadius="sm"
-                            />
-                            <Text fontSize="7px" textAlign="right" mt={0.5}>
-                              {(progress * 100).toFixed(0)}%
-                            </Text>
-                          </Box>
-                        </Tooltip>
-                      );
-                    })}
-                  </Grid>
+                    <Grid templateColumns={`repeat(${columnCount}, 1fr)`} gap={1}>
+                      {tpIds.map((id, idx) => {
+                        const progress = progressValues[idx] ?? 0;
+                        return (
+                            <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
+                              <Box
+                                  p={1}
+                                  bg="gray.50"
+                                  borderRadius="sm"
+                                  minH="36px" // ← Ensures each item has enough space
+                                  display="flex"
+                                  flexDirection="column"
+                                  justifyContent="space-between"
+                              >
+                                <Text fontSize="8px" fontWeight="bold" textAlign="center">
+                                  {id}
+                                </Text>
+                                <Progress
+                                    value={progress * 100}
+                                    size="xs"
+                                    mt={0.5}
+                                    colorScheme={
+                                      progress >= 1 ? 'green' :
+                                          progress >= 0.7 ? 'green' :
+                                              progress >= 0.4 ? 'orange' : 'red'
+                                    }
+                                    borderRadius="sm"
+                                />
+                                <Text fontSize="7px" textAlign="right" mt={0.5}>
+                                  {(progress * 100).toFixed(0)}%
+                                </Text>
+                              </Box>
+                            </Tooltip>
+                        );
+                      })}
+                    </Grid>
                 ) : (
-                  // Original vertical layout for 1-2 TPs
-                  <Box>
-                    {tpIds.map((id, idx) => {
-                      const progress = progressValues[idx] ?? 0;
-                      return (
-                        <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
-                          <Box 
-                            display="flex" 
-                            alignItems="center" 
-                            justifyContent="space-between"
-                            mb={1}
-                            p={1}
-                            bg="gray.50"
-                            borderRadius="sm"
-                          >
-                            <Text fontSize="9px" fontWeight="bold" width="40%">{id}</Text>
-                            <Box width="55%">
-                              <Progress
-                                value={progress * 100}
-                                size="xs"
-                                colorScheme={
-                                  progress >= 1 ? 'green' :
-                                  progress >= 0.7 ? 'green' :
-                                  progress >= 0.4 ? 'orange' : 'red'
-                                }
-                                borderRadius="sm"
-                              />
-                              <Text fontSize="8px" textAlign="right" mt={0.5}>
-                                {(progress * 100).toFixed(0)}%
-                              </Text>
-                            </Box>
-                          </Box>
-                        </Tooltip>
-                      );
-                    })}
-                  </Box>
+                    <VStack spacing={1} align="stretch">
+                      {tpIds.map((id, idx) => {
+                        const progress = progressValues[idx] ?? 0;
+                        return (
+                            <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
+                              <Box
+                                  display="flex"
+                                  alignItems="center"
+                                  justifyContent="space-between"
+                                  p={1}
+                                  bg="gray.50"
+                                  borderRadius="sm"
+                                  minH="36px"
+                              >
+                                <Text fontSize="9px" fontWeight="bold" width="40%">
+                                  {id}
+                                </Text>
+                                <Box width="55%">
+                                  <Progress
+                                      value={progress * 100}
+                                      size="xs"
+                                      colorScheme={
+                                        progress >= 1 ? 'green' :
+                                            progress >= 0.7 ? 'green' :
+                                                progress >= 0.4 ? 'orange' : 'red'
+                                      }
+                                      borderRadius="sm"
+                                  />
+                                  <Text fontSize="8px" textAlign="right" mt={0.5}>
+                                    {(progress * 100).toFixed(0)}%
+                                  </Text>
+                                </Box>
+                              </Box>
+                            </Tooltip>
+                        );
+                      })}
+                    </VStack>
                 )}
               </Box>
             </Box>
@@ -600,27 +630,29 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   // Create a ref for the list component
   const listRef = React.useRef();
   
-  // Function to calculate row heights
+  // Function to calculate row heights based on TP IDs box height
   const getRowHeight = React.useCallback((index) => {
     const row = data?.[index];
-    if (!row) return 60; // Default height
-    
+    if (!row) return 60;
+
     const tpIds = row.list_includes_tp_id || '';
     const tpCount = tpIds && typeof tpIds === 'string' ? tpIds.split('|').length : 0;
-    
-    // Determine layout based on TP count
+
+    let boxHeight;
+
     if (tpCount > 4) {
-      // 3-column grid for more than 4 TPs
       const rowsNeeded = Math.ceil(tpCount / 3);
-      return Math.max(60, (rowsNeeded * 30) + 10);
+      boxHeight = rowsNeeded * 42 + 24; // add extra buffer here
     } else if (tpCount > 2) {
-      // 2-column grid for 3-4 TPs
       const rowsNeeded = Math.ceil(tpCount / 2);
-      return Math.max(60, (rowsNeeded * 30) + 10);
+      boxHeight = rowsNeeded * 42 + 20;
+    } else if (tpCount > 0) {
+      boxHeight = tpCount * 42 + 12;
     } else {
-      // Vertical layout for 1-2 TPs
-      return Math.max(60, (tpCount * 22) + 10);
+      boxHeight = 50;
     }
+
+    return Math.max(70, boxHeight); // slightly bump base height
   }, [data]);
   
   const table = useReactTable({
