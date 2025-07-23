@@ -291,7 +291,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       },
     {
       accessorKey: 'list_id_tp_total_progress',
-      header: 'TP PROGRESS',
+      header: 'TOTAL TP PROGRESS',
       size: 80,
       cell: ({ getValue, row }) => {
         const value = getValue();
@@ -769,7 +769,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'description': '#007598',
               'n_distinct_tps': '#007598', // N°TP is now part of subsystem information
               'list_includes_tp_id': '#007598', // TP IDs column
-              'list_id_tp_total_progress': '#007598', // TP Progress column
+              'list_id_tp_total_progress': '#007598', // TOTAL TP Progress column
 
               // Items progress
               'total_insulation': '#CEC19B',
