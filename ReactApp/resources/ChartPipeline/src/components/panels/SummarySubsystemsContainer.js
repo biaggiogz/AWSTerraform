@@ -191,7 +191,7 @@ const SummarySubsystemsContainer = ({
       <Box position="relative" width="100%" height="800px" overflow="hidden">
         <ResizableDraggablePanel
           title="Subsystem Overview"
-          initialWidth={100}
+          initialWidth={1000}
           initialHeight={700}
           initialX={20}
           initialY={20}

@@ -290,16 +290,24 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
-      accessorKey: 'pending_punch',
-      header: 'TOTAL PENDING PUNCH',
+      accessorKey: 'close_punch',
+      header: 'CLOSE PUNCH',
       size: 60,
       cell: ({ getValue }) => (
           <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
-      accessorKey: 'close_punch',
-      header: 'TOTAL CLOSE PUNCH',
+      accessorKey: 'pending_punch',
+      header: 'PENDING PUNCH',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'open_punch',
+      header: 'OPEN PUNCH',
       size: 60,
       cell: ({ getValue }) => (
           <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
@@ -349,6 +357,13 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             colspan: 3, 
             startCol: 15,
             color: '#0ABAB5'
+          },
+          {
+            id: 'punch',
+            title: 'PUNCH LIST PROGRESS',
+            colspan: 4,
+            startCol: 15,
+            color: '#748DAE'
           }
         ]
       },
@@ -384,6 +399,13 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             colspan: 3, 
             startCol: 15,
             color: '#09A7A3'
+          },
+          {
+            id: 'punch_metrics',
+            title: 'PUNCH LIST STATUS',
+            colspan: 4,
+            startCol: 15,
+            color: '#687F9D'
           }
         ]
       }
@@ -519,7 +541,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'pending_inst': '#A888B5',
               'total_tracing': '#0ABAB5',
               'done_tracing': '#0ABAB5',
-              'pending_tracing': '#0ABAB5'
+              'pending_tracing': '#0ABAB5',
+
+              'total_punch': '#748DAE',
+              'pending_punch': '#748DAE',
+              'close_punch': '#748DAE',
+              'open_punch': '#748DAE'
+
+
             };
             const columnId = header.column.id;
             const bgColor = columnColors[columnId] || '#F7FAFC';
