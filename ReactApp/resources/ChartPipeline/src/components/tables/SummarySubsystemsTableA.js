@@ -153,7 +153,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'list_includes_tp_id',
       header: 'TP IDs',
-      size: 100,
+      size: 84, // Adjusted to match standard column width
       cell: ({ getValue, row }) => {
         const value = getValue();
         const tpIds = (value && typeof value === 'string') ? value.split('|') : [];
@@ -197,7 +197,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         }
         
         return (
-            <Box width="100%" maxWidth="100px" mx="auto" height={`${boxHeight}px`}>
+            <Box width="100%" height={`${boxHeight}px`}>
               <Box
                   borderWidth="1px"
                   borderRadius="md"
@@ -205,6 +205,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                   width="100%"
                   height="100%"
                   overflowY="auto" // allows scrolling if content ever overflows
+                  overflowX="hidden" // prevent horizontal overflow
                   p={1}
               >
                 {useGrid ? (
