@@ -330,14 +330,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           },
           { 
             id: 'instruments', 
-            title: 'INSTRUMENTS (INST)',
+            title: 'INSTRUMENTS PROGRESS',
             colspan: 3, 
             startCol: 12,
             color: '#A888B5'
           },
           { 
             id: 'tracing', 
-            title: 'TRACING', 
+            title: 'TRACING PROGRESS',
             colspan: 3, 
             startCol: 15,
             color: '#6FC1B2'
@@ -372,7 +372,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           },
           { 
             id: 'tracing_metrics', 
-            title: 'TRACING METRICS', 
+            title: 'TRACING STATUS',
             colspan: 3, 
             startCol: 15,
             color: '#63AEA1'
