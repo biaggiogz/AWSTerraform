@@ -374,9 +374,49 @@ FROM "Subsystem Overview";`);
                       <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_insulation) AS "Pending Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_insulation) AS "Pending Items _Local"\nFROM "Subsystem Overview";')}>
                         Pending Items
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(n_distinct_tps) AS "Total Test Packs _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(n_distinct_tps) AS "Total Test Packs _Local"\nFROM "Subsystem Overview";')}>
-                        Total Test Packs
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_loop) AS "Total Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_loop) AS "Total Loops _Local"\nFROM "Subsystem Overview";')}>
+                        Total Loops
                       </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_loop) AS "Done Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_loop) AS "Done Loops _Local"\nFROM "Subsystem Overview";')}>
+                        Done Loops
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_loop) AS "Pending Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_loop) AS "Pending Loops _Local"\nFROM "Subsystem Overview";')}>
+                        Pending Loops
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_inst) AS "Total Inst _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_inst) AS "Total Inst _Local"\nFROM "Subsystem Overview";')}>
+                        Total Inst
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_inst) AS "Done Inst _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_inst) AS "Done Inst _Local"\nFROM "Subsystem Overview";')}>
+                        Done Inst
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_inst) AS "Pending Inst _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_inst) AS "Pending Inst _Local"\nFROM "Subsystem Overview";')}>
+                        Pending Inst
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_tracing) AS "Total Tracing _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_tracing) AS "Total Tracing _Local"\nFROM "Subsystem Overview";')}>
+                        Total Tracing
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_tracing) AS "Done Tracing _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_tracing) AS "Done Tracing _Local"\nFROM "Subsystem Overview";')}>
+                        Done Tracing
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_tracing) AS "Pending Tracing _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_tracing) AS "Pending Tracing _Local"\nFROM "Subsystem Overview";')}>
+                        Pending Tracing
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_punch) AS "Total Punch _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_punch) AS "Total Punch _Local"\nFROM "Subsystem Overview";')}>
+                        Total Punch
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_punch) AS "Pending Punch _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_punch) AS "Pending Punch _Local"\nFROM "Subsystem Overview";')}>
+                        Pending Punch
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(close_punch) AS "Close Punch _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(close_punch) AS "Close Punch _Local"\nFROM "Subsystem Overview";')}>
+                        Close Punch
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(open_punch) AS "Open Punch _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(open_punch) AS "Open Punch _Local"\nFROM "Subsystem Overview";')}>
+                        Open Punch
+                      </Button>
+
+                      {/*<Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(n_distinct_tps) AS "Total Test Packs _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(n_distinct_tps) AS "Total Test Packs _Local"\nFROM "Subsystem Overview";')}>*/}
+                      {/*  Total Test Packs*/}
+                      {/*</Button>*/}
                     </HStack>
                     <HStack spacing={2} wrap="wrap">
                       <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_loop) AS "Total Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_loop) AS "Total Loops _Local"\nFROM "Subsystem Overview";')}>
