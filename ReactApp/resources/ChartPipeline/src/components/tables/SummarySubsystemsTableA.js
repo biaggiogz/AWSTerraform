@@ -179,14 +179,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           columnCount = 3; // 3 columns for 5-6 TPs
         }
         
-        // Calculate the height needed for the TP boxes
+        // Calculate the height needed for the TP boxes - match the cell height
         let boxHeight;
         if (tpIds.length > 6) {
           const rowsNeeded = Math.ceil(tpIds.length / 4);
-          boxHeight = (rowsNeeded * 31) + 20;
+          boxHeight = Math.max(80, (rowsNeeded * 31) + 20); // Ensure minimum height
         } else if (tpIds.length > 4) {
           const rowsNeeded = Math.ceil(tpIds.length / 3);
-          boxHeight = (rowsNeeded * 31) + 20;
+          boxHeight = Math.max(80, (rowsNeeded * 31) + 20); // Ensure minimum height
         } else if (tpIds.length > 2) {
           const rowsNeeded = Math.ceil(tpIds.length / 2);
           boxHeight = (rowsNeeded * 31) + 20;
@@ -204,12 +204,21 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                   bg="white"
                   width="100%"
                   height="100%"
+                  display="flex"
+                  flexDirection="column"
+                  justifyContent="space-between"
                   overflowY="auto" // allows scrolling if content ever overflows
                   overflowX="hidden" // prevent horizontal overflow
                   p={1}
               >
                 {useGrid ? (
-                    <Grid templateColumns={`repeat(${columnCount}, 1fr)`} gap={1}>
+                    <Grid 
+                      templateColumns={`repeat(${columnCount}, 1fr)`} 
+                      gap={1} 
+                      height="100%" 
+                      alignContent="space-evenly" 
+                      justifyItems="center"
+                    >
                       {tpIds.map((id, idx) => {
                         const progress = progressValues[idx] ?? 0;
                         return (
@@ -641,9 +650,12 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
 
     let boxHeight;
 
-    if (tpCount > 4) {
+    if (tpCount > 6) {
+      const rowsNeeded = Math.ceil(tpCount / 4);
+      boxHeight = Math.max(80, rowsNeeded * 42 + 24); // Ensure minimum height for 4-column grid
+    } else if (tpCount > 4) {
       const rowsNeeded = Math.ceil(tpCount / 3);
-      boxHeight = rowsNeeded * 42 + 24; // add extra buffer here
+      boxHeight = Math.max(80, rowsNeeded * 42 + 24); // Ensure minimum height for 3-column grid
     } else if (tpCount > 2) {
       const rowsNeeded = Math.ceil(tpCount / 2);
       boxHeight = rowsNeeded * 42 + 20;
