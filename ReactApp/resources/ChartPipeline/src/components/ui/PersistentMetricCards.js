@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { Box, Text, HStack, VStack, IconButton, Badge } from '@chakra-ui/react';
 import { DeleteIcon, ChevronUpIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
@@ -13,20 +13,21 @@ try {
   console.warn('SolidJS components not available:', error.message);
 }
 
-const PersistentMetricCard = ({ card, onRemove }) => (
+// Memoized card component to prevent unnecessary re-renders
+const PersistentMetricCard = memo(({ card, onRemove }) => (
   <Box
     bg="white"
     border="1px solid"
     borderColor="blue.200"
     borderRadius="md"
-    p={3}
-    minW="200px"
+    p={2}
+    minW="180px"
     position="relative"
   >
-    <VStack spacing={2} align="stretch">
+    <VStack spacing={1} align="stretch">
       <HStack justify="space-between" align="center">
         <Text fontSize="xs" fontWeight="bold" color="blue.600" textTransform="uppercase">
-          {card.title}
+          {card.title || card.key}
         </Text>
         <HStack spacing={1}>
           <Badge colorScheme="blue" size="sm">SAVED</Badge>
@@ -41,24 +42,22 @@ const PersistentMetricCard = ({ card, onRemove }) => (
         </HStack>
       </HStack>
       <Box textAlign="center">
-        <Text fontSize="2xl" fontWeight="bold" color="blue.600">
+        <Text fontSize="xl" fontWeight="bold" color="blue.600">
           {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
         </Text>
       </Box>
-      <Text fontSize="xs" color="gray.500" noOfLines={2} title={card.query}>
-        Query: {card.query}
-      </Text>
     </VStack>
   </Box>
-);
+));
 
+// Main component with performance optimizations
 const PersistentMetricCards = ({ tabName = 'summarySubsystems' }) => {
   // Feature flag for SolidJS migration
   const USE_SOLIDJS = process.env.REACT_APP_USE_SOLIDJS === 'true' || 
                      localStorage.getItem('use-solidjs') === 'true';
   
   const { sqlState, removeMetricCard, getStateAge } = usePersistentSQLState(tabName);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false); // Default to collapsed
   const stateAge = getStateAge();
   
   // SolidJS version (5-8x faster)
@@ -80,13 +79,17 @@ const PersistentMetricCards = ({ tabName = 'summarySubsystems' }) => {
     );
   }
 
-  // React version (fallback)
-  // Show persistent metric cards from saved queries
-  if (!sqlState.metricCards.length && (!sqlState.result || !Array.isArray(sqlState.result))) {
+  // Early return if no cards to show
+  if (!sqlState.metricCards?.length && (!sqlState.result || !Array.isArray(sqlState.result))) {
     return null;
   }
 
-  const cardsToShow = sqlState.metricCards.length > 0 ? sqlState.metricCards : (sqlState.result || []);
+  // Memoize cards to prevent recalculation on every render
+  const cardsToShow = useMemo(() => {
+    // Limit the number of cards to prevent performance issues
+    const cards = sqlState.metricCards.length > 0 ? sqlState.metricCards : (sqlState.result || []);
+    return cards.slice(0, 20); // Limit to 20 cards max for performance
+  }, [sqlState.metricCards, sqlState.result]);
 
   return (
     <Box p={1} bg="blue.50" borderRadius="md">
@@ -111,15 +114,17 @@ const PersistentMetricCards = ({ tabName = 'summarySubsystems' }) => {
         </HStack>
       </HStack>
       {isVisible && (
-        <HStack spacing={4} wrap="wrap">
-          {cardsToShow.map(card => (
-            <PersistentMetricCard
-              key={card.id}
-              card={card}
-              onRemove={removeMetricCard}
-            />
-          ))}
-        </HStack>
+        <Box maxH="300px" overflowY="auto">
+          <HStack spacing={2} wrap="wrap" alignItems="flex-start">
+            {cardsToShow.map(card => (
+              <PersistentMetricCard
+                key={card.id}
+                card={card}
+                onRemove={removeMetricCard}
+              />
+            ))}
+          </HStack>
+        </Box>
       )}
     </Box>
   );
