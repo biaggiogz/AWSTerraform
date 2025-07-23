@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { Box, Heading, Text, HStack, Button, Tooltip } from '@chakra-ui/react';
+import { Box, Heading, Text, HStack, Button, Tooltip, Grid, Progress } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
-import { FixedSizeList as List } from 'react-window';
+import { VariableSizeList as List } from 'react-window';
 
 const VirtualizedRow = ({ index, style, data }) => {
   const { rows, table } = data;
@@ -9,7 +9,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   
   return (
     <div style={style}>
-      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', minHeight: '48px' }}>
+      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', height: '100%' }}>
         {row.getVisibleCells().map(cell => (
           <div
             key={cell.id}
@@ -157,52 +157,64 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       cell: ({ getValue, row }) => {
         const value = getValue();
         const tpIds = (value && typeof value === 'string') ? value.split('|') : [];
-        
-        const progressValue = row.original?.list_id_tp_total_progress;
-        const progressValues = (progressValue && typeof progressValue === 'string') ? 
-          progressValue.split('|') : [];
-        
-        // Create a mapping of TP IDs to their progress values
-        const tpProgress = {};
-        tpIds.forEach((id, index) => {
-          if (progressValues[index]) {
-            tpProgress[id] = parseFloat(progressValues[index]);
-          }
-        });
-        
+
+        const progressRaw = row.original?.list_id_tp_total_progress || '';
+        const progressValues = (progressRaw && typeof progressRaw === 'string')
+            ? progressRaw.split('|').map(p => parseFloat(p) || 0)
+            : [];
+
+        const getColor = (p) => {
+          if (p >= 1) return 'green.500';
+          if (p >= 0.7) return 'green.300';
+          if (p >= 0.4) return 'orange.400';
+          return 'red.400';
+        };
+
         return (
-          <Tooltip 
-            label={
-              <Box p={2}>
-                <Text fontWeight="bold" mb={2}>TP IDs and Progress:</Text>
-                {Object.entries(tpProgress).length > 0 ? (
-                  Object.entries(tpProgress).map(([id, progress]) => (
-                    <Text key={id}>
-                      TP {id}: {(progress * 100).toFixed(0)}%
-                    </Text>
-                  ))
-                ) : (
-                  <Text>No TP progress data available</Text>
-                )}
-              </Box>
-            }
-            hasArrow
-            placement="top"
-          >
-            <Text 
-              fontSize="xs" 
-              fontWeight="bold" 
-              textAlign="center"
-              cursor="pointer"
-              textDecoration="underline"
-              color="blue.600"
-            >
-              {tpIds.length > 0 ? `${tpIds.length} TPs` : 'No TPs'}
-            </Text>
-          </Tooltip>
+            <Box width="100%" maxWidth="100px" overflow="hidden" mx="auto">
+              <Grid
+                templateColumns="repeat(2, 1fr)"
+                gap={1}
+                p={1}
+                borderRadius="md"
+                bg="gray.50"
+                width="100%"
+              >
+              {tpIds.map((id, idx) => {
+                const progress = progressValues[idx] ?? 0;
+
+                return (
+                    <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
+                      <Box
+                          p={1}
+                          bg="white"
+                          border="1px solid"
+                          borderColor={getColor(progress)}
+                          borderRadius="md"
+                          textAlign="center"
+                          fontSize="8px"
+                          width="100%"
+                          overflow="hidden"
+                      >
+                        <Text fontWeight="semibold" mb={1}>{id}</Text>
+                        <Progress
+                            value={progress * 100}
+                            size="xs"
+                            colorScheme={
+                              progress >= 1 ? 'green' :
+                                  progress >= 0.7 ? 'green' :
+                                      progress >= 0.4 ? 'orange' : 'red'
+                            }
+                            borderRadius="sm"
+                        />
+                      </Box>
+                    </Tooltip>
+                );
+              })}
+              </Grid>
+            </Box>
         );
-      }
-    },
+      }      },
     {
       accessorKey: 'list_id_tp_total_progress',
       header: 'TP PROGRESS',
@@ -542,6 +554,19 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     ];
   }, []);
 
+  // Create a ref for the list component
+  const listRef = React.useRef();
+  
+  // Function to calculate row heights
+  const getRowHeight = React.useCallback((index) => {
+    const row = data?.[index];
+    if (!row) return 60; // Default height
+    
+    const tpIds = row.list_includes_tp_id || '';
+    const tpCount = tpIds && typeof tpIds === 'string' ? tpIds.split('|').length : 0;
+    return Math.max(60, Math.ceil(tpCount / 2) * 30 + 20);
+  }, [data]);
+  
   const table = useReactTable({
     data: data || [],
     columns,
@@ -742,9 +767,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         {/* Table Body - Virtualized */}
         <Box width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content" flex={1}>
           <List
+            ref={listRef}
             height={600}
             itemCount={rows.length}
-            itemSize={48}
+            itemSize={getRowHeight}
             itemData={{ rows, table }}
             width={headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}
             style={{ overflowX: 'hidden', overflowY: 'auto' }}
