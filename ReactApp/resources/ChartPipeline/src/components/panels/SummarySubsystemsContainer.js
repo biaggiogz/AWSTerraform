@@ -195,7 +195,7 @@ const SummarySubsystemsContainer = ({
           initialHeight={700}
           initialX={20}
           initialY={20}
-          minWidth={400}
+          minWidth={1000}
           minHeight={300}
           onBringToFront={handleBringToFront}
         >
