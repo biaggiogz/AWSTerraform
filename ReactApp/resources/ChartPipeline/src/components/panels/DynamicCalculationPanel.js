@@ -21,7 +21,7 @@ import LoopStatusFilter from '../filters/LoopStatusFilter';
 import HitoFilter from '../filters/HitoFilter';
 import HitoFilterA from '../filters/HitoFilterA';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onBringToFront, onMetricsUpdated }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
@@ -215,7 +215,8 @@ FROM "Subsystem Overview";`);
             key: cleanKey,
             value,
             scope,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            query: sqlQuery // Store the query that generated this card
           };
         })
       );
@@ -257,14 +258,15 @@ FROM "Subsystem Overview";`);
         // Save metric cards to persistent state
         updateQuery(sqlQuery, finalCards);
         
-
-        // Save metric cards to persistent state
-        updateQuery(sqlQuery, finalCards);
+        // Notify parent components that metrics have been updated
+        if (onMetricsUpdated) {
+          onMetricsUpdated(finalCards);
+        }
         
         return finalCards;
       });
     }
-  }, [calculations, lockedCards, deletedCards, sqlQuery, updateQuery]);
+  }, [calculations, lockedCards, deletedCards, sqlQuery, updateQuery, onMetricsUpdated]);
 
   // Restore metric cards from persistent state on mount
   useEffect(() => {
