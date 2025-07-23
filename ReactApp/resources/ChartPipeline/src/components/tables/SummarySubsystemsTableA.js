@@ -52,7 +52,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     },
     {
       // Extract fluid from subsystem (first part before the dash)
-      accessorKey: 'subsystem',
+      accessorKey: 'fluid_subsystem',
       header: 'FLUID',
       size: 60,
       cell: ({ getValue }) => {
@@ -124,6 +124,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
+      accessorKey: 'n_distinct_tps',
+      header: 'N°TP',
+      size: 60,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
+      )
+    },
+    {
       accessorKey: 'total_insulation',
       header: 'TOTAL ITEMS',
       size: 60,
@@ -133,8 +141,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           
           const totalItems = getValue() || 0;
           const doneItems = row.original.done_insulation || 0;
+          // Check if all items are done (total equals done) and there are items
           const isDone = (totalItems === doneItems) && (totalItems > 0);
           
+          // Green for completed, orange for in progress
           const bgColor = isDone ? '#2F5249' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
@@ -174,14 +184,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
 
-    {
-      accessorKey: 'n_tps',
-      header: 'N°TP',
-      size: 60,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
-      )
-    },
+
     {
       accessorKey: 'total_loop',
       header: 'TOTAL LOOP',
@@ -192,8 +195,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           
           const totalLoops = getValue() || 0;
           const doneLoops = row.original.done_loop || 0;
+          // Check if all loops are done (total equals done) and there are loops
           const isDone = (totalLoops === doneLoops) && (totalLoops > 0);
           
+          // Green for completed, orange for in progress
           const bgColor = isDone ? '#2F5249' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
@@ -309,23 +314,16 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           { 
             id: 'subsystem_info', 
             title: 'SUBSYSTEM INFORMATION', 
-            colspan: 5,
+            colspan: 6,
             startCol: 0,
             color: '#0082A9'
           },
           { 
             id: 'items_progress', 
-            title: 'ITEMS PROGRESS', 
+            title: 'ITEMS INSULATION PROGRESS',
             colspan: 3, 
-            startCol: 4,
+            startCol: 6,
             color: '#E5D6AC'
-          },
-          { 
-            id: 'description_testpacks', 
-            title: 'TEST PACKS',
-            colspan: 1,
-            startCol: 7,
-            color: '#6FC1B2'
           },
           { 
             id: 'loop_testing', 
@@ -354,15 +352,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       {
         level: 2,
         headers: [
-          { id: 'empty_1', title: '', colspan: 4, startCol: 0, color: 'transparent' },
+          { id: 'empty_1', title: '', colspan: 6, startCol: 0, color: 'transparent' },
           { 
-            id: 'completion_status', 
-            title: 'COMPLETION STATUS', 
+            id: 'insulation_status',
+            title: 'INSULATION STATUS',
             colspan: 3, 
-            startCol: 4,
+            startCol: 6,
             color: '#CEC19B'
           },
-          { id: 'empty_2', title: '', colspan: 2, startCol: 7, color: 'transparent' },
           { 
             id: 'loop_metrics', 
             title: 'LOOP METRICS', 
@@ -499,15 +496,12 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'subsystem': '#007598', // Both subsystem and fluid use the same accessor
               'hito_isos': '#007598', // HITO is part of subsystem information
               'description': '#007598',
+              'n_distinct_tps': '#007598', // N°TP is now part of subsystem information
 
               // Items progress
               'total_insulation': '#CEC19B',
               'done_insulation': '#CEC19B',
               'pending_insulation': '#CEC19B',
-              
-              // & Test Packs
-
-              'n_tps': '#63AEA1',
               
               // Loop Signal Progress
               'total_loop': '#7CA2C5',
@@ -516,8 +510,8 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               
               // Additional columns
               'total_inst': '#8AB3DB',
-              'DONE': '#8AB3DB',
-              'PENDING': '#8AB3DB',
+              'done_inst': '#8AB3DB',
+              'pending_inst': '#8AB3DB',
               'total_tracing': '#6FC1B2',
               'done_tracing': '#6FC1B2',
               'pending_tracing': '#6FC1B2'
