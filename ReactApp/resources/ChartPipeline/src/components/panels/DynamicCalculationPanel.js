@@ -18,6 +18,7 @@ import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 import HitoFilter from '../filters/HitoFilter';
+import HitoFilterA from '../filters/HitoFilterA';
 
 const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onBringToFront }) => {
   // Determine tab context based on data structure
@@ -816,27 +817,51 @@ FROM "Control Instruments";`);
       )}
       
       {isHitoFilterVisible && (
-        <HitoFilter
-          data={detailsData}
-          onFilterChange={onHitoFilteredDataChange || (() => {})}
-          isVisible={isHitoFilterVisible}
-          onClose={() => {
-            setIsHitoFilterVisible(false);
-            if (onHitoFilterVisibilityChange) {
-              onHitoFilterVisibilityChange(false);
-            }
-            // Reset this filter's effect by passing the original data
-            if (onHitoFilteredDataChange) {
-              onHitoFilteredDataChange(detailsData);
-            }
-            // Reset propagation if it was active
-            if (onHitoPropagationChange) {
-              onHitoPropagationChange([], 'nothing');
-            }
-          }}
-          onPropagationChange={onHitoPropagationChange || (() => {})}
-          onBringToFront={onBringToFront}
-        />
+        isSubsystemsTab ? (
+          <HitoFilterA
+            data={controlData}
+            onFilterChange={onFilteredControlDataChange || (() => {})}
+            isVisible={isHitoFilterVisible}
+            onClose={() => {
+              setIsHitoFilterVisible(false);
+              if (onHitoFilterVisibilityChange) {
+                onHitoFilterVisibilityChange(false);
+              }
+              // Reset this filter's effect by passing the original data
+              if (onFilteredControlDataChange) {
+                onFilteredControlDataChange(controlData);
+              }
+              // Reset propagation if it was active
+              if (onHitoPropagationChange) {
+                onHitoPropagationChange([], 'nothing');
+              }
+            }}
+            onPropagationChange={onHitoPropagationChange || (() => {})}
+            onBringToFront={onBringToFront}
+          />
+        ) : (
+          <HitoFilter
+            data={detailsData}
+            onFilterChange={onHitoFilteredDataChange || (() => {})}
+            isVisible={isHitoFilterVisible}
+            onClose={() => {
+              setIsHitoFilterVisible(false);
+              if (onHitoFilterVisibilityChange) {
+                onHitoFilterVisibilityChange(false);
+              }
+              // Reset this filter's effect by passing the original data
+              if (onHitoFilteredDataChange) {
+                onHitoFilteredDataChange(detailsData);
+              }
+              // Reset propagation if it was active
+              if (onHitoPropagationChange) {
+                onHitoPropagationChange([], 'nothing');
+              }
+            }}
+            onPropagationChange={onHitoPropagationChange || (() => {})}
+            onBringToFront={onBringToFront}
+          />
+        )
       )}
     </Box>
   );

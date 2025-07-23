@@ -205,6 +205,7 @@ const SummarySubsystemsContainer = ({
             onSubsystemSelect={handleSubsystemSelect}
             isItemsFilterVisible={isItemsFilterVisible}
             isLoopFilterVisible={isLoopFilterVisible}
+            isHitoFilterVisible={isHitoFilterVisible}
           />
         </ResizableDraggablePanel>
         

@@ -34,7 +34,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible }) => {
+const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible }) => {
   // Log the data structure to help with debugging
   React.useEffect(() => {
     if (data && data.length > 0) {
@@ -89,27 +89,47 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'hito_isos',
       header: 'HITO',
       size: 104,
-      cell: ({ getValue, row }) => (
+      cell: ({ getValue, row }) => {
+        // Generate a consistent color based on the hito string for highlighting when filter is active
+        const getHitoColor = (hito) => {
+          if (!hito) return "#007598";
+          const hash = hito.split('').reduce((acc, char) => {
+            return char.charCodeAt(0) + ((acc << 5) - acc);
+          }, 0);
+          
+          const h = Math.abs(hash) % 360;
+          const s = 60 + (Math.abs(hash) % 30); // 60-90%
+          const l = 35 + (Math.abs(hash) % 15); // 35-50%
+          
+          return `hsl(${h}, ${s}%, ${l}%)`;
+        };
+
+        const hitoValue = getValue();
+        const bgColor = isHitoFilterVisible ? getHitoColor(hitoValue) : (selectedSubsystem === hitoValue ? "#007598" : "white");
+        const textColor = isHitoFilterVisible || selectedSubsystem === hitoValue ? "white" : "blue.600";
+        
+        return (
           <Button
-              size="xs"
-              variant={selectedSubsystem === getValue() ? "solid" : "outline"}
-              onClick={() => onSubsystemSelect(getValue())}
-              _hover={{ bg: selectedSubsystem === getValue() ? "#007598" : "blue.200" }}
-              fontSize="10px"
-              fontWeight="medium"
-              color={selectedSubsystem === getValue() ? "white" : "blue.600"}
-              bg={selectedSubsystem === getValue() ? "#007598" : "white"}
-              borderColor={selectedSubsystem === getValue() ? "#007598" : "blue.500"}
-              minWidth="30px"
-              height="18px"
-              px={2}
-              borderRadius="sm"
-              title={getValue()}
-              isTruncated
+            size="xs"
+            variant={isHitoFilterVisible || selectedSubsystem === hitoValue ? "solid" : "outline"}
+            onClick={() => onSubsystemSelect(hitoValue)}
+            _hover={{ bg: isHitoFilterVisible || selectedSubsystem === hitoValue ? bgColor : "blue.200" }}
+            fontSize="10px"
+            fontWeight="medium"
+            color={textColor}
+            bg={bgColor}
+            borderColor={isHitoFilterVisible ? bgColor : "blue.500"}
+            minWidth="30px"
+            height="18px"
+            px={2}
+            borderRadius="sm"
+            title={hitoValue}
+            isTruncated
           >
-            {getValue()}
+            {hitoValue}
           </Button>
-      )
+        );
+      }
     },
     {
       accessorKey: 'description',
