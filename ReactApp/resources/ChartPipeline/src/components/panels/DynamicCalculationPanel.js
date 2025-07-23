@@ -203,9 +203,10 @@ FROM "Subsystem Overview";`);
     }, 0);
   };
 
-  // Update metric cards when calculations change
+  // Update metric cards when calculations change or filtered data changes
   React.useEffect(() => {
     if (calculations.length > 0) {
+      // Create a unique key for each calculation to prevent duplicates
       const newCards = calculations.flatMap((row, rowIdx) => 
         Object.entries(row).map(([key, value], entryIdx) => {
           const cleanKey = key.replace(/_Local$|_Global$/, '');
@@ -215,7 +216,8 @@ FROM "Subsystem Overview";`);
             key: cleanKey,
             value,
             scope,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            originalKey: key // Store original key for matching
           };
         })
       );
@@ -232,39 +234,48 @@ FROM "Subsystem Overview";`);
       });
       
       setMetricCards(prev => {
-        // Keep existing cards that still exist in new results AND haven't been manually deleted
-        const existingCards = prev.filter(card => 
-          newCards.some(newCard => newCard.id === card.id) && !deletedCards.has(card.id)
-        );
+        // Keep existing cards that haven't been manually deleted
+        const existingCards = prev.filter(card => !deletedCards.has(card.id));
         
         // Add only truly new cards that don't exist yet and haven't been deleted
         const trulyNewCards = newCards.filter(newCard => 
-          !prev.some(existingCard => existingCard.id === newCard.id) && !deletedCards.has(newCard.id)
+          !prev.some(existingCard => 
+            (existingCard.originalKey === newCard.originalKey || 
+             (existingCard.key === newCard.key && existingCard.scope === newCard.scope))
+          ) && !deletedCards.has(newCard.id)
         );
         
-        // Update values for existing unlocked cards
-        const updatedCards = existingCards.map(existingCard => {
-          // Check if it's a Global card (which should be locked) or if it was manually locked
-          if (existingCard.scope === 'GLOBAL' || lockedCards.has(existingCard.id)) {
-            return existingCard; // Keep locked cards unchanged
+        // For all existing cards, update values based on scope and lock status
+        const updatedExistingCards = existingCards.map(existingCard => {
+          // Always update Local metrics regardless of lock status
+          if (existingCard.scope === 'LOCAL') {
+            // Find matching new card by key and scope
+            const matchingNewCard = newCards.find(nc => 
+              nc.key === existingCard.key && nc.scope === 'LOCAL'
+            );
+            if (matchingNewCard) {
+              return { ...existingCard, value: matchingNewCard.value, timestamp: Date.now() };
+            }
           }
-          const newCard = newCards.find(nc => nc.id === existingCard.id);
-          return newCard || existingCard;
+          // For other cards, only update if not locked
+          else if (!lockedCards.has(existingCard.id)) {
+            const newCard = newCards.find(nc => nc.id === existingCard.id);
+            if (newCard) {
+              return newCard;
+            }
+          }
+          return existingCard;
         });
         
-        const finalCards = [...updatedCards, ...trulyNewCards];
+        const finalCards = [...updatedExistingCards, ...trulyNewCards];
         
-        // Save metric cards to persistent state
-        updateQuery(sqlQuery, finalCards);
-        
-
         // Save metric cards to persistent state
         updateQuery(sqlQuery, finalCards);
         
         return finalCards;
       });
     }
-  }, [calculations, lockedCards, deletedCards, sqlQuery, updateQuery]);
+  }, [calculations, lockedCards, deletedCards, sqlQuery, updateQuery, filteredControlData, filteredDetailsData]);
 
   // Restore metric cards from persistent state on mount
   useEffect(() => {
@@ -430,22 +441,7 @@ FROM "Subsystem Overview";`);
                       <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(open_punch) AS "Open Punch _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(open_punch) AS "Open Punch _Local"\nFROM "Subsystem Overview";')}>
                         Open Punch
                       </Button>
-
-                      {/*<Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(n_distinct_tps) AS "Total Test Packs _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(n_distinct_tps) AS "Total Test Packs _Local"\nFROM "Subsystem Overview";')}>*/}
-                      {/*  Total Test Packs*/}
-                      {/*</Button>*/}
                     </HStack>
-                    {/*<HStack spacing={2} wrap="wrap">*/}
-                    {/*  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_loop) AS "Total Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_loop) AS "Total Loops _Local"\nFROM "Subsystem Overview";')}>*/}
-                    {/*    Total Loops*/}
-                    {/*  </Button>*/}
-                    {/*  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_loop) AS "Done Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_loop) AS "Done Loops _Local"\nFROM "Subsystem Overview";')}>*/}
-                    {/*    Done Loops*/}
-                    {/*  </Button>*/}
-                    {/*  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_inst) AS "Total Inst _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_inst) AS "Total Inst _Local"\nFROM "Subsystem Overview";')}>*/}
-                    {/*    Total Inst*/}
-                    {/*  </Button>*/}
-                    {/*</HStack>*/}
                   </>
                 ) : (
                   // INSTRUMENTS metrics

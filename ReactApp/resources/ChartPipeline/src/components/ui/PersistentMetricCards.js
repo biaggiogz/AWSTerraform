@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { Box, Text, HStack, VStack, IconButton, Badge } from '@chakra-ui/react';
 import { DeleteIcon, ChevronUpIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
@@ -51,7 +51,7 @@ const PersistentMetricCard = memo(({ card, onRemove }) => (
 ));
 
 // Main component with performance optimizations
-const PersistentMetricCards = ({ tabName = 'summarySubsystems' }) => {
+const PersistentMetricCards = ({ tabName = 'summarySubsystems', filteredData }) => {
   // Feature flag for SolidJS migration
   const USE_SOLIDJS = process.env.REACT_APP_USE_SOLIDJS === 'true' || 
                      localStorage.getItem('use-solidjs') === 'true';
@@ -59,6 +59,24 @@ const PersistentMetricCards = ({ tabName = 'summarySubsystems' }) => {
   const { sqlState, removeMetricCard, getStateAge } = usePersistentSQLState(tabName);
   const [isVisible, setIsVisible] = useState(false); // Default to collapsed
   const stateAge = getStateAge();
+  
+  // Use a timestamp to force re-render when filters change
+  const [filterTimestamp, setFilterTimestamp] = useState(Date.now());
+  
+  // Update timestamp when filteredData changes
+  useEffect(() => {
+    setFilterTimestamp(Date.now());
+  }, [filteredData]);
+  
+  // Memoize cards to prevent recalculation on every render - must be called before any conditional returns
+  const cardsToShow = useMemo(() => {
+    if (!sqlState.metricCards?.length && (!sqlState.result || !Array.isArray(sqlState.result))) {
+      return [];
+    }
+    // Limit the number of cards to prevent performance issues
+    const cards = sqlState.metricCards.length > 0 ? sqlState.metricCards : (sqlState.result || []);
+    return cards.slice(0, 20); // Limit to 20 cards max for performance
+  }, [sqlState.metricCards, sqlState.result, filterTimestamp]);
   
   // SolidJS version (5-8x faster)
   if (USE_SOLIDJS && SolidInReact && PersistentMetricCardsSolid) {
@@ -80,16 +98,9 @@ const PersistentMetricCards = ({ tabName = 'summarySubsystems' }) => {
   }
 
   // Early return if no cards to show
-  if (!sqlState.metricCards?.length && (!sqlState.result || !Array.isArray(sqlState.result))) {
+  if (cardsToShow.length === 0) {
     return null;
   }
-
-  // Memoize cards to prevent recalculation on every render
-  const cardsToShow = useMemo(() => {
-    // Limit the number of cards to prevent performance issues
-    const cards = sqlState.metricCards.length > 0 ? sqlState.metricCards : (sqlState.result || []);
-    return cards.slice(0, 20); // Limit to 20 cards max for performance
-  }, [sqlState.metricCards, sqlState.result]);
 
   return (
     <Box p={1} bg="blue.50" borderRadius="md">
