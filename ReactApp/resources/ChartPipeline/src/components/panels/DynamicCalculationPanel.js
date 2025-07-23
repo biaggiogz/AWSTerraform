@@ -17,6 +17,7 @@ import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
+// Import directly without lazy loading
 import HitoFilter from '../filters/HitoFilter';
 import HitoFilterA from '../filters/HitoFilterA';
 
@@ -219,6 +220,17 @@ FROM "Subsystem Overview";`);
         })
       );
       
+      // Auto-lock all Global metrics
+      const globalCardIds = newCards
+        .filter(card => card.scope === 'GLOBAL')
+        .map(card => card.id);
+      
+      setLockedCards(prev => {
+        const newLockedCards = new Set(prev);
+        globalCardIds.forEach(id => newLockedCards.add(id));
+        return newLockedCards;
+      });
+      
       setMetricCards(prev => {
         // Keep existing cards that still exist in new results AND haven't been manually deleted
         const existingCards = prev.filter(card => 
@@ -232,7 +244,8 @@ FROM "Subsystem Overview";`);
         
         // Update values for existing unlocked cards
         const updatedCards = existingCards.map(existingCard => {
-          if (lockedCards.has(existingCard.id)) {
+          // Check if it's a Global card (which should be locked) or if it was manually locked
+          if (existingCard.scope === 'GLOBAL' || lockedCards.has(existingCard.id)) {
             return existingCard; // Keep locked cards unchanged
           }
           const newCard = newCards.find(nc => nc.id === existingCard.id);
@@ -241,6 +254,10 @@ FROM "Subsystem Overview";`);
         
         const finalCards = [...updatedCards, ...trulyNewCards];
         
+        // Save metric cards to persistent state
+        updateQuery(sqlQuery, finalCards);
+        
+
         // Save metric cards to persistent state
         updateQuery(sqlQuery, finalCards);
         
@@ -418,17 +435,17 @@ FROM "Subsystem Overview";`);
                       {/*  Total Test Packs*/}
                       {/*</Button>*/}
                     </HStack>
-                    <HStack spacing={2} wrap="wrap">
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_loop) AS "Total Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_loop) AS "Total Loops _Local"\nFROM "Subsystem Overview";')}>
-                        Total Loops
-                      </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_loop) AS "Done Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_loop) AS "Done Loops _Local"\nFROM "Subsystem Overview";')}>
-                        Done Loops
-                      </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_inst) AS "Total Inst _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_inst) AS "Total Inst _Local"\nFROM "Subsystem Overview";')}>
-                        Total Inst
-                      </Button>
-                    </HStack>
+                    {/*<HStack spacing={2} wrap="wrap">*/}
+                    {/*  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_loop) AS "Total Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_loop) AS "Total Loops _Local"\nFROM "Subsystem Overview";')}>*/}
+                    {/*    Total Loops*/}
+                    {/*  </Button>*/}
+                    {/*  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_loop) AS "Done Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_loop) AS "Done Loops _Local"\nFROM "Subsystem Overview";')}>*/}
+                    {/*    Done Loops*/}
+                    {/*  </Button>*/}
+                    {/*  <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_inst) AS "Total Inst _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_inst) AS "Total Inst _Local"\nFROM "Subsystem Overview";')}>*/}
+                    {/*    Total Inst*/}
+                    {/*  </Button>*/}
+                    {/*</HStack>*/}
                   </>
                 ) : (
                   // INSTRUMENTS metrics
