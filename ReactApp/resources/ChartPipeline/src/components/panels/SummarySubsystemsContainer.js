@@ -224,7 +224,7 @@ const SummarySubsystemsContainer = ({
             selectedSubsystem={selectedSubsystem}
             onSubsystemSelect={handleSubsystemSelect}
             isProgressFilterVisible={isProgressFilterVisible}
-            isHitoFilterVisible={isHitoFilterVisible}
+            isHitoFilterVisible={false}
           />
         </ResizableDraggablePanel>
       </Box>

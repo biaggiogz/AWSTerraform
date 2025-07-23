@@ -105,15 +105,18 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         };
 
         const hitoValue = getValue();
-        const bgColor = isHitoFilterVisible ? getHitoColor(hitoValue) : (selectedSubsystem === hitoValue ? "#007598" : "white");
-        const textColor = isHitoFilterVisible || selectedSubsystem === hitoValue ? "white" : "blue.600";
+        
+        // Only apply special styling when the filter is active or when this specific hito is selected
+        const isSelected = selectedSubsystem === hitoValue;
+        const bgColor = isHitoFilterVisible ? getHitoColor(hitoValue) : (isSelected ? "#007598" : "white");
+        const textColor = isHitoFilterVisible || isSelected ? "white" : "blue.600";
         
         return (
           <Button
             size="xs"
-            variant={isHitoFilterVisible || selectedSubsystem === hitoValue ? "solid" : "outline"}
+            variant={isHitoFilterVisible || isSelected ? "solid" : "outline"}
             onClick={() => onSubsystemSelect(hitoValue)}
-            _hover={{ bg: isHitoFilterVisible || selectedSubsystem === hitoValue ? bgColor : "blue.200" }}
+            _hover={{ bg: isHitoFilterVisible || isSelected ? bgColor : "blue.200" }}
             fontSize="10px"
             fontWeight="medium"
             color={textColor}
