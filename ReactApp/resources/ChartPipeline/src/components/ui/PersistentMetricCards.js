@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Box, Text, HStack, VStack, IconButton, Badge } from '@chakra-ui/react';
-import { DeleteIcon, ChevronUpIcon, ChevronDownIcon, RepeatIcon } from '@chakra-ui/icons';
+import { DeleteIcon, ChevronUpIcon, ChevronDownIcon } from '@chakra-ui/icons';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
-import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 
 // SolidJS Migration Support
 let SolidInReact, PersistentMetricCardsSolid;
@@ -14,7 +13,7 @@ try {
   console.warn('SolidJS components not available:', error.message);
 }
 
-const PersistentMetricCard = ({ card, onRemove, lastUpdated }) => (
+const PersistentMetricCard = ({ card, onRemove }) => (
   <Box
     bg="white"
     border="1px solid"
@@ -31,11 +30,6 @@ const PersistentMetricCard = ({ card, onRemove, lastUpdated }) => (
         </Text>
         <HStack spacing={1}>
           <Badge colorScheme="blue" size="sm">SAVED</Badge>
-          {lastUpdated && card.timestamp && (
-            <Badge colorScheme="green" size="sm" title={`Last updated: ${new Date(card.timestamp).toLocaleTimeString()}`}>
-              LIVE
-            </Badge>
-          )}
           <IconButton
             icon={<DeleteIcon />}
             size="xs"
@@ -58,90 +52,14 @@ const PersistentMetricCard = ({ card, onRemove, lastUpdated }) => (
   </Box>
 );
 
-const PersistentMetricCards = ({ tabName = 'summarySubsystems', controlData, detailsData, filteredControlData, filteredDetailsData, filters }) => {
+const PersistentMetricCards = ({ tabName = 'summarySubsystems' }) => {
   // Feature flag for SolidJS migration
   const USE_SOLIDJS = process.env.REACT_APP_USE_SOLIDJS === 'true' || 
                      localStorage.getItem('use-solidjs') === 'true';
   
-  const { sqlState, removeMetricCard, getStateAge, updateQuery } = usePersistentSQLState(tabName);
+  const { sqlState, removeMetricCard, getStateAge } = usePersistentSQLState(tabName);
   const [isVisible, setIsVisible] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const stateAge = getStateAge();
-  
-  // Get dynamic calculations hook to refresh metrics
-  const { executeSQLQuery } = useDynamicCalculations(
-    controlData, 
-    detailsData,
-    filteredControlData,
-    filteredDetailsData,
-    filters
-  );
-  
-  // Add effect to refresh metrics when data changes
-  // Define refreshMetrics with useCallback to avoid dependency issues
-  const refreshMetrics = useCallback(async () => {
-    if (!sqlState.query) return;
-    
-    setIsRefreshing(true);
-    try {
-      // Execute the saved query to get fresh results
-      const result = await executeSQLQuery(sqlState.query);
-      
-      // Update the values and timestamp on all cards to indicate they've been refreshed
-      if (sqlState.metricCards && sqlState.metricCards.length > 0) {
-        // Extract values from the result
-        const resultValues = {};
-        if (result && result.length > 0) {
-          result.forEach(row => {
-            Object.entries(row).forEach(([key, value]) => {
-              resultValues[key] = value;
-            });
-          });
-        }
-        
-        // Update cards with new values
-        const updatedCards = sqlState.metricCards.map(card => {
-          // Try to find a matching result for this card
-          const newValue = resultValues[card.key] !== undefined ? 
-            resultValues[card.key] : 
-            (resultValues[card.key + '_Global'] !== undefined ? 
-              resultValues[card.key + '_Global'] : 
-              (resultValues[card.key + '_Local'] !== undefined ? 
-                resultValues[card.key + '_Local'] : 
-                card.value));
-          
-          return {
-            ...card,
-            value: newValue !== undefined ? newValue : card.value,
-            timestamp: Date.now() // Update timestamp to show it's been refreshed
-          };
-        });
-        
-        // Update persistent state with refreshed cards
-        updateQuery(sqlState.query, updatedCards);
-      }
-    } catch (error) {
-      console.error('Failed to refresh metrics:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [sqlState.query, sqlState.metricCards, executeSQLQuery, updateQuery]);
-  
-  useEffect(() => {
-    // Only refresh if we have saved queries and data is available
-    if (sqlState.query && (controlData?.length > 0 || detailsData?.length > 0)) {
-      refreshMetrics();
-    }
-  }, [sqlState.query, controlData, detailsData, filteredControlData, filteredDetailsData, refreshMetrics]);
-  
-  // Also refresh when filters change
-  useEffect(() => {
-    if (sqlState.query && filters && (controlData?.length > 0 || detailsData?.length > 0)) {
-      refreshMetrics();
-    }
-  }, [filters, sqlState.query, controlData, detailsData, refreshMetrics]);
-  
-
   
   // SolidJS version (5-8x faster)
   if (USE_SOLIDJS && SolidInReact && PersistentMetricCardsSolid) {
@@ -155,9 +73,7 @@ const PersistentMetricCards = ({ tabName = 'summarySubsystems', controlData, det
             result: sqlState.result,
             stateAge
           },
-          onRemoveCard: removeMetricCard,
-          onRefresh: refreshMetrics,
-          isRefreshing
+          onRemoveCard: removeMetricCard
         }}
         className="solidjs-persistent-metrics"
       />
@@ -185,16 +101,6 @@ const PersistentMetricCards = ({ tabName = 'summarySubsystems', controlData, det
             </Badge>
           )}
           <IconButton
-            icon={<RepeatIcon />}
-            size="xs"
-            variant="ghost"
-            colorScheme="green"
-            isLoading={isRefreshing}
-            onClick={refreshMetrics}
-            aria-label="Refresh metrics"
-            title="Refresh metrics with current data"
-          />
-          <IconButton
             icon={isVisible ? <ChevronUpIcon /> : <ChevronDownIcon />}
             size="xs"
             variant="ghost"
@@ -211,7 +117,6 @@ const PersistentMetricCards = ({ tabName = 'summarySubsystems', controlData, det
               key={card.id}
               card={card}
               onRemove={removeMetricCard}
-              lastUpdated={card.timestamp && Date.now() - card.timestamp < 60000} // Show as updated if less than 1 minute old
             />
           ))}
         </HStack>

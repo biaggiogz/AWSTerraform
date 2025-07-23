@@ -43,6 +43,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
     <Box p={6} width="100%" height="100vh" maxWidth="100vw" overflow="hidden">
       <PersistentStateNotification tabName="summarySubsystems" />
       <VStack spacing={4} align="stretch">
+        <PersistentMetricCards tabName="summarySubsystems" />
         <SummarySubsystemsContainer
           tableAData={tableAData}
           tableBData={tableBData}

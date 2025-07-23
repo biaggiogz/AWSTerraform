@@ -1,9 +1,8 @@
-import React, { lazy, Suspense, useState, useMemo, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useMemo } from 'react';
 import { Box, VStack, Center, Spinner } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
-import PersistentMetricCards from '../ui/PersistentMetricCards';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
 
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
@@ -21,7 +20,6 @@ const SummarySubsystemsContainer = ({
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [topZIndex, setTopZIndex] = useState(100);
-  const [updatedMetrics, setUpdatedMetrics] = useState([]);
   
   // Apply status, loop, and hito filters
   const combinedFilteredTableAData = useMemo(() => {
@@ -163,18 +161,6 @@ const SummarySubsystemsContainer = ({
 
   return (
     <VStack spacing={4} align="stretch">
-      {/* Persistent Metric Cards - Inside Container to get filtered data */}
-      <PersistentMetricCards 
-        tabName="summarySubsystems" 
-        controlData={tableAData}
-        detailsData={tableBData}
-        filteredControlData={filteredTableAData}
-        filteredDetailsData={filteredTableBData}
-        filters={{
-          selectedSubsystem: selectedSubsystem
-        }}
-      />
-      
       {/* SQL Query Interface */}
       <Suspense fallback={<Center p={4}><Spinner /></Center>}>
         <DynamicCalculationPanel
@@ -198,7 +184,6 @@ const SummarySubsystemsContainer = ({
           onHitoFilterVisibilityChange={setIsHitoFilterVisible}
           onHitoPropagationChange={handleHitoPropagationChange}
           onBringToFront={handleBringToFront}
-          onMetricsUpdated={setUpdatedMetrics}
         />
       </Suspense>
       
