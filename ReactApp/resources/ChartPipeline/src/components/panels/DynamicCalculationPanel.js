@@ -27,11 +27,11 @@ const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData
   const tabName = isSubsystemsTab ? 'summarySubsystems' : 'instrumentsReport';
   
   const { sqlState, updateQuery } = usePersistentSQLState(tabName);
-  const [sqlQuery, setSqlQuery] = useState(sqlState.query || `SELECT SUM(totalItems) AS "Total Items _Global"
-FROM "Control Instruments";
+  const [sqlQuery, setSqlQuery] = useState(sqlState.query || `SELECT SUM(total_insulation) AS "Total Items _Global"
+FROM "Subsystem Overview";
 
-SELECT SUM(doneItems) AS "Done Items _Local"
-FROM "Control Instruments";`);
+SELECT SUM(done_insulation) AS "Done Items _Local"
+FROM "Subsystem Overview";`);
   const [metricCards, setMetricCards] = useState([]);
   const [lockedCards, setLockedCards] = useState(new Set());
   const [deletedCards, setDeletedCards] = useState(new Set());
@@ -66,6 +66,16 @@ FROM "Control Instruments";`);
     filteredDetailsData,
     filters
   );
+  
+  // Log available tables and fields for debugging
+  React.useEffect(() => {
+    if (tableInfo && Object.keys(tableInfo).length > 0) {
+      console.log('Available tables:', Object.keys(tableInfo));
+      Object.entries(tableInfo).forEach(([tableName, info]) => {
+        console.log(`Fields in ${tableName}:`, info.fields);
+      });
+    }
+  }, [tableInfo]);
 
   // Tab context already determined above
 
@@ -352,31 +362,31 @@ FROM "Control Instruments";`);
                   // SUMMARY SUBSYSTEMS metrics
                   <>
                     <HStack spacing={2} wrap="wrap">
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT(DISTINCT subsystem) AS "Total Subsystems _Global"\nFROM "Control Instruments";\n\nSELECT COUNT(DISTINCT subsystem) AS "Total Subsystems _Local"\nFROM "Control Instruments";')}>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT(DISTINCT subsystem) AS "Total Subsystems _Global"\nFROM "Subsystem Overview";\n\nSELECT COUNT(DISTINCT subsystem) AS "Total Subsystems _Local"\nFROM "Subsystem Overview";')}>
                         Total Subsystems
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(totalItems) AS "Total Items _Global"\nFROM "Control Instruments";\n\nSELECT SUM(totalItems) AS "Total Items _Local"\nFROM "Control Instruments";')}>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_insulation) AS "Total Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_insulation) AS "Total Items _Local"\nFROM "Subsystem Overview";')}>
                         Total Items
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(doneItems) AS "Done Items _Global"\nFROM "Control Instruments";\n\nSELECT SUM(doneItems) AS "Done Items _Local"\nFROM "Control Instruments";')}>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_insulation) AS "Done Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_insulation) AS "Done Items _Local"\nFROM "Subsystem Overview";')}>
                         Done Items
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pendingItems) AS "Pending Items _Global"\nFROM "Control Instruments";\n\nSELECT SUM(pendingItems) AS "Pending Items _Local"\nFROM "Control Instruments";')}>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_insulation) AS "Pending Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_insulation) AS "Pending Items _Local"\nFROM "Subsystem Overview";')}>
                         Pending Items
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT(DISTINCT testPack) AS "Total Test Packs _Global"\nFROM "Details Instruments";\n\nSELECT COUNT(DISTINCT testPack) AS "Total Test Packs _Local"\nFROM "Details Instruments";')}>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(n_distinct_tps) AS "Total Test Packs _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(n_distinct_tps) AS "Total Test Packs _Local"\nFROM "Subsystem Overview";')}>
                         Total Test Packs
                       </Button>
                     </HStack>
                     <HStack spacing={2} wrap="wrap">
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(totalLoops) AS "Total Loops _Global"\nFROM "Control Instruments";\n\nSELECT SUM(totalLoops) AS "Total Loops _Local"\nFROM "Control Instruments";')}>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_loop) AS "Total Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_loop) AS "Total Loops _Local"\nFROM "Subsystem Overview";')}>
                         Total Loops
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(doneLoops) AS "Done Loops _Global"\nFROM "Control Instruments";\n\nSELECT SUM(doneLoops) AS "Done Loops _Local"\nFROM "Control Instruments";')}>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_loop) AS "Done Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_loop) AS "Done Loops _Local"\nFROM "Subsystem Overview";')}>
                         Done Loops
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT AVG(testPackProgress) AS "Avg Progress _Global"\nFROM "Details Instruments";\n\nSELECT AVG(testPackProgress) AS "Avg Progress _Local"\nFROM "Details Instruments";')}>
-                        Avg Progress
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_inst) AS "Total Inst _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_inst) AS "Total Inst _Local"\nFROM "Subsystem Overview";')}>
+                        Total Inst
                       </Button>
                     </HStack>
                   </>

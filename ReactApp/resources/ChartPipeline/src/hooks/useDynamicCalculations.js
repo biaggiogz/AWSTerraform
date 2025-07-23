@@ -20,16 +20,16 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
     if (!controlData || !detailsData) return;
     
     try {
-      await createTable('Control Instruments', controlData);
-      await createTable('Details Instruments', detailsData);
+      await createTable('Subsystem Overview', controlData);
+      await createTable('Test Pack Details', detailsData);
       tablesInitialized.current = true;
       
       // Immediately update with filtered data if available
       const controlDataToUse = filteredControlData && filteredControlData.length > 0 ? filteredControlData : controlData;
       const detailsDataToUse = filteredDetailsData && filteredDetailsData.length > 0 ? filteredDetailsData : detailsData;
       
-      updateFilteredTable('Control Instruments', controlDataToUse);
-      updateFilteredTable('Details Instruments', detailsDataToUse);
+      updateFilteredTable('Subsystem Overview', controlDataToUse);
+      updateFilteredTable('Test Pack Details', detailsDataToUse);
     } catch (error) {
       console.error('Failed to initialize tables:', error);
     }
@@ -43,10 +43,10 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
       const detailsDataToUse = filteredDetailsData && filteredDetailsData.length > 0 ? filteredDetailsData : detailsData;
       
       if (controlDataToUse) {
-        updateFilteredTable('Control Instruments', controlDataToUse);
+        updateFilteredTable('Subsystem Overview', controlDataToUse);
       }
       if (detailsDataToUse) {
-        updateFilteredTable('Details Instruments', detailsDataToUse);
+        updateFilteredTable('Test Pack Details', detailsDataToUse);
       }
     }
   }, [filteredControlData, filteredDetailsData, controlData, detailsData, updateFilteredTable]);
@@ -85,11 +85,11 @@ const useDynamicCalculations = (controlData, detailsData, filteredControlData, f
   const availableTables = useMemo(() => getAvailableTables(), [getAvailableTables]);
 
   const controlColumns = useMemo(() => {
-    return getTableFields('Control Instruments');
+    return getTableFields('Subsystem Overview');
   }, [getTableFields]);
 
   const detailColumns = useMemo(() => {
-    return getTableFields('Details Instruments');
+    return getTableFields('Test Pack Details');
   }, [getTableFields]);
 
   return {

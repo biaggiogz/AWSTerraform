@@ -115,9 +115,19 @@ export const useSummarySubsystemsData = (filteredData = []) => {
   // Create DuckDB tables when data is loaded
   useEffect(() => {
     if (data.length > 0) {
-      createTable('pipelinedata', data);
+      createTable('Test Pack Details', data); // Table B with pipelinedata.csv
+      console.log('Created Test Pack Details table for SQL queries');
     }
   }, [data, createTable]);
+  
+  // Create DuckDB table for Table A (SSM data)
+  useEffect(() => {
+    const ssmData = window.ssmData || [];
+    if (ssmData.length > 0) {
+      createTable('Subsystem Overview', ssmData); // Table A with ssm.csv
+      console.log('Created Subsystem Overview table for SQL queries with SSM data');
+    }
+  }, [loading, createTable]);
 
   // Use SSM CSV data directly for TableA
   const tableAData = useMemo(() => {
@@ -130,6 +140,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     // Log the field names from the first item to help with debugging
     if (ssmData.length > 0) {
       console.log('SSM data fields:', Object.keys(ssmData[0]));
+      console.log('SSM data sample:', ssmData[0]);
     }
     
     // Use the SSM data directly without transformation

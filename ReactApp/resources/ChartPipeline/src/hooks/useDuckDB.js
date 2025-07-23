@@ -68,6 +68,7 @@ const useDuckDB = () => {
   const mapFieldName = (fieldName, row) => {
     // Field name mappings for different tables
     const fieldMappings = {
+      // General mappings
       'WELDING FW+SW': ['TP 100% FW+SW', 'WELDING FW+SW', 'weldingFwSw', 'WELDING_FW_SW', 'WELDING FW SW'],
       'TP 100% FW+SW': ['TP 100% FW+SW', 'WELDING FW+SW', 'weldingFwSw', 'WELDING_FW_SW', 'WELDING FW SW'],
       'ISOMETRIC': ['ISOMETRIC', 'isometric'],
@@ -75,7 +76,19 @@ const useDuckDB = () => {
       'QTY INST': ['QTY INST', 'QTY_INST', 'qtyInst', 'QUANTITY INST'],
       'TEST PACK': ['TEST PACK', 'TESTPACK', 'testPack', 'TEST_PACK'],
       'TESTPACK': ['TESTPACK', 'testPack', 'TEST PACK', 'TEST_PACK'],
-      'MOUNTING': ['MOUNTING ON ISO/EQUI/PACK', 'mountingOnIsoEquiPack']
+      'MOUNTING': ['MOUNTING ON ISO/EQUI/PACK', 'mountingOnIsoEquiPack'],
+      
+      // Specific mappings for Subsystem Overview table (ssm.csv)
+      'testPack': ['n_distinct_tps', 'nn_tps', 'n_tps', 'testPack'],
+      'total_items': ['total_insulation', 'total_items', 'TOTAL ITEMS'],
+      'done_items': ['done_insulation', 'done_items', 'DONE ITEMS'],
+      'pending_items': ['pending_insulation', 'pending_items', 'PENDING ITEMS'],
+      'total_loops': ['total_loop', 'total_loops', 'TOTAL LOOP'],
+      'done_loops': ['done_loop', 'done_loops', 'LOOP DONE'],
+      'pending_loops': ['pending_loop', 'pending_loops', 'LOOP PENDING'],
+      'total_inst': ['total_inst', 'TOTAL INST'],
+      'done_inst': ['done_inst', 'DONE INST'],
+      'pending_inst': ['pending_inst', 'PENDING INST']
     };
 
     // First try exact match (case sensitive)
@@ -113,7 +126,7 @@ const useDuckDB = () => {
     }
     
     // Debug logging for problematic fields
-    if (['WELDING FW+SW', 'TP 100% FW+SW', 'QTY INST', 'TEST PACK'].includes(fieldName)) {
+    if (['testPack', 'total_items', 'done_items', 'pending_items', 'total_loops', 'WELDING FW+SW', 'TP 100% FW+SW', 'QTY INST', 'TEST PACK'].includes(fieldName)) {
       console.log(`Field: ${fieldName}, Available keys:`, Object.keys(row).slice(0, 10), 'Value found:', value);
     }
     
