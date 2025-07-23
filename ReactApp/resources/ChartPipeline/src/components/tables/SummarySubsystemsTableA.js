@@ -155,9 +155,12 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'TP IDs',
       size: 100,
       cell: ({ getValue, row }) => {
-        const tpIds = getValue() ? getValue().split('|') : [];
-        const progressValues = row.original.list_id_tp_total_progress ? 
-          row.original.list_id_tp_total_progress.split('|') : [];
+        const value = getValue();
+        const tpIds = (value && typeof value === 'string') ? value.split('|') : [];
+        
+        const progressValue = row.original?.list_id_tp_total_progress;
+        const progressValues = (progressValue && typeof progressValue === 'string') ? 
+          progressValue.split('|') : [];
         
         // Create a mapping of TP IDs to their progress values
         const tpProgress = {};
@@ -172,11 +175,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             label={
               <Box p={2}>
                 <Text fontWeight="bold" mb={2}>TP IDs and Progress:</Text>
-                {Object.entries(tpProgress).map(([id, progress]) => (
-                  <Text key={id}>
-                    TP {id}: {(progress * 100).toFixed(0)}%
-                  </Text>
-                ))}
+                {Object.entries(tpProgress).length > 0 ? (
+                  Object.entries(tpProgress).map(([id, progress]) => (
+                    <Text key={id}>
+                      TP {id}: {(progress * 100).toFixed(0)}%
+                    </Text>
+                  ))
+                ) : (
+                  <Text>No TP progress data available</Text>
+                )}
               </Box>
             }
             hasArrow
@@ -201,7 +208,16 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'TP PROGRESS',
       size: 80,
       cell: ({ getValue, row }) => {
-        const progressValues = getValue() ? getValue().split('|').map(v => parseFloat(v)) : [];
+        const value = getValue();
+        let progressValues = [];
+        
+        if (value && typeof value === 'string') {
+          try {
+            progressValues = value.split('|').map(v => parseFloat(v) || 0);
+          } catch (error) {
+            console.error('Error parsing progress values:', error);
+          }
+        }
         
         // Calculate average progress if there are values
         let avgProgress = 0;
