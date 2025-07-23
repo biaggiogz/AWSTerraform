@@ -55,13 +55,9 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'fluid_subsystem',
       header: 'FLUID',
       size: 60,
-      cell: ({ getValue }) => {
-        const subsystem = getValue() || '';
-        const fluid = subsystem.split('-')[0] || '';
-        return (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{fluid}</Text>
-        );
-      }
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
+      )
     },
     {
       accessorKey: 'subsystem',
@@ -493,6 +489,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             const columnColors = {
               // Subsystem information
               's_n': '#007598',
+              'fluid_subsystem': '#007598',
               'subsystem': '#007598', // Both subsystem and fluid use the same accessor
               'hito_isos': '#007598', // HITO is part of subsystem information
               'description': '#007598',
