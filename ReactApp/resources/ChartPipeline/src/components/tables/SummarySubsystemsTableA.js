@@ -172,49 +172,51 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
 
         return (
             <Box width="100%" maxWidth="100px" overflow="hidden" mx="auto">
-              <Grid
-                templateColumns="repeat(2, 1fr)"
-                gap={1}
-                p={1}
-                borderRadius="md"
-                bg="gray.50"
+              <Box 
+                borderWidth="1px" 
+                borderRadius="md" 
+                bg="white" 
                 width="100%"
+                p={1}
               >
-              {tpIds.map((id, idx) => {
-                const progress = progressValues[idx] ?? 0;
-
-                return (
-                    <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
-                      <Box
+                  {tpIds.map((id, idx) => {
+                    const progress = progressValues[idx] ?? 0;
+                    return (
+                      <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
+                        <Box 
+                          display="flex" 
+                          alignItems="center" 
+                          justifyContent="space-between"
+                          mb={1}
                           p={1}
-                          bg="white"
-                          border="1px solid"
-                          borderColor={getColor(progress)}
-                          borderRadius="md"
-                          textAlign="center"
-                          fontSize="8px"
-                          width="100%"
-                          overflow="hidden"
-                      >
-                        <Text fontWeight="semibold" mb={1}>{id}</Text>
-                        <Progress
-                            value={progress * 100}
-                            size="xs"
-                            colorScheme={
-                              progress >= 1 ? 'green' :
-                                  progress >= 0.7 ? 'green' :
-                                      progress >= 0.4 ? 'orange' : 'red'
-                            }
-                            borderRadius="sm"
-                        />
-                      </Box>
-                    </Tooltip>
-                );
-              })}
-              </Grid>
+                          bg="gray.50"
+                          borderRadius="sm"
+                        >
+                          <Text fontSize="9px" fontWeight="bold" width="40%">{id}</Text>
+                          <Box width="55%">
+                            <Progress
+                              value={progress * 100}
+                              size="xs"
+                              colorScheme={
+                                progress >= 1 ? 'green' :
+                                progress >= 0.7 ? 'green' :
+                                progress >= 0.4 ? 'orange' : 'red'
+                              }
+                              borderRadius="sm"
+                            />
+                            <Text fontSize="8px" textAlign="right" mt={0.5}>
+                              {(progress * 100).toFixed(0)}%
+                            </Text>
+                          </Box>
+                        </Box>
+                      </Tooltip>
+                    );
+                  })}
+              </Box>
             </Box>
         );
-      }      },
+      }
+      },
     {
       accessorKey: 'list_id_tp_total_progress',
       header: 'TP PROGRESS',
@@ -564,7 +566,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     
     const tpIds = row.list_includes_tp_id || '';
     const tpCount = tpIds && typeof tpIds === 'string' ? tpIds.split('|').length : 0;
-    return Math.max(60, Math.ceil(tpCount / 2) * 30 + 20);
+    
+    // Each TP now takes up one row in a vertical list
+    // Each TP row height ~22px + padding (10px)
+    return Math.max(60, (tpCount * 22) + 10);
   }, [data]);
   
   const table = useReactTable({
