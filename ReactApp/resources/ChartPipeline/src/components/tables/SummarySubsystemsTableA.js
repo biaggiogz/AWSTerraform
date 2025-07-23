@@ -166,10 +166,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         const getColor = (p) => {
           if (p >= 1) return 'green.500';
           if (p >= 0.7) return 'green.300';
-          if (p >= 0.4) return 'orange.400';
+          if (p >= 0.4) return 'green.100';
           return 'red.400';
         };
 
+        // Determine grid layout based on number of TPs
+        const useGrid = tpIds.length > 2;
+        const columnCount = tpIds.length > 4 ? 3 : 2;
+        
         return (
             <Box width="100%" maxWidth="100px" overflow="hidden" mx="auto">
               <Box 
@@ -179,24 +183,23 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                 width="100%"
                 p={1}
               >
-                  {tpIds.map((id, idx) => {
-                    const progress = progressValues[idx] ?? 0;
-                    return (
-                      <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
-                        <Box 
-                          display="flex" 
-                          alignItems="center" 
-                          justifyContent="space-between"
-                          mb={1}
-                          p={1}
-                          bg="gray.50"
-                          borderRadius="sm"
-                        >
-                          <Text fontSize="9px" fontWeight="bold" width="40%">{id}</Text>
-                          <Box width="55%">
+                {useGrid ? (
+                  <Grid templateColumns={`repeat(${columnCount}, 1fr)`} gap={1}>
+                    {tpIds.map((id, idx) => {
+                      const progress = progressValues[idx] ?? 0;
+                      return (
+                        <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
+                          <Box 
+                            p={1}
+                            bg="gray.50"
+                            borderRadius="sm"
+                            mb={1}
+                          >
+                            <Text fontSize="8px" fontWeight="bold" textAlign="center">{id}</Text>
                             <Progress
                               value={progress * 100}
                               size="xs"
+                              mt={1}
                               colorScheme={
                                 progress >= 1 ? 'green' :
                                 progress >= 0.7 ? 'green' :
@@ -204,14 +207,52 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                               }
                               borderRadius="sm"
                             />
-                            <Text fontSize="8px" textAlign="right" mt={0.5}>
+                            <Text fontSize="7px" textAlign="right" mt={0.5}>
                               {(progress * 100).toFixed(0)}%
                             </Text>
                           </Box>
-                        </Box>
-                      </Tooltip>
-                    );
-                  })}
+                        </Tooltip>
+                      );
+                    })}
+                  </Grid>
+                ) : (
+                  // Original vertical layout for 1-2 TPs
+                  <Box>
+                    {tpIds.map((id, idx) => {
+                      const progress = progressValues[idx] ?? 0;
+                      return (
+                        <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
+                          <Box 
+                            display="flex" 
+                            alignItems="center" 
+                            justifyContent="space-between"
+                            mb={1}
+                            p={1}
+                            bg="gray.50"
+                            borderRadius="sm"
+                          >
+                            <Text fontSize="9px" fontWeight="bold" width="40%">{id}</Text>
+                            <Box width="55%">
+                              <Progress
+                                value={progress * 100}
+                                size="xs"
+                                colorScheme={
+                                  progress >= 1 ? 'green' :
+                                  progress >= 0.7 ? 'green' :
+                                  progress >= 0.4 ? 'orange' : 'red'
+                                }
+                                borderRadius="sm"
+                              />
+                              <Text fontSize="8px" textAlign="right" mt={0.5}>
+                                {(progress * 100).toFixed(0)}%
+                              </Text>
+                            </Box>
+                          </Box>
+                        </Tooltip>
+                      );
+                    })}
+                  </Box>
+                )}
               </Box>
             </Box>
         );
@@ -567,9 +608,19 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     const tpIds = row.list_includes_tp_id || '';
     const tpCount = tpIds && typeof tpIds === 'string' ? tpIds.split('|').length : 0;
     
-    // Each TP now takes up one row in a vertical list
-    // Each TP row height ~22px + padding (10px)
-    return Math.max(60, (tpCount * 22) + 10);
+    // Determine layout based on TP count
+    if (tpCount > 4) {
+      // 3-column grid for more than 4 TPs
+      const rowsNeeded = Math.ceil(tpCount / 3);
+      return Math.max(60, (rowsNeeded * 30) + 10);
+    } else if (tpCount > 2) {
+      // 2-column grid for 3-4 TPs
+      const rowsNeeded = Math.ceil(tpCount / 2);
+      return Math.max(60, (rowsNeeded * 30) + 10);
+    } else {
+      // Vertical layout for 1-2 TPs
+      return Math.max(60, (tpCount * 22) + 10);
+    }
   }, [data]);
   
   const table = useReactTable({
