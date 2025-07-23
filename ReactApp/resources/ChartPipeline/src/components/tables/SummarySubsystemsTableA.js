@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Heading, Text, HStack, Button } from '@chakra-ui/react';
+import { Box, Heading, Text, HStack, Button, Tooltip } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { FixedSizeList as List } from 'react-window';
 
@@ -149,6 +149,97 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       cell: ({ getValue }) => (
         <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
       )
+    },
+    {
+      accessorKey: 'list_includes_tp_id',
+      header: 'TP IDs',
+      size: 100,
+      cell: ({ getValue, row }) => {
+        const tpIds = getValue() ? getValue().split('|') : [];
+        const progressValues = row.original.list_id_tp_total_progress ? 
+          row.original.list_id_tp_total_progress.split('|') : [];
+        
+        // Create a mapping of TP IDs to their progress values
+        const tpProgress = {};
+        tpIds.forEach((id, index) => {
+          if (progressValues[index]) {
+            tpProgress[id] = parseFloat(progressValues[index]);
+          }
+        });
+        
+        return (
+          <Tooltip 
+            label={
+              <Box p={2}>
+                <Text fontWeight="bold" mb={2}>TP IDs and Progress:</Text>
+                {Object.entries(tpProgress).map(([id, progress]) => (
+                  <Text key={id}>
+                    TP {id}: {(progress * 100).toFixed(0)}%
+                  </Text>
+                ))}
+              </Box>
+            }
+            hasArrow
+            placement="top"
+          >
+            <Text 
+              fontSize="xs" 
+              fontWeight="bold" 
+              textAlign="center"
+              cursor="pointer"
+              textDecoration="underline"
+              color="blue.600"
+            >
+              {tpIds.length > 0 ? `${tpIds.length} TPs` : 'No TPs'}
+            </Text>
+          </Tooltip>
+        );
+      }
+    },
+    {
+      accessorKey: 'list_id_tp_total_progress',
+      header: 'TP PROGRESS',
+      size: 80,
+      cell: ({ getValue, row }) => {
+        const progressValues = getValue() ? getValue().split('|').map(v => parseFloat(v)) : [];
+        
+        // Calculate average progress if there are values
+        let avgProgress = 0;
+        if (progressValues.length > 0) {
+          avgProgress = progressValues.reduce((sum, val) => sum + val, 0) / progressValues.length;
+        }
+        
+        // Color based on progress percentage
+        const getProgressColor = (progress) => {
+          if (progress >= 1) return '#2F5249'; // Green for 100%
+          if (progress >= 0.7) return '#4C9A8A'; // Lighter green for >= 70%
+          if (progress >= 0.4) return '#E85C0D'; // Orange for >= 40%
+          return '#C53030'; // Red for < 40%
+        };
+        
+        const bgColor = getProgressColor(avgProgress);
+        
+        return (
+          <Tooltip 
+            label={`Average Progress: ${(avgProgress * 100).toFixed(0)}%`}
+            hasArrow
+            placement="top"
+          >
+            <Text 
+              fontSize="xs" 
+              fontWeight="bold" 
+              textAlign="center"
+              bg={bgColor}
+              color="white"
+              px={2}
+              py={1}
+              borderRadius="sm"
+            >
+              {(avgProgress * 100).toFixed(0)}%
+            </Text>
+          </Tooltip>
+        );
+      }
     },
     {
       accessorKey: 'total_insulation',
@@ -337,7 +428,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     }
 
-  ], [selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible]);
+  ], [selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {
@@ -349,7 +440,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           { 
             id: 'subsystem_info', 
             title: 'SUBSYSTEM INFORMATION', 
-            colspan: 6,
+            colspan: 8,
             startCol: 0,
             color: '#0082A9'
           },
@@ -357,35 +448,35 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             id: 'items_progress', 
             title: 'ITEMS INSULATION PROGRESS',
             colspan: 3, 
-            startCol: 6,
+            startCol: 8,
             color: '#E5D6AC'
           },
           { 
             id: 'loop_testing', 
             title: 'LOOP SIGNAL PROGRESS', 
             colspan: 3, 
-            startCol: 9,
+            startCol: 11,
             color: '#8AB3DB'
           },
           { 
             id: 'instruments', 
             title: 'INSTRUMENTS PROGRESS',
             colspan: 3, 
-            startCol: 12,
+            startCol: 14,
             color: '#A888B5'
           },
           { 
             id: 'tracing', 
             title: 'TRACING PROGRESS',
             colspan: 3, 
-            startCol: 15,
+            startCol: 17,
             color: '#0ABAB5'
           },
           {
             id: 'punch',
             title: 'PUNCH LIST PROGRESS',
             colspan: 4,
-            startCol: 15,
+            startCol: 20,
             color: '#748DAE'
           }
         ]
@@ -394,40 +485,40 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       {
         level: 2,
         headers: [
-          { id: 'empty_1', title: '', colspan: 6, startCol: 0, color: 'transparent' },
+          { id: 'empty_1', title: '', colspan: 8, startCol: 0, color: 'transparent' },
           { 
             id: 'insulation_status',
             title: 'INSULATION STATUS',
             colspan: 3, 
-            startCol: 6,
+            startCol: 8,
             color: '#CEC19B'
           },
           { 
             id: 'loop_metrics', 
             title: 'LOOP STATUS',
             colspan: 3, 
-            startCol: 9,
+            startCol: 11,
             color: '#7CA2C5'
           },
           { 
             id: 'instrument_metrics', 
             title: 'INSTRUMENT STATUS',
             colspan: 3, 
-            startCol: 12,
+            startCol: 14,
             color: '#977AA3'
           },
           { 
             id: 'tracing_metrics', 
             title: 'TRACING STATUS',
             colspan: 3, 
-            startCol: 15,
+            startCol: 17,
             color: '#09A7A3'
           },
           {
             id: 'punch_metrics',
             title: 'PUNCH LIST STATUS',
             colspan: 4,
-            startCol: 15,
+            startCol: 20,
             color: '#687F9D'
           }
         ]
@@ -547,6 +638,8 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'hito_isos': '#007598', // HITO is part of subsystem information
               'description': '#007598',
               'n_distinct_tps': '#007598', // N°TP is now part of subsystem information
+              'list_includes_tp_id': '#007598', // TP IDs column
+              'list_id_tp_total_progress': '#007598', // TP Progress column
 
               // Items progress
               'total_insulation': '#CEC19B',
