@@ -137,7 +137,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     const result = ssmData.map(item => {
       // Convert string values to numbers where needed
       const numericFields = ['total_insulation', 'done_insulation', 'pending_insulation', 
-                            'total_loop', 'done_loop', 'pending_loop', 'n_tps'];
+                            'total_loop', 'done_loop', 'pending_loop', 'n_distinct_tps'];
       
       const processedItem = { ...item };
       
@@ -243,7 +243,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
 
     // JavaScript fallback implementation
     const uniqueSubsystems = new Set(tableAData.map(item => item.subsystem)).size;
-    const uniqueTestPacks = tableAData.reduce((sum, item) => sum + (item.n_tps || 0), 0);
+    const uniqueTestPacks = tableAData.reduce((sum, item) => sum + (item.n_distinct_tps || 0), 0);
     
     const totalItemsSum = tableAData.reduce((sum, item) => sum + (item.total_insulation || 0), 0);
     const totalDoneItemsSum = tableAData.reduce((sum, item) => sum + (item.done_insulation || 0), 0);

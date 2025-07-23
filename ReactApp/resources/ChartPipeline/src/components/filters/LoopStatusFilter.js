@@ -34,12 +34,12 @@ const LoopStatusFilter = ({
     
     const metrics = {};
     data.forEach(row => {
-      if (row.subsystem && row.totalLoops !== undefined && row.doneLoops !== undefined) {
-        const isDone = (row.totalLoops === row.doneLoops) && (row.totalLoops > 0);
+      if (row.subsystem && row.total_loop !== undefined && row.done_loop !== undefined) {
+        const isDone = (row.total_loop === row.done_loop) && (row.total_loop > 0);
         metrics[row.subsystem] = {
           status: isDone ? 'Done' : 'Pending',
-          totalLoops: row.totalLoops,
-          doneLoops: row.doneLoops
+          totalLoops: row.total_loop,
+          doneLoops: row.done_loop
         };
       }
     });
@@ -84,7 +84,7 @@ const LoopStatusFilter = ({
         if (!selectedSubsystems[row.subsystem]) return false;
         
         if (exclusiveFilter) {
-          const isDone = (row.totalLoops === row.doneLoops) && (row.totalLoops > 0);
+          const isDone = (row.total_loop === row.done_loop) && (row.total_loop > 0);
           const status = isDone ? 'Done' : 'Pending';
           if (exclusiveFilter === 'done') return status === 'Done';
           if (exclusiveFilter === 'pending') return status === 'Pending';
@@ -150,7 +150,7 @@ const LoopStatusFilter = ({
           if (!selectedSubsystems[row.subsystem]) return false;
           
           if (exclusiveFilter) {
-            const isDone = (row.totalLoops === row.doneLoops) && (row.totalLoops > 0);
+            const isDone = (row.total_loop === row.done_loop) && (row.total_loop > 0);
             const status = isDone ? 'Done' : 'Pending';
             if (exclusiveFilter === 'done') return status === 'Done';
             if (exclusiveFilter === 'pending') return status === 'Pending';

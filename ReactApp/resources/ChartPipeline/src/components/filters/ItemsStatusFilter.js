@@ -34,12 +34,12 @@ const ItemsStatusFilter = ({
     
     const metrics = {};
     data.forEach(row => {
-      if (row.subsystem && row.totalItems !== undefined && row.doneItems !== undefined) {
-        const isDone = (row.totalItems === row.doneItems) && (row.totalItems > 0);
+      if (row.subsystem && row.total_insulation !== undefined && row.done_insulation !== undefined) {
+        const isDone = (row.total_insulation === row.done_insulation) && (row.total_insulation > 0);
         metrics[row.subsystem] = {
           status: isDone ? 'Done' : 'Pending',
-          totalItems: row.totalItems,
-          doneItems: row.doneItems
+          totalItems: row.total_insulation,
+          doneItems: row.done_insulation
         };
       }
     });
@@ -84,7 +84,7 @@ const ItemsStatusFilter = ({
         if (!selectedSubsystems[row.subsystem]) return false;
         
         if (exclusiveFilter) {
-          const isDone = (row.totalItems === row.doneItems) && (row.totalItems > 0);
+          const isDone = (row.total_insulation === row.done_insulation) && (row.total_insulation > 0);
           const status = isDone ? 'Done' : 'Pending';
           if (exclusiveFilter === 'done') return status === 'Done';
           if (exclusiveFilter === 'pending') return status === 'Pending';
@@ -150,7 +150,7 @@ const ItemsStatusFilter = ({
           if (!selectedSubsystems[row.subsystem]) return false;
           
           if (exclusiveFilter) {
-            const isDone = (row.totalItems === row.doneItems) && (row.totalItems > 0);
+            const isDone = (row.total_insulation === row.done_insulation) && (row.total_insulation > 0);
             const status = isDone ? 'Done' : 'Pending';
             if (exclusiveFilter === 'done') return status === 'Done';
             if (exclusiveFilter === 'pending') return status === 'Pending';
