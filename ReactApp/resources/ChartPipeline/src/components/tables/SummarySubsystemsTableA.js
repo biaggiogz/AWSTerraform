@@ -90,6 +90,40 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
+      accessorKey: 'hito_isos',
+      header: 'HITO',
+      size: 104,
+      cell: ({ getValue, row }) => (
+          <Button
+              size="xs"
+              variant={selectedSubsystem === getValue() ? "solid" : "outline"}
+              onClick={() => onSubsystemSelect(getValue())}
+              _hover={{ bg: selectedSubsystem === getValue() ? "#007598" : "blue.200" }}
+              fontSize="10px"
+              fontWeight="medium"
+              color={selectedSubsystem === getValue() ? "white" : "blue.600"}
+              bg={selectedSubsystem === getValue() ? "#007598" : "white"}
+              borderColor={selectedSubsystem === getValue() ? "#007598" : "blue.500"}
+              minWidth="30px"
+              height="18px"
+              px={2}
+              borderRadius="sm"
+              title={getValue()}
+              isTruncated
+          >
+            {getValue()}
+          </Button>
+      )
+    },
+    {
+      accessorKey: 'description',
+      header: 'DESCRIPTION',
+      size: 112,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" title={getValue()} noOfLines={2} wordBreak="break-word" textAlign="center">{getValue()}</Text>
+      )
+    },
+    {
       accessorKey: 'total_insulation',
       header: 'TOTAL ITEMS',
       size: 60,
@@ -139,14 +173,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
-    {
-      accessorKey: 'description',
-      header: 'DESCRIPTION',
-      size: 112,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" title={getValue()} noOfLines={2} wordBreak="break-word" textAlign="center">{getValue()}</Text>
-      )
-    },
+
     {
       accessorKey: 'n_tps',
       header: 'N°TP',
@@ -282,7 +309,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           { 
             id: 'subsystem_info', 
             title: 'SUBSYSTEM INFORMATION', 
-            colspan: 3, 
+            colspan: 5,
             startCol: 0,
             color: '#0082A9'
           },
@@ -290,35 +317,35 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             id: 'items_progress', 
             title: 'ITEMS PROGRESS', 
             colspan: 3, 
-            startCol: 3,
+            startCol: 4,
             color: '#E5D6AC'
           },
           { 
             id: 'description_testpacks', 
-            title: 'DESCRIPTION & TEST PACKS', 
-            colspan: 2, 
-            startCol: 6,
+            title: 'TEST PACKS',
+            colspan: 1,
+            startCol: 7,
             color: '#6FC1B2'
           },
           { 
             id: 'loop_testing', 
             title: 'LOOP SIGNAL PROGRESS', 
             colspan: 3, 
-            startCol: 8,
+            startCol: 9,
             color: '#8AB3DB'
           },
           { 
             id: 'instruments', 
             title: 'INSTRUMENTS', 
             colspan: 3, 
-            startCol: 11,
+            startCol: 12,
             color: '#8AB3DB'
           },
           { 
             id: 'tracing', 
             title: 'TRACING', 
             colspan: 3, 
-            startCol: 14,
+            startCol: 15,
             color: '#6FC1B2'
           }
         ]
@@ -327,34 +354,34 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       {
         level: 2,
         headers: [
-          { id: 'empty_1', title: '', colspan: 3, startCol: 0, color: 'transparent' },
+          { id: 'empty_1', title: '', colspan: 4, startCol: 0, color: 'transparent' },
           { 
             id: 'completion_status', 
             title: 'COMPLETION STATUS', 
             colspan: 3, 
-            startCol: 3,
+            startCol: 4,
             color: '#CEC19B'
           },
-          { id: 'empty_2', title: '', colspan: 2, startCol: 6, color: 'transparent' },
+          { id: 'empty_2', title: '', colspan: 2, startCol: 7, color: 'transparent' },
           { 
             id: 'loop_metrics', 
             title: 'LOOP METRICS', 
             colspan: 3, 
-            startCol: 8,
+            startCol: 9,
             color: '#7CA2C5'
           },
           { 
             id: 'instrument_metrics', 
             title: 'INSTRUMENT METRICS', 
             colspan: 3, 
-            startCol: 11,
+            startCol: 12,
             color: '#7CA2C5'
           },
           { 
             id: 'tracing_metrics', 
             title: 'TRACING METRICS', 
             colspan: 3, 
-            startCol: 14,
+            startCol: 15,
             color: '#63AEA1'
           }
         ]
@@ -470,14 +497,16 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               // Subsystem information
               's_n': '#007598',
               'subsystem': '#007598', // Both subsystem and fluid use the same accessor
-              
+              'hito_isos': '#007598', // HITO is part of subsystem information
+              'description': '#007598',
+
               // Items progress
               'total_insulation': '#CEC19B',
               'done_insulation': '#CEC19B',
               'pending_insulation': '#CEC19B',
               
-              // Description & Test Packs
-              'description': '#63AEA1',
+              // & Test Packs
+
               'n_tps': '#63AEA1',
               
               // Loop Signal Progress

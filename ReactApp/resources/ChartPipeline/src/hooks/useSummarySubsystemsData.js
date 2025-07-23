@@ -5,9 +5,6 @@ import useDuckDBEnhanced from './useDuckDB.enhanced';
 
 export const useSummarySubsystemsData = (filteredData = []) => {
   const [data, setData] = useState([]);
-  const [aislData, setAislData] = useState([]);
-  const [loopData, setLoopData] = useState([]);
-  const [subsystemsInfoData, setSubsystemsInfoData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [wasmModules, setWasmModules] = useState({});
@@ -86,55 +83,22 @@ export const useSummarySubsystemsData = (filteredData = []) => {
           });
         }
         
-        // Load supporting datasets including ssm.csv for Table A
-        const [ssmResponse, aislResponse, loopResponse, subsystemsInfoResponse] = await Promise.all([
-          fetch('/data/ssm.csv'), // This should point to the public folder path
-          fetch('/data/aislamientos.csv'),
-          fetch('/data/test_of_lazos_updated.csv'),
-          fetch('/data/subsystems_info.csv')
-        ]);
+        // Load only ssm.csv for Table A
+        const ssmResponse = await fetch('/data/ssm.csv');
+        const ssmCsvText = await ssmResponse.text();
 
-        const [ssmCsvText, aislCsvText, loopCsvText, subsystemsInfoCsvText] = await Promise.all([
-          ssmResponse.text(),
-          aislResponse.text(),
-          loopResponse.text(),
-          subsystemsInfoResponse.text()
-        ]);
-
-        // Parse all CSV files
-        let ssmData = [];
+        // Parse SSM CSV file
         Papa.parse(ssmCsvText, {
           header: true,
           dynamicTyping: true, // Convert numeric strings to numbers
           complete: (results) => {
             console.log('SSM CSV data sample:', results.data[0]);
-            ssmData = results.data;
-          },
-          error: (error) => setError(`Error parsing SSM CSV: ${error.message}`)
-        });
-
-        Papa.parse(aislCsvText, {
-          header: true,
-          complete: (results) => setAislData(results.data),
-          error: (error) => setError(`Error parsing aislamientos CSV: ${error.message}`)
-        });
-
-        Papa.parse(loopCsvText, {
-          header: true,
-          complete: (results) => setLoopData(results.data),
-          error: (error) => setError(`Error parsing loop CSV: ${error.message}`)
-        });
-
-        Papa.parse(subsystemsInfoCsvText, {
-          header: true,
-          complete: (results) => {
-            setSubsystemsInfoData(results.data);
             // Store the SSM data in the component state for Table A
-            window.ssmData = ssmData;
+            window.ssmData = results.data;
             setLoading(false);
           },
           error: (error) => {
-            setError(`Error parsing subsystems info CSV: ${error.message}`);
+            setError(`Error parsing SSM CSV: ${error.message}`);
             setLoading(false);
           }
         });
@@ -150,13 +114,10 @@ export const useSummarySubsystemsData = (filteredData = []) => {
 
   // Create DuckDB tables when data is loaded
   useEffect(() => {
-    if (data.length > 0 && aislData.length > 0 && loopData.length > 0 && subsystemsInfoData.length > 0) {
+    if (data.length > 0) {
       createTable('pipelinedata', data);
-      createTable('aislamientos', aislData);
-      createTable('loops', loopData);
-      createTable('subsystems', subsystemsInfoData);
     }
-  }, [data, aislData, loopData, subsystemsInfoData, createTable]);
+  }, [data, createTable]);
 
   // Use SSM CSV data directly for TableA
   const tableAData = useMemo(() => {
@@ -199,15 +160,12 @@ export const useSummarySubsystemsData = (filteredData = []) => {
 
   // Process data for TableB (Test Pack Details) using SQL specification
   const tableBData = useMemo(() => {
-    if (!data.length || !loopData.length) return [];
+    if (!data.length) return [];
 
     const startTime = performance.now();
     
-    // Get all unique subsystems from both loop_data and main_dataset
+    // Get all unique subsystems from the dataset
     const allSubsystems = new Set();
-    loopData.forEach(item => {
-      if (item['SUBS_PRE']) allSubsystems.add(item['SUBS_PRE']);
-    });
     data.forEach(item => {
       if (item['SUBSYSTEM']) allSubsystems.add(item['SUBSYSTEM']);
     });
@@ -268,11 +226,11 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     console.log(`TableB processing time: ${processingTime.toFixed(2)}ms`);
 
     return expandedData.sort((a, b) => a.subsystem.localeCompare(b.subsystem));
-  }, [data, loopData]);
+  }, [data]);
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
-    if (!tableAData.length || !tableBData.length) return {};
+    if (!tableAData.length) return {};
 
     const startTime = performance.now();
     
@@ -285,7 +243,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
 
     // JavaScript fallback implementation
     const uniqueSubsystems = new Set(tableAData.map(item => item.subsystem)).size;
-    const uniqueTestPacks = new Set(tableBData.map(item => item.testPack)).size;
+    const uniqueTestPacks = tableAData.reduce((sum, item) => sum + (item.n_tps || 0), 0);
     
     const totalItemsSum = tableAData.reduce((sum, item) => sum + (item.total_insulation || 0), 0);
     const totalDoneItemsSum = tableAData.reduce((sum, item) => sum + (item.done_insulation || 0), 0);
@@ -294,8 +252,9 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     const totalLoopsSum = tableAData.reduce((sum, item) => sum + (item.total_loop || 0), 0);
     const totalPendingLoopsSum = tableAData.reduce((sum, item) => sum + (item.pending_loop || 0), 0);
     
-    const doneTestPacks = tableBData.filter(item => item.testPackProgress === 100).length;
-    const pendingTestPacks = tableBData.filter(item => item.testPackProgress < 100).length;
+    // Estimate test pack completion based on insulation completion
+    const doneTestPacks = Math.round(uniqueTestPacks * (totalDoneItemsSum / (totalItemsSum || 1)));
+    const pendingTestPacks = uniqueTestPacks - doneTestPacks;
     
     const avgProgressItemsPercent = tableAData.length > 0 ? 
       Math.round(tableAData.reduce((sum, item) => {
@@ -320,7 +279,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
       pendingTestPacks,
       avgProgressItemsPercent
     };
-  }, [tableAData, tableBData]);
+  }, [tableAData, wasmModules.statsCalculator]);
 
   return {
     tableAData,
