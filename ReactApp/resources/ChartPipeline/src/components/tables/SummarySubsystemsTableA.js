@@ -236,22 +236,24 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'total_inst',
       header: 'TOTAL INST',
+      color: '#E8988A',
       size: 60,
       cell: ({ getValue }) => (
           <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
-      accessorKey: 'DONE',
-      header: 'TOTAL DONE',
+      accessorKey: 'done_inst',
+      header: 'DONE INST',
+      color: '#E8988A',
       size: 60,
       cell: ({ getValue }) => (
           <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
-      accessorKey: 'PENDING',
-      header: 'TOTAL PENDING',
+      accessorKey: 'pending_inst',
+      header: 'PENDING INST',
       size: 60,
       cell: ({ getValue }) => (
           <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
@@ -330,10 +332,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           },
           { 
             id: 'instruments', 
-            title: 'INSTRUMENTS', 
+            title: 'INSTRUMENTS (INST)',
             colspan: 3, 
             startCol: 12,
-            color: '#8AB3DB'
+            color: '#E8988A'
           },
           { 
             id: 'tracing', 
@@ -358,17 +360,17 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           },
           { 
             id: 'loop_metrics', 
-            title: 'LOOP METRICS', 
+            title: 'LOOP STATUS',
             colspan: 3, 
             startCol: 9,
             color: '#7CA2C5'
           },
           { 
             id: 'instrument_metrics', 
-            title: 'INSTRUMENT METRICS', 
+            title: 'INSTRUMENT STATUS',
             colspan: 3, 
             startCol: 12,
-            color: '#7CA2C5'
+            color: '#D1897C'
           },
           { 
             id: 'tracing_metrics', 
