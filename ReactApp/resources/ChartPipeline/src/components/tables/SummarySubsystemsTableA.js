@@ -267,7 +267,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     },
     {
       accessorKey: 'done_tracing',
-      header: 'TOTAL DONE TRACING',
+      header: 'DONE TRACING',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'pending_tracing',
+      header: 'PENDING TRACING',
       size: 60,
       cell: ({ getValue }) => (
           <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
@@ -340,7 +348,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             title: 'TRACING PROGRESS',
             colspan: 3, 
             startCol: 15,
-            color: '#6FC1B2'
+            color: '#0ABAB5'
           }
         ]
       },
@@ -375,7 +383,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             title: 'TRACING STATUS',
             colspan: 3, 
             startCol: 15,
-            color: '#63AEA1'
+            color: '#09A7A3'
           }
         ]
       }
@@ -509,9 +517,9 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'total_inst': '#A888B5',
               'done_inst': '#A888B5',
               'pending_inst': '#A888B5',
-              'total_tracing': '#6FC1B2',
-              'done_tracing': '#6FC1B2',
-              'pending_tracing': '#6FC1B2'
+              'total_tracing': '#0ABAB5',
+              'done_tracing': '#0ABAB5',
+              'pending_tracing': '#0ABAB5'
             };
             const columnId = header.column.id;
             const bgColor = columnColors[columnId] || '#F7FAFC';
