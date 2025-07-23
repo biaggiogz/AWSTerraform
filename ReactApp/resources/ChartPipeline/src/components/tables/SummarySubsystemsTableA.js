@@ -242,7 +242,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                                     colorScheme={
                                       progress >= 1 ? 'green' :
                                           progress >= 0.7 ? 'green' :
-                                              progress >= 0.4 ? 'orange' : 'red'
+                                              progress >= 0.4 ? 'green' : 'red'
                                     }
                                     borderRadius="sm"
                                 />
@@ -279,7 +279,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                                       colorScheme={
                                         progress >= 1 ? 'green' :
                                             progress >= 0.7 ? 'green' :
-                                                progress >= 0.4 ? 'orange' : 'red'
+                                                progress >= 0.4 ? 'green' : 'red'
                                       }
                                       borderRadius="sm"
                                   />
