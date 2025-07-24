@@ -1,9 +1,10 @@
-import React, { lazy, Suspense, useState, useMemo } from 'react';
+import React, { lazy, Suspense, useState, useMemo, useEffect } from 'react';
 import { Box, VStack, Center, Spinner } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
-import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
+import ProgressTestpackTable from '../tables/ProgressTespackTable';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
+import Papa from 'papaparse';
 
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 
@@ -11,6 +12,7 @@ const SummarySubsystemsContainer = ({
   tableAData, 
   tableBData
 }) => {
+  const [tpProgressData, setTpProgressData] = useState([]);
   const [progressFilteredData, setProgressFilteredData] = useState(tableBData);
   const [statusFilteredData, setStatusFilteredData] = useState(tableAData);
   const [loopFilteredData, setLoopFilteredData] = useState(tableAData);
@@ -20,6 +22,25 @@ const SummarySubsystemsContainer = ({
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [topZIndex, setTopZIndex] = useState(100);
+  
+  // Load CSV data
+  useEffect(() => {
+    const loadCSVData = async () => {
+      try {
+        const response = await fetch('/data/tp_with_progress.csv');
+        const csvText = await response.text();
+        Papa.parse(csvText, {
+          header: true,
+          complete: (results) => {
+            setTpProgressData(results.data.filter(row => row.subsystem && row.tp_id));
+          }
+        });
+      } catch (error) {
+        console.error('Error loading CSV data:', error);
+      }
+    };
+    loadCSVData();
+  }, []);
   
   // Apply status, loop, and hito filters
   const combinedFilteredTableAData = useMemo(() => {
@@ -240,25 +261,23 @@ const SummarySubsystemsContainer = ({
             isProgressFilterVisible={isProgressFilterVisible}
           />
         </ResizableDraggablePanel>
-        
-        {/*<ResizableDraggablePanel*/}
-        {/*  title="Test Pack Details"*/}
-        {/*  initialWidth={700}*/}
-        {/*  initialHeight={550}*/}
-        {/*  initialX={750}*/}
-        {/*  initialY={20}*/}
-        {/*  minWidth={400}*/}
-        {/*  minHeight={300}*/}
-        {/*  onBringToFront={handleBringToFront}*/}
-        {/*>*/}
-        {/*  <SummarySubsystemsTableB*/}
-        {/*    data={filteredTableBData}*/}
-        {/*    selectedSubsystem={selectedSubsystem}*/}
-        {/*    onSubsystemSelect={handleSubsystemSelect}*/}
-        {/*    isProgressFilterVisible={isProgressFilterVisible}*/}
-        {/*    isHitoFilterVisible={false}*/}
-        {/*  />*/}
-        {/*</ResizableDraggablePanel>*/}
+
+        <ResizableDraggablePanel
+          title="Test Pack Details"
+          initialWidth={700}
+          initialHeight={550}
+          initialX={750}
+          initialY={20}
+          minWidth={400}
+          minHeight={300}
+          onBringToFront={handleBringToFront}
+        >
+          <ProgressTestpackTable
+            data={tpProgressData}
+            selectedSubsystem={selectedSubsystem}
+            isProgressFilterVisible={isProgressFilterVisible}
+          />
+        </ResizableDraggablePanel>
       </Box>
     </VStack>
   );
