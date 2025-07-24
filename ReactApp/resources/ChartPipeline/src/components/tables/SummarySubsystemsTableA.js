@@ -9,7 +9,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   
   return (
     <div style={style}>
-      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', height: '100%' }}>
+      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', height: '100%', overflow: 'hidden' }}>
         {row.getVisibleCells().map(cell => (
           <div
             key={cell.id}
@@ -23,7 +23,9 @@ const VirtualizedRow = ({ index, style, data }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '12px'
+              fontSize: '12px',
+              overflow: 'hidden', // Prevent content from overflowing
+              position: 'relative' // Ensure proper stacking context
             }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -297,7 +299,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         }
         
         return (
-            <Box width="100%" height={`${boxHeight}px`}>
+            <Box width="100%" height={`${boxHeight}px`} position="relative" overflow="hidden">
               <Box
                   borderWidth="1px"
                   borderRadius="md"
@@ -310,6 +312,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                   overflowY="auto" // allows scrolling if content ever overflows
                   overflowX="hidden" // prevent horizontal overflow
                   p={1}
+                  position="absolute" // Ensure the box stays within its container
+                  top={0}
+                  left={0}
+                  zIndex={0} // Lower z-index to prevent overlapping with other rows
               >
                 {useGrid ? (
                     <Grid 
@@ -318,6 +324,8 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                       height="100%" 
                       alignContent="space-evenly" 
                       justifyItems="center"
+                      overflow="hidden" // Prevent content from overflowing
+                      position="relative" // Ensure proper stacking context
                     >
                       {tpIds.map((id, idx) => {
                         const progress = progressValues[idx] ?? 0;
@@ -370,7 +378,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                       })}
                     </Grid>
                 ) : (
-                    <VStack spacing={1} align="stretch">
+                    <VStack spacing={1} align="stretch" overflow="hidden" position="relative">
                       {tpIds.map((id, idx) => {
                         const progress = progressValues[idx] ?? 0;
                         const progressFilterColor = getProgressFilterColor(id, progress);
@@ -780,23 +788,26 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
 
     let boxHeight;
 
+    // Add extra height when progress filter is active to prevent overlapping
+    const progressFilterPadding = isProgressFilterVisible ? 20 : 0;
+
     if (tpCount > 6) {
       const rowsNeeded = Math.ceil(tpCount / 4);
-      boxHeight = Math.max(80, rowsNeeded * 42 + 24); // Ensure minimum height for 4-column grid
+      boxHeight = Math.max(80, rowsNeeded * 42 + 24 + progressFilterPadding); // Ensure minimum height for 4-column grid
     } else if (tpCount > 4) {
       const rowsNeeded = Math.ceil(tpCount / 3);
-      boxHeight = Math.max(80, rowsNeeded * 42 + 24); // Ensure minimum height for 3-column grid
+      boxHeight = Math.max(80, rowsNeeded * 42 + 24 + progressFilterPadding); // Ensure minimum height for 3-column grid
     } else if (tpCount > 2) {
       const rowsNeeded = Math.ceil(tpCount / 2);
-      boxHeight = rowsNeeded * 42 + 20;
+      boxHeight = rowsNeeded * 42 + 20 + progressFilterPadding;
     } else if (tpCount > 0) {
-      boxHeight = tpCount * 42 + 12;
+      boxHeight = tpCount * 42 + 12 + progressFilterPadding;
     } else {
-      boxHeight = 50;
+      boxHeight = 50 + progressFilterPadding;
     }
 
     return Math.max(70, boxHeight); // slightly bump base height
-  }, [data]);
+  }, [data, isProgressFilterVisible]);
   
   const table = useReactTable({
     data: isProgressFilterVisible ? filteredData || [] : data || [],
@@ -1005,6 +1016,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             itemData={{ rows, table }}
             width={headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}
             style={{ overflowX: 'hidden', overflowY: 'auto' }}
+            overscanCount={3} // Render more rows to prevent visual glitches
           >
             {VirtualizedRow}
           </List>
