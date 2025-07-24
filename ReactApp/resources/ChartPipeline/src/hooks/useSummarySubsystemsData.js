@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Papa from 'papaparse';
 import { wasmLoader } from '../wasm/wasm-loader';
 import useDuckDBEnhanced from './useDuckDB.enhanced';
@@ -11,15 +11,18 @@ export const useSummarySubsystemsData = (filteredData = []) => {
 
   const { executeQuery, createTable } = useDuckDBEnhanced();
 
-  // Load WASM modules
+  // Load WASM modules with timeout
   useEffect(() => {
     const loadWasmModules = async () => {
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('WASM load timeout')), 5000)
+      );
+      
       try {
-        const [aggregator, testpackProcessor, statsCalculator] = await Promise.all([
+        const wasmPromise = Promise.all([
           wasmLoader.loadModule(
             'subsystem-aggregator',
             '/wasm/subsystem-aggregator.wasm',
-            // JavaScript fallback
             {
               processMultipleCSVs: (csvData) => csvData,
               aggregateSubsystemStats: (data) => data,
@@ -29,7 +32,6 @@ export const useSummarySubsystemsData = (filteredData = []) => {
           wasmLoader.loadModule(
             'testpack-processor',
             '/wasm/testpack-processor.wasm',
-            // JavaScript fallback
             {
               expandTestPacks: (data) => data,
               calculateTestPackProgress: (data) => data,
@@ -39,14 +41,19 @@ export const useSummarySubsystemsData = (filteredData = []) => {
           wasmLoader.loadModule(
             'stats-calculator',
             '/wasm/stats-calculator.wasm',
-            // JavaScript fallback
             {
-              calculateAverages: (values) => values.reduce((a, b) => a + b, 0) / values.length,
+              calculateAverages: (values) => {
+                let sum = 0;
+                for (let i = 0; i < values.length; i++) sum += values[i];
+                return sum / values.length;
+              },
               computeProgressPercentages: (done, total) => total > 0 ? (done / total) * 100 : 0,
               aggregateLoopStatistics: (data) => data
             }
           )
         ]);
+
+        const [aggregator, testpackProcessor, statsCalculator] = await Promise.race([wasmPromise, timeout]);
 
         setWasmModules({
           aggregator,
@@ -112,22 +119,33 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     fetchData();
   }, [filteredData]);
 
-  // Create DuckDB tables when data is loaded
-  useEffect(() => {
-    if (data.length > 0) {
-      createTable('Test Pack Details', data); // Table B with pipelinedata.csv
-      console.log('Created Test Pack Details table for SQL queries');
-    }
-  }, [data, createTable]);
+  // Create DuckDB tables when data is loaded - debounced
+  const createTablesTimeoutRef = useRef(null);
   
-  // Create DuckDB table for Table A (SSM data)
   useEffect(() => {
-    const ssmData = window.ssmData || [];
-    if (ssmData.length > 0) {
-      createTable('Subsystem Overview', ssmData); // Table A with ssm.csv
-      console.log('Created Subsystem Overview table for SQL queries with SSM data');
+    if (createTablesTimeoutRef.current) {
+      clearTimeout(createTablesTimeoutRef.current);
     }
-  }, [loading, createTable]);
+    
+    createTablesTimeoutRef.current = setTimeout(() => {
+      if (data.length > 0) {
+        createTable('Test Pack Details', data);
+        console.log('Created Test Pack Details table for SQL queries');
+      }
+      
+      const ssmData = window.ssmData || [];
+      if (ssmData.length > 0) {
+        createTable('Subsystem Overview', ssmData);
+        console.log('Created Subsystem Overview table for SQL queries with SSM data');
+      }
+    }, 100);
+    
+    return () => {
+      if (createTablesTimeoutRef.current) {
+        clearTimeout(createTablesTimeoutRef.current);
+      }
+    };
+  }, [data, loading, createTable]);
 
   // Use SSM CSV data directly for TableA
   const tableAData = useMemo(() => {
@@ -145,22 +163,25 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     
     // Use the SSM data directly without transformation
     // Just make sure numeric fields are properly converted
-    const result = ssmData.map(item => {
-      // Convert string values to numbers where needed
-      const numericFields = ['total_insulation', 'done_insulation', 'pending_insulation', 
-                            'total_loop', 'done_loop', 'pending_loop', 'n_distinct_tps'];
-      
+    const numericFields = ['total_insulation', 'done_insulation', 'pending_insulation', 
+                          'total_loop', 'done_loop', 'pending_loop', 'n_distinct_tps'];
+    
+    const result = [];
+    for (let i = 0; i < ssmData.length; i++) {
+      const item = ssmData[i];
       const processedItem = { ...item };
       
       // Convert numeric fields from strings to numbers
-      numericFields.forEach(field => {
+      for (let j = 0; j < numericFields.length; j++) {
+        const field = numericFields[j];
         if (processedItem[field] && typeof processedItem[field] === 'string') {
           processedItem[field] = parseFloat(processedItem[field]) || 0;
         }
-      });
-      
-      return processedItem;
-    }).sort((a, b) => (b.total_insulation || 0) - (a.total_insulation || 0));
+      }
+      result.push(processedItem);
+    }
+    
+    result.sort((a, b) => (b.total_insulation || 0) - (a.total_insulation || 0));
 
     const processingTime = performance.now() - startTime;
     console.log(`TableA processing time: ${processingTime.toFixed(2)}ms`);
@@ -175,18 +196,13 @@ export const useSummarySubsystemsData = (filteredData = []) => {
 
     const startTime = performance.now();
     
-    // Get all unique subsystems from the dataset
-    const allSubsystems = new Set();
-    data.forEach(item => {
-      if (item['SUBSYSTEM']) allSubsystems.add(item['SUBSYSTEM']);
-    });
-
     // Process progress data - group by SUBSYSTEM and TEST PACK, then calculate averages
     const progressMap = new Map();
-    data.forEach(item => {
+    for (let i = 0; i < data.length; i++) {
+      const item = data[i];
       const subsystem = item['SUBSYSTEM'];
       const testPack = item['TEST PACK'];
-      if (!subsystem || !testPack) return;
+      if (!subsystem || !testPack) continue;
 
       const key = `${subsystem}|${testPack}`;
       if (!progressMap.has(key)) {
@@ -206,16 +222,20 @@ export const useSummarySubsystemsData = (filteredData = []) => {
       
       const progress = parseFloat(item['CONSTRUC COORD PROGRESS']) || 0;
       progressMap.get(key).progressValues.push(progress);
-    });
+    }
 
     // Expand test packs and calculate average progress
     const expandedData = [];
-    progressMap.forEach((groupData) => {
+    for (const [key, groupData] of progressMap) {
       const testPacks = groupData.testPack.split('|');
-      const avgProgress = groupData.progressValues.reduce((sum, val) => sum + val, 0) / groupData.progressValues.length;
+      let sum = 0;
+      for (let i = 0; i < groupData.progressValues.length; i++) {
+        sum += groupData.progressValues[i];
+      }
+      const avgProgress = sum / groupData.progressValues.length;
       
-      testPacks.forEach(tp => {
-        const trimmedTp = tp.trim();
+      for (let i = 0; i < testPacks.length; i++) {
+        const trimmedTp = testPacks[i].trim();
         if (trimmedTp) {
           expandedData.push({
             subsystem: groupData.subsystem,
@@ -230,13 +250,14 @@ export const useSummarySubsystemsData = (filteredData = []) => {
             technip: groupData.technip
           });
         }
-      });
-    });
+      }
+    }
 
     const processingTime = performance.now() - startTime;
     console.log(`TableB processing time: ${processingTime.toFixed(2)}ms`);
 
-    return expandedData.sort((a, b) => a.subsystem.localeCompare(b.subsystem));
+    expandedData.sort((a, b) => a.subsystem.localeCompare(b.subsystem));
+    return expandedData;
   }, [data]);
 
   // Calculate summary statistics
@@ -252,34 +273,43 @@ export const useSummarySubsystemsData = (filteredData = []) => {
       console.log('Using WASM stats calculator for summary statistics');
     }
 
-    // JavaScript fallback implementation
-    const uniqueSubsystems = new Set(tableAData.map(item => item.subsystem)).size;
-    const uniqueTestPacks = tableAData.reduce((sum, item) => sum + (item.n_distinct_tps || 0), 0);
+    // JavaScript fallback implementation with optimized loops
+    const uniqueSubsystemsSet = new Set();
+    let uniqueTestPacks = 0;
+    let totalItemsSum = 0;
+    let totalDoneItemsSum = 0;
+    let totalPendingItemsSum = 0;
+    let totalLoopsSum = 0;
+    let totalPendingLoopsSum = 0;
+    let progressSum = 0;
     
-    const totalItemsSum = tableAData.reduce((sum, item) => sum + (item.total_insulation || 0), 0);
-    const totalDoneItemsSum = tableAData.reduce((sum, item) => sum + (item.done_insulation || 0), 0);
-    const totalPendingItemsSum = tableAData.reduce((sum, item) => sum + (item.pending_insulation || 0), 0);
-    
-    const totalLoopsSum = tableAData.reduce((sum, item) => sum + (item.total_loop || 0), 0);
-    const totalPendingLoopsSum = tableAData.reduce((sum, item) => sum + (item.pending_loop || 0), 0);
+    for (let i = 0; i < tableAData.length; i++) {
+      const item = tableAData[i];
+      uniqueSubsystemsSet.add(item.subsystem);
+      uniqueTestPacks += (item.n_distinct_tps || 0);
+      totalItemsSum += (item.total_insulation || 0);
+      totalDoneItemsSum += (item.done_insulation || 0);
+      totalPendingItemsSum += (item.pending_insulation || 0);
+      totalLoopsSum += (item.total_loop || 0);
+      totalPendingLoopsSum += (item.pending_loop || 0);
+      
+      const totalItems = item.total_insulation || 0;
+      const doneItems = item.done_insulation || 0;
+      const progress = totalItems > 0 ? (doneItems / totalItems) * 100 : 0;
+      progressSum += progress;
+    }
     
     // Estimate test pack completion based on insulation completion
     const doneTestPacks = Math.round(uniqueTestPacks * (totalDoneItemsSum / (totalItemsSum || 1)));
     const pendingTestPacks = uniqueTestPacks - doneTestPacks;
     
-    const avgProgressItemsPercent = tableAData.length > 0 ? 
-      Math.round(tableAData.reduce((sum, item) => {
-        const totalItems = item.total_insulation || 0;
-        const doneItems = item.done_insulation || 0;
-        const progress = totalItems > 0 ? (doneItems / totalItems) * 100 : 0;
-        return sum + progress;
-      }, 0) / tableAData.length) : 0;
+    const avgProgressItemsPercent = tableAData.length > 0 ? Math.round(progressSum / tableAData.length) : 0;
 
     const processingTime = performance.now() - startTime;
     console.log(`Summary stats processing time: ${processingTime.toFixed(2)}ms`);
 
     return {
-      uniqueSubsystems,
+      uniqueSubsystems: uniqueSubsystemsSet.size,
       uniqueTestPacks,
       totalItemsSum,
       totalDoneItemsSum,

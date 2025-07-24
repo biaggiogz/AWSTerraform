@@ -34,24 +34,31 @@ const ProgressFilter = ({
     if (!data || data.length === 0) return {};
 
     const metrics = {};
-    data.forEach(row => {
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
       if (row.testPack && row.testPackProgress !== undefined) {
         metrics[row.testPack] = {
           progress: Math.round(row.testPackProgress)
         };
       }
-    });
-
+    }
     return metrics;
   }, [data]);
 
   const sortedTestPacks = useMemo(() => {
-    return Object.entries(testPackMetrics)
-        .sort((a, b) => a[0].localeCompare(b[0], undefined, {numeric: true}))
-        .reduce((obj, [key, value]) => {
-          obj[key] = value;
-          return obj;
-        }, {});
+    const entries = Object.entries(testPackMetrics);
+    entries.sort((a, b) => {
+      const aNum = parseInt(a[0]) || 0;
+      const bNum = parseInt(b[0]) || 0;
+      return aNum - bNum || a[0].localeCompare(b[0]);
+    });
+    
+    const result = {};
+    for (let i = 0; i < entries.length; i++) {
+      const [key, value] = entries[i];
+      result[key] = value;
+    }
+    return result;
   }, [testPackMetrics]);
 
   // Initialize with empty selection when filter opens
@@ -76,25 +83,31 @@ const ProgressFilter = ({
   const getFilteredData = useCallback(() => {
     if (!data || data.length === 0) return [];
     
-    const selectedTPs = Object.keys(selectedTestPacks).filter(tp => selectedTestPacks[tp]);
-    if (selectedTPs.length === 0) return [];
+    const selectedTPsSet = new Set();
+    for (const tp in selectedTestPacks) {
+      if (selectedTestPacks[tp]) selectedTPsSet.add(tp);
+    }
+    if (selectedTPsSet.size === 0) return [];
 
-    return data.filter(row => {
+    const result = [];
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
       const testPackId = row.testPack || row.tp_id;
-      if (!selectedTestPacks[testPackId]) return false;
+      if (!selectedTPsSet.has(testPackId)) continue;
 
       if (exclusiveFilter) {
         const progress = row.testPackProgress || (row.progress_tp * 100);
-        if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
-        if (exclusiveFilter === "below90") return progress < 90;
-        if (exclusiveFilter === 'done100') return progress === 100;
+        if (exclusiveFilter === 'range90to99' && (progress < 90 || progress >= 100)) continue;
+        if (exclusiveFilter === 'below90' && progress >= 90) continue;
+        if (exclusiveFilter === 'done100' && progress !== 100) continue;
       }
-
-      return true;
-    });
+      result.push(row);
+    }
+    return result;
   }, [data, selectedTestPacks, exclusiveFilter]);
 
   const debounceRef = useRef(null);
+  const lastFilteredDataRef = useRef([]);
 
   React.useEffect(() => {
     if (!isInitialized) return;
@@ -106,15 +119,19 @@ const ProgressFilter = ({
     debounceRef.current = setTimeout(() => {
       const filteredData = getFilteredData();
       
-      onFilterChange(filteredData);
+      // Only update if data actually changed
+      if (JSON.stringify(filteredData) !== JSON.stringify(lastFilteredDataRef.current)) {
+        lastFilteredDataRef.current = filteredData;
+        onFilterChange(filteredData);
 
-      if (!window.progressFilterState) window.progressFilterState = {};
-      window.progressFilterState.filteredData = filteredData;
+        if (!window.progressFilterState) window.progressFilterState = {};
+        window.progressFilterState.filteredData = filteredData;
 
-      if (onPropagationChange && propagationTarget !== 'nothing') {
-        onPropagationChange(filteredData, propagationTarget);
+        if (onPropagationChange && propagationTarget !== 'nothing') {
+          onPropagationChange(filteredData, propagationTarget);
+        }
       }
-    }, 100);
+    }, 50);
 
     return () => {
       if (debounceRef.current) {
@@ -171,34 +188,40 @@ const ProgressFilter = ({
     onPropagationChange(currentFilteredData, value);
   }, [getFilteredData, onPropagationChange, isInitialized]);
 
-  const searchTermLower = useMemo(() => searchTerm.toLowerCase(), [searchTerm]);
-  
   const filteredTestPacks = useMemo(() => {
     if (!searchTerm) return sortedTestPacks;
 
-    return Object.fromEntries(
-      Object.entries(sortedTestPacks).filter(([testPack]) => 
-        testPack.toLowerCase().includes(searchTermLower)
-      )
-    );
-  }, [sortedTestPacks, searchTermLower]);
+    const searchLower = searchTerm.toLowerCase();
+    const result = {};
+    for (const testPack in sortedTestPacks) {
+      if (testPack.toLowerCase().includes(searchLower)) {
+        result[testPack] = sortedTestPacks[testPack];
+      }
+    }
+    return result;
+  }, [sortedTestPacks, searchTerm]);
 
   const memoizedButtons = useMemo(() => {
     const entries = Object.entries(filteredTestPacks);
     if (entries.length === 0) return [];
     
-    return entries.map(([testPack, metrics]) => {
+    const buttons = new Array(entries.length);
+    for (let i = 0; i < entries.length; i++) {
+      const [testPack, metrics] = entries[i];
       const progress = metrics.progress;
       const isSelected = selectedTestPacks[testPack] === true;
-      const isVisible = !exclusiveFilter ||
-          (exclusiveFilter === 'range90to99' && progress >= 90 && progress < 100) ||
-          (exclusiveFilter === 'below90' && progress < 90) ||
-          (exclusiveFilter === 'done100' && progress === 100);
+      
+      let isVisible = true;
+      if (exclusiveFilter) {
+        isVisible = (exclusiveFilter === 'range90to99' && progress >= 90 && progress < 100) ||
+                   (exclusiveFilter === 'below90' && progress < 90) ||
+                   (exclusiveFilter === 'done100' && progress === 100);
+      }
 
       const isDisabled = exclusiveFilter && !isVisible;
       const progressColor = getProgressColor(progress);
 
-      return (
+      buttons[i] = (
           <Button
               key={testPack}
               size="sm"
@@ -224,7 +247,8 @@ const ProgressFilter = ({
             </VStack>
           </Button>
       );
-    });
+    }
+    return buttons;
   }, [filteredTestPacks, selectedTestPacks, exclusiveFilter, toggleTestPack, getProgressColor]);
 
   // Reset internal state when filter becomes invisible
@@ -361,6 +385,8 @@ export default React.memo(ProgressFilter, (prevProps, nextProps) => {
     prevProps.data === nextProps.data &&
     prevProps.isVisible === nextProps.isVisible &&
     prevProps.onFilterChange === nextProps.onFilterChange &&
-    prevProps.onPropagationChange === nextProps.onPropagationChange
+    prevProps.onPropagationChange === nextProps.onPropagationChange &&
+    prevProps.onClose === nextProps.onClose &&
+    prevProps.onBringToFront === nextProps.onBringToFront
   );
 });

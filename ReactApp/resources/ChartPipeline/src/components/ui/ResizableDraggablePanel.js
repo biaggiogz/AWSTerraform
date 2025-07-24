@@ -60,7 +60,13 @@ const ResizableDraggablePanel = ({
     }
   }, [dimensions, bringToFront]);
 
+  const lastUpdateRef = useRef(0);
+  
   const handleMouseMove = useCallback((e) => {
+    const now = performance.now();
+    if (now - lastUpdateRef.current < 16) return; // 60fps throttle
+    lastUpdateRef.current = now;
+    
     if (isDragging) {
       setDimensions(prev => ({
         ...prev,
@@ -117,8 +123,8 @@ const ResizableDraggablePanel = ({
 
   React.useEffect(() => {
     if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('mousemove', handleMouseMove, { passive: true });
+      document.addEventListener('mouseup', handleMouseUp, { passive: true });
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Box,
   VStack,
@@ -84,42 +84,31 @@ FROM "Subsystem Overview";`);
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   // Color mapping for metric cards - matching SummarySubsystemsTableA.js header colors
-  const getMetricColor = (metricName) => {
-    const name = metricName.toLowerCase();
+  const getMetricColor = useMemo(() => {
+    const colorMap = {
+      subsystem: '#007598', hito: '#007598', description: '#007598', fluid: '#007598',
+      items: '#CEC19B', insulation: '#CEC19B',
+      loop: '#7CA2C5',
+      inst: '#977AA3',
+      tracing: '#09A7A3',
+      punch: '#687F9D',
+      'total isos': '#007598',
+      'total test pack': '#7CA2C5',
+      'total scope teiga': '#977AA3',
+      'total scope siemsa': '#977AA3',
+      'total installed teiga': '#977AA3',
+      'total installed': '#977AA3',
+      'trac yes': '#09A7A3'
+    };
     
-    // Subsystem information - #007598
-    if (name.includes('subsystem')) return '#007598';
-    if (name.includes('hito')) return '#007598';
-    if (name.includes('description')) return '#007598';
-    if (name.includes('fluid')) return '#007598';
-    
-    // Items insulation progress - #CEC19B
-    if (name.includes('items') || name.includes('insulation')) return '#CEC19B';
-    
-    // Loop signal progress - #7CA2C5
-    if (name.includes('loop')) return '#7CA2C5';
-    
-    // Instruments progress - #977AA3
-    if (name.includes('inst')) return '#977AA3';
-    
-    // Tracing progress - #09A7A3
-    if (name.includes('tracing')) return '#09A7A3';
-    
-    // Punch list progress - #687F9D
-    if (name.includes('punch')) return '#687F9D';
-    
-    // Legacy mappings for instruments tab
-    if (name.includes('total isos')) return '#007598';
-    if (name.includes('total at') && name.includes('%')) return '#007598';
-    if (name.includes('total test pack')) return '#7CA2C5';
-    if (name.includes('total scope teiga')) return '#977AA3';
-    if (name.includes('total scope siemsa')) return '#977AA3';
-    if (name.includes('total installed teiga')) return '#977AA3';
-    if (name.includes('total installed')) return '#977AA3';
-    if (name.includes('trac yes')) return '#09A7A3';
-    
-    return '#E2E8F0'; // default gray
-  };
+    return (metricName) => {
+      const name = metricName.toLowerCase();
+      for (const key in colorMap) {
+        if (name.includes(key)) return colorMap[key];
+      }
+      return '#E2E8F0';
+    };
+  }, []);
 
   const handleExecute = () => {
     if (!sqlQuery.trim()) return;
@@ -170,13 +159,17 @@ FROM "Subsystem Overview";`);
   };
 
   // Get all available field names for intellisense
-  const getAllFieldNames = () => {
+  const getAllFieldNames = useMemo(() => {
     const fields = new Set();
-    Object.values(tableInfo).forEach(info => {
-      info.fields.forEach(field => fields.add(field));
-    });
+    const tableInfoValues = Object.values(tableInfo);
+    for (let i = 0; i < tableInfoValues.length; i++) {
+      const info = tableInfoValues[i];
+      for (let j = 0; j < info.fields.length; j++) {
+        fields.add(info.fields[j]);
+      }
+    }
     return Array.from(fields).sort();
-  };
+  }, [tableInfo]);
 
   // Handle textarea changes with intellisense
   const handleSqlQueryChange = (e) => {
@@ -229,25 +222,32 @@ FROM "Subsystem Overview";`);
   React.useEffect(() => {
     if (calculations.length > 0) {
       // Create a unique key for each calculation to prevent duplicates
-      const newCards = calculations.flatMap((row, rowIdx) => 
-        Object.entries(row).map(([key, value], entryIdx) => {
+      const newCards = [];
+      for (let rowIdx = 0; rowIdx < calculations.length; rowIdx++) {
+        const row = calculations[rowIdx];
+        const entries = Object.entries(row);
+        for (let entryIdx = 0; entryIdx < entries.length; entryIdx++) {
+          const [key, value] = entries[entryIdx];
           const cleanKey = key.replace(/_Local$|_Global$/, '');
           const scope = key.endsWith('_Local') ? 'LOCAL' : key.endsWith('_Global') ? 'GLOBAL' : null;
-          return {
+          newCards.push({
             id: `${rowIdx}-${entryIdx}-${key}`,
             key: cleanKey,
             value,
             scope,
             timestamp: Date.now(),
-            originalKey: key // Store original key for matching
-          };
-        })
-      );
+            originalKey: key
+          });
+        }
+      }
       
       // Auto-lock all Global metrics
-      const globalCardIds = newCards
-        .filter(card => card.scope === 'GLOBAL')
-        .map(card => card.id);
+      const globalCardIds = [];
+      for (let i = 0; i < newCards.length; i++) {
+        if (newCards[i].scope === 'GLOBAL') {
+          globalCardIds.push(newCards[i].id);
+        }
+      }
       
       setLockedCards(prev => {
         const newLockedCards = new Set(prev);

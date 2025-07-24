@@ -35,27 +35,29 @@ const ProgressTestpackTable = ({ data, selectedSubsystem, isProgressFilterVisibl
     const flattenedData = useMemo(() => {
         if (!data || data.length === 0) return [];
 
-        return data
-            .filter(row => row.tp_id && row.subsystem)
-            .filter(row => !selectedSubsystem || row.subsystem === selectedSubsystem)
-            .filter(row => {
-                if (!selectedTPs) return true;
-                return selectedTPs.includes(String(row.tp_id));
-            })
-            .map(row => ({
+        const result = [];
+        const selectedTPsSet = selectedTPs ? new Set(selectedTPs) : null;
+        
+        for (let i = 0; i < data.length; i++) {
+            const row = data[i];
+            if (!row.tp_id || !row.subsystem) continue;
+            if (selectedSubsystem && row.subsystem !== selectedSubsystem) continue;
+            if (selectedTPsSet && !selectedTPsSet.has(String(row.tp_id))) continue;
+            
+            result.push({
                 id: String(row.tp_id),
                 subsystem: row.subsystem,
                 progress: parseFloat(row.progress_tp || 0),
-            }));
+            });
+        }
+        return result;
     }, [data, selectedSubsystem, selectedTPs]);
 
     // Memoize progress color calculation
-    const getProgressColor = useMemo(() => {
-        return (progress) => {
-            if (progress >= 1) return '#437057';
-            if (progress >= 0.9) return '#97B067';
-            return '#E86A33';
-        };
+    const getProgressColor = useCallback((progress) => {
+        if (progress >= 1) return '#437057';
+        if (progress >= 0.9) return '#97B067';
+        return '#E86A33';
     }, []);
 
     const columns = useMemo(
