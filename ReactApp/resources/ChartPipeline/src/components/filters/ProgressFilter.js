@@ -28,6 +28,7 @@ const ProgressFilter = ({
   const [selectedTestPacks, setSelectedTestPacks] = useState({});
   const [propagationTarget, setPropagationTarget] = useState('nothing');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const testPackMetrics = useMemo(() => {
     if (!data || data.length === 0) return {};
@@ -53,20 +54,29 @@ const ProgressFilter = ({
         }, {});
   }, [testPackMetrics]);
 
+  // Initialize with empty selection when filter opens
   React.useEffect(() => {
     const testPackKeys = Object.keys(sortedTestPacks);
-    if (testPackKeys.length > 0 && Object.keys(selectedTestPacks).length === 0) {
+    if (testPackKeys.length > 0 && !isInitialized) {
       const initialState = testPackKeys.reduce((acc, testPack) => {
-        acc[testPack] = true;
+        acc[testPack] = false;
         return acc;
       }, {});
       setSelectedTestPacks(initialState);
+      setIsInitialized(true);
+
+      if (!window.progressFilterState) window.progressFilterState = {};
+      window.progressFilterState.filteredData = [];
+
+      console.log('ProgressFilter initialized with empty selection');
     }
-  }, [sortedTestPacks]);
+  }, [sortedTestPacks, isInitialized]);
 
   const debounceRef = useRef(null);
 
   React.useEffect(() => {
+    if (!isInitialized) return;
+
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
@@ -74,18 +84,28 @@ const ProgressFilter = ({
     debounceRef.current = setTimeout(() => {
       if (!data || data.length === 0) {
         onFilterChange([]);
-        // Clear global state for TableA
         if (window.progressFilterState) {
           window.progressFilterState.filteredData = [];
         }
         return;
       }
 
+      const selectedTPs = Object.keys(selectedTestPacks).filter(tp => selectedTestPacks[tp]);
+
+      if (selectedTPs.length === 0) {
+        onFilterChange([]);
+        if (!window.progressFilterState) window.progressFilterState = {};
+        window.progressFilterState.filteredData = [];
+        console.log('No test packs selected - showing empty result');
+        return;
+      }
+
       const filteredData = data.filter(row => {
-        if (!selectedTestPacks[row.testPack]) return false;
+        const testPackId = row.testPack || row.tp_id;
+        if (!selectedTestPacks[testPackId]) return false;
 
         if (exclusiveFilter) {
-          const progress = row.testPackProgress;
+          const progress = row.testPackProgress || (row.progress_tp * 100);
           if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
           if (exclusiveFilter === "below90") return progress < 90;
           if (exclusiveFilter === 'done100') return progress === 100;
@@ -96,12 +116,14 @@ const ProgressFilter = ({
 
       onFilterChange(filteredData);
 
-      // Store filtered data in global state for TableA to access
       if (!window.progressFilterState) window.progressFilterState = {};
       window.progressFilterState.filteredData = filteredData;
-      console.log('Progress filter updated with', filteredData.length, 'items');
+      console.log('Progress filter updated:', {
+        selectedCount: selectedTPs.length,
+        filteredCount: filteredData.length,
+        exclusiveFilter
+      });
 
-      // Handle propagation based on selected target
       if (onPropagationChange && propagationTarget !== 'nothing') {
         onPropagationChange(filteredData, propagationTarget);
       }
@@ -112,7 +134,7 @@ const ProgressFilter = ({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [data, selectedTestPacks, exclusiveFilter, onFilterChange, onPropagationChange, propagationTarget]);
+  }, [data, selectedTestPacks, exclusiveFilter, onFilterChange, onPropagationChange, propagationTarget, isInitialized]);
 
   const toggleExclusiveFilter = useCallback((filter) => {
     setExclusiveFilter(prev => prev === filter ? null : filter);
@@ -152,58 +174,34 @@ const ProgressFilter = ({
   const handlePropagationChange = useCallback((value) => {
     setPropagationTarget(value);
 
-    // Immediately trigger propagation when dropdown changes
-    if (onPropagationChange) {
-      if (value === 'nothing') {
-        // Only clear global state for TableA, don't affect TableB
-        if (window.progressFilterState) {
-          window.progressFilterState.filteredData = [];
+    if (!onPropagationChange || !isInitialized) return;
+
+    const selectedTPs = Object.keys(selectedTestPacks).filter(tp => selectedTestPacks[tp]);
+
+    let currentFilteredData = [];
+    if (selectedTPs.length > 0) {
+      currentFilteredData = data.filter(row => {
+        const testPackId = row.testPack || row.tp_id;
+        if (!selectedTestPacks[testPackId]) return false;
+
+        if (exclusiveFilter) {
+          const progress = row.testPackProgress || (row.progress_tp * 100);
+          if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
+          if (exclusiveFilter === "below90") return progress < 90;
+          if (exclusiveFilter === 'done100') return progress === 100;
         }
-        onPropagationChange([], 'nothing');
-      } else if (value === 'tableA') {
-        // Get current filtered data and propagate only to TableA
-        const currentFilteredData = data.filter(row => {
-          if (!selectedTestPacks[row.testPack]) return false;
 
-          if (exclusiveFilter) {
-            const progress = row.testPackProgress;
-            if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
-            if (exclusiveFilter === "below90") return progress < 90;
-            if (exclusiveFilter === 'done100') return progress === 100;
-          }
-
-          return true;
-        });
-
-        // Update global state for TableA
-        if (!window.progressFilterState) window.progressFilterState = {};
-        window.progressFilterState.filteredData = currentFilteredData;
-
-        onPropagationChange(currentFilteredData, 'tableA');
-      } else if (value === 'both') {
-        // Get current filtered data and propagate to both tables
-        const currentFilteredData = data.filter(row => {
-          if (!selectedTestPacks[row.testPack]) return false;
-
-          if (exclusiveFilter) {
-            const progress = row.testPackProgress;
-            if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
-            if (exclusiveFilter === "below90") return progress < 90;
-            if (exclusiveFilter === 'done100') return progress === 100;
-          }
-
-          return true;
-        });
-
-        // Update global state for TableA
-        if (!window.progressFilterState) window.progressFilterState = {};
-        window.progressFilterState.filteredData = currentFilteredData;
-
-        // Propagate to both tables
-        onPropagationChange(currentFilteredData, 'both');
-      }
+        return true;
+      });
     }
-  }, [data, selectedTestPacks, exclusiveFilter, onPropagationChange]);
+
+    if (!window.progressFilterState) window.progressFilterState = {};
+    window.progressFilterState.filteredData = currentFilteredData;
+
+    onPropagationChange(currentFilteredData, value);
+
+    console.log('Propagation changed:', { target: value, dataCount: currentFilteredData.length });
+  }, [data, selectedTestPacks, exclusiveFilter, onPropagationChange, isInitialized]);
 
   const filteredTestPacks = useMemo(() => {
     if (!searchTerm) return sortedTestPacks;
@@ -220,7 +218,7 @@ const ProgressFilter = ({
   const memoizedButtons = useMemo(() =>
       Object.entries(filteredTestPacks).map(([testPack, metrics]) => {
         const progress = metrics.progress;
-        const isSelected = selectedTestPacks[testPack] || false;
+        const isSelected = selectedTestPacks[testPack] === true;
         const isVisible = !exclusiveFilter ||
             (exclusiveFilter === 'range90to99' && progress >= 90 && progress < 100) ||
             (exclusiveFilter === 'below90' && progress < 90) ||
@@ -245,7 +243,7 @@ const ProgressFilter = ({
                 isDisabled={isDisabled}
             >
               <VStack spacing={0} align="center">
-                <Text fontSize="xs" fontWeight="bold" noOfLines={1}>
+                <Text fontSize="10px" noOfLines={1}>
                   {testPack}
                 </Text>
                 <Text fontSize="10px" noOfLines={1}>
@@ -260,12 +258,10 @@ const ProgressFilter = ({
   // Reset internal state when filter becomes invisible
   React.useEffect(() => {
     if (!isVisible) {
-      // No need to reset selectedTestPacks as they should persist
-      // But we should reset the exclusive filter and propagation
       setExclusiveFilter(null);
       setPropagationTarget('nothing');
+      setIsInitialized(false);
 
-      // Clear global state for TableA
       if (window.progressFilterState) {
         window.progressFilterState.filteredData = [];
       }
@@ -307,7 +303,6 @@ const ProgressFilter = ({
           </Box>
 
           <HStack spacing={4} justifyContent="center">
-
             <Tooltip label="Click to show only 100% done" placement="top">
               <HStack
                   onClick={() => toggleExclusiveFilter('done100')}
@@ -339,8 +334,6 @@ const ProgressFilter = ({
                 <Text fontWeight={exclusiveFilter === 'range90to99' ? "bold" : "normal"}>From 90% to 99%</Text>
               </HStack>
             </Tooltip>
-
-
 
             <Tooltip label="Click to show only below 90%" placement="top">
               <HStack

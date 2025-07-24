@@ -37,7 +37,7 @@ const SidebarProgressItemsPanel = ({ data }) => {
       Object.keys(subsystemGroups).forEach(subsystem => {
         const subsystemData = subsystemGroups[subsystem];
         
-        // Total items for this subsystem
+        // Total Insul for this subsystem
         const totalItems = subsystemData.length;
         
         // Items done (where metric value equals or is very close to 1)
@@ -64,7 +64,7 @@ const SidebarProgressItemsPanel = ({ data }) => {
         }
       });
       
-      // Sort by total items (largest first)
+      // Sort by Total Insul (largest first)
       return progressData.sort((a, b) => b.totalItems - a.totalItems);
     };
 
@@ -85,7 +85,7 @@ const SidebarProgressItemsPanel = ({ data }) => {
     
     return (
       <Box mb={1}>
-        <Text fontSize="10px" fontWeight="bold" mb={1} color="gray.600" noOfLines={1} title={`${subsystem}: ${totalItems} total items`}>
+        <Text fontSize="10px" fontWeight="bold" mb={1} color="gray.600" noOfLines={1} title={`${subsystem}: ${totalItems} Total Insul`}>
           {subsystem.length > 18 ? subsystem.substring(0, 18) + '...' : subsystem}: {totalItems}
         </Text>
         <Box position="relative" height="22px" width="100%">

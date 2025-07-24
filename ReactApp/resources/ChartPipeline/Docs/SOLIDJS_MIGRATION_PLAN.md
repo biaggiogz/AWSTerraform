@@ -106,7 +106,7 @@ const SummarySubsystemsTableASolid = (props) => {
   - Optimized button rendering
   - **Expected Performance**: 2-4x faster filtering
 
-- **ItemsStatusFilter.solid.jsx** & **LoopStatusFilter.solid.jsx**
+- **InsulationStatusFilter.solid.jsx** & **LoopStatusFilter.solid.jsx**
   - Signal-based status calculations
   - Reactive color synchronization
   - Memory-efficient state management

@@ -15,23 +15,23 @@ import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, 
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import ProgressFilter from '../filters/ProgressFilter';
-import ItemsStatusFilter from '../filters/ItemsStatusFilter';
+import InsulStatusFilter from '../filters/InsulationStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 // Import directly without lazy loading
 import HitoFilter from '../filters/HitoFilter';
 import HitoFilterA from '../filters/HitoFilterA';
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onBringToFront }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
   const tabName = isSubsystemsTab ? 'summarySubsystems' : 'instrumentsReport';
   
   const { sqlState, updateQuery } = usePersistentSQLState(tabName);
-  const [sqlQuery, setSqlQuery] = useState(sqlState.query || `SELECT SUM(total_insulation) AS "Total Items _Global"
+  const [sqlQuery, setSqlQuery] = useState(sqlState.query || `SELECT SUM(total_insulation) AS "Total Insul _Global"
 FROM "Subsystem Overview";
 
-SELECT SUM(done_insulation) AS "Done Items _Local"
+SELECT SUM(done_insulation) AS "Done Insul _Local"
 FROM "Subsystem Overview";`);
   const [metricCards, setMetricCards] = useState([]);
   const [lockedCards, setLockedCards] = useState(new Set());
@@ -352,7 +352,7 @@ FROM "Subsystem Overview";`);
                 }
               }}
               aria-label="Toggle subsystem status filter"
-              title="Items Status Filter"
+              title="Insul Status Filter"
             />
             <IconButton
               icon={<MdLoop />}
@@ -415,19 +415,19 @@ FROM "Subsystem Overview";`);
                       <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT(DISTINCT subsystem) AS "Total Subsystems _Global"\nFROM "Subsystem Overview";\n\nSELECT COUNT(DISTINCT subsystem) AS "Total Subsystems _Local"\nFROM "Subsystem Overview";')}>
                         Total Subsystems
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_insulation) AS "Total Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_insulation) AS "Total Items _Local"\nFROM "Subsystem Overview";')}>
-                        Total Items
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_insulation) AS "Total Insul _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_insulation) AS "Total Insul _Local"\nFROM "Subsystem Overview";')}>
+                        Total Insul
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_insulation) AS "Done Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_insulation) AS "Done Items _Local"\nFROM "Subsystem Overview";')}>
-                        Done Items
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_insulation) AS "Done Insul _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_insulation) AS "Done Insul _Local"\nFROM "Subsystem Overview";')}>
+                        Done Insul
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_insulation) AS "Pending Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_insulation) AS "Pending Items _Local"\nFROM "Subsystem Overview";')}>
-                        Pending Items
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_insulation) AS "Pending Insul _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_insulation) AS "Pending Insul _Local"\nFROM "Subsystem Overview";')}>
+                        Pending Insul
                       </Button>
                       <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_loop) AS "Total Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_loop) AS "Total Loops _Local"\nFROM "Subsystem Overview";')}>
                         Total Loops
                       </Button>
-                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_loop) AS "Done Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_loop) AS "Done Loops _Local"\nFROM "Subsystem Overview";')}>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_loop) AS "Done Insul _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_loop) AS "Done Loops _Local"\nFROM "Subsystem Overview";')}>
                         Done Loops
                       </Button>
                       <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_loop) AS "Pending Loops _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_loop) AS "Pending Loops _Local"\nFROM "Subsystem Overview";')}>
@@ -831,7 +831,7 @@ FROM "Subsystem Overview";`);
       
       {isFilterVisible && (
         <ProgressFilter
-          data={detailsData}
+          data={csvProgressData || detailsData}
           onFilterChange={onFilteredDataChange || (() => {})}
           isVisible={isFilterVisible}
           onClose={() => {
@@ -839,17 +839,14 @@ FROM "Subsystem Overview";`);
             if (onProgressFilterVisibilityChange) {
               onProgressFilterVisibilityChange(false);
             }
-            // Reset this filter's effect by passing the original data
             if (onFilteredDataChange) {
-              onFilteredDataChange(detailsData);
+              onFilteredDataChange(csvProgressData || detailsData);
             }
-            // Reset propagation if it was active
             if (onProgressPropagationChange) {
               onProgressPropagationChange([], 'nothing');
             }
           }}
           onPropagationChange={(filteredData, target) => {
-            // Handle the 'both' option by calling the propagation handler with 'both'
             if (onProgressPropagationChange) {
               onProgressPropagationChange(filteredData, target);
             }
@@ -859,7 +856,7 @@ FROM "Subsystem Overview";`);
       )}
       
       {isSubsystemFilterVisible && (
-        <ItemsStatusFilter
+        <InsulStatusFilter
           data={controlData}
           onFilterChange={onFilteredControlDataChange || (() => {})}
           isVisible={isSubsystemFilterVisible}

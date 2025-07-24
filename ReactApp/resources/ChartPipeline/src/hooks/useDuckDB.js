@@ -80,9 +80,9 @@ const useDuckDB = () => {
       
       // Specific mappings for Subsystem Overview table (ssm.csv)
       'testPack': ['n_distinct_tps', 'nn_tps', 'n_tps', 'testPack'],
-      'total_items': ['total_insulation', 'total_items', 'TOTAL ITEMS'],
-      'done_items': ['done_insulation', 'done_items', 'DONE ITEMS'],
-      'pending_items': ['pending_insulation', 'pending_items', 'PENDING ITEMS'],
+      'total_items': ['total_insulation', 'total_items', 'Total Insul'],
+      'done_items': ['done_insulation', 'done_items', 'Done Insul'],
+      'pending_items': ['pending_insulation', 'pending_items', 'Pending Insul'],
       'total_loops': ['total_loop', 'total_loops', 'TOTAL LOOP'],
       'done_loops': ['done_loop', 'done_loops', 'LOOP DONE'],
       'pending_loops': ['pending_loop', 'pending_loops', 'LOOP PENDING'],

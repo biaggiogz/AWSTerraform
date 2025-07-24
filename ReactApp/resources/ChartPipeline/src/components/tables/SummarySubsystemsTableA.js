@@ -220,60 +220,6 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     },
 
     {
-      accessorKey: 'total_insulation',
-      header: 'TOTAL ITEMS',
-      size: 60,
-      cell: ({ getValue, row }) => {
-        const getItemsStatusColor = () => {
-          if (!isItemsFilterVisible) return { bg: 'transparent', color: 'inherit' };
-          
-          const totalItems = getValue() || 0;
-          const doneItems = row.original.done_insulation || 0;
-          // Check if all items are done (total equals done) and there are items
-          const isDone = (totalItems === doneItems) && (totalItems > 0);
-          
-          // Green for completed, orange for in progress
-          const bgColor = isDone ? '#2F5249' : '#E85C0D';
-          return { bg: bgColor, color: 'white' };
-        };
-        
-        const colors = getItemsStatusColor();
-        
-        return (
-          <Text 
-            fontSize="xs" 
-            fontWeight="bold"
-            textAlign="center"
-            bg={colors.bg}
-            color={colors.color}
-            px={colors.bg !== 'transparent' ? 2 : 0}
-            py={colors.bg !== 'transparent' ? 1 : 0}
-            borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
-          >
-            {getValue()?.toLocaleString()}
-          </Text>
-        );
-      }
-    },
-    {
-      accessorKey: 'done_insulation',
-      header: 'DONE ITEMS',
-      size: 60,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
-      )
-    },
-    {
-      accessorKey: 'pending_insulation',
-      header: 'PENDING ITEMS',
-      size: 60,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
-      )
-    },
-
-
-    {
       accessorKey: 'total_loop',
       header: 'TOTAL LOOP',
       size: 60,
@@ -374,6 +320,58 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     },
     {
+      accessorKey: 'total_insulation',
+      header: 'Total Insul',
+      size: 60,
+      cell: ({ getValue, row }) => {
+        const getItemsStatusColor = () => {
+          if (!isItemsFilterVisible) return { bg: 'transparent', color: 'inherit' };
+          
+          const totalItems = getValue() || 0;
+          const doneItems = row.original.done_insulation || 0;
+          // Check if all items are done (total equals done) and there are items
+          const isDone = (totalItems === doneItems) && (totalItems > 0);
+          
+          // Green for completed, orange for in progress
+          const bgColor = isDone ? '#2F5249' : '#E85C0D';
+          return { bg: bgColor, color: 'white' };
+        };
+        
+        const colors = getItemsStatusColor();
+        
+        return (
+          <Text 
+            fontSize="xs" 
+            fontWeight="bold"
+            textAlign="center"
+            bg={colors.bg}
+            color={colors.color}
+            px={colors.bg !== 'transparent' ? 2 : 0}
+            py={colors.bg !== 'transparent' ? 1 : 0}
+            borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
+          >
+            {getValue()?.toLocaleString()}
+          </Text>
+        );
+      }
+    },
+    {
+      accessorKey: 'done_insulation',
+      header: 'Done Insul',
+      size: 60,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'pending_insulation',
+      header: 'Pending Insul',
+      size: 60,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
       accessorKey: 'total_punch',
       header: 'TOTAL PUNCH',
       size: 60,
@@ -423,32 +421,32 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             color: '#0082A9'
           },
           { 
-            id: 'items_progress', 
-            title: 'ITEMS INSULATION PROGRESS',
-            colspan: 3, 
-            startCol: 6,
-            color: '#E5D6AC'
-          },
-          { 
             id: 'loop_testing', 
             title: 'LOOP SIGNAL PROGRESS', 
             colspan: 3, 
-            startCol: 9,
+            startCol: 6,
             color: '#8AB3DB'
           },
           { 
             id: 'instruments', 
             title: 'INSTRUMENTS PROGRESS',
             colspan: 3, 
-            startCol: 12,
+            startCol: 9,
             color: '#A888B5'
           },
           { 
             id: 'tracing', 
             title: 'TRACING PROGRESS',
             colspan: 3, 
-            startCol: 15,
+            startCol: 12,
             color: '#0ABAB5'
+          },
+          { 
+            id: 'insulation_progress',
+            title: 'INSULATION PROGRESS',
+            colspan: 3, 
+            startCol: 15,
+            color: '#E5D6AC'
           },
           {
             id: 'punch',
@@ -465,32 +463,32 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         headers: [
           { id: 'empty_1', title: '', colspan: 6, startCol: 0, color: 'transparent' },
           { 
-            id: 'insulation_status',
-            title: 'INSULATION STATUS',
-            colspan: 3, 
-            startCol: 6,
-            color: '#CEC19B'
-          },
-          { 
             id: 'loop_metrics', 
             title: 'LOOP STATUS',
             colspan: 3, 
-            startCol: 9,
+            startCol: 6,
             color: '#7CA2C5'
           },
           { 
             id: 'instrument_metrics', 
             title: 'INSTRUMENT STATUS',
             colspan: 3, 
-            startCol: 12,
+            startCol: 9,
             color: '#977AA3'
           },
           { 
             id: 'tracing_metrics', 
             title: 'TRACING STATUS',
             colspan: 3, 
-            startCol: 15,
+            startCol: 12,
             color: '#09A7A3'
+          },
+          { 
+            id: 'insulation_status',
+            title: 'INSULATION STATUS',
+            colspan: 3, 
+            startCol: 15,
+            color: '#CEC19B'
           },
           {
             id: 'punch_metrics',
@@ -648,11 +646,6 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'description': '#007598',
               'n_distinct_tps': '#007598', // N°TP is now part of subsystem information
 
-              // Items progress
-              'total_insulation': '#CEC19B',
-              'done_insulation': '#CEC19B',
-              'pending_insulation': '#CEC19B',
-              
               // Loop Signal Progress
               'total_loop': '#7CA2C5',
               'done_loop': '#7CA2C5',
@@ -665,6 +658,11 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'total_tracing': '#0ABAB5',
               'done_tracing': '#0ABAB5',
               'pending_tracing': '#0ABAB5',
+
+              // Items progress
+              'total_insulation': '#CEC19B',
+              'done_insulation': '#CEC19B',
+              'pending_insulation': '#CEC19B',
 
               'total_punch': '#748DAE',
               'pending_punch': '#748DAE',

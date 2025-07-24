@@ -47,7 +47,7 @@ The "SUMMARY SUBSYSTEMS" tab provides a comprehensive dashboard for subsystem an
 
 ### Filter Components
 - **ProgressFilter.js** - Test Pack progress filtering
-- **ItemsStatusFilter.js** - Items status filtering
+- **InsulationStatusFilter.js** - Items status filtering
 - **LoopStatusFilter.js** - Loop status filtering
 - **HitoFilter.js** - Hitol Filter
 
@@ -97,7 +97,7 @@ This hybrid architecture represents Phase 1 of a migration plan to gradually mov
 
 ## Filter Components
 - **ProgressFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/ProgressFilter.js`
-- **ItemsStatusFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/ItemsStatusFilter.js`
+- **InsulationStatusFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/InsulationStatusFilter.js`
 - **LoopStatusFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/LoopStatusFilter.js`
 - **HitoFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/HitoFilter.js`
 

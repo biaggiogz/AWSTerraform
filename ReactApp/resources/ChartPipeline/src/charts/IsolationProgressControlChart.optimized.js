@@ -87,7 +87,7 @@ const IsolationProgressControlChart = ({ data }) => {
     // Percentage of total
     const a_advance_mleq_total = C_Mleq > 0 ? (m_advance_mleq_total / C_Mleq) * 100 : 0;
 
-    // Calculate DONE and PENDING items for each category
+    // Calculate DONE and Pending Insul for each category
     const categoryColumns = ['Avance Distanciadores', 'Avance Aislamiento', 'Avance Chapa', 'Avance Cajas', 'Avance Rematar'];
     
     const doneItems = categoryColumns.map(col => 
@@ -294,9 +294,9 @@ const IsolationProgressControlChart = ({ data }) => {
               <Bar data={chartData} options={options} />
             </Box>
             
-            {/* DONE ITEMS and PENDING ITEMS metrics below chart */}
+            {/* Done Insul and Pending Insul metrics below chart */}
             <VStack spacing={2} mt={4} ml="auto">
-              {/* DONE ITEMS Row */}
+              {/* Done Insul Row */}
               <HStack spacing={0} w="full" justify="space-between">
                 <Text fontSize="xs" fontWeight="bold" minW="80px">DONE</Text>
                 {metrics.doneItems.map((value, index) => (
@@ -316,7 +316,7 @@ const IsolationProgressControlChart = ({ data }) => {
                 ))}
               </HStack>
               
-              {/* PENDING ITEMS Row */}
+              {/* Pending Insul Row */}
               <HStack spacing={0} w="full" justify="space-between">
                 <Text fontSize="xs" fontWeight="bold" minW="80px">PENDING</Text>
                 {metrics.pendingItems.map((value, index) => (

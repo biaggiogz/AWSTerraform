@@ -16,7 +16,7 @@ import {
 import { MdClose } from 'react-icons/md';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 
-const ItemsStatusFilter = ({ 
+const InsulationStatusFilter = ({
   data, 
   onFilterChange, 
   isVisible, 
@@ -226,7 +226,7 @@ const ItemsStatusFilter = ({
 
   return (
     <ResizableDraggablePanel
-      title="Items Status Filter"
+      title="Insul Status Filter"
       initialWidth={400}
       initialHeight={600}
       initialX={150}
@@ -247,7 +247,7 @@ const ItemsStatusFilter = ({
         </HStack>
 
         <HStack spacing={4} justifyContent="center">
-          <Tooltip label="Click to show only done items" placement="top">
+          <Tooltip label="Click to show only Done Insul" placement="top">
             <HStack
               onClick={() => toggleExclusiveFilter('done')}
               cursor="pointer"
@@ -263,7 +263,7 @@ const ItemsStatusFilter = ({
             </HStack>
           </Tooltip>
 
-          <Tooltip label="Click to show only pending items" placement="top">
+          <Tooltip label="Click to show only Pending Insul" placement="top">
             <HStack
               onClick={() => toggleExclusiveFilter('pending')}
               cursor="pointer"
@@ -324,4 +324,4 @@ const ItemsStatusFilter = ({
   );
 };
 
-export default React.memo(ItemsStatusFilter);
+export default React.memo(InsulationStatusFilter);

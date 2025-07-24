@@ -23,7 +23,7 @@ const SummarySubsystemsContainer = ({
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [topZIndex, setTopZIndex] = useState(100);
   
-  // Load CSV data
+  // Load CSV data and transform for ProgressFilter compatibility
   useEffect(() => {
     const loadCSVData = async () => {
       try {
@@ -32,7 +32,25 @@ const SummarySubsystemsContainer = ({
         Papa.parse(csvText, {
           header: true,
           complete: (results) => {
-            setTpProgressData(results.data.filter(row => row.subsystem && row.tp_id));
+            const filteredData = results.data.filter(row => row.subsystem && row.tp_id);
+            
+            // Transform CSV data to be compatible with ProgressFilter
+            const transformedData = filteredData.map(row => ({
+              // Original CSV format for ProgressTestpackTable
+              ...row,
+              // Transformed format for ProgressFilter compatibility
+              testPack: String(row.tp_id),
+              testPackProgress: Math.round((parseFloat(row.progress_tp) || 0) * 100)
+            }));
+            
+            console.log('CSV Data loaded and transformed:', {
+              totalRows: results.data.length,
+              filteredRows: transformedData.length,
+              sampleOriginal: filteredData.slice(0, 2),
+              sampleTransformed: transformedData.slice(0, 2)
+            });
+            
+            setTpProgressData(transformedData);
           }
         });
       } catch (error) {
@@ -145,23 +163,26 @@ const SummarySubsystemsContainer = ({
   };
   
   const handleProgressPropagationChange = (filteredData, target) => {
+    console.log('Progress propagation:', { filteredData, target });
+    
     // Only handle TableA propagation here
     if (target === 'tableA' || target === 'both') {
       if (filteredData.length === 0) {
-        // Reset TableA to original state when no filtered data
         setStatusFilteredData(tableAData);
         return;
       }
       
-      // Extract test packs from filtered TableB data
-      const filteredTestPacks = filteredData.map(row => row.testPack);
+      // Extract test packs from filtered data (handle both formats)
+      const filteredTestPacks = filteredData.map(row => 
+        String(row.testPack || row.tp_id || '')
+      ).filter(Boolean);
+      
+      console.log('Filtered test packs for propagation:', filteredTestPacks.slice(0, 5));
       
       // Filter TableA data based on test packs in list_includes_tp_id
       const propagatedTableAData = tableAData.filter(row => {
         try {
           const tpIds = row.list_includes_tp_id;
-          
-          // Handle different data types
           if (!tpIds) return false;
           
           let tpIdArray = [];
@@ -172,20 +193,19 @@ const SummarySubsystemsContainer = ({
           } else if (typeof tpIds === 'number') {
             tpIdArray = [String(tpIds)];
           } else {
-            console.warn('Unexpected TP IDs type:', typeof tpIds, tpIds);
             return false;
           }
           
           return tpIdArray.some(tpId => filteredTestPacks.includes(String(tpId)));
         } catch (error) {
-          console.error('Error filtering row:', error, row);
+          console.error('Error filtering row:', error);
           return false;
         }
       });
       
+      console.log('Propagated TableA rows:', propagatedTableAData.length);
       setStatusFilteredData(propagatedTableAData);
     } else if (target === 'nothing') {
-      // Reset TableA to original state when propagation is disabled
       setStatusFilteredData(tableAData);
     }
   };
@@ -220,6 +240,7 @@ const SummarySubsystemsContainer = ({
           detailsData={tableBData}
           filteredControlData={filteredTableAData}
           filteredDetailsData={filteredTableBData}
+          csvProgressData={tpProgressData}
           filters={{
             selectedSubsystem: selectedSubsystem
           }}
@@ -263,7 +284,7 @@ const SummarySubsystemsContainer = ({
         </ResizableDraggablePanel>
 
         <ResizableDraggablePanel
-          title="Test Pack Details"
+          title="Test Pack Progress Details"
           initialWidth={700}
           initialHeight={550}
           initialX={750}
@@ -282,5 +303,6 @@ const SummarySubsystemsContainer = ({
     </VStack>
   );
 };
+
 
 export default SummarySubsystemsContainer;
