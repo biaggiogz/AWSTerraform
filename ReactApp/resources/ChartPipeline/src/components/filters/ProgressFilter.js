@@ -61,6 +61,10 @@ const ProgressFilter = ({
         return acc;
       }, {});
       setSelectedTestPacks(initialState);
+      
+      // Initialize with no user selection when first loading test packs
+      if (!window.progressFilterState) window.progressFilterState = {};
+      window.progressFilterState.hasUserSelection = false;
     }
   }, [sortedTestPacks]);
 
@@ -77,9 +81,14 @@ const ProgressFilter = ({
         // Clear global state for TableA
         if (window.progressFilterState) {
           window.progressFilterState.filteredData = [];
+          window.progressFilterState.hasUserSelection = false;
         }
         return;
       }
+      
+      // Check if user has made any specific selections
+      const hasUserSelection = exclusiveFilter !== null || 
+        Object.values(selectedTestPacks).some(selected => !selected);
       
       const filteredData = data.filter(row => {
         if (!selectedTestPacks[row.testPack]) return false;
@@ -97,7 +106,9 @@ const ProgressFilter = ({
       // Store filtered data in global state for TableA to access
       if (!window.progressFilterState) window.progressFilterState = {};
       window.progressFilterState.filteredData = filteredData;
-      console.log('Progress filter updated with', filteredData.length, 'items');
+      window.progressFilterState.hasUserSelection = hasUserSelection;
+      console.log('Progress filter updated with', filteredData.length, 'items', 
+                 hasUserSelection ? '(user selection active)' : '(no specific selection)');
       
       // Call onFilterChange with the filtered data
       // This will trigger the SQL query re-execution in DynamicCalculationPanel
@@ -117,23 +128,47 @@ const ProgressFilter = ({
   }, [data, selectedTestPacks, exclusiveFilter, onFilterChange, onPropagationChange, propagationTarget]);
 
   const toggleExclusiveFilter = useCallback((filter) => {
-    setExclusiveFilter(prev => prev === filter ? null : filter);
-  }, []);
+    setExclusiveFilter(prev => {
+      const newValue = prev === filter ? null : filter;
+      // Ensure we update the global state to indicate user selection
+      if (!window.progressFilterState) window.progressFilterState = {};
+      window.progressFilterState.hasUserSelection = newValue !== null || 
+        Object.values(selectedTestPacks).some(selected => !selected);
+      return newValue;
+    });
+  }, [selectedTestPacks]);
 
   const toggleTestPack = useCallback((testPack) => {
-    setSelectedTestPacks(prev => ({
-      ...prev,
-      [testPack]: !prev[testPack]
-    }));
-  }, []);
+    setSelectedTestPacks(prev => {
+      const newState = {
+        ...prev,
+        [testPack]: !prev[testPack]
+      };
+      
+      // Update global state to indicate user selection
+      if (!window.progressFilterState) window.progressFilterState = {};
+      window.progressFilterState.hasUserSelection = exclusiveFilter !== null || 
+        Object.values(newState).some(selected => !selected);
+      
+      return newState;
+    });
+  }, [exclusiveFilter]);
 
   const toggleAllTestPacks = useCallback((value) => {
     const newState = Object.keys(sortedTestPacks).reduce((acc, testPack) => {
       acc[testPack] = value;
       return acc;
     }, {});
+    
+    // Only mark as user selection if not selecting all (deselecting some is a user selection)
+    const isUserSelection = !value || exclusiveFilter !== null;
+    
+    // Update global state
+    if (!window.progressFilterState) window.progressFilterState = {};
+    window.progressFilterState.hasUserSelection = isUserSelection;
+    
     setSelectedTestPacks(newState);
-  }, [sortedTestPacks]);
+  }, [sortedTestPacks, exclusiveFilter]);
 
   const invertTestPackSelection = useCallback(() => {
     setSelectedTestPacks(prev => {
@@ -141,6 +176,11 @@ const ProgressFilter = ({
       Object.keys(sortedTestPacks).forEach(testPack => {
         invertedState[testPack] = !prev[testPack];
       });
+      
+      // Inverting is always a user selection
+      if (!window.progressFilterState) window.progressFilterState = {};
+      window.progressFilterState.hasUserSelection = true;
+      
       return invertedState;
     });
   }, [sortedTestPacks]);
@@ -261,6 +301,11 @@ const ProgressFilter = ({
 
   // Reset internal state when filter becomes invisible
   React.useEffect(() => {
+    // Initialize global state if needed
+    if (!window.progressFilterState) {
+      window.progressFilterState = { filteredData: [], hasUserSelection: false };
+    }
+    
     if (!isVisible) {
       // No need to reset selectedTestPacks as they should persist
       // But we should reset the exclusive filter and propagation
@@ -268,9 +313,12 @@ const ProgressFilter = ({
       setPropagationTarget('nothing');
       
       // Clear global state for TableA
-      if (window.progressFilterState) {
-        window.progressFilterState.filteredData = [];
-      }
+      window.progressFilterState.filteredData = [];
+      window.progressFilterState.hasUserSelection = false;
+    } else {
+      // When filter becomes visible, explicitly set hasUserSelection to false
+      // This ensures no filtering happens by default when opening
+      window.progressFilterState.hasUserSelection = false;
     }
   }, [isVisible]);
   

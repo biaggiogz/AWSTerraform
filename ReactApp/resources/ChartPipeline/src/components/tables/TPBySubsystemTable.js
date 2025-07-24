@@ -60,19 +60,71 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
     return subsystemTPs.filter(item => item.subsystem === selectedSubsystem);
   }, [subsystemTPs, selectedSubsystem]);
   
-  // Apply progress filter if active
+  // Track if the filter is actually visible and active
+  const [filterActive, setFilterActive] = React.useState(false);
+  
+  // Update filter active state when visibility changes
+  React.useEffect(() => {
+    if (!isProgressFilterVisible) {
+      setFilterActive(false);
+    } else {
+      // Short delay before considering the filter active
+      // This prevents immediate filtering when the filter is first opened
+      const timer = setTimeout(() => {
+        setFilterActive(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isProgressFilterVisible]);
+  
+  // Add debug logging to help diagnose issues
+  React.useEffect(() => {
+    if (isProgressFilterVisible && window.progressFilterState?.filteredData) {
+      console.log('Progress filter state:', {
+        hasUserSelection: window.progressFilterState.hasUserSelection,
+        filteredDataLength: window.progressFilterState.filteredData.length,
+        sampleItem: window.progressFilterState.filteredData[0],
+      });
+    }
+  }, [isProgressFilterVisible]);
+  
+  // Apply progress filter only when user has made specific selections
   const filteredByProgress = useMemo(() => {
-    if (!isProgressFilterVisible || !window.progressFilterState?.filteredData?.length) {
+    // Only apply filtering if:
+    // 1. The filter is visible
+    // 2. The filter has been active for a moment (not just opened)
+    // 3. The user has made specific selections
+    if (!isProgressFilterVisible || !filterActive || !window.progressFilterState?.hasUserSelection) {
+      console.log('Not filtering: filter not active or no user selection');
       return filteredSubsystems;
     }
     
-    const filteredTPs = window.progressFilterState.filteredData.map(item => item.testPack);
+    // If there are no filtered TPs, don't filter the data
+    if (!window.progressFilterState?.filteredData?.length) {
+      console.log('Not filtering: no filtered data');
+      return filteredSubsystems;
+    }
     
+    // Get filtered TPs from the progress filter
+    // The data structure can vary depending on the source
+    const filteredTPs = window.progressFilterState.filteredData.map(item => {
+      // Handle both possible data structures
+      const tpId = item.testPack || item.id || '';
+      return tpId;
+    }).filter(Boolean); // Remove any empty values
+    
+    console.log('Filtered TPs:', filteredTPs.slice(0, 5), '...', filteredTPs.length, 'total');
+    
+    // Highlight matching TPs but don't remove non-matching ones
     return filteredSubsystems.map(subsystem => ({
       ...subsystem,
-      tps: subsystem.tps.filter(tp => filteredTPs.includes(tp.id))
-    })).filter(subsystem => subsystem.tps.length > 0);
-  }, [filteredSubsystems, isProgressFilterVisible]);
+      // Mark TPs as selected or not based on filter
+      tps: subsystem.tps.map(tp => ({
+        ...tp,
+        isSelected: filteredTPs.includes(tp.id)
+      }))
+    }));
+  }, [filteredSubsystems, isProgressFilterVisible, filterActive]);
   
   // Get progress color based on value
   const getProgressColor = (progress) => {
@@ -84,6 +136,7 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
   // Row renderer for virtualized list
   const Row = ({ index, style }) => {
     const subsystem = filteredByProgress[index];
+    const hasActiveFilter = isProgressFilterVisible && filterActive && window.progressFilterState?.hasUserSelection;
     
     return (
       <Box 
@@ -106,23 +159,32 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
           
           <Box>
             <HStack spacing={1} flexWrap="wrap">
-              {subsystem.tps.map(tp => (
-                <Tooltip key={tp.id} label={`${tp.id} - ${tp.progressPercent}%`} hasArrow>
-                  <Box
-                    px={2}
-                    py={1}
-                    bg={getProgressColor(tp.progress)}
-                    color="white"
-                    borderRadius="md"
-                    fontSize="xs"
-                    fontWeight="medium"
-                    mb={1}
-                    mr={1}
-                  >
-                    {tp.id} ({tp.progressPercent}%)
-                  </Box>
-                </Tooltip>
-              ))}
+              {subsystem.tps.map(tp => {
+                // Determine styling based on filter state
+                const isSelected = hasActiveFilter ? tp.isSelected : true;
+                const opacity = hasActiveFilter && !isSelected ? 0.4 : 1;
+                const bgColor = getProgressColor(tp.progress);
+                
+                return (
+                  <Tooltip key={tp.id} label={`${tp.id} - ${tp.progressPercent}%`} hasArrow>
+                    <Box
+                      px={2}
+                      py={1}
+                      bg={bgColor}
+                      color="white"
+                      borderRadius="md"
+                      fontSize="xs"
+                      fontWeight="medium"
+                      mb={1}
+                      mr={1}
+                      opacity={opacity}
+                      transition="opacity 0.2s"
+                    >
+                      {tp.id} ({tp.progressPercent}%)
+                    </Box>
+                  </Tooltip>
+                );
+              })}
             </HStack>
           </Box>
         </VStack>

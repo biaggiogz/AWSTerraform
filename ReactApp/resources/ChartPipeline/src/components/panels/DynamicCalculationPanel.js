@@ -819,6 +819,14 @@ FROM "Subsystem Overview";`);
             const isFiltering = filteredData.length > 0 && filteredData.length < detailsData.length;
             setIsProgressFiltering(isFiltering);
             
+            // Check if user has made any specific selections
+            const hasUserSelection = window.progressFilterState?.hasUserSelection || false;
+            console.log('Progress filter change:', {
+              filteredDataLength: filteredData.length,
+              hasUserSelection,
+              isFiltering
+            });
+            
             if (onFilteredDataChange) {
               onFilteredDataChange(filteredData);
             }
