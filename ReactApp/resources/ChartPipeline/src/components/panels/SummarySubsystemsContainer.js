@@ -2,6 +2,7 @@ import React, { lazy, Suspense, useState, useMemo } from 'react';
 import { Box, VStack, Center, Spinner } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import SummarySubsystemsTableB from '../tables/SummarySubsystemsTableB';
+import TPBySubsystemTable from '../tables/TPBySubsystemTable';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
 
@@ -222,11 +223,11 @@ const SummarySubsystemsContainer = ({
       <Box position="relative" width="100%" height="800px" overflow="hidden">
         <ResizableDraggablePanel
           title="Subsystem Overview"
-          initialWidth={1000}
+          initialWidth={900}
           initialHeight={700}
           initialX={20}
           initialY={20}
-          minWidth={1000}
+          minWidth={800}
           minHeight={300}
           onBringToFront={handleBringToFront}
         >
@@ -237,6 +238,23 @@ const SummarySubsystemsContainer = ({
             isItemsFilterVisible={isItemsFilterVisible}
             isLoopFilterVisible={isLoopFilterVisible}
             isHitoFilterVisible={isHitoFilterVisible}
+            isProgressFilterVisible={isProgressFilterVisible}
+          />
+        </ResizableDraggablePanel>
+        
+        <ResizableDraggablePanel
+          title="Test Pack Progress by Subsystem"
+          initialWidth={400}
+          initialHeight={600}
+          initialX={940}
+          initialY={20}
+          minWidth={350}
+          minHeight={300}
+          onBringToFront={handleBringToFront}
+        >
+          <TPBySubsystemTable
+            data={tableAData}
+            selectedSubsystem={selectedSubsystem}
             isProgressFilterVisible={isProgressFilterVisible}
           />
         </ResizableDraggablePanel>

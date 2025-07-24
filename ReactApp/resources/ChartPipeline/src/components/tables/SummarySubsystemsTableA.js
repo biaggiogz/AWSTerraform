@@ -43,72 +43,16 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   // State to store filtered data
   const [filteredData, setFilteredData] = React.useState(data);
   
+  // We no longer need to filter TableA directly based on TP IDs
+  // since we've moved that functionality to the separate TP table
   React.useEffect(() => {
-    // Initialize global state if needed
-    if (!window.progressFilterState) {
-      window.progressFilterState = { selectedTPs: {}, filteredData: [] };
-    }
-    
-    // Set up a timer to check for changes in the global progressFilterState
-    const intervalId = setInterval(() => {
-      setForceUpdate(prev => prev + 1); // Force re-render periodically when filter is visible
-      
-      // Apply filtering based on progressFilterState
-      if (isProgressFilterVisible && window.progressFilterState && window.progressFilterState.filteredData) {
-        const filteredTPs = window.progressFilterState.filteredData.map(item => item.testPack);
-        
-        if (filteredTPs.length > 0) {
-          // Filter rows that have at least one matching TP ID
-          const newFilteredData = data.filter(row => {
-            try {
-              const tpIds = row.list_includes_tp_id;
-              
-              // Handle different data types
-              if (!tpIds) return false;
-              
-              let tpIdArray = [];
-              if (typeof tpIds === 'string') {
-                tpIdArray = tpIds.split('|');
-              } else if (Array.isArray(tpIds)) {
-                tpIdArray = tpIds;
-              } else if (typeof tpIds === 'number') {
-                tpIdArray = [String(tpIds)];
-              } else {
-                console.warn('Unexpected TP IDs type:', typeof tpIds, tpIds);
-                return false;
-              }
-              
-              return tpIdArray.some(tpId => filteredTPs.includes(String(tpId)));
-            } catch (error) {
-              console.error('Error filtering row:', error, row);
-              return false;
-            }
-          });
-          
-          setFilteredData(newFilteredData);
-        } else {
-          setFilteredData(data);
-        }
-      } else {
-        setFilteredData(data);
-      }
-    }, 500); // Check every 500ms
-    
-    return () => clearInterval(intervalId);
-  }, [isProgressFilterVisible, data]);
+    setFilteredData(data);
+  }, [data]);
   
-  // Reset filtered data when progress filter is turned off
-  React.useEffect(() => {
-    if (!isProgressFilterVisible) {
-      setFilteredData(data);
-    }
-  }, [isProgressFilterVisible, data]);
   // Log the data structure to help with debugging
   React.useEffect(() => {
     if (data && data.length > 0) {
       console.log('Table A data sample:', data[0]);
-      console.log('TP IDs type:', typeof data[0].list_includes_tp_id);
-      console.log('TP IDs value:', data[0].list_includes_tp_id);
     }
   }, [data]);
   const columns = useMemo(() => [
@@ -220,276 +164,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
       )
     },
-    {
-      accessorKey: 'list_includes_tp_id',
-      header: 'TP IDs',
-      size: 84, // Adjusted to match standard column width
-      cell: ({ getValue, row }) => {
-        const value = getValue();
-        const tpIds = (value && typeof value === 'string') ? value.split('|') : [];
 
-        const progressRaw = row.original?.list_id_tp_total_progress || '';
-        const progressValues = (progressRaw && typeof progressRaw === 'string')
-            ? progressRaw.split('|').map(p => parseFloat(p) || 0)
-            : [];
-
-        const getColor = (p) => {
-          if (p >= 1) return 'green.500';
-          if (p >= 0.7) return 'green.300';
-          if (p >= 0.4) return 'green.100';
-          return 'red.400';
-        };
-
-        // Progress filter handling
-        const getProgressFilterColor = (tpId, progress) => {
-          if (!isProgressFilterVisible) return null;
-          
-          // Check if any TPs are selected in the filter
-          const hasFilteredData = window.progressFilterState && 
-                                window.progressFilterState.filteredData && 
-                                window.progressFilterState.filteredData.length > 0;
-          
-          // If we have filtered data, check if this TP is in the filtered list
-          if (hasFilteredData) {
-            // Find the matching TP in the filtered data
-            const matchingTP = window.progressFilterState.filteredData.find(item => {
-              return item.testPack === tpId;
-            });
-            
-            if (matchingTP) {
-              // Use the exact same color scheme as in TableB
-              const tpProgress = matchingTP.testPackProgress || 0;
-
-              if (tpProgress === 100) return '#437057'; // 100%
-              if (tpProgress >= 90 && tpProgress < 100) return '#97B067'; // > 90%
-              return '#E86A33'; // < 90%
-            }
-            
-            // If we have filtered data but this TP is not in it, show with reduced opacity
-            return 'gray.300';
-          }
-          
-          return null;
-        };
-
-        // Determine grid layout based on number of TPs
-        const useGrid = tpIds.length > 2;
-        let columnCount = 2; // Default 2 columns
-        if (tpIds.length > 6) {
-          columnCount = 4; // 4 columns for more than 6 TPs
-        } else if (tpIds.length > 4) {
-          columnCount = 3; // 3 columns for 5-6 TPs
-        }
-        
-        // Calculate the height needed for the TP boxes - match the cell height
-        let boxHeight;
-        if (tpIds.length > 6) {
-          const rowsNeeded = Math.ceil(tpIds.length / 4);
-          boxHeight = Math.max(80, (rowsNeeded * 31) + 20); // Ensure minimum height
-        } else if (tpIds.length > 4) {
-          const rowsNeeded = Math.ceil(tpIds.length / 3);
-          boxHeight = Math.max(80, (rowsNeeded * 31) + 20); // Ensure minimum height
-        } else if (tpIds.length > 2) {
-          const rowsNeeded = Math.ceil(tpIds.length / 2);
-          boxHeight = (rowsNeeded * 31) + 20;
-        } else if (tpIds.length > 0) {
-          boxHeight = (tpIds.length * 31) + 10;
-        } else {
-          boxHeight = 40;
-        }
-        
-        return (
-            <Box width="100%" height={`${boxHeight}px`} position="relative" overflow="hidden">
-              <Box
-                  borderWidth="1px"
-                  borderRadius="md"
-                  bg="white"
-                  width="100%"
-                  height="100%"
-                  display="flex"
-                  flexDirection="column"
-                  justifyContent="space-between"
-                  overflowY="auto" // allows scrolling if content ever overflows
-                  overflowX="hidden" // prevent horizontal overflow
-                  p={1}
-                  position="absolute" // Ensure the box stays within its container
-                  top={0}
-                  left={0}
-                  zIndex={0} // Lower z-index to prevent overlapping with other rows
-              >
-                {useGrid ? (
-                    <Grid 
-                      templateColumns={`repeat(${columnCount}, 1fr)`} 
-                      gap={1} 
-                      height="100%" 
-                      alignContent="space-evenly" 
-                      justifyItems="center"
-                      overflow="hidden" // Prevent content from overflowing
-                      position="relative" // Ensure proper stacking context
-                    >
-                      {tpIds.map((id, idx) => {
-                        const progress = progressValues[idx] ?? 0;
-                        const progressFilterColor = getProgressFilterColor(id, progress);
-                        
-                        return (
-                            <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
-                              <Box
-                                  p={1}
-                                  bg={progressFilterColor || "gray.50"}
-                                  borderRadius="sm"
-                                  minH="36px" // ← Ensures each item has enough space
-                                  display="flex"
-                                  flexDirection="column"
-                                  justifyContent="space-between"
-                                  opacity={progressFilterColor === 'gray.300' ? 0.5 : 1}
-                                  borderWidth="1px"
-                                  borderColor={progressFilterColor && progressFilterColor !== 'gray.300' ? progressFilterColor : "transparent"}
-                              >
-                                <Text 
-                                  fontSize="8px" 
-                                  fontWeight="bold" 
-                                  textAlign="center"
-                                  color={progressFilterColor && progressFilterColor !== 'gray.300' ? "white" : "inherit"}
-                                >
-                                  {id}
-                                </Text>
-                                <Progress
-                                    value={progress * 100}
-                                    size="xs"
-                                    mt={0.5}
-                                    colorScheme={
-                                      progress >= 1 ? 'green' :
-                                          progress >= 0.7 ? 'green' :
-                                              progress >= 0.4 ? 'green' : 'red'
-                                    }
-                                    borderRadius="sm"
-                                />
-                                <Text 
-                                  fontSize="7px" 
-                                  textAlign="right" 
-                                  mt={0.5}
-                                  color={progressFilterColor && progressFilterColor !== 'gray.300' ? "white" : "inherit"}
-                                >
-                                  {(progress * 100).toFixed(0)}%
-                                </Text>
-                              </Box>
-                            </Tooltip>
-                        );
-                      })}
-                    </Grid>
-                ) : (
-                    <VStack spacing={1} align="stretch" overflow="hidden" position="relative">
-                      {tpIds.map((id, idx) => {
-                        const progress = progressValues[idx] ?? 0;
-                        const progressFilterColor = getProgressFilterColor(id, progress);
-                        
-                        return (
-                            <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
-                              <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  justifyContent="space-between"
-                                  p={1}
-                                  bg={progressFilterColor || "gray.50"}
-                                  borderRadius="sm"
-                                  minH="36px"
-                                  opacity={progressFilterColor === 'gray.300' ? 0.5 : 1}
-                                  borderWidth="1px"
-                                  borderColor={progressFilterColor && progressFilterColor !== 'gray.300' ? progressFilterColor : "transparent"}
-                              >
-                                <Text 
-                                  fontSize="9px" 
-                                  fontWeight="bold" 
-                                  width="40%"
-                                  color={progressFilterColor && progressFilterColor !== 'gray.300' ? "white" : "inherit"}
-                                >
-                                  {id}
-                                </Text>
-                                <Box width="55%">
-                                  <Progress
-                                      value={progress * 100}
-                                      size="xs"
-                                      colorScheme={
-                                        progress >= 1 ? 'green' :
-                                            progress >= 0.7 ? 'green' :
-                                                progress >= 0.4 ? 'green' : 'red'
-                                      }
-                                      borderRadius="sm"
-                                  />
-                                  <Text 
-                                    fontSize="8px" 
-                                    textAlign="right" 
-                                    mt={0.5}
-                                    color={progressFilterColor && progressFilterColor !== 'gray.300' ? "white" : "inherit"}
-                                  >
-                                    {(progress * 100).toFixed(0)}%
-                                  </Text>
-                                </Box>
-                              </Box>
-                            </Tooltip>
-                        );
-                      })}
-                    </VStack>
-                )}
-              </Box>
-            </Box>
-        );
-      }
-      },
-    {
-      accessorKey: 'list_id_tp_total_progress',
-      header: 'TOTAL TP PROGRESS',
-      size: 80,
-      cell: ({ getValue, row }) => {
-        const value = getValue();
-        let progressValues = [];
-        
-        if (value && typeof value === 'string') {
-          try {
-            progressValues = value.split('|').map(v => parseFloat(v) || 0);
-          } catch (error) {
-            console.error('Error parsing progress values:', error);
-          }
-        }
-        
-        // Calculate average progress if there are values
-        let avgProgress = 0;
-        if (progressValues.length > 0) {
-          avgProgress = progressValues.reduce((sum, val) => sum + val, 0) / progressValues.length;
-        }
-        
-        // Color based on progress percentage
-        const getProgressColor = (progress) => {
-          if (progress >= 1) return '#2F5249'; // Green for 100%
-          if (progress >= 0.7) return '#4C9A8A'; // Lighter green for >= 70%
-          if (progress >= 0.4) return '#E85C0D'; // Orange for >= 40%
-          return '#C53030'; // Red for < 40%
-        };
-        
-        const bgColor = getProgressColor(avgProgress);
-        
-        return (
-          <Tooltip 
-            label={`Average Progress: ${(avgProgress * 100).toFixed(0)}%`}
-            hasArrow
-            placement="top"
-          >
-            <Text 
-              fontSize="xs" 
-              fontWeight="bold" 
-              textAlign="center"
-              bg={bgColor}
-              color="white"
-              px={2}
-              py={1}
-              borderRadius="sm"
-            >
-              {(avgProgress * 100).toFixed(0)}%
-            </Text>
-          </Tooltip>
-        );
-      }
-    },
     {
       accessorKey: 'total_insulation',
       header: 'TOTAL ITEMS',
@@ -689,7 +364,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           { 
             id: 'subsystem_info', 
             title: 'SUBSYSTEM INFORMATION', 
-            colspan: 8,
+            colspan: 6,
             startCol: 0,
             color: '#0082A9'
           },
@@ -697,35 +372,35 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             id: 'items_progress', 
             title: 'ITEMS INSULATION PROGRESS',
             colspan: 3, 
-            startCol: 8,
+            startCol: 6,
             color: '#E5D6AC'
           },
           { 
             id: 'loop_testing', 
             title: 'LOOP SIGNAL PROGRESS', 
             colspan: 3, 
-            startCol: 11,
+            startCol: 9,
             color: '#8AB3DB'
           },
           { 
             id: 'instruments', 
             title: 'INSTRUMENTS PROGRESS',
             colspan: 3, 
-            startCol: 14,
+            startCol: 12,
             color: '#A888B5'
           },
           { 
             id: 'tracing', 
             title: 'TRACING PROGRESS',
             colspan: 3, 
-            startCol: 17,
+            startCol: 15,
             color: '#0ABAB5'
           },
           {
             id: 'punch',
             title: 'PUNCH LIST PROGRESS',
             colspan: 4,
-            startCol: 20,
+            startCol: 18,
             color: '#748DAE'
           }
         ]
@@ -734,40 +409,40 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       {
         level: 2,
         headers: [
-          { id: 'empty_1', title: '', colspan: 8, startCol: 0, color: 'transparent' },
+          { id: 'empty_1', title: '', colspan: 6, startCol: 0, color: 'transparent' },
           { 
             id: 'insulation_status',
             title: 'INSULATION STATUS',
             colspan: 3, 
-            startCol: 8,
+            startCol: 6,
             color: '#CEC19B'
           },
           { 
             id: 'loop_metrics', 
             title: 'LOOP STATUS',
             colspan: 3, 
-            startCol: 11,
+            startCol: 9,
             color: '#7CA2C5'
           },
           { 
             id: 'instrument_metrics', 
             title: 'INSTRUMENT STATUS',
             colspan: 3, 
-            startCol: 14,
+            startCol: 12,
             color: '#977AA3'
           },
           { 
             id: 'tracing_metrics', 
             title: 'TRACING STATUS',
             colspan: 3, 
-            startCol: 17,
+            startCol: 15,
             color: '#09A7A3'
           },
           {
             id: 'punch_metrics',
             title: 'PUNCH LIST STATUS',
             colspan: 4,
-            startCol: 20,
+            startCol: 18,
             color: '#687F9D'
           }
         ]
@@ -778,39 +453,13 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   // Create a ref for the list component
   const listRef = React.useRef();
   
-  // Function to calculate row heights based on TP IDs box height
-  const getRowHeight = React.useCallback((index) => {
-    const row = data?.[index];
-    if (!row) return 60;
-
-    const tpIds = row.list_includes_tp_id || '';
-    const tpCount = tpIds && typeof tpIds === 'string' ? tpIds.split('|').length : 0;
-
-    let boxHeight;
-
-    // Add extra height when progress filter is active to prevent overlapping
-    const progressFilterPadding = isProgressFilterVisible ? 20 : 0;
-
-    if (tpCount > 6) {
-      const rowsNeeded = Math.ceil(tpCount / 4);
-      boxHeight = Math.max(80, rowsNeeded * 42 + 24 + progressFilterPadding); // Ensure minimum height for 4-column grid
-    } else if (tpCount > 4) {
-      const rowsNeeded = Math.ceil(tpCount / 3);
-      boxHeight = Math.max(80, rowsNeeded * 42 + 24 + progressFilterPadding); // Ensure minimum height for 3-column grid
-    } else if (tpCount > 2) {
-      const rowsNeeded = Math.ceil(tpCount / 2);
-      boxHeight = rowsNeeded * 42 + 20 + progressFilterPadding;
-    } else if (tpCount > 0) {
-      boxHeight = tpCount * 42 + 12 + progressFilterPadding;
-    } else {
-      boxHeight = 50 + progressFilterPadding;
-    }
-
-    return Math.max(70, boxHeight); // slightly bump base height
-  }, [data, isProgressFilterVisible]);
+  // Fixed row height for better performance
+  const getRowHeight = React.useCallback(() => {
+    return 60;
+  }, []);
   
   const table = useReactTable({
-    data: isProgressFilterVisible ? filteredData || [] : data || [],
+    data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     enableColumnResizing: true,

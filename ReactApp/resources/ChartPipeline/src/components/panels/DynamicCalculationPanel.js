@@ -43,6 +43,7 @@ FROM "Subsystem Overview";`);
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
+  const [isProgressFiltering, setIsProgressFiltering] = useState(false);
   const textareaRef = useRef(null);
 
   // Restore query from persistent state
@@ -276,6 +277,9 @@ FROM "Subsystem Overview";`);
       });
     }
   }, [calculations, lockedCards, deletedCards, sqlQuery, updateQuery, filteredControlData, filteredDetailsData]);
+  
+  // We're now directly triggering SQL query execution when filters change
+  // No need for an effect to watch for filtered data changes
 
   // Restore metric cards from persistent state on mount
   useEffect(() => {
@@ -810,10 +814,25 @@ FROM "Subsystem Overview";`);
       {isFilterVisible && (
         <ProgressFilter
           data={detailsData}
-          onFilterChange={onFilteredDataChange || (() => {})}
+          onFilterChange={(filteredData) => {
+            // Set isProgressFiltering based on whether we're actually filtering
+            const isFiltering = filteredData.length > 0 && filteredData.length < detailsData.length;
+            setIsProgressFiltering(isFiltering);
+            
+            if (onFilteredDataChange) {
+              onFilteredDataChange(filteredData);
+            }
+            
+            // Directly re-execute the SQL query when filter changes
+            if (sqlQuery.trim()) {
+              // Small delay to ensure the filtered data is processed
+              setTimeout(() => executeSQLQuery(sqlQuery), 100);
+            }
+          }}
           isVisible={isFilterVisible}
           onClose={() => {
             setIsFilterVisible(false);
+            setIsProgressFiltering(false); // Reset filtering state
             if (onProgressFilterVisibilityChange) {
               onProgressFilterVisibilityChange(false);
             }
@@ -825,11 +844,20 @@ FROM "Subsystem Overview";`);
             if (onProgressPropagationChange) {
               onProgressPropagationChange([], 'nothing');
             }
+            // Re-execute query with original data to update metrics
+            if (sqlQuery.trim()) {
+              setTimeout(() => executeSQLQuery(sqlQuery), 100);
+            }
           }}
           onPropagationChange={(filteredData, target) => {
             // Handle the 'both' option by calling the propagation handler with 'both'
             if (onProgressPropagationChange) {
               onProgressPropagationChange(filteredData, target);
+            }
+            
+            // Re-execute query when propagation changes
+            if (sqlQuery.trim()) {
+              setTimeout(() => executeSQLQuery(sqlQuery), 100);
             }
           }}
           onBringToFront={onBringToFront}

@@ -94,12 +94,14 @@ const ProgressFilter = ({
         return true;
       });
       
-      onFilterChange(filteredData);
-      
       // Store filtered data in global state for TableA to access
       if (!window.progressFilterState) window.progressFilterState = {};
       window.progressFilterState.filteredData = filteredData;
       console.log('Progress filter updated with', filteredData.length, 'items');
+      
+      // Call onFilterChange with the filtered data
+      // This will trigger the SQL query re-execution in DynamicCalculationPanel
+      onFilterChange(filteredData);
       
       // Handle propagation based on selected target
       if (onPropagationChange && propagationTarget !== 'nothing') {
