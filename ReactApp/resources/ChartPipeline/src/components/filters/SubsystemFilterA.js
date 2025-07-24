@@ -132,16 +132,8 @@ const SubsystemFilterA = ({
         }
     }, [data, selectedSubsystems, onPropagationChange]);
 
-    const getSubsystemColor = useCallback((subsystem) => {
-        const hash = subsystem.split('').reduce((acc, char) => {
-            return char.charCodeAt(0) + ((acc << 5) - acc);
-        }, 0);
-
-        const h = Math.abs(hash) % 360;
-        const s = 60 + (Math.abs(hash) % 30);
-        const l = 35 + (Math.abs(hash) % 15);
-
-        return `hsl(${h}, ${s}%, ${l}%)`;
+    const getSubsystemColor = useCallback(() => {
+        return '#A4CCD9';
     }, []);
 
     const filteredSubsystems = useMemo(() => {
@@ -159,7 +151,7 @@ const SubsystemFilterA = ({
     const memoizedButtons = useMemo(() =>
         Object.keys(filteredSubsystems).map((subsystem) => {
             const isSelected = selectedSubsystems[subsystem] || false;
-            const color = getSubsystemColor(subsystem);
+            const color = getSubsystemColor();
 
             return (
                 <Button
@@ -167,12 +159,12 @@ const SubsystemFilterA = ({
                     size="sm"
                     height="36px"
                     variant={isSelected ? "solid" : "outline"}
-                    bg={isSelected ? color : "white"}
-                    borderColor={color}
+                    bg={isSelected ? color : "rgba(128, 128, 128, 0.3)"}
+                    borderColor={isSelected ? color : "rgba(128, 128, 128, 0.5)"}
                     color={isSelected ? "white" : "black"}
                     onClick={() => toggleSubsystem(subsystem)}
                     mb={1}
-                    _hover={{ bg: isSelected ? color : "gray.100" }}
+                    _hover={{ bg: isSelected ? color : "rgba(128, 128, 128, 0.4)" }}
                 >
                     <VStack spacing={0} align="center">
                         <Text fontSize="xs" fontWeight="bold" noOfLines={1}>

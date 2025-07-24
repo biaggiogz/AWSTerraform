@@ -192,7 +192,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
 
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <Box transform="scale(0.9)" transformOrigin="top left" width="111.11%">
+                <Box transform="scale(0.95)" transformOrigin="top left" width="111.11%">
                   <SummarySubsystems data={data} isZoomed={true} />
                 </Box>
               </Suspense>

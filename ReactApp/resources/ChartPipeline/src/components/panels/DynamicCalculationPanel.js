@@ -11,7 +11,7 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag } from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory} from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import InsulStatusFilter from '../filters/InsulationStatusFilter';
@@ -89,6 +89,7 @@ FROM "Subsystem Overview";`);
     const colorMap = {
       subsystem: '#007598', hito: '#007598', description: '#007598', fluid: '#007598',
       insulation: '#CEC19B',
+      insul: '#CEC19B',
       loop: '#7CA2C5',
       inst: '#977AA3',
       tracing: '#09A7A3',
@@ -388,7 +389,7 @@ FROM "Subsystem Overview";`);
               title="Hito Filter"
             />
             <IconButton
-              icon={<MdCheckCircle />}
+              icon={<MdCategory />}
               size="sm"
               variant="ghost"
               onClick={() => {
@@ -398,8 +399,8 @@ FROM "Subsystem Overview";`);
                   onSubsystemFilterVisibilityChange(newVisibility);
                 }
               }}
-              aria-label="Toggle subsystem filter A"
-              title="Subsystem Filter A"
+              aria-label="Toggle subsystem "
+              title="Subsystem Filter"
             />
             <IconButton
               icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}
