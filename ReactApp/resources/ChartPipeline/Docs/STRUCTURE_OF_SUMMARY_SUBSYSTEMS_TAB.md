@@ -37,8 +37,7 @@ The "SUMMARY SUBSYSTEMS" tab provides a comprehensive dashboard for subsystem an
   - Path: `ReactApp/resources/ChartPipeline/src/components/panels/DynamicCalculationPanel.js`
 - **SummarySubsystemsTableA.js** - Subsystem Overview table with dual color synchronization
   - Path: `ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableA.js`
-- **SummarySubsystemsTableB.js** - Test Pack Details table with color synchronization
-  - Path: `ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableB.js`
+- **.js** - Test Pack Details table with color synchronization
 - **ResizableDraggablePanel.js** - Draggable and resizable container for tables
   - Path: `ReactApp/resources/ChartPipeline/src/components/ui/ResizableDraggablePanel.js`
   - Used for both tables in the Summary Subsystems tab
@@ -92,7 +91,6 @@ console.log('✅ SolidJS activated for SUMMARY SUBSYSTEMS');
 ```
 
 This hybrid architecture represents Phase 1 of a migration plan to gradually move components from React to SolidJS for performance improvements.s`
-- **SummarySubsystemsTableB.js**: `ReactApp/resources/ChartPipeline/src/components/tables/SummarySubsystemsTableB.js`
 - **PersistentMetricCards.js**: `ReactApp/resources/ChartPipeline/src/components/ui/PersistentMetricCards.js`
 
 ## Filter Components

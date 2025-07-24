@@ -110,14 +110,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     }
   }, [data]);
   const columns = useMemo(() => [
-    {
-      accessorKey: 's_n',
-      header: 'S/N',
-      size: 60,
-      cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
-      )
-    },
+    // {
+    //   accessorKey: 's_n',
+    //   header: 'S/N',
+    //   size: 60,
+    //   cell: ({ getValue }) => (
+    //     <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
+    //   )
+    // },
     {
       // Extract fluid from subsystem (first part before the dash)
       accessorKey: 'fluid_subsystem',
@@ -448,7 +448,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           { 
             id: 'subsystem_info', 
             title: 'SUBSYSTEM INFORMATION', 
-            colspan: 6,
+            colspan: 5,
             startCol: 0,
             color: '#0082A9'
           },
@@ -456,42 +456,42 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             id: 'summary_items', 
             title: 'SUMMARY ITEMS BY SUBSYSTEM', 
             colspan: 4,
-            startCol: 6,
+            startCol: 5,
             color: '#B03052'
           },
           { 
             id: 'loop_testing', 
             title: 'LOOP SIGNAL PROGRESS', 
             colspan: 3, 
-            startCol: 10,
+            startCol: 9,
             color: '#8AB3DB'
           },
           { 
             id: 'instruments', 
             title: 'INSTRUMENTS PROGRESS',
             colspan: 3, 
-            startCol: 13,
+            startCol: 12,
             color: '#A888B5'
           },
           { 
             id: 'tracing', 
             title: 'TRACING PROGRESS',
             colspan: 3, 
-            startCol: 16,
+            startCol: 15,
             color: '#0ABAB5'
           },
           { 
             id: 'insulation_progress',
             title: 'INSULATION PROGRESS',
             colspan: 3, 
-            startCol: 19,
+            startCol: 18,
             color: '#E5D6AC'
           },
           {
             id: 'punch',
             title: 'PUNCH LIST PROGRESS',
             colspan: 4,
-            startCol: 22,
+            startCol: 21,
             color: '#748DAE'
           }
         ]
@@ -500,47 +500,47 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       {
         level: 2,
         headers: [
-          { id: 'empty_1', title: '', colspan: 6, startCol: 0, color: 'transparent' },
+          { id: 'empty_1', title: '', colspan: 5, startCol: 0, color: 'transparent' },
           { 
             id: 'item_status', 
             title: 'ITEM STATUS',
             colspan: 4, 
-            startCol: 6,
+            startCol: 5,
             color: '#9E2B4A'
           },
           { 
             id: 'loop_metrics', 
             title: 'LOOP STATUS',
             colspan: 3, 
-            startCol: 10,
+            startCol: 9,
             color: '#7CA2C5'
           },
           { 
             id: 'instrument_metrics', 
             title: 'INSTRUMENT STATUS',
             colspan: 3, 
-            startCol: 13,
+            startCol: 12,
             color: '#977AA3'
           },
           { 
             id: 'tracing_metrics', 
             title: 'TRACING STATUS',
             colspan: 3, 
-            startCol: 16,
+            startCol: 15,
             color: '#09A7A3'
           },
           { 
             id: 'insulation_status',
             title: 'INSULATION STATUS',
             colspan: 3, 
-            startCol: 19,
+            startCol: 18,
             color: '#CEC19B'
           },
           {
             id: 'punch_metrics',
             title: 'PUNCH LIST STATUS',
             colspan: 4,
-            startCol: 22,
+            startCol: 21,
             color: '#687F9D'
           }
         ]
