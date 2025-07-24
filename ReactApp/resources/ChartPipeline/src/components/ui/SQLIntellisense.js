@@ -11,7 +11,7 @@ const SQLIntellisense = ({ value, onChange, onSuggestionSelect, ...textareaProps
   // Available fields from both tables
   const tableFields = {
     SummarySubsystemsTableA: [
-      'serialNumber', 'fluid', 'subsystem', 'totalItems', 'doneItems', 
+      'serialNumber', 'fluid', 'subsystem', 'totalItems', 'doneInsul', 
       'pendingItems', 'description', 'numTestPacks', 'totalLoops', 
       'doneLoops', 'pendingLoops'
     ],

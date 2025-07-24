@@ -277,7 +277,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     const uniqueSubsystemsSet = new Set();
     let uniqueTestPacks = 0;
     let totalItemsSum = 0;
-    let totalDoneItemsSum = 0;
+    let totaldoneInsulSum = 0;
     let totalPendingItemsSum = 0;
     let totalLoopsSum = 0;
     let totalPendingLoopsSum = 0;
@@ -288,19 +288,19 @@ export const useSummarySubsystemsData = (filteredData = []) => {
       uniqueSubsystemsSet.add(item.subsystem);
       uniqueTestPacks += (item.n_distinct_tps || 0);
       totalItemsSum += (item.total_insulation || 0);
-      totalDoneItemsSum += (item.done_insulation || 0);
+      totaldoneInsulSum += (item.done_insulation || 0);
       totalPendingItemsSum += (item.pending_insulation || 0);
       totalLoopsSum += (item.total_loop || 0);
       totalPendingLoopsSum += (item.pending_loop || 0);
       
       const totalItems = item.total_insulation || 0;
-      const doneItems = item.done_insulation || 0;
-      const progress = totalItems > 0 ? (doneItems / totalItems) * 100 : 0;
+      const doneInsul = item.done_insulation || 0;
+      const progress = totalItems > 0 ? (doneInsul / totalItems) * 100 : 0;
       progressSum += progress;
     }
     
     // Estimate test pack completion based on insulation completion
-    const doneTestPacks = Math.round(uniqueTestPacks * (totalDoneItemsSum / (totalItemsSum || 1)));
+    const doneTestPacks = Math.round(uniqueTestPacks * (totaldoneInsulSum / (totalItemsSum || 1)));
     const pendingTestPacks = uniqueTestPacks - doneTestPacks;
     
     const avgProgressItemsPercent = tableAData.length > 0 ? Math.round(progressSum / tableAData.length) : 0;
@@ -312,7 +312,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
       uniqueSubsystems: uniqueSubsystemsSet.size,
       uniqueTestPacks,
       totalItemsSum,
-      totalDoneItemsSum,
+      totaldoneInsulSum,
       totalPendingItemsSum,
       totalLoopsSum,
       totalPendingLoopsSum,

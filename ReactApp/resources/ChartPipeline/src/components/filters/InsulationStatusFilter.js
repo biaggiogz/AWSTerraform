@@ -39,7 +39,7 @@ const InsulationStatusFilter = ({
         metrics[row.subsystem] = {
           status: isDone ? 'Done' : 'Pending',
           totalItems: row.total_insulation,
-          doneItems: row.done_insulation
+          doneInsul: row.done_insulation
         };
       }
     });

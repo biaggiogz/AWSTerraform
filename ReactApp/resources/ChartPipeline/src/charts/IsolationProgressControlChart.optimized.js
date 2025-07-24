@@ -57,7 +57,7 @@ const IsolationProgressControlChart = ({ data }) => {
         advance_to_finish: 10,
         m_advance_mleq_total: 0,
         a_advance_mleq_total: 0,
-        doneItems: [0, 0, 0, 0, 0, 0],
+        doneInsul: [0, 0, 0, 0, 0, 0],
         pendingItems: [0, 0, 0, 0, 0, 0]
       };
     }
@@ -90,7 +90,7 @@ const IsolationProgressControlChart = ({ data }) => {
     // Calculate DONE and Pending Insul for each category
     const categoryColumns = ['Avance Distanciadores', 'Avance Aislamiento', 'Avance Chapa', 'Avance Cajas', 'Avance Rematar'];
     
-    const doneItems = categoryColumns.map(col => 
+    const doneInsul = categoryColumns.map(col => 
       data.filter(row => parseFloat(row[col]) === 1).length
     );
     
@@ -105,7 +105,7 @@ const IsolationProgressControlChart = ({ data }) => {
     const mleqTotalDone = m_advance_mleq_total;
     const mleqTotalPending = C_Mleq - m_advance_mleq_total;
     
-    doneItems.push(mleqTotalDone);
+    doneInsul.push(mleqTotalDone);
     pendingItems.push(mleqTotalPending);
 
     return {
@@ -117,7 +117,7 @@ const IsolationProgressControlChart = ({ data }) => {
       advance_to_finish,
       m_advance_mleq_total,
       a_advance_mleq_total,
-      doneItems,
+      doneInsul,
       pendingItems
     };
   }, [data]);
@@ -299,7 +299,7 @@ const IsolationProgressControlChart = ({ data }) => {
               {/* Done Insul Row */}
               <HStack spacing={0} w="full" justify="space-between">
                 <Text fontSize="xs" fontWeight="bold" minW="80px">DONE</Text>
-                {metrics.doneItems.map((value, index) => (
+                {metrics.doneInsul.map((value, index) => (
                   <Box key={index} flex={1} textAlign="center">
                     <Box 
                       border="1px solid" 

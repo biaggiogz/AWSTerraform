@@ -49,7 +49,6 @@ ChartPipeline/
 │   ├── wasm/               # WebAssembly optimization modules
 │   │   ├── wasm-loader.js              # WASM loading with fallback mechanism
 │   │   ├── multi-filter.wasm.js        # Filtering operations optimization (2-4x faster)
-│   │   ├── relationship-engine.wasm.js # Relationship finding optimization (5-10x faster)
 │   │   ├── sql-engine.wasm.js          # SQL execution optimization (2-3x faster)
 │   │   └── README.md                   # WASM implementation documentation
 │   ├── components/         # Reusable UI components
@@ -78,7 +77,6 @@ ChartPipeline/
 │   ├── utils/              # Utility functions
 │   │   ├── dataProcessor.optimized.js # Data transformation and processing utilities
 │   │   ├── multiValueFilter.js     # Multi-value filtering utilities
-│   │   └── multiValueFilter.wasm.js # WASM-enhanced multi-value filter
 │   ├── App.optimized.js    # Main application with responsive layout
 │   ├── App.multiValueFilter.js # Multi-value filter version of main app
 ├── .dockerignore           # Docker ignore patterns

@@ -360,9 +360,9 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           if (!isItemsFilterVisible) return { bg: 'transparent', color: 'inherit' };
           
           const totalItems = getValue() || 0;
-          const doneItems = row.original.done_insulation || 0;
+          const doneInsul = row.original.done_insulation || 0;
           // Check if all items are done (total equals done) and there are items
-          const isDone = (totalItems === doneItems) && (totalItems > 0);
+          const isDone = (totalItems === doneInsul) && (totalItems > 0);
           
           // Green for completed, orange for in progress
           const bgColor = isDone ? '#2F5249' : '#E85C0D';

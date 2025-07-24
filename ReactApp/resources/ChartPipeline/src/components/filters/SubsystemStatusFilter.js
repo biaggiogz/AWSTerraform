@@ -28,12 +28,12 @@ const SubsystemStatusFilter = ({
     
     const metrics = {};
     data.forEach(row => {
-      if (row.subsystem && row.totalItems !== undefined && row.doneItems !== undefined) {
-        const isDone = (row.totalItems === row.doneItems) && (row.totalItems > 0);
+      if (row.subsystem && row.totalItems !== undefined && row.doneInsul !== undefined) {
+        const isDone = (row.totalItems === row.doneInsul) && (row.totalItems > 0);
         metrics[row.subsystem] = {
           status: isDone ? 'Done' : 'Pending',
           totalItems: row.totalItems,
-          doneItems: row.doneItems
+          doneInsul: row.doneInsul
         };
       }
     });
@@ -78,7 +78,7 @@ const SubsystemStatusFilter = ({
         if (!selectedSubsystems[row.subsystem]) return false;
         
         if (exclusiveFilter) {
-          const isDone = (row.totalItems === row.doneItems) && (row.totalItems > 0);
+          const isDone = (row.totalItems === row.doneInsul) && (row.totalItems > 0);
           const status = isDone ? 'Done' : 'Pending';
           if (exclusiveFilter === 'done') return status === 'Done';
           if (exclusiveFilter === 'pending') return status === 'Pending';
