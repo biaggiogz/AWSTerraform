@@ -14,8 +14,7 @@ import {
 import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop, MdFlag } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
-// ProgressFilter disabled
-// import ProgressFilter from '../filters/ProgressFilter';
+import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 // Import directly without lazy loading
@@ -44,7 +43,6 @@ FROM "Subsystem Overview";`);
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
-  const [isProgressFiltering, setIsProgressFiltering] = useState(false);
   const textareaRef = useRef(null);
 
   // Restore query from persistent state
@@ -278,9 +276,6 @@ FROM "Subsystem Overview";`);
       });
     }
   }, [calculations, lockedCards, deletedCards, sqlQuery, updateQuery, filteredControlData, filteredDetailsData]);
-  
-  // We're now directly triggering SQL query execution when filters change
-  // No need for an effect to watch for filtered data changes
 
   // Restore metric cards from persistent state on mount
   useEffect(() => {
@@ -309,18 +304,19 @@ FROM "Subsystem Overview";`);
             SQL Query Interface
           </Text>
           <HStack spacing={2}>
-            {/* Progress Filter button disabled */}
             <IconButton
               icon={<MdFilterList />}
               size="sm"
               variant="ghost"
               onClick={() => {
-                // Progress filter disabled
-                console.log('Progress filter has been disabled');
+                const newVisibility = !isFilterVisible;
+                setIsFilterVisible(newVisibility);
+                if (onProgressFilterVisibilityChange) {
+                  onProgressFilterVisibilityChange(newVisibility);
+                }
               }}
               aria-label="Toggle progress filter"
-              title="Test Pack Progress Filter (Disabled)"
-              isDisabled={true}
+              title="Test Pack Progress Filter"
             />
             <IconButton
               icon={<MdCheckCircle />}
@@ -811,9 +807,34 @@ FROM "Subsystem Overview";`);
         </HStack>
       )}
       
-      {/* ProgressFilter disabled */}
+      {isFilterVisible && (
+        <ProgressFilter
+          data={detailsData}
+          onFilterChange={onFilteredDataChange || (() => {})}
+          isVisible={isFilterVisible}
+          onClose={() => {
+            setIsFilterVisible(false);
+            if (onProgressFilterVisibilityChange) {
+              onProgressFilterVisibilityChange(false);
+            }
+            // Reset this filter's effect by passing the original data
+            if (onFilteredDataChange) {
+              onFilteredDataChange(detailsData);
+            }
+            // Reset propagation if it was active
+            if (onProgressPropagationChange) {
+              onProgressPropagationChange([], 'nothing');
+            }
+          }}
+          onPropagationChange={(filteredData, target) => {
+            // Handle the 'both' option by calling the propagation handler with 'both'
+            if (onProgressPropagationChange) {
+              onProgressPropagationChange(filteredData, target);
+            }
+          }}
+          onBringToFront={onBringToFront}
         />
-      )
+      )}
       
       {isSubsystemFilterVisible && (
         <ItemsStatusFilter

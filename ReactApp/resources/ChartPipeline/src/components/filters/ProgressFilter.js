@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { extractMatchingSubsystems } from '../../utils/filterUtils';
 import {
   Box,
   Heading,
@@ -35,48 +34,13 @@ const ProgressFilter = ({
     
     const metrics = {};
     data.forEach(row => {
-      // Handle different data structures
       if (row.testPack && row.testPackProgress !== undefined) {
-        // Original format
         metrics[row.testPack] = {
           progress: Math.round(row.testPackProgress)
         };
-      } else if (row.list_includes_tp_id && row.list_id_tp_total_progress) {
-        // Handle ssm.csv format with pipe-separated lists
-        let tpIds = [];
-        if (typeof row.list_includes_tp_id === 'string') {
-          tpIds = row.list_includes_tp_id.includes('|') 
-            ? row.list_includes_tp_id.split('|') 
-            : [row.list_includes_tp_id];
-        } else if (Array.isArray(row.list_includes_tp_id)) {
-          tpIds = row.list_includes_tp_id.map(id => String(id));
-        } else if (row.list_includes_tp_id !== undefined && row.list_includes_tp_id !== null) {
-          tpIds = [String(row.list_includes_tp_id)];
-        }
-        
-        let progressValues = [];
-        if (typeof row.list_id_tp_total_progress === 'string') {
-          progressValues = row.list_id_tp_total_progress.includes('|') 
-            ? row.list_id_tp_total_progress.split('|').map(p => parseFloat(p) || 0)
-            : [parseFloat(row.list_id_tp_total_progress) || 0];
-        } else if (Array.isArray(row.list_id_tp_total_progress)) {
-          progressValues = row.list_id_tp_total_progress.map(p => parseFloat(p) || 0);
-        } else if (row.list_id_tp_total_progress !== undefined && row.list_id_tp_total_progress !== null) {
-          progressValues = [parseFloat(row.list_id_tp_total_progress) || 0];
-        }
-        
-        // Create metrics for each TP ID
-        tpIds.forEach((tpId, idx) => {
-          if (!tpId) return; // Skip empty IDs
-          const progress = idx < progressValues.length ? progressValues[idx] : 0;
-          metrics[tpId] = {
-            progress: Math.round(progress * 100) // Convert from decimal to percentage
-          };
-        });
       }
     });
     
-    console.log('Extracted test pack metrics:', Object.keys(metrics).length);
     return metrics;
   }, [data]);
 
@@ -97,10 +61,6 @@ const ProgressFilter = ({
         return acc;
       }, {});
       setSelectedTestPacks(initialState);
-      
-      // Initialize with no user selection when first loading test packs
-      if (!window.progressFilterState) window.progressFilterState = {};
-      window.progressFilterState.hasUserSelection = false;
     }
   }, [sortedTestPacks]);
 
@@ -117,128 +77,34 @@ const ProgressFilter = ({
         // Clear global state for TableA
         if (window.progressFilterState) {
           window.progressFilterState.filteredData = [];
-          window.progressFilterState.hasUserSelection = false;
         }
         return;
       }
       
-      // Check if user has made any specific selections
-      const hasUserSelection = exclusiveFilter !== null || 
-        Object.values(selectedTestPacks).some(selected => !selected);
-      
       const filteredData = data.filter(row => {
-        // Handle different data structures
-        if (row.testPack && row.testPackProgress !== undefined) {
-          // Original format
-          if (!selectedTestPacks[row.testPack]) return false;
-          
-          if (exclusiveFilter) {
-            const progress = row.testPackProgress;
-            if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
-            if (exclusiveFilter === "below90") return progress < 90;
-            if (exclusiveFilter === 'done100') return progress === 100;
-          }
-          
-          return true;
-        } else if (row.list_includes_tp_id) {
-          // ssm.csv format
-          let tpIds = [];
-          if (typeof row.list_includes_tp_id === 'string') {
-            tpIds = row.list_includes_tp_id.includes('|') 
-              ? row.list_includes_tp_id.split('|') 
-              : [row.list_includes_tp_id];
-          } else if (Array.isArray(row.list_includes_tp_id)) {
-            tpIds = row.list_includes_tp_id.map(id => String(id));
-          } else if (row.list_includes_tp_id !== undefined && row.list_includes_tp_id !== null) {
-            tpIds = [String(row.list_includes_tp_id)];
-          }
-          
-          // Check if any TP ID is selected
-          const anySelected = tpIds.some(tpId => selectedTestPacks[tpId]);
-          if (!anySelected) return false;
-          
-          // Apply exclusive filter if needed
-          if (exclusiveFilter) {
-            let progressValues = [];
-            if (typeof row.list_id_tp_total_progress === 'string') {
-              progressValues = row.list_id_tp_total_progress.includes('|') 
-                ? row.list_id_tp_total_progress.split('|').map(p => parseFloat(p) || 0)
-                : [parseFloat(row.list_id_tp_total_progress) || 0];
-            } else if (Array.isArray(row.list_id_tp_total_progress)) {
-              progressValues = row.list_id_tp_total_progress.map(p => parseFloat(p) || 0);
-            } else if (row.list_id_tp_total_progress !== undefined && row.list_id_tp_total_progress !== null) {
-              progressValues = [parseFloat(row.list_id_tp_total_progress) || 0];
-            }
-              
-            const matchesFilter = tpIds.some((tpId, idx) => {
-              if (!selectedTestPacks[tpId]) return false;
-              const progress = idx < progressValues.length ? progressValues[idx] * 100 : 0;
-              if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
-              if (exclusiveFilter === "below90") return progress < 90;
-              if (exclusiveFilter === 'done100') return progress === 100;
-              return false;
-            });
-            
-            return matchesFilter;
-          }
-          
-          return true;
+        if (!selectedTestPacks[row.testPack]) return false;
+        
+        if (exclusiveFilter) {
+          const progress = row.testPackProgress;
+          if (exclusiveFilter === 'above90') return progress > 90;
+          if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
+          if (exclusiveFilter === 'below70') return progress < 70;
+          if (exclusiveFilter === 'done100') return progress === 100;
         }
         
-        return false;
+        return true;
       });
       
-      // Store filtered data in global state
-      if (!window.progressFilterState) window.progressFilterState = {};
-      
-      // Get selected test pack IDs
-      const selectedTPIds = Object.entries(selectedTestPacks)
-        .filter(([tp, isSelected]) => isSelected)
-        .map(([tp]) => tp);
-      
-      window.progressFilterState.selectedTPs = selectedTPIds;
-      window.progressFilterState.hasUserSelection = hasUserSelection;
-      
-      // Extract subsystems that contain the selected test packs
-      const matchingSubsystems = new Set();
-      if (propagationTarget === 'tableA' || propagationTarget === 'both') {
-        // Use the utility function to extract matching subsystems
-        const activeTPIds = selectedTPIds.filter(tpId => selectedTestPacks[tpId]);
-        const extractedSubsystems = extractMatchingSubsystems(data, activeTPIds);
-        extractedSubsystems.forEach(subsystem => matchingSubsystems.add(subsystem));
-      }
-      
-      // Filter data based on matching subsystems
-      let subsystemFilteredData = [];
-      if (matchingSubsystems.size > 0) {
-        subsystemFilteredData = data.filter(row => 
-          matchingSubsystems.has(row.subsystem)
-        );
-        console.log('Progress filter matched', matchingSubsystems.size, 'subsystems');
-      } else {
-        subsystemFilteredData = hasUserSelection ? [] : data;
-      }
-      
-      // Only update filteredData in global state if propagation is set to tableA or both
-      if (propagationTarget === 'tableA' || propagationTarget === 'both') {
-        window.progressFilterState.filteredData = subsystemFilteredData;
-        window.progressFilterState.matchingSubsystems = Array.from(matchingSubsystems);
-        console.log('Progress filter updated with', subsystemFilteredData.length, 'items', 
-                   '(propagating to ' + propagationTarget + ')');
-        console.log('Matching subsystems:', matchingSubsystems.size);
-      } else {
-        window.progressFilterState.filteredData = [];
-        window.progressFilterState.matchingSubsystems = [];
-        console.log('Progress filter updated but not propagating to tables');
-      }
-      
-      // Call onFilterChange with the filtered data
-      // This will trigger the SQL query re-execution in DynamicCalculationPanel
       onFilterChange(filteredData);
       
+      // Store filtered data in global state for TableA to access
+      if (!window.progressFilterState) window.progressFilterState = {};
+      window.progressFilterState.filteredData = filteredData;
+      console.log('Progress filter updated with', filteredData.length, 'items');
+      
       // Handle propagation based on selected target
-      if (onPropagationChange) {
-        onPropagationChange(subsystemFilteredData, propagationTarget);
+      if (onPropagationChange && propagationTarget !== 'nothing') {
+        onPropagationChange(filteredData, propagationTarget);
       }
     }, 100);
     
@@ -250,47 +116,23 @@ const ProgressFilter = ({
   }, [data, selectedTestPacks, exclusiveFilter, onFilterChange, onPropagationChange, propagationTarget]);
 
   const toggleExclusiveFilter = useCallback((filter) => {
-    setExclusiveFilter(prev => {
-      const newValue = prev === filter ? null : filter;
-      // Ensure we update the global state to indicate user selection
-      if (!window.progressFilterState) window.progressFilterState = {};
-      window.progressFilterState.hasUserSelection = newValue !== null || 
-        Object.values(selectedTestPacks).some(selected => !selected);
-      return newValue;
-    });
-  }, [selectedTestPacks]);
+    setExclusiveFilter(prev => prev === filter ? null : filter);
+  }, []);
 
   const toggleTestPack = useCallback((testPack) => {
-    setSelectedTestPacks(prev => {
-      const newState = {
-        ...prev,
-        [testPack]: !prev[testPack]
-      };
-      
-      // Update global state to indicate user selection
-      if (!window.progressFilterState) window.progressFilterState = {};
-      window.progressFilterState.hasUserSelection = exclusiveFilter !== null || 
-        Object.values(newState).some(selected => !selected);
-      
-      return newState;
-    });
-  }, [exclusiveFilter]);
+    setSelectedTestPacks(prev => ({
+      ...prev,
+      [testPack]: !prev[testPack]
+    }));
+  }, []);
 
   const toggleAllTestPacks = useCallback((value) => {
     const newState = Object.keys(sortedTestPacks).reduce((acc, testPack) => {
       acc[testPack] = value;
       return acc;
     }, {});
-    
-    // Only mark as user selection if not selecting all (deselecting some is a user selection)
-    const isUserSelection = !value || exclusiveFilter !== null;
-    
-    // Update global state
-    if (!window.progressFilterState) window.progressFilterState = {};
-    window.progressFilterState.hasUserSelection = isUserSelection;
-    
     setSelectedTestPacks(newState);
-  }, [sortedTestPacks, exclusiveFilter]);
+  }, [sortedTestPacks]);
 
   const invertTestPackSelection = useCallback(() => {
     setSelectedTestPacks(prev => {
@@ -298,18 +140,14 @@ const ProgressFilter = ({
       Object.keys(sortedTestPacks).forEach(testPack => {
         invertedState[testPack] = !prev[testPack];
       });
-      
-      // Inverting is always a user selection
-      if (!window.progressFilterState) window.progressFilterState = {};
-      window.progressFilterState.hasUserSelection = true;
-      
       return invertedState;
     });
   }, [sortedTestPacks]);
 
   const getProgressColor = useCallback((progress) => {
     if (progress === 100) return '#437057';
-    if (progress >= 90 && progress < 100) return '#97B067';
+    if (progress > 90) return '#97B067';
+    if (progress >= 70) return '#FFBF78';
     return '#E86A33';
   }, []);
 
@@ -322,45 +160,51 @@ const ProgressFilter = ({
         // Only clear global state for TableA, don't affect TableB
         if (window.progressFilterState) {
           window.progressFilterState.filteredData = [];
-          window.progressFilterState.matchingSubsystems = [];
-          window.progressFilterState.hasUserSelection = false;
         }
         onPropagationChange([], 'nothing');
-      } else if (value === 'tableA' || value === 'both') {
-        // Get selected test pack IDs
-        const selectedTPIds = Object.entries(selectedTestPacks)
-          .filter(([tp, isSelected]) => isSelected)
-          .map(([tp]) => tp);
+      } else if (value === 'tableA') {
+        // Get current filtered data and propagate only to TableA
+        const currentFilteredData = data.filter(row => {
+          if (!selectedTestPacks[row.testPack]) return false;
+          
+          if (exclusiveFilter) {
+            const progress = row.testPackProgress;
+            if (exclusiveFilter === 'above90') return progress > 90;
+            if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
+            if (exclusiveFilter === 'below70') return progress < 70;
+            if (exclusiveFilter === 'done100') return progress === 100;
+          }
+          
+          return true;
+        });
         
-        // Extract subsystems that contain the selected test packs
-        const activeTPIds = selectedTPIds.filter(tpId => selectedTestPacks[tpId]);
-        const matchingSubsystems = extractMatchingSubsystems(data, activeTPIds);
-        
-        // Filter data based on matching subsystems
-        let subsystemFilteredData = [];
-        if (matchingSubsystems.size > 0) {
-          subsystemFilteredData = data.filter(row => 
-            matchingSubsystems.has(row.subsystem)
-          );
-          console.log('Progress filter matched', matchingSubsystems.size, 'subsystems');
-        } else {
-          // If no specific selection, use all data
-          const hasUserSelection = exclusiveFilter !== null || 
-            Object.values(selectedTestPacks).some(selected => !selected);
-          subsystemFilteredData = hasUserSelection ? [] : data;
-        }
-        
-        // Update global state
+        // Update global state for TableA
         if (!window.progressFilterState) window.progressFilterState = {};
-        window.progressFilterState.filteredData = subsystemFilteredData;
-        window.progressFilterState.matchingSubsystems = Array.from(matchingSubsystems);
-        window.progressFilterState.hasUserSelection = true;
-        window.progressFilterState.selectedTPs = selectedTPIds;
+        window.progressFilterState.filteredData = currentFilteredData;
         
-        console.log('Propagation changed to', value, 'with', matchingSubsystems.size, 'matching subsystems');
+        onPropagationChange(currentFilteredData, 'tableA');
+      } else if (value === 'both') {
+        // Get current filtered data and propagate to both tables
+        const currentFilteredData = data.filter(row => {
+          if (!selectedTestPacks[row.testPack]) return false;
+          
+          if (exclusiveFilter) {
+            const progress = row.testPackProgress;
+            if (exclusiveFilter === 'above90') return progress > 90;
+            if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
+            if (exclusiveFilter === 'below70') return progress < 70;
+            if (exclusiveFilter === 'done100') return progress === 100;
+          }
+          
+          return true;
+        });
         
-        // Propagate to appropriate tables
-        onPropagationChange(subsystemFilteredData, value);
+        // Update global state for TableA
+        if (!window.progressFilterState) window.progressFilterState = {};
+        window.progressFilterState.filteredData = currentFilteredData;
+        
+        // Propagate to both tables
+        onPropagationChange(currentFilteredData, 'both');
       }
     }
   }, [data, selectedTestPacks, exclusiveFilter, onPropagationChange]);
@@ -382,8 +226,9 @@ const ProgressFilter = ({
       const progress = metrics.progress;
       const isSelected = selectedTestPacks[testPack] || false;
       const isVisible = !exclusiveFilter ||
-                      (exclusiveFilter === 'range90to99' && progress >= 90 && progress < 100) ||
-                      (exclusiveFilter === 'below90' && progress < 90) ||
+                      (exclusiveFilter === 'above90' && progress > 90) ||
+                      (exclusiveFilter === 'between70And90' && progress >= 70 && progress <= 90) ||
+                      (exclusiveFilter === 'below70' && progress < 70) ||
                       (exclusiveFilter === 'done100' && progress === 100);
       
       const isDisabled = exclusiveFilter && !isVisible;
@@ -419,41 +264,18 @@ const ProgressFilter = ({
 
   // Reset internal state when filter becomes invisible
   React.useEffect(() => {
-    // Initialize global state if needed
-    if (!window.progressFilterState) {
-      window.progressFilterState = { 
-        filteredData: [], 
-        hasUserSelection: false,
-        selectedTPs: [],
-        matchingSubsystems: []
-      };
-    }
-    
     if (!isVisible) {
       // No need to reset selectedTestPacks as they should persist
       // But we should reset the exclusive filter and propagation
       setExclusiveFilter(null);
       setPropagationTarget('nothing');
       
-      // Clear global state
-      window.progressFilterState.filteredData = [];
-      window.progressFilterState.hasUserSelection = false;
-      window.progressFilterState.selectedTPs = [];
-      window.progressFilterState.matchingSubsystems = [];
-    } else {
-      // When filter becomes visible, explicitly set hasUserSelection to false
-      // This ensures no filtering happens by default when opening
-      window.progressFilterState.hasUserSelection = false;
-      
-      // Initialize selectedTPs based on current selection
-      window.progressFilterState.selectedTPs = Object.entries(selectedTestPacks)
-        .filter(([tp, isSelected]) => isSelected)
-        .map(([tp]) => tp);
-      
-      // Reset matching subsystems
-      window.progressFilterState.matchingSubsystems = [];
+      // Clear global state for TableA
+      if (window.progressFilterState) {
+        window.progressFilterState.filteredData = [];
+      }
     }
-  }, [isVisible, selectedTestPacks]);
+  }, [isVisible]);
   
   if (!isVisible) return null;
 
@@ -507,37 +329,51 @@ const ProgressFilter = ({
             </HStack>
           </Tooltip>
 
-          <Tooltip label="Click to show only above 90% and below 100%" placement="top">
+          <Tooltip label="Click to show only above 90%" placement="top">
             <HStack
-              onClick={() => toggleExclusiveFilter('range90to99')}
+              onClick={() => toggleExclusiveFilter('above90')}
               cursor="pointer"
               p={1}
               borderRadius="md"
-              bg={exclusiveFilter === 'range90to99' ? "blue.50" : "transparent"}
+              bg={exclusiveFilter === 'above90' ? "blue.50" : "transparent"}
               borderWidth="1px"
-              borderColor={exclusiveFilter === 'range90to99' ? "blue.300" : "transparent"}
+              borderColor={exclusiveFilter === 'above90' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
               <Box width="15px" height="15px" bg="#97B067" borderWidth="1px" />
-              <Text fontWeight={exclusiveFilter === 'range90to99' ? "bold" : "normal"}>From 90% to 99%</Text>
+              <Text fontWeight={exclusiveFilter === 'above90' ? "bold" : "normal"}>Above 90%</Text>
             </HStack>
           </Tooltip>
 
-
-
-          <Tooltip label="Click to show only below 90%" placement="top">
+          <Tooltip label="Click to show only 70-90%" placement="top">
             <HStack
-              onClick={() => toggleExclusiveFilter('below90')}
+              onClick={() => toggleExclusiveFilter('between70And90')}
               cursor="pointer"
               p={1}
               borderRadius="md"
-              bg={exclusiveFilter === 'below90' ? "blue.50" : "transparent"}
+              bg={exclusiveFilter === 'between70And90' ? "blue.50" : "transparent"}
               borderWidth="1px"
-              borderColor={exclusiveFilter === 'below90' ? "blue.300" : "transparent"}
+              borderColor={exclusiveFilter === 'between70And90' ? "blue.300" : "transparent"}
+              _hover={{ bg: "gray.100" }}
+            >
+              <Box width="15px" height="15px" bg="#FFBF78" borderWidth="1px" />
+              <Text fontWeight={exclusiveFilter === 'between70And90' ? "bold" : "normal"}>70-90%</Text>
+            </HStack>
+          </Tooltip>
+
+          <Tooltip label="Click to show only below 70%" placement="top">
+            <HStack
+              onClick={() => toggleExclusiveFilter('below70')}
+              cursor="pointer"
+              p={1}
+              borderRadius="md"
+              bg={exclusiveFilter === 'below70' ? "blue.50" : "transparent"}
+              borderWidth="1px"
+              borderColor={exclusiveFilter === 'below70' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
               <Box width="15px" height="15px" bg="#E86A33" borderWidth="1px" />
-              <Text fontWeight={exclusiveFilter === 'below90' ? "bold" : "normal"}>Below 90%</Text>
+              <Text fontWeight={exclusiveFilter === 'below70' ? "bold" : "normal"}>Below 70%</Text>
             </HStack>
           </Tooltip>
         </HStack>
