@@ -242,6 +242,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
+    {
+      accessorKey: 'avg_progress_subsystem',
+      header: 'AVG PROGRESS SUBSYSTEM',
+      size: 80,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{(getValue() || 0).toFixed(1)}%</Text>
+      )
+    },
 
     {
       accessorKey: 'total_loop',
@@ -447,9 +455,9 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           { 
             id: 'summary_items', 
             title: 'SUMMARY ITEMS BY SUBSYSTEM', 
-            colspan: 3,
+            colspan: 4,
             startCol: 6,
-            color: '#FF6B35'
+            color: '#B03052'
           },
           { 
             id: 'loop_testing', 
@@ -496,43 +504,43 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           { 
             id: 'item_status', 
             title: 'ITEM STATUS',
-            colspan: 3, 
+            colspan: 4, 
             startCol: 6,
-            color: '#E55A2B'
+            color: '#9E2B4A'
           },
           { 
             id: 'loop_metrics', 
             title: 'LOOP STATUS',
             colspan: 3, 
-            startCol: 9,
+            startCol: 10,
             color: '#7CA2C5'
           },
           { 
             id: 'instrument_metrics', 
             title: 'INSTRUMENT STATUS',
             colspan: 3, 
-            startCol: 12,
+            startCol: 13,
             color: '#977AA3'
           },
           { 
             id: 'tracing_metrics', 
             title: 'TRACING STATUS',
             colspan: 3, 
-            startCol: 15,
+            startCol: 16,
             color: '#09A7A3'
           },
           { 
             id: 'insulation_status',
             title: 'INSULATION STATUS',
             colspan: 3, 
-            startCol: 18,
+            startCol: 19,
             color: '#CEC19B'
           },
           {
             id: 'punch_metrics',
             title: 'PUNCH LIST STATUS',
             colspan: 4,
-            startCol: 21,
+            startCol: 22,
             color: '#687F9D'
           }
         ]
@@ -685,9 +693,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'n_distinct_tps': '#007598', // N°TP is now part of subsystem information
 
               // Summary Items by Subsystem
-              'total_items': '#E55A2B',
-              'done_items': '#E55A2B',
-              'pending_items': '#E55A2B',
+              'total_items': '#B03052',
+              'done_items': '#B03052',
+              'pending_items': '#B03052',
+              'avg_progress_subsystem': '#B03052',
 
               // Loop Signal Progress
               'total_loop': '#7CA2C5',
