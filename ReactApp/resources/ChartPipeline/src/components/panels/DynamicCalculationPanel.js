@@ -83,19 +83,41 @@ FROM "Subsystem Overview";`);
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
-  // Color mapping for metric cards
+  // Color mapping for metric cards - matching SummarySubsystemsTableA.js header colors
   const getMetricColor = (metricName) => {
     const name = metricName.toLowerCase();
+    
+    // Subsystem information - #007598
+    if (name.includes('subsystem')) return '#007598';
+    if (name.includes('hito')) return '#007598';
+    if (name.includes('description')) return '#007598';
+    if (name.includes('fluid')) return '#007598';
+    
+    // Items insulation progress - #CEC19B
+    if (name.includes('items') || name.includes('insulation')) return '#CEC19B';
+    
+    // Loop signal progress - #7CA2C5
+    if (name.includes('loop')) return '#7CA2C5';
+    
+    // Instruments progress - #977AA3
+    if (name.includes('inst')) return '#977AA3';
+    
+    // Tracing progress - #09A7A3
+    if (name.includes('tracing')) return '#09A7A3';
+    
+    // Punch list progress - #687F9D
+    if (name.includes('punch')) return '#687F9D';
+    
+    // Legacy mappings for instruments tab
     if (name.includes('total isos')) return '#007598';
     if (name.includes('total at') && name.includes('%')) return '#007598';
-    if (name.includes('total subsystem')) return '#CEC19B';
     if (name.includes('total test pack')) return '#7CA2C5';
-    if (name.includes('total inst')) return '#B3CDDF';
-    if (name.includes('total scope teiga')) return '#B3CDDF';
-    if (name.includes('total scope siemsa')) return '#B3CDDF';
-    if (name.includes('total installed teiga')) return '#B3CDDF';
-    if (name.includes('total installed')) return '#B3CDDF';
-    if (name.includes('trac yes')) return '#D98265';
+    if (name.includes('total scope teiga')) return '#977AA3';
+    if (name.includes('total scope siemsa')) return '#977AA3';
+    if (name.includes('total installed teiga')) return '#977AA3';
+    if (name.includes('total installed')) return '#977AA3';
+    if (name.includes('trac yes')) return '#09A7A3';
+    
     return '#E2E8F0'; // default gray
   };
 
@@ -600,9 +622,9 @@ FROM "Subsystem Overview";`);
                   return (
                     <Box
                       key={card.id}
-                      bg="rgba(103, 154, 154)"
+                      bg={getMetricColor(card.key)}
                       border="3px solid"
-                      borderColor={isLocked ? "rgba(103, 154, 154,0.8)" : "rgba(103, 154, 154,0.8)"}
+                      borderColor={isLocked ? getMetricColor(card.key) : getMetricColor(card.key)}
                       borderRadius="lg"
                       p={0.5}
                       minW="100px"
@@ -674,9 +696,9 @@ FROM "Subsystem Overview";`);
                   return (
                     <Box
                       key={card.id}
-                      bg="rgba(0, 0, 60,1)"
+                      bg={getMetricColor(card.key)}
                       border="3px solid"
-                      borderColor={isLocked ? "rgba(0, 0, 60,1)" : "rgba(0, 0, 60,1)"}
+                      borderColor={isLocked ? getMetricColor(card.key) : getMetricColor(card.key)}
                       borderRadius="lg"
                       p={0.5}
                       minW="100px"
@@ -746,9 +768,9 @@ FROM "Subsystem Overview";`);
             return (
               <Box
                 key={card.id}
-                bg="#E2E8F0"
+                bg={getMetricColor(card.key)}
                 border="2px solid"
-                borderColor={isLocked ? "orange.300" : "#3D365C"}
+                borderColor={isLocked ? "orange.300" : getMetricColor(card.key)}
                 borderRadius="lg"
                 p={0.5}
                 minW="120px"
