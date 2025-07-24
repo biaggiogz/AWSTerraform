@@ -112,6 +112,23 @@ FROM "Subsystem Overview";`);
   const handleExecute = () => {
     if (!sqlQuery.trim()) return;
     setDeletedCards(new Set()); // Clear deleted cards on new query
+    
+    // Clear any stale cached results before executing new query
+    const cacheKey = `${tabName}_sqlState`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        const age = Date.now() - (parsed.timestamp || 0);
+        if (age > 300000) { // 5 minutes
+          localStorage.removeItem(cacheKey);
+          console.log('Cleared stale calculation cache');
+        }
+      } catch (e) {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+    
     updateQuery(sqlQuery); // Save query to persistent state
     executeSQLQuery(sqlQuery);
   };

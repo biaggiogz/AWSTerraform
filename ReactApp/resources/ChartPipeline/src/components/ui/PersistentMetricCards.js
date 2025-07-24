@@ -56,17 +56,29 @@ const PersistentMetricCards = ({ tabName = 'summarySubsystems', filteredData }) 
   const USE_SOLIDJS = process.env.REACT_APP_USE_SOLIDJS === 'true' || 
                      localStorage.getItem('use-solidjs') === 'true';
   
-  const { sqlState, removeMetricCard, getStateAge } = usePersistentSQLState(tabName);
+  const { sqlState, removeMetricCard, getStateAge, invalidateCache, shouldInvalidateCache } = usePersistentSQLState(tabName);
   const [isVisible, setIsVisible] = useState(false); // Default to collapsed
   const stateAge = getStateAge();
+  
+  // Generate data hash for cache validation
+  const dataHash = useMemo(() => {
+    if (!filteredData?.length) return null;
+    return JSON.stringify(filteredData.slice(0, 10)).slice(0, 100); // Sample hash
+  }, [filteredData]);
   
   // Use a timestamp to force re-render when filters change
   const [filterTimestamp, setFilterTimestamp] = useState(Date.now());
   
-  // Update timestamp when filteredData changes
+  // Update timestamp when filteredData changes and validate cache
   useEffect(() => {
     setFilterTimestamp(Date.now());
-  }, [filteredData]);
+    
+    // Invalidate cache if data has changed significantly
+    if (dataHash && shouldInvalidateCache(dataHash)) {
+      console.log('Data changed, invalidating metric card cache');
+      invalidateCache();
+    }
+  }, [filteredData, dataHash, shouldInvalidateCache, invalidateCache]);
   
   // Memoize cards to prevent recalculation on every render - must be called before any conditional returns
   const cardsToShow = useMemo(() => {
@@ -110,8 +122,8 @@ const PersistentMetricCards = ({ tabName = 'summarySubsystems', filteredData }) 
         </Text>
         <HStack spacing={2}>
           {stateAge !== null && (
-            <Badge colorScheme="blue" fontSize="xs">
-              Saved {stateAge}m ago
+            <Badge colorScheme={stateAge > 5 ? "orange" : "blue"} fontSize="xs">
+              {stateAge > 5 ? "⚠️ " : ""}Saved {stateAge}m ago
             </Badge>
           )}
           <IconButton

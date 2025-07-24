@@ -1,0 +1,45 @@
+{
+  "Comment": "CloudFront configuration for React app with proper caching",
+  "DefaultCacheBehavior": {
+    "TargetOriginId": "react-app-origin",
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "CachePolicyId": "custom-cache-policy",
+    "ResponseHeadersPolicyId": "custom-headers-policy"
+  },
+  "CacheBehaviors": [
+    {
+      "PathPattern": "/static/js/*",
+      "TargetOriginId": "react-app-origin",
+      "ViewerProtocolPolicy": "https-only",
+      "CachePolicyId": "long-cache-policy",
+      "Compress": true
+    },
+    {
+      "PathPattern": "/static/css/*", 
+      "TargetOriginId": "react-app-origin",
+      "ViewerProtocolPolicy": "https-only",
+      "CachePolicyId": "long-cache-policy",
+      "Compress": true
+    },
+    {
+      "PathPattern": "/api/*",
+      "TargetOriginId": "api-origin",
+      "ViewerProtocolPolicy": "https-only", 
+      "CachePolicyId": "no-cache-policy"
+    },
+    {
+      "PathPattern": "/manifest.json",
+      "TargetOriginId": "react-app-origin",
+      "ViewerProtocolPolicy": "https-only",
+      "CachePolicyId": "no-cache-policy"
+    }
+  ],
+  "CustomErrorResponses": [
+    {
+      "ErrorCode": 404,
+      "ResponseCode": 200,
+      "ResponsePagePath": "/index.html",
+      "ErrorCachingMinTTL": 300
+    }
+  ]
+}

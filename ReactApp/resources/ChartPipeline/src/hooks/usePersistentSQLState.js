@@ -2,23 +2,37 @@ import { useState, useEffect, useCallback } from 'react';
 
 export const usePersistentSQLState = (tabName = 'default') => {
   const STORAGE_KEY = `${tabName}_sqlState`;
+  const VERSION_KEY = `${tabName}_dataVersion`;
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  
   const [sqlState, setSqlState] = useState({
     query: '',
     result: null,
     metricCards: [],
-    timestamp: null
+    timestamp: null,
+    dataVersion: null
   });
 
-  // Load state from localStorage on mount
+  // Load state from localStorage on mount with cache validation
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        const now = Date.now();
+        
+        // Check if cache is expired
+        if (parsed.timestamp && (now - parsed.timestamp) > CACHE_DURATION) {
+          console.log('Cache expired, clearing stale data');
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+        
         setSqlState(parsed);
       }
     } catch (error) {
       console.warn('Failed to load SQL state:', error);
+      localStorage.removeItem(STORAGE_KEY);
     }
   }, []);
 
@@ -77,11 +91,26 @@ export const usePersistentSQLState = (tabName = 'default') => {
       query: '',
       result: null,
       metricCards: [],
-      timestamp: null
+      timestamp: null,
+      dataVersion: null
     };
     
     setSqlState(emptyState);
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(VERSION_KEY);
+  }, []);
+
+  // Invalidate cache when data changes
+  const invalidateCache = useCallback(() => {
+    const newVersion = Date.now().toString();
+    localStorage.setItem(VERSION_KEY, newVersion);
+    clearState();
+  }, [clearState]);
+
+  // Check if cache should be invalidated
+  const shouldInvalidateCache = useCallback((currentDataHash) => {
+    const savedVersion = localStorage.getItem(VERSION_KEY);
+    return !savedVersion || savedVersion !== currentDataHash;
   }, []);
 
   // Get age of saved state in minutes
@@ -96,6 +125,8 @@ export const usePersistentSQLState = (tabName = 'default') => {
     addMetricCard,
     removeMetricCard,
     clearState,
-    getStateAge
+    getStateAge,
+    invalidateCache,
+    shouldInvalidateCache
   };
 };
