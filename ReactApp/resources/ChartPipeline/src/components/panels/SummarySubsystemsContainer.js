@@ -124,13 +124,44 @@ const SummarySubsystemsContainer = ({
   };
   
   const handleProgressPropagationChange = (filteredData, target) => {
-    if (target === 'tableA') {
-      // Extract subsystems from filtered TableB data
-      const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
-      // Filter TableA data based on subsystems
-      const propagatedTableAData = tableAData.filter(row => 
-        allowedSubsystems.has(row.subsystem)
-      );
+    // Only handle TableA propagation here
+    if (target === 'tableA' || target === 'both') {
+      if (filteredData.length === 0) {
+        // Reset TableA to original state when no filtered data
+        setStatusFilteredData(tableAData);
+        return;
+      }
+      
+      // Extract test packs from filtered TableB data
+      const filteredTestPacks = filteredData.map(row => row.testPack);
+      
+      // Filter TableA data based on test packs in list_includes_tp_id
+      const propagatedTableAData = tableAData.filter(row => {
+        try {
+          const tpIds = row.list_includes_tp_id;
+          
+          // Handle different data types
+          if (!tpIds) return false;
+          
+          let tpIdArray = [];
+          if (typeof tpIds === 'string') {
+            tpIdArray = tpIds.split('|');
+          } else if (Array.isArray(tpIds)) {
+            tpIdArray = tpIds;
+          } else if (typeof tpIds === 'number') {
+            tpIdArray = [String(tpIds)];
+          } else {
+            console.warn('Unexpected TP IDs type:', typeof tpIds, tpIds);
+            return false;
+          }
+          
+          return tpIdArray.some(tpId => filteredTestPacks.includes(String(tpId)));
+        } catch (error) {
+          console.error('Error filtering row:', error, row);
+          return false;
+        }
+      });
+      
       setStatusFilteredData(propagatedTableAData);
     } else if (target === 'nothing') {
       // Reset TableA to original state when propagation is disabled
@@ -206,6 +237,7 @@ const SummarySubsystemsContainer = ({
             isItemsFilterVisible={isItemsFilterVisible}
             isLoopFilterVisible={isLoopFilterVisible}
             isHitoFilterVisible={isHitoFilterVisible}
+            isProgressFilterVisible={isProgressFilterVisible}
           />
         </ResizableDraggablePanel>
         

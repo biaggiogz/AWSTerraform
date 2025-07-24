@@ -74,6 +74,10 @@ const ProgressFilter = ({
     debounceRef.current = setTimeout(() => {
       if (!data || data.length === 0) {
         onFilterChange([]);
+        // Clear global state for TableA
+        if (window.progressFilterState) {
+          window.progressFilterState.filteredData = [];
+        }
         return;
       }
       
@@ -92,6 +96,11 @@ const ProgressFilter = ({
       });
       
       onFilterChange(filteredData);
+      
+      // Store filtered data in global state for TableA to access
+      if (!window.progressFilterState) window.progressFilterState = {};
+      window.progressFilterState.filteredData = filteredData;
+      console.log('Progress filter updated with', filteredData.length, 'items');
       
       // Handle propagation based on selected target
       if (onPropagationChange && propagationTarget !== 'nothing') {
@@ -148,9 +157,13 @@ const ProgressFilter = ({
     // Immediately trigger propagation when dropdown changes
     if (onPropagationChange) {
       if (value === 'nothing') {
+        // Only clear global state for TableA, don't affect TableB
+        if (window.progressFilterState) {
+          window.progressFilterState.filteredData = [];
+        }
         onPropagationChange([], 'nothing');
-      } else {
-        // Get current filtered data and propagate
+      } else if (value === 'tableA') {
+        // Get current filtered data and propagate only to TableA
         const currentFilteredData = data.filter(row => {
           if (!selectedTestPacks[row.testPack]) return false;
           
@@ -164,7 +177,34 @@ const ProgressFilter = ({
           
           return true;
         });
-        onPropagationChange(currentFilteredData, value);
+        
+        // Update global state for TableA
+        if (!window.progressFilterState) window.progressFilterState = {};
+        window.progressFilterState.filteredData = currentFilteredData;
+        
+        onPropagationChange(currentFilteredData, 'tableA');
+      } else if (value === 'both') {
+        // Get current filtered data and propagate to both tables
+        const currentFilteredData = data.filter(row => {
+          if (!selectedTestPacks[row.testPack]) return false;
+          
+          if (exclusiveFilter) {
+            const progress = row.testPackProgress;
+            if (exclusiveFilter === 'above90') return progress > 90;
+            if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
+            if (exclusiveFilter === 'below70') return progress < 70;
+            if (exclusiveFilter === 'done100') return progress === 100;
+          }
+          
+          return true;
+        });
+        
+        // Update global state for TableA
+        if (!window.progressFilterState) window.progressFilterState = {};
+        window.progressFilterState.filteredData = currentFilteredData;
+        
+        // Propagate to both tables
+        onPropagationChange(currentFilteredData, 'both');
       }
     }
   }, [data, selectedTestPacks, exclusiveFilter, onPropagationChange]);
@@ -229,6 +269,11 @@ const ProgressFilter = ({
       // But we should reset the exclusive filter and propagation
       setExclusiveFilter(null);
       setPropagationTarget('nothing');
+      
+      // Clear global state for TableA
+      if (window.progressFilterState) {
+        window.progressFilterState.filteredData = [];
+      }
     }
   }, [isVisible]);
   
@@ -349,6 +394,7 @@ const ProgressFilter = ({
           >
             <option value="nothing">Nothing</option>
             <option value="tableA">Table A (Subsystem Overview)</option>
+            <option value="both">Both Tables</option>
           </Select>
         </Box>
 

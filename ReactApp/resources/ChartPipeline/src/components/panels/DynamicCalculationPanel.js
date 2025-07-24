@@ -826,7 +826,12 @@ FROM "Subsystem Overview";`);
               onProgressPropagationChange([], 'nothing');
             }
           }}
-          onPropagationChange={onProgressPropagationChange || (() => {})}
+          onPropagationChange={(filteredData, target) => {
+            // Handle the 'both' option by calling the propagation handler with 'both'
+            if (onProgressPropagationChange) {
+              onProgressPropagationChange(filteredData, target);
+            }
+          }}
           onBringToFront={onBringToFront}
         />
       )}

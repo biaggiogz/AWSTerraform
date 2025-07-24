@@ -34,11 +34,79 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible }) => {
+const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
+  // Force re-render when progress filter selection changes
+  const [, setForceUpdate] = React.useState(0);
+  
+  // State to store filtered data
+  const [filteredData, setFilteredData] = React.useState(data);
+  
+  React.useEffect(() => {
+    // Initialize global state if needed
+    if (!window.progressFilterState) {
+      window.progressFilterState = { selectedTPs: {}, filteredData: [] };
+    }
+    
+    // Set up a timer to check for changes in the global progressFilterState
+    const intervalId = setInterval(() => {
+      setForceUpdate(prev => prev + 1); // Force re-render periodically when filter is visible
+      
+      // Apply filtering based on progressFilterState
+      if (isProgressFilterVisible && window.progressFilterState && window.progressFilterState.filteredData) {
+        const filteredTPs = window.progressFilterState.filteredData.map(item => item.testPack);
+        
+        if (filteredTPs.length > 0) {
+          // Filter rows that have at least one matching TP ID
+          const newFilteredData = data.filter(row => {
+            try {
+              const tpIds = row.list_includes_tp_id;
+              
+              // Handle different data types
+              if (!tpIds) return false;
+              
+              let tpIdArray = [];
+              if (typeof tpIds === 'string') {
+                tpIdArray = tpIds.split('|');
+              } else if (Array.isArray(tpIds)) {
+                tpIdArray = tpIds;
+              } else if (typeof tpIds === 'number') {
+                tpIdArray = [String(tpIds)];
+              } else {
+                console.warn('Unexpected TP IDs type:', typeof tpIds, tpIds);
+                return false;
+              }
+              
+              return tpIdArray.some(tpId => filteredTPs.includes(String(tpId)));
+            } catch (error) {
+              console.error('Error filtering row:', error, row);
+              return false;
+            }
+          });
+          
+          setFilteredData(newFilteredData);
+        } else {
+          setFilteredData(data);
+        }
+      } else {
+        setFilteredData(data);
+      }
+    }, 500); // Check every 500ms
+    
+    return () => clearInterval(intervalId);
+  }, [isProgressFilterVisible, data]);
+  
+  // Reset filtered data when progress filter is turned off
+  React.useEffect(() => {
+    if (!isProgressFilterVisible) {
+      setFilteredData(data);
+    }
+  }, [isProgressFilterVisible, data]);
   // Log the data structure to help with debugging
   React.useEffect(() => {
     if (data && data.length > 0) {
       console.log('Table A data sample:', data[0]);
+      console.log('TP IDs type:', typeof data[0].list_includes_tp_id);
+      console.log('TP IDs value:', data[0].list_includes_tp_id);
     }
   }, [data]);
   const columns = useMemo(() => [
@@ -170,6 +238,39 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           return 'red.400';
         };
 
+        // Progress filter handling
+        const getProgressFilterColor = (tpId, progress) => {
+          if (!isProgressFilterVisible) return null;
+          
+          // Check if any TPs are selected in the filter
+          const hasFilteredData = window.progressFilterState && 
+                                window.progressFilterState.filteredData && 
+                                window.progressFilterState.filteredData.length > 0;
+          
+          // If we have filtered data, check if this TP is in the filtered list
+          if (hasFilteredData) {
+            // Find the matching TP in the filtered data
+            const matchingTP = window.progressFilterState.filteredData.find(item => {
+              return item.testPack === tpId;
+            });
+            
+            if (matchingTP) {
+              // Use the exact same color scheme as in TableB
+              const tpProgress = matchingTP.testPackProgress || 0;
+              
+              if (tpProgress === 100) return '#437057'; // 100%
+              if (tpProgress > 90) return '#97B067'; // > 90%
+              if (tpProgress >= 70) return '#FFBF78'; // >= 70%
+              return '#E86A33'; // < 70%
+            }
+            
+            // If we have filtered data but this TP is not in it, show with reduced opacity
+            return 'gray.300';
+          }
+          
+          return null;
+        };
+
         // Determine grid layout based on number of TPs
         const useGrid = tpIds.length > 2;
         let columnCount = 2; // Default 2 columns
@@ -221,18 +322,28 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                     >
                       {tpIds.map((id, idx) => {
                         const progress = progressValues[idx] ?? 0;
+                        const progressFilterColor = getProgressFilterColor(id, progress);
+                        
                         return (
                             <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
                               <Box
                                   p={1}
-                                  bg="gray.50"
+                                  bg={progressFilterColor || "gray.50"}
                                   borderRadius="sm"
                                   minH="36px" // ← Ensures each item has enough space
                                   display="flex"
                                   flexDirection="column"
                                   justifyContent="space-between"
+                                  opacity={progressFilterColor === 'gray.300' ? 0.5 : 1}
+                                  borderWidth="1px"
+                                  borderColor={progressFilterColor && progressFilterColor !== 'gray.300' ? progressFilterColor : "transparent"}
                               >
-                                <Text fontSize="8px" fontWeight="bold" textAlign="center">
+                                <Text 
+                                  fontSize="8px" 
+                                  fontWeight="bold" 
+                                  textAlign="center"
+                                  color={progressFilterColor && progressFilterColor !== 'gray.300' ? "white" : "inherit"}
+                                >
                                   {id}
                                 </Text>
                                 <Progress
@@ -246,7 +357,12 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                                     }
                                     borderRadius="sm"
                                 />
-                                <Text fontSize="7px" textAlign="right" mt={0.5}>
+                                <Text 
+                                  fontSize="7px" 
+                                  textAlign="right" 
+                                  mt={0.5}
+                                  color={progressFilterColor && progressFilterColor !== 'gray.300' ? "white" : "inherit"}
+                                >
                                   {(progress * 100).toFixed(0)}%
                                 </Text>
                               </Box>
@@ -258,6 +374,8 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                     <VStack spacing={1} align="stretch">
                       {tpIds.map((id, idx) => {
                         const progress = progressValues[idx] ?? 0;
+                        const progressFilterColor = getProgressFilterColor(id, progress);
+                        
                         return (
                             <Tooltip key={id} label={`TP ${id} - ${(progress * 100).toFixed(0)}%`} hasArrow>
                               <Box
@@ -265,11 +383,19 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                                   alignItems="center"
                                   justifyContent="space-between"
                                   p={1}
-                                  bg="gray.50"
+                                  bg={progressFilterColor || "gray.50"}
                                   borderRadius="sm"
                                   minH="36px"
+                                  opacity={progressFilterColor === 'gray.300' ? 0.5 : 1}
+                                  borderWidth="1px"
+                                  borderColor={progressFilterColor && progressFilterColor !== 'gray.300' ? progressFilterColor : "transparent"}
                               >
-                                <Text fontSize="9px" fontWeight="bold" width="40%">
+                                <Text 
+                                  fontSize="9px" 
+                                  fontWeight="bold" 
+                                  width="40%"
+                                  color={progressFilterColor && progressFilterColor !== 'gray.300' ? "white" : "inherit"}
+                                >
                                   {id}
                                 </Text>
                                 <Box width="55%">
@@ -283,7 +409,12 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                                       }
                                       borderRadius="sm"
                                   />
-                                  <Text fontSize="8px" textAlign="right" mt={0.5}>
+                                  <Text 
+                                    fontSize="8px" 
+                                    textAlign="right" 
+                                    mt={0.5}
+                                    color={progressFilterColor && progressFilterColor !== 'gray.300' ? "white" : "inherit"}
+                                  >
                                     {(progress * 100).toFixed(0)}%
                                   </Text>
                                 </Box>
@@ -539,7 +670,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     }
 
-  ], [selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible]);
+  ], [selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {
@@ -669,7 +800,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   }, [data]);
   
   const table = useReactTable({
-    data: data || [],
+    data: isProgressFilterVisible ? filteredData || [] : data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     enableColumnResizing: true,
