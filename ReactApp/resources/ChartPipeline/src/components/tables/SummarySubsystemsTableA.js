@@ -463,35 +463,35 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             id: 'loop_testing', 
             title: 'LOOP SIGNAL PROGRESS', 
             colspan: 3, 
-            startCol: 9,
+            startCol: 10,
             color: '#8AB3DB'
           },
           { 
             id: 'instruments', 
             title: 'INSTRUMENTS PROGRESS',
             colspan: 3, 
-            startCol: 12,
+            startCol: 13,
             color: '#A888B5'
           },
           { 
             id: 'tracing', 
             title: 'TRACING PROGRESS',
             colspan: 3, 
-            startCol: 15,
+            startCol: 16,
             color: '#0ABAB5'
           },
           { 
             id: 'insulation_progress',
             title: 'INSULATION PROGRESS',
             colspan: 3, 
-            startCol: 18,
+            startCol: 19,
             color: '#E5D6AC'
           },
           {
             id: 'punch',
             title: 'PUNCH LIST PROGRESS',
             colspan: 4,
-            startCol: 21,
+            startCol: 22,
             color: '#748DAE'
           }
         ]
