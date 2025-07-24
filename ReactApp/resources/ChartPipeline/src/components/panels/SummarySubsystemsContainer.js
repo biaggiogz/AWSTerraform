@@ -21,6 +21,8 @@ const SummarySubsystemsContainer = ({
   const [isItemsFilterVisible, setIsItemsFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
+  const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
+  const [subsystemFilteredData, setSubsystemFilteredData] = useState(tableAData);
   const [topZIndex, setTopZIndex] = useState(100);
   
   // Load CSV data and transform for ProgressFilter compatibility
@@ -60,19 +62,23 @@ const SummarySubsystemsContainer = ({
     loadCSVData();
   }, []);
   
-  // Apply status, loop, and hito filters
+  // Apply status, loop, hito, and subsystem filters
   const combinedFilteredTableAData = useMemo(() => {
     const statusFiltered = statusFilteredData;
     const loopFiltered = loopFilteredData;
+    const subsystemFiltered = subsystemFilteredData;
     
-    // Find intersection of both filters
+    // Find intersection of all filters
     const statusSubsystems = new Set(statusFiltered.map(row => row.subsystem));
     const loopSubsystems = new Set(loopFiltered.map(row => row.subsystem));
+    const subsystemSubsystems = new Set(subsystemFiltered.map(row => row.subsystem));
     
     return tableAData.filter(row => 
-      statusSubsystems.has(row.subsystem) && loopSubsystems.has(row.subsystem)
+      statusSubsystems.has(row.subsystem) && 
+      loopSubsystems.has(row.subsystem) &&
+      subsystemSubsystems.has(row.subsystem)
     );
-  }, [tableAData, statusFilteredData, loopFilteredData]);
+  }, [tableAData, statusFilteredData, loopFilteredData, subsystemFilteredData]);
   
   const combinedFilteredTableBData = useMemo(() => {
     // Apply hito filter to progressFilteredData
@@ -107,6 +113,10 @@ const SummarySubsystemsContainer = ({
   React.useEffect(() => {
     setHitoFilteredData(tableBData);
   }, [tableBData]);
+  
+  React.useEffect(() => {
+    setSubsystemFilteredData(tableAData);
+  }, [tableAData]);
   
   const handleProgressFilterChange = (filteredData) => {
     // If we're receiving the original data, it means the filter is being reset
@@ -225,6 +235,23 @@ const SummarySubsystemsContainer = ({
     }
   };
   
+  const handleSubsystemFilterChange = (filteredData) => {
+    const isReset = filteredData === tableAData;
+    setSubsystemFilteredData(filteredData);
+  };
+  
+  const handleSubsystemPropagationChange = (filteredData, target) => {
+    if (target === 'tableB') {
+      const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
+      const propagatedTableBData = tableBData.filter(row => 
+        allowedSubsystems.has(row.subsystem)
+      );
+      setProgressFilteredData(propagatedTableBData);
+    } else if (target === 'nothing') {
+      setSubsystemFilteredData(tableAData);
+    }
+  };
+  
   const handleBringToFront = () => {
     const newZIndex = topZIndex + 1;
     setTopZIndex(newZIndex);
@@ -256,6 +283,9 @@ const SummarySubsystemsContainer = ({
           onHitoFilteredDataChange={handleHitoFilterChange}
           onHitoFilterVisibilityChange={setIsHitoFilterVisible}
           onHitoPropagationChange={handleHitoPropagationChange}
+          onSubsystemFilteredDataChange={handleSubsystemFilterChange}
+          onSubsystemFilterVisibilityChange={setIsSubsystemFilterVisible}
+          onSubsystemPropagationChange={handleSubsystemPropagationChange}
           onBringToFront={handleBringToFront}
         />
       </Suspense>
@@ -266,7 +296,7 @@ const SummarySubsystemsContainer = ({
           title="Subsystem Overview"
           initialWidth={1657}
           initialHeight={700}
-          initialX={15}
+          initialX={10}
           initialY={10}
           minWidth={1657}
           minHeight={700}
@@ -280,6 +310,7 @@ const SummarySubsystemsContainer = ({
             isLoopFilterVisible={isLoopFilterVisible}
             isHitoFilterVisible={isHitoFilterVisible}
             isProgressFilterVisible={isProgressFilterVisible}
+            isSubsystemFilterVisible={isSubsystemFilterVisible}
           />
         </ResizableDraggablePanel>
 
@@ -287,7 +318,7 @@ const SummarySubsystemsContainer = ({
           title="Test Pack Progress Details"
           initialWidth={700}
           initialHeight={550}
-          initialX={750}
+          initialX={1110}
           initialY={20}
           minWidth={400}
           minHeight={300}

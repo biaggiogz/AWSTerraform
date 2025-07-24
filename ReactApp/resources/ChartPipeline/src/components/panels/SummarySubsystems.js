@@ -6,7 +6,7 @@ import PersistentStateNotification from '../ui/PersistentStateNotification';
 import { useSummarySubsystemsData } from '../../hooks/useSummarySubsystemsData';
 import WasmPerformanceMonitor from '../ui/WasmPerformanceMonitor';
 
-const SummarySubsystems = ({ data: filteredData = [] }) => {
+const SummarySubsystems = ({ data: filteredData = [], isZoomed = false }) => {
   const [performanceMetrics, setPerformanceMetrics] = useState({});
   
   const {
@@ -40,7 +40,7 @@ const SummarySubsystems = ({ data: filteredData = [] }) => {
   }
 
   return (
-    <Box p={6} width="100%" height="100vh" maxWidth="100vw" overflow="hidden">
+    <Box p={6} width="100%" height="100vh" maxWidth={isZoomed ? "166.67vw" : "150vw"} overflow="hidden">
       <PersistentStateNotification tabName="summarySubsystems" />
       <VStack spacing={4} align="stretch">
         <PersistentMetricCards tabName="summarySubsystems" />

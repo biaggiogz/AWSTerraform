@@ -86,8 +86,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
 
   // Handle tab change
   const handleTabChange = (index) => {
-    // Set zoom to 80% for SUMMARY SUBSYSTEMS tab, 100% for others
-    // document.body.style.zoom = index === 4 ? '0.8' : '1.0';
     onDashboardChange(dashboardNames[index]);
   };
 
@@ -194,7 +192,9 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
 
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <SummarySubsystems data={data} />
+                <Box transform="scale(0.9)" transformOrigin="top left" width="111.11%">
+                  <SummarySubsystems data={data} isZoomed={true} />
+                </Box>
               </Suspense>
             </TabPanel>
           </TabPanels>

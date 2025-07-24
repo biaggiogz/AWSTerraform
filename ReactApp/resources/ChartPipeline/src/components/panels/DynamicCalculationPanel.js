@@ -19,8 +19,9 @@ import LoopStatusFilter from '../filters/LoopStatusFilter';
 // Import directly without lazy loading
 import HitoFilter from '../filters/HitoFilter';
 import HitoFilterA from '../filters/HitoFilterA';
+import SubsystemFilterA from '../filters/SubsystemFilterA'
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onBringToFront }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
@@ -42,6 +43,7 @@ FROM "Subsystem Overview";`);
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
+  const [isSubsystemFilterAVisible, setIsSubsystemFilterAVisible] = useState(false);
   const textareaRef = useRef(null);
 
   // Restore query from persistent state
@@ -384,6 +386,20 @@ FROM "Subsystem Overview";`);
               }}
               aria-label="Toggle hito filter"
               title="Hito Filter"
+            />
+            <IconButton
+              icon={<MdCheckCircle />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const newVisibility = !isSubsystemFilterAVisible;
+                setIsSubsystemFilterAVisible(newVisibility);
+                if (onSubsystemFilterVisibilityChange) {
+                  onSubsystemFilterVisibilityChange(newVisibility);
+                }
+              }}
+              aria-label="Toggle subsystem filter A"
+              title="Subsystem Filter A"
             />
             <IconButton
               icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}
@@ -928,6 +944,30 @@ FROM "Subsystem Overview";`);
             onBringToFront={onBringToFront}
           />
         )
+      )}
+      
+      {isSubsystemFilterAVisible && (
+        <SubsystemFilterA
+          data={controlData}
+          onFilterChange={onSubsystemFilteredDataChange || (() => {})}
+          isVisible={isSubsystemFilterAVisible}
+          onClose={() => {
+            setIsSubsystemFilterAVisible(false);
+            if (onSubsystemFilterVisibilityChange) {
+              onSubsystemFilterVisibilityChange(false);
+            }
+            // Reset this filter's effect by passing the original data
+            if (onSubsystemFilteredDataChange) {
+              onSubsystemFilteredDataChange(controlData);
+            }
+            // Reset propagation if it was active
+            if (onSubsystemPropagationChange) {
+              onSubsystemPropagationChange([], 'nothing');
+            }
+          }}
+          onPropagationChange={onSubsystemPropagationChange || (() => {})}
+          onBringToFront={onBringToFront}
+        />
       )}
     </Box>
   );
