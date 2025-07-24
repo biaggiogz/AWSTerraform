@@ -86,7 +86,7 @@ FROM "Subsystem Overview";`);
   const getMetricColor = useMemo(() => {
     const colorMap = {
       subsystem: '#007598', hito: '#007598', description: '#007598', fluid: '#007598',
-      items: '#CEC19B', insulation: '#CEC19B',
+      insulation: '#CEC19B',
       loop: '#7CA2C5',
       inst: '#977AA3',
       tracing: '#09A7A3',

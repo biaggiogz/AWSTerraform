@@ -261,15 +261,15 @@ const SummarySubsystemsContainer = ({
       </Suspense>
       
       {/* Draggable Tables */}
-      <Box position="relative" width="100%" height="800px" overflow="hidden">
+      <Box position="relative" width="120%" height="800px" overflow="hidden">
         <ResizableDraggablePanel
           title="Subsystem Overview"
-          initialWidth={1000}
+          initialWidth={1657}
           initialHeight={700}
-          initialX={20}
-          initialY={20}
-          minWidth={1000}
-          minHeight={300}
+          initialX={15}
+          initialY={10}
+          minWidth={1657}
+          minHeight={700}
           onBringToFront={handleBringToFront}
         >
           <SummarySubsystemsTableA

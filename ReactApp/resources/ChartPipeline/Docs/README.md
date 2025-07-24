@@ -78,7 +78,6 @@ ChartPipeline/
 │   │   ├── dataProcessor.optimized.js # Data transformation and processing utilities
 │   │   ├── multiValueFilter.js     # Multi-value filtering utilities
 │   ├── App.optimized.js    # Main application with responsive layout
-│   ├── App.multiValueFilter.js # Multi-value filter version of main app
 ├── .dockerignore           # Docker ignore patterns
 ├── .env                    # Environment configuration
 ├── Dockerfile              # Docker configuration

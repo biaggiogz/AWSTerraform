@@ -86,6 +86,8 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
 
   // Handle tab change
   const handleTabChange = (index) => {
+    // Set zoom to 80% for SUMMARY SUBSYSTEMS tab, 100% for others
+    // document.body.style.zoom = index === 4 ? '0.8' : '1.0';
     onDashboardChange(dashboardNames[index]);
   };
 
