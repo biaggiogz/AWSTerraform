@@ -241,24 +241,24 @@ const SummarySubsystemsContainer = ({
           />
         </ResizableDraggablePanel>
         
-        <ResizableDraggablePanel
-          title="Test Pack Details"
-          initialWidth={700}
-          initialHeight={550}
-          initialX={750}
-          initialY={20}
-          minWidth={400}
-          minHeight={300}
-          onBringToFront={handleBringToFront}
-        >
-          <SummarySubsystemsTableB
-            data={filteredTableBData}
-            selectedSubsystem={selectedSubsystem}
-            onSubsystemSelect={handleSubsystemSelect}
-            isProgressFilterVisible={isProgressFilterVisible}
-            isHitoFilterVisible={false}
-          />
-        </ResizableDraggablePanel>
+        {/*<ResizableDraggablePanel*/}
+        {/*  title="Test Pack Details"*/}
+        {/*  initialWidth={700}*/}
+        {/*  initialHeight={550}*/}
+        {/*  initialX={750}*/}
+        {/*  initialY={20}*/}
+        {/*  minWidth={400}*/}
+        {/*  minHeight={300}*/}
+        {/*  onBringToFront={handleBringToFront}*/}
+        {/*>*/}
+        {/*  <SummarySubsystemsTableB*/}
+        {/*    data={filteredTableBData}*/}
+        {/*    selectedSubsystem={selectedSubsystem}*/}
+        {/*    onSubsystemSelect={handleSubsystemSelect}*/}
+        {/*    isProgressFilterVisible={isProgressFilterVisible}*/}
+        {/*    isHitoFilterVisible={false}*/}
+        {/*  />*/}
+        {/*</ResizableDraggablePanel>*/}
       </Box>
     </VStack>
   );
