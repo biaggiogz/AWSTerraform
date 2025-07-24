@@ -61,25 +61,25 @@ const ProgressFilter = ({
     return result;
   }, [testPackMetrics]);
 
-  // Initialize with empty selection when filter opens
+  // Initialize when filter opens
   React.useEffect(() => {
-    const testPackKeys = Object.keys(sortedTestPacks);
-    if (testPackKeys.length > 0 && !isInitialized) {
+    if (isVisible && !isInitialized && Object.keys(sortedTestPacks).length > 0) {
+      const testPackKeys = Object.keys(sortedTestPacks);
       const initialState = testPackKeys.reduce((acc, testPack) => {
-        acc[testPack] = false;
+        acc[testPack] = true;
         return acc;
       }, {});
       setSelectedTestPacks(initialState);
       setIsInitialized(true);
-
+      
+      // Trigger immediate filter with all data
+      onFilterChange(data || []);
+      
       if (!window.progressFilterState) window.progressFilterState = {};
-      window.progressFilterState.filteredData = [];
-
-      console.log('ProgressFilter initialized with empty selection');
+      window.progressFilterState.filteredData = data || [];
     }
-  }, [sortedTestPacks, isInitialized]);
+  }, [isVisible, isInitialized, sortedTestPacks, data, onFilterChange]);
 
-  // Extract filtering logic to avoid duplication
   const getFilteredData = useCallback(() => {
     if (!data || data.length === 0) return [];
     
@@ -107,8 +107,8 @@ const ProgressFilter = ({
   }, [data, selectedTestPacks, exclusiveFilter]);
 
   const debounceRef = useRef(null);
-  const lastFilteredDataRef = useRef([]);
 
+  // Debounced filter application
   React.useEffect(() => {
     if (!isInitialized) return;
 
@@ -118,27 +118,22 @@ const ProgressFilter = ({
 
     debounceRef.current = setTimeout(() => {
       const filteredData = getFilteredData();
-      
-      // Only update if data actually changed
-      if (JSON.stringify(filteredData) !== JSON.stringify(lastFilteredDataRef.current)) {
-        lastFilteredDataRef.current = filteredData;
-        onFilterChange(filteredData);
+      onFilterChange(filteredData);
 
-        if (!window.progressFilterState) window.progressFilterState = {};
-        window.progressFilterState.filteredData = filteredData;
+      if (!window.progressFilterState) window.progressFilterState = {};
+      window.progressFilterState.filteredData = filteredData;
 
-        if (onPropagationChange && propagationTarget !== 'nothing') {
-          onPropagationChange(filteredData, propagationTarget);
-        }
+      if (onPropagationChange && propagationTarget !== 'nothing') {
+        onPropagationChange(filteredData, propagationTarget);
       }
-    }, 50);
+    }, 100);
 
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [getFilteredData, onFilterChange, onPropagationChange, propagationTarget, isInitialized]);
+  }, [selectedTestPacks, exclusiveFilter, getFilteredData, onFilterChange, onPropagationChange, propagationTarget, isInitialized]);
 
   const toggleExclusiveFilter = useCallback((filter) => {
     setExclusiveFilter(prev => prev === filter ? null : filter);
@@ -251,11 +246,13 @@ const ProgressFilter = ({
     return buttons;
   }, [filteredTestPacks, selectedTestPacks, exclusiveFilter, toggleTestPack, getProgressColor]);
 
-  // Reset internal state when filter becomes invisible
+  // Reset state when filter becomes invisible
   React.useEffect(() => {
     if (!isVisible) {
       setExclusiveFilter(null);
       setPropagationTarget('nothing');
+      setSelectedTestPacks({});
+      setSearchTerm('');
       setIsInitialized(false);
 
       if (window.progressFilterState) {

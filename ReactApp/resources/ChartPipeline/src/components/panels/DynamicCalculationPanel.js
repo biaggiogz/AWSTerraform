@@ -11,10 +11,9 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop, MdFlag } from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
-import ProgressFilter from '../filters/ProgressFilter';
 import InsulStatusFilter from '../filters/InsulationStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 // Import directly without lazy loading
@@ -39,7 +38,7 @@ FROM "Subsystem Overview";`);
   const [isInterfaceVisible, setIsInterfaceVisible] = useState(true);
   const [showFieldSuggestions, setShowFieldSuggestions] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
-  const [isFilterVisible, setIsFilterVisible] = useState(false);
+
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
@@ -326,20 +325,7 @@ FROM "Subsystem Overview";`);
             SQL Query Interface
           </Text>
           <HStack spacing={2}>
-            <IconButton
-              icon={<MdFilterList />}
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                const newVisibility = !isFilterVisible;
-                setIsFilterVisible(newVisibility);
-                if (onProgressFilterVisibilityChange) {
-                  onProgressFilterVisibilityChange(newVisibility);
-                }
-              }}
-              aria-label="Toggle progress filter"
-              title="Test Pack Progress Filter"
-            />
+
             <IconButton
               icon={<MdCheckCircle />}
               size="sm"
@@ -829,31 +815,7 @@ FROM "Subsystem Overview";`);
         </HStack>
       )}
       
-      {isFilterVisible && (
-        <ProgressFilter
-          data={csvProgressData || detailsData}
-          onFilterChange={onFilteredDataChange || (() => {})}
-          isVisible={isFilterVisible}
-          onClose={() => {
-            setIsFilterVisible(false);
-            if (onProgressFilterVisibilityChange) {
-              onProgressFilterVisibilityChange(false);
-            }
-            if (onFilteredDataChange) {
-              onFilteredDataChange(csvProgressData || detailsData);
-            }
-            if (onProgressPropagationChange) {
-              onProgressPropagationChange([], 'nothing');
-            }
-          }}
-          onPropagationChange={(filteredData, target) => {
-            if (onProgressPropagationChange) {
-              onProgressPropagationChange(filteredData, target);
-            }
-          }}
-          onBringToFront={onBringToFront}
-        />
-      )}
+
       
       {isSubsystemFilterVisible && (
         <InsulStatusFilter
