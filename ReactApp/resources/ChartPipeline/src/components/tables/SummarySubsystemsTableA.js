@@ -257,11 +257,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             if (matchingTP) {
               // Use the exact same color scheme as in TableB
               const tpProgress = matchingTP.testPackProgress || 0;
-              
+
               if (tpProgress === 100) return '#437057'; // 100%
-              if (tpProgress > 90) return '#97B067'; // > 90%
-              if (tpProgress >= 70) return '#FFBF78'; // >= 70%
-              return '#E86A33'; // < 70%
+              if (tpProgress >= 90 && tpProgress < 100) return '#97B067'; // > 90%
+              return '#E86A33'; // < 90%
             }
             
             // If we have filtered data but this TP is not in it, show with reduced opacity

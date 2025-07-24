@@ -86,9 +86,8 @@ const ProgressFilter = ({
         
         if (exclusiveFilter) {
           const progress = row.testPackProgress;
-          if (exclusiveFilter === 'above90') return progress > 90;
-          if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
-          if (exclusiveFilter === 'below70') return progress < 70;
+          if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
+          if (exclusiveFilter === "below90") return progress < 90;
           if (exclusiveFilter === 'done100') return progress === 100;
         }
         
@@ -146,8 +145,7 @@ const ProgressFilter = ({
 
   const getProgressColor = useCallback((progress) => {
     if (progress === 100) return '#437057';
-    if (progress > 90) return '#97B067';
-    if (progress >= 70) return '#FFBF78';
+    if (progress >= 90 && progress < 100) return '#97B067';
     return '#E86A33';
   }, []);
 
@@ -169,9 +167,8 @@ const ProgressFilter = ({
           
           if (exclusiveFilter) {
             const progress = row.testPackProgress;
-            if (exclusiveFilter === 'above90') return progress > 90;
-            if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
-            if (exclusiveFilter === 'below70') return progress < 70;
+            if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
+            if (exclusiveFilter === "below90") return progress < 90;
             if (exclusiveFilter === 'done100') return progress === 100;
           }
           
@@ -190,9 +187,8 @@ const ProgressFilter = ({
           
           if (exclusiveFilter) {
             const progress = row.testPackProgress;
-            if (exclusiveFilter === 'above90') return progress > 90;
-            if (exclusiveFilter === 'between70And90') return progress >= 70 && progress <= 90;
-            if (exclusiveFilter === 'below70') return progress < 70;
+            if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
+            if (exclusiveFilter === "below90") return progress < 90;
             if (exclusiveFilter === 'done100') return progress === 100;
           }
           
@@ -226,9 +222,8 @@ const ProgressFilter = ({
       const progress = metrics.progress;
       const isSelected = selectedTestPacks[testPack] || false;
       const isVisible = !exclusiveFilter ||
-                      (exclusiveFilter === 'above90' && progress > 90) ||
-                      (exclusiveFilter === 'between70And90' && progress >= 70 && progress <= 90) ||
-                      (exclusiveFilter === 'below70' && progress < 70) ||
+                      (exclusiveFilter === 'range90to99' && progress >= 90 && progress < 100) ||
+                      (exclusiveFilter === 'below90' && progress < 90) ||
                       (exclusiveFilter === 'done100' && progress === 100);
       
       const isDisabled = exclusiveFilter && !isVisible;
@@ -329,51 +324,37 @@ const ProgressFilter = ({
             </HStack>
           </Tooltip>
 
-          <Tooltip label="Click to show only above 90%" placement="top">
+          <Tooltip label="Click to show only above 90% and below 100%" placement="top">
             <HStack
-              onClick={() => toggleExclusiveFilter('above90')}
+              onClick={() => toggleExclusiveFilter('range90to99')}
               cursor="pointer"
               p={1}
               borderRadius="md"
-              bg={exclusiveFilter === 'above90' ? "blue.50" : "transparent"}
+              bg={exclusiveFilter === 'range90to99' ? "blue.50" : "transparent"}
               borderWidth="1px"
-              borderColor={exclusiveFilter === 'above90' ? "blue.300" : "transparent"}
+              borderColor={exclusiveFilter === 'range90to99' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
               <Box width="15px" height="15px" bg="#97B067" borderWidth="1px" />
-              <Text fontWeight={exclusiveFilter === 'above90' ? "bold" : "normal"}>Above 90%</Text>
+              <Text fontWeight={exclusiveFilter === 'range90to99' ? "bold" : "normal"}>From 90% to 99%</Text>
             </HStack>
           </Tooltip>
 
-          <Tooltip label="Click to show only 70-90%" placement="top">
-            <HStack
-              onClick={() => toggleExclusiveFilter('between70And90')}
-              cursor="pointer"
-              p={1}
-              borderRadius="md"
-              bg={exclusiveFilter === 'between70And90' ? "blue.50" : "transparent"}
-              borderWidth="1px"
-              borderColor={exclusiveFilter === 'between70And90' ? "blue.300" : "transparent"}
-              _hover={{ bg: "gray.100" }}
-            >
-              <Box width="15px" height="15px" bg="#FFBF78" borderWidth="1px" />
-              <Text fontWeight={exclusiveFilter === 'between70And90' ? "bold" : "normal"}>70-90%</Text>
-            </HStack>
-          </Tooltip>
 
-          <Tooltip label="Click to show only below 70%" placement="top">
+
+          <Tooltip label="Click to show only below 90%" placement="top">
             <HStack
-              onClick={() => toggleExclusiveFilter('below70')}
+              onClick={() => toggleExclusiveFilter('below90')}
               cursor="pointer"
               p={1}
               borderRadius="md"
-              bg={exclusiveFilter === 'below70' ? "blue.50" : "transparent"}
+              bg={exclusiveFilter === 'below90' ? "blue.50" : "transparent"}
               borderWidth="1px"
-              borderColor={exclusiveFilter === 'below70' ? "blue.300" : "transparent"}
+              borderColor={exclusiveFilter === 'below90' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
               <Box width="15px" height="15px" bg="#E86A33" borderWidth="1px" />
-              <Text fontWeight={exclusiveFilter === 'below70' ? "bold" : "normal"}>Below 70%</Text>
+              <Text fontWeight={exclusiveFilter === 'below90' ? "bold" : "normal"}>Below 90%</Text>
             </HStack>
           </Tooltip>
         </HStack>
