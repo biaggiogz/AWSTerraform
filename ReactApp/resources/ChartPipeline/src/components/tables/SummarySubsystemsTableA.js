@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { filterByMatchingSubsystems } from '../../utils/filterUtils';
 import { Box, Heading, Text, HStack, Button, Tooltip, Grid, Progress, VStack } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { VariableSizeList as List } from 'react-window';
@@ -40,11 +41,49 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   // Force re-render when progress filter selection changes
   const [, setForceUpdate] = React.useState(0);
   
+  // Listen for changes in the progress filter state
+  React.useEffect(() => {
+    const handleProgressFilterChange = () => {
+      // Force re-render
+      setForceUpdate(prev => prev + 1);
+      
+      // Debug the current state
+      if (window.progressFilterState) {
+        console.log('Progress Filter State:', {
+          hasUserSelection: window.progressFilterState.hasUserSelection,
+          matchingSubsystemsCount: window.progressFilterState.matchingSubsystems?.length || 0,
+          filteredDataCount: window.progressFilterState.filteredData?.length || 0
+        });
+      }
+      
+      // Re-apply filtering
+      if (window.progressFilterState?.hasUserSelection && 
+          window.progressFilterState?.matchingSubsystems?.length > 0) {
+        const filtered = filterByMatchingSubsystems(data, window.progressFilterState.matchingSubsystems);
+        setFilteredData(filtered);
+        console.log('TableA: Applied filtering based on progress filter');
+      } else {
+        setFilteredData(data);
+        console.log('TableA: No filtering applied');
+      }
+    };
+    
+    // Set up interval to check for changes in progressFilterState
+    const intervalId = setInterval(() => {
+      if (window.progressFilterState && isProgressFilterVisible) {
+        handleProgressFilterChange();
+      }
+    }, 500); // Check every 500ms
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [data, isProgressFilterVisible]);
+  
   // State to store filtered data
   const [filteredData, setFilteredData] = React.useState(data);
   
-  // We no longer need to filter TableA directly based on TP IDs
-  // since we've moved that functionality to the separate TP table
+  // Initial data setup
   React.useEffect(() => {
     setFilteredData(data);
   }, [data]);

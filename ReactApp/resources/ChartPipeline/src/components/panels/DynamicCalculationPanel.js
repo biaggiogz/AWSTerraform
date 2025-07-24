@@ -14,7 +14,8 @@ import {
 import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdFilterList, MdCheckCircle, MdLoop, MdFlag } from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
-import ProgressFilter from '../filters/ProgressFilter';
+// ProgressFilter disabled
+// import ProgressFilter from '../filters/ProgressFilter';
 import ItemsStatusFilter from '../filters/ItemsStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 // Import directly without lazy loading
@@ -308,19 +309,18 @@ FROM "Subsystem Overview";`);
             SQL Query Interface
           </Text>
           <HStack spacing={2}>
+            {/* Progress Filter button disabled */}
             <IconButton
               icon={<MdFilterList />}
               size="sm"
               variant="ghost"
               onClick={() => {
-                const newVisibility = !isFilterVisible;
-                setIsFilterVisible(newVisibility);
-                if (onProgressFilterVisibilityChange) {
-                  onProgressFilterVisibilityChange(newVisibility);
-                }
+                // Progress filter disabled
+                console.log('Progress filter has been disabled');
               }}
               aria-label="Toggle progress filter"
-              title="Test Pack Progress Filter"
+              title="Test Pack Progress Filter (Disabled)"
+              isDisabled={true}
             />
             <IconButton
               icon={<MdCheckCircle />}
@@ -811,66 +811,9 @@ FROM "Subsystem Overview";`);
         </HStack>
       )}
       
-      {isFilterVisible && (
-        <ProgressFilter
-          data={detailsData}
-          onFilterChange={(filteredData) => {
-            // Set isProgressFiltering based on whether we're actually filtering
-            const isFiltering = filteredData.length > 0 && filteredData.length < detailsData.length;
-            setIsProgressFiltering(isFiltering);
-            
-            // Check if user has made any specific selections
-            const hasUserSelection = window.progressFilterState?.hasUserSelection || false;
-            console.log('Progress filter change:', {
-              filteredDataLength: filteredData.length,
-              hasUserSelection,
-              isFiltering
-            });
-            
-            if (onFilteredDataChange) {
-              onFilteredDataChange(filteredData);
-            }
-            
-            // Directly re-execute the SQL query when filter changes
-            if (sqlQuery.trim()) {
-              // Small delay to ensure the filtered data is processed
-              setTimeout(() => executeSQLQuery(sqlQuery), 100);
-            }
-          }}
-          isVisible={isFilterVisible}
-          onClose={() => {
-            setIsFilterVisible(false);
-            setIsProgressFiltering(false); // Reset filtering state
-            if (onProgressFilterVisibilityChange) {
-              onProgressFilterVisibilityChange(false);
-            }
-            // Reset this filter's effect by passing the original data
-            if (onFilteredDataChange) {
-              onFilteredDataChange(detailsData);
-            }
-            // Reset propagation if it was active
-            if (onProgressPropagationChange) {
-              onProgressPropagationChange([], 'nothing');
-            }
-            // Re-execute query with original data to update metrics
-            if (sqlQuery.trim()) {
-              setTimeout(() => executeSQLQuery(sqlQuery), 100);
-            }
-          }}
-          onPropagationChange={(filteredData, target) => {
-            // Handle the 'both' option by calling the propagation handler with 'both'
-            if (onProgressPropagationChange) {
-              onProgressPropagationChange(filteredData, target);
-            }
-            
-            // Re-execute query when propagation changes
-            if (sqlQuery.trim()) {
-              setTimeout(() => executeSQLQuery(sqlQuery), 100);
-            }
-          }}
-          onBringToFront={onBringToFront}
+      {/* ProgressFilter disabled */}
         />
-      )}
+      )
       
       {isSubsystemFilterVisible && (
         <ItemsStatusFilter

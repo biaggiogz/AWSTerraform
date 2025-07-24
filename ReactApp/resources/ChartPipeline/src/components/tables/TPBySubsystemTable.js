@@ -4,6 +4,25 @@ import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-tabl
 import { FixedSizeList as List } from 'react-window';
 
 const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }) => {
+  // Add debug logging for data
+  React.useEffect(() => {
+    if (data && data.length > 0) {
+      // Log a sample row to see the structure
+      const sampleRow = data.find(row => {
+        return row.list_includes_tp_id && 
+               typeof row.list_includes_tp_id === 'string' && 
+               !row.list_includes_tp_id.includes('|');
+      });
+      if (sampleRow) {
+        console.log('Sample row with single TP ID:', {
+          subsystem: sampleRow.subsystem,
+          tpId: sampleRow.list_includes_tp_id,
+          progress: sampleRow.list_id_tp_total_progress
+        });
+      }
+    }
+  }, [data]);
+  
   // Group TPs by subsystem
   const subsystemTPs = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -12,24 +31,73 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
     const subsystemMap = new Map();
     
     data.forEach(row => {
-      if (!row.subsystem || !row.list_includes_tp_id) return;
+      if (!row.subsystem) return;
+      
+      // Skip rows without TP IDs, but log them for debugging
+      if (!row.list_includes_tp_id) {
+        console.log(`Skipping row for subsystem ${row.subsystem} - no TP ID`);
+        return;
+      }
       
       const subsystem = row.subsystem;
       const tpIdsRaw = row.list_includes_tp_id;
       const progressRaw = row.list_id_tp_total_progress || '';
       
       // Parse TP IDs and progress values
-      const tpIds = typeof tpIdsRaw === 'string' ? tpIdsRaw.split('|') : [];
-      const progressValues = typeof progressRaw === 'string' 
-        ? progressRaw.split('|').map(p => parseFloat(p) || 0)
-        : [];
+      // Handle both single values and pipe-separated lists
+      let tpIds = [];
+      if (typeof tpIdsRaw === 'string') {
+        // Check if it contains a pipe character
+        tpIds = tpIdsRaw.includes('|') ? tpIdsRaw.split('|') : [tpIdsRaw];
+      } else if (tpIdsRaw !== undefined && tpIdsRaw !== null) {
+        // Handle non-string values (like numbers)
+        tpIds = [String(tpIdsRaw)];
+      }
+      
+      // Debug log the raw TP ID value
+      console.log(`TP ID for ${subsystem}:`, {
+        raw: tpIdsRaw,
+        type: typeof tpIdsRaw,
+        parsed: tpIds
+      });
+      
+      // Similarly handle progress values
+      let progressValues = [];
+      if (typeof progressRaw === 'string') {
+        // Check if it contains a pipe character
+        try {
+          progressValues = progressRaw.includes('|') 
+            ? progressRaw.split('|').map(p => parseFloat(p) || 0)
+            : [parseFloat(progressRaw) || 0];
+        } catch (error) {
+          console.error(`Error parsing progress for ${subsystem}:`, error);
+          progressValues = [0]; // Default to 0 if parsing fails
+        }
+      } else if (progressRaw !== undefined && progressRaw !== null) {
+        // Handle non-string values
+        progressValues = [parseFloat(progressRaw) || 0];
+      }
       
       // Create TP objects with ID and progress
-      const tps = tpIds.map((id, idx) => ({
-        id,
-        progress: progressValues[idx] || 0,
-        progressPercent: Math.round((progressValues[idx] || 0) * 100)
-      }));
+      const tps = tpIds.map((id, idx) => {
+        // Make sure we have a valid progress value
+        const progress = idx < progressValues.length ? progressValues[idx] : 0;
+        // Store both the decimal progress (0-1) and percentage (0-100)
+        return {
+          id,
+          progress,
+          progressPercent: Math.round(progress * 100)
+        };
+      });
+      
+      // Debug log for single TP subsystems
+      if (tps.length === 1) {
+        console.log(`Single TP for subsystem ${subsystem}:`, {
+          tpId: tps[0].id,
+          progress: tps[0].progress,
+          progressPercent: tps[0].progressPercent
+        });
+      }
       
       if (!subsystemMap.has(subsystem)) {
         subsystemMap.set(subsystem, {
@@ -56,6 +124,13 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
   
   // Filter by selected subsystem if any
   const filteredSubsystems = useMemo(() => {
+    // Log the total number of subsystems with TPs
+    console.log(`Total subsystems with TPs: ${subsystemTPs.length}`);
+    if (subsystemTPs.length > 0) {
+      // Log a sample subsystem
+      console.log('Sample subsystem:', subsystemTPs[0]);
+    }
+    
     if (!selectedSubsystem) return subsystemTPs;
     return subsystemTPs.filter(item => item.subsystem === selectedSubsystem);
   }, [subsystemTPs, selectedSubsystem]);
@@ -68,14 +143,28 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
     if (!isProgressFilterVisible) {
       setFilterActive(false);
     } else {
-      // Short delay before considering the filter active
-      // This prevents immediate filtering when the filter is first opened
-      const timer = setTimeout(() => {
-        setFilterActive(true);
-      }, 500);
-      return () => clearTimeout(timer);
+      // Make filter active immediately to be more responsive
+      setFilterActive(true);
     }
   }, [isProgressFilterVisible]);
+  
+  // Force re-render when window.progressFilterState changes
+  React.useEffect(() => {
+    const checkFilterState = () => {
+      if (window.progressFilterState) {
+        // Force re-render by updating state
+        setFilterActive(window.progressFilterState.hasUserSelection);
+      }
+    };
+    
+    // Check initially
+    checkFilterState();
+    
+    // Set up interval to check for changes
+    const intervalId = setInterval(checkFilterState, 300);
+    
+    return () => clearInterval(intervalId);
+  }, []);
   
   // Add debug logging to help diagnose issues
   React.useEffect(() => {
@@ -99,38 +188,50 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
       return filteredSubsystems;
     }
     
-    // If there are no filtered TPs, don't filter the data
-    if (!window.progressFilterState?.filteredData?.length) {
-      console.log('Not filtering: no filtered data');
+    // Get selected TPs directly from the global state
+    const selectedTPs = window.progressFilterState?.selectedTPs || [];
+    
+    // If there are no selected TPs, don't filter the data
+    if (!selectedTPs.length) {
+      console.log('Not filtering: no selected TPs');
       return filteredSubsystems;
     }
     
-    // Get filtered TPs from the progress filter
-    // The data structure can vary depending on the source
-    const filteredTPs = window.progressFilterState.filteredData.map(item => {
-      // Handle both possible data structures
-      const tpId = item.testPack || item.id || '';
-      return tpId;
-    }).filter(Boolean); // Remove any empty values
+    console.log('Selected TPs:', selectedTPs.slice(0, 5), '...', selectedTPs.length, 'total');
     
-    console.log('Filtered TPs:', filteredTPs.slice(0, 5), '...', filteredTPs.length, 'total');
+    // Filter subsystems to only include those with selected TPs
+    const filteredSubsystemsWithSelectedTPs = filteredSubsystems
+      .map(subsystem => {
+        // Mark TPs as selected or not based on filter
+        const updatedTPs = subsystem.tps.map(tp => {
+          // Convert both to strings for comparison
+          const isSelected = selectedTPs.some(selectedTp => String(selectedTp) === String(tp.id));
+          return {
+            ...tp,
+            isSelected
+          };
+        });
+        
+        // Only include TPs that are selected
+        const selectedTPsOnly = updatedTPs.filter(tp => tp.isSelected);
+        
+        return {
+          ...subsystem,
+          tps: selectedTPsOnly,
+          // Only include subsystems that have at least one selected TP
+          hasSelectedTPs: selectedTPsOnly.length > 0
+        };
+      })
+      .filter(subsystem => subsystem.hasSelectedTPs);
     
-    // Highlight matching TPs but don't remove non-matching ones
-    return filteredSubsystems.map(subsystem => ({
-      ...subsystem,
-      // Mark TPs as selected or not based on filter
-      tps: subsystem.tps.map(tp => ({
-        ...tp,
-        isSelected: filteredTPs.includes(tp.id)
-      }))
-    }));
+    return filteredSubsystemsWithSelectedTPs;
   }, [filteredSubsystems, isProgressFilterVisible, filterActive]);
   
-  // Get progress color based on value
+  // Get progress color based on value - matching ProgressFilter.js
   const getProgressColor = (progress) => {
-    if (progress >= 1) return '#437057';
-    if (progress >= 0.9) return '#97B067';
-    return '#E86A33';
+    if (progress >= 100) return '#437057'; // Done 100%
+    if (progress >= 90 && progress < 100) return '#97B067'; // From 90% to 99%
+    return '#E86A33'; // Below 90%
   };
   
   // Row renderer for virtualized list
@@ -145,12 +246,15 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
         borderBottom="1px solid" 
         borderColor="gray.200"
         bg={index % 2 === 0 ? "white" : "gray.50"}
+        borderLeft="4px solid"
+        borderLeftColor="blue.500"
       >
         <VStack align="stretch" spacing={2}>
           <HStack justify="space-between">
             <Heading size="xs" color="#007598">{subsystem.subsystem}</Heading>
             <Badge 
-              colorScheme={subsystem.avgProgress >= 0.9 ? "green" : subsystem.avgProgress >= 0.7 ? "yellow" : "orange"}
+              bg={getProgressColor(Math.round(subsystem.avgProgress * 100))}
+              color="white"
               fontSize="xs"
             >
               {Math.round(subsystem.avgProgress * 100)}% Avg
@@ -160,10 +264,7 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
           <Box>
             <HStack spacing={1} flexWrap="wrap">
               {subsystem.tps.map(tp => {
-                // Determine styling based on filter state
-                const isSelected = hasActiveFilter ? tp.isSelected : true;
-                const opacity = hasActiveFilter && !isSelected ? 0.4 : 1;
-                const bgColor = getProgressColor(tp.progress);
+                const bgColor = getProgressColor(tp.progressPercent);
                 
                 return (
                   <Tooltip key={tp.id} label={`${tp.id} - ${tp.progressPercent}%`} hasArrow>
@@ -177,8 +278,10 @@ const TPBySubsystemTable = ({ data, selectedSubsystem, isProgressFilterVisible }
                       fontWeight="medium"
                       mb={1}
                       mr={1}
-                      opacity={opacity}
-                      transition="opacity 0.2s"
+                      transform="scale(1.05)"
+                      boxShadow="0 0 0 2px white, 0 0 0 4px blue.500"
+                      border="2px solid"
+                      borderColor="blue.500"
                     >
                       {tp.id} ({tp.progressPercent}%)
                     </Box>
