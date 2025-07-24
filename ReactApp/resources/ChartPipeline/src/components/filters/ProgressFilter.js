@@ -72,6 +72,28 @@ const ProgressFilter = ({
     }
   }, [sortedTestPacks, isInitialized]);
 
+  // Extract filtering logic to avoid duplication
+  const getFilteredData = useCallback(() => {
+    if (!data || data.length === 0) return [];
+    
+    const selectedTPs = Object.keys(selectedTestPacks).filter(tp => selectedTestPacks[tp]);
+    if (selectedTPs.length === 0) return [];
+
+    return data.filter(row => {
+      const testPackId = row.testPack || row.tp_id;
+      if (!selectedTestPacks[testPackId]) return false;
+
+      if (exclusiveFilter) {
+        const progress = row.testPackProgress || (row.progress_tp * 100);
+        if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
+        if (exclusiveFilter === "below90") return progress < 90;
+        if (exclusiveFilter === 'done100') return progress === 100;
+      }
+
+      return true;
+    });
+  }, [data, selectedTestPacks, exclusiveFilter]);
+
   const debounceRef = useRef(null);
 
   React.useEffect(() => {
@@ -82,47 +104,12 @@ const ProgressFilter = ({
     }
 
     debounceRef.current = setTimeout(() => {
-      if (!data || data.length === 0) {
-        onFilterChange([]);
-        if (window.progressFilterState) {
-          window.progressFilterState.filteredData = [];
-        }
-        return;
-      }
-
-      const selectedTPs = Object.keys(selectedTestPacks).filter(tp => selectedTestPacks[tp]);
-
-      if (selectedTPs.length === 0) {
-        onFilterChange([]);
-        if (!window.progressFilterState) window.progressFilterState = {};
-        window.progressFilterState.filteredData = [];
-        console.log('No test packs selected - showing empty result');
-        return;
-      }
-
-      const filteredData = data.filter(row => {
-        const testPackId = row.testPack || row.tp_id;
-        if (!selectedTestPacks[testPackId]) return false;
-
-        if (exclusiveFilter) {
-          const progress = row.testPackProgress || (row.progress_tp * 100);
-          if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
-          if (exclusiveFilter === "below90") return progress < 90;
-          if (exclusiveFilter === 'done100') return progress === 100;
-        }
-
-        return true;
-      });
-
+      const filteredData = getFilteredData();
+      
       onFilterChange(filteredData);
 
       if (!window.progressFilterState) window.progressFilterState = {};
       window.progressFilterState.filteredData = filteredData;
-      console.log('Progress filter updated:', {
-        selectedCount: selectedTPs.length,
-        filteredCount: filteredData.length,
-        exclusiveFilter
-      });
 
       if (onPropagationChange && propagationTarget !== 'nothing') {
         onPropagationChange(filteredData, propagationTarget);
@@ -134,7 +121,7 @@ const ProgressFilter = ({
         clearTimeout(debounceRef.current);
       }
     };
-  }, [data, selectedTestPacks, exclusiveFilter, onFilterChange, onPropagationChange, propagationTarget, isInitialized]);
+  }, [getFilteredData, onFilterChange, onPropagationChange, propagationTarget, isInitialized]);
 
   const toggleExclusiveFilter = useCallback((filter) => {
     setExclusiveFilter(prev => prev === filter ? null : filter);
@@ -176,84 +163,69 @@ const ProgressFilter = ({
 
     if (!onPropagationChange || !isInitialized) return;
 
-    const selectedTPs = Object.keys(selectedTestPacks).filter(tp => selectedTestPacks[tp]);
-
-    let currentFilteredData = [];
-    if (selectedTPs.length > 0) {
-      currentFilteredData = data.filter(row => {
-        const testPackId = row.testPack || row.tp_id;
-        if (!selectedTestPacks[testPackId]) return false;
-
-        if (exclusiveFilter) {
-          const progress = row.testPackProgress || (row.progress_tp * 100);
-          if (exclusiveFilter === 'range90to99') return progress >= 90 && progress < 100;
-          if (exclusiveFilter === "below90") return progress < 90;
-          if (exclusiveFilter === 'done100') return progress === 100;
-        }
-
-        return true;
-      });
-    }
+    const currentFilteredData = getFilteredData();
 
     if (!window.progressFilterState) window.progressFilterState = {};
     window.progressFilterState.filteredData = currentFilteredData;
 
     onPropagationChange(currentFilteredData, value);
+  }, [getFilteredData, onPropagationChange, isInitialized]);
 
-    console.log('Propagation changed:', { target: value, dataCount: currentFilteredData.length });
-  }, [data, selectedTestPacks, exclusiveFilter, onPropagationChange, isInitialized]);
-
+  const searchTermLower = useMemo(() => searchTerm.toLowerCase(), [searchTerm]);
+  
   const filteredTestPacks = useMemo(() => {
     if (!searchTerm) return sortedTestPacks;
 
-    const filtered = {};
-    Object.entries(sortedTestPacks).forEach(([testPack, metrics]) => {
-      if (testPack.toLowerCase().includes(searchTerm.toLowerCase())) {
-        filtered[testPack] = metrics;
-      }
+    return Object.fromEntries(
+      Object.entries(sortedTestPacks).filter(([testPack]) => 
+        testPack.toLowerCase().includes(searchTermLower)
+      )
+    );
+  }, [sortedTestPacks, searchTermLower]);
+
+  const memoizedButtons = useMemo(() => {
+    const entries = Object.entries(filteredTestPacks);
+    if (entries.length === 0) return [];
+    
+    return entries.map(([testPack, metrics]) => {
+      const progress = metrics.progress;
+      const isSelected = selectedTestPacks[testPack] === true;
+      const isVisible = !exclusiveFilter ||
+          (exclusiveFilter === 'range90to99' && progress >= 90 && progress < 100) ||
+          (exclusiveFilter === 'below90' && progress < 90) ||
+          (exclusiveFilter === 'done100' && progress === 100);
+
+      const isDisabled = exclusiveFilter && !isVisible;
+      const progressColor = getProgressColor(progress);
+
+      return (
+          <Button
+              key={testPack}
+              size="sm"
+              height="36px"
+              variant={isSelected ? "solid" : "outline"}
+              bg={isDisabled ? "gray.600" : (isSelected ? progressColor : "white")}
+              borderColor={isDisabled ? "gray.600" : progressColor}
+              color={isDisabled ? "gray.400" : (isSelected ? "white" : "black")}
+              opacity={isVisible ? 1 : 0.5}
+              onClick={isDisabled ? undefined : () => toggleTestPack(testPack)}
+              cursor={isDisabled ? "not-allowed" : "pointer"}
+              mb={1}
+              _hover={isDisabled ? {} : { bg: isSelected ? progressColor : "gray.100" }}
+              isDisabled={isDisabled}
+          >
+            <VStack spacing={0} align="center">
+              <Text fontSize="10px" noOfLines={1}>
+                {testPack}
+              </Text>
+              <Text fontSize="10px" noOfLines={1}>
+                {progress}%
+              </Text>
+            </VStack>
+          </Button>
+      );
     });
-    return filtered;
-  }, [sortedTestPacks, searchTerm]);
-
-  const memoizedButtons = useMemo(() =>
-      Object.entries(filteredTestPacks).map(([testPack, metrics]) => {
-        const progress = metrics.progress;
-        const isSelected = selectedTestPacks[testPack] === true;
-        const isVisible = !exclusiveFilter ||
-            (exclusiveFilter === 'range90to99' && progress >= 90 && progress < 100) ||
-            (exclusiveFilter === 'below90' && progress < 90) ||
-            (exclusiveFilter === 'done100' && progress === 100);
-
-        const isDisabled = exclusiveFilter && !isVisible;
-
-        return (
-            <Button
-                key={testPack}
-                size="sm"
-                height="36px"
-                variant={isSelected ? "solid" : "outline"}
-                bg={isDisabled ? "gray.600" : (isSelected ? getProgressColor(progress) : "white")}
-                borderColor={isDisabled ? "gray.600" : getProgressColor(progress)}
-                color={isDisabled ? "gray.400" : (isSelected ? "white" : "black")}
-                opacity={isVisible ? 1 : 0.5}
-                onClick={isDisabled ? undefined : () => toggleTestPack(testPack)}
-                cursor={isDisabled ? "not-allowed" : "pointer"}
-                mb={1}
-                _hover={isDisabled ? {} : { bg: isSelected ? getProgressColor(progress) : "gray.100" }}
-                isDisabled={isDisabled}
-            >
-              <VStack spacing={0} align="center">
-                <Text fontSize="10px" noOfLines={1}>
-                  {testPack}
-                </Text>
-                <Text fontSize="10px" noOfLines={1}>
-                  {progress}%
-                </Text>
-              </VStack>
-            </Button>
-        );
-      }), [filteredTestPacks, selectedTestPacks, exclusiveFilter, toggleTestPack, getProgressColor]
-  );
+  }, [filteredTestPacks, selectedTestPacks, exclusiveFilter, toggleTestPack, getProgressColor]);
 
   // Reset internal state when filter becomes invisible
   React.useEffect(() => {
@@ -384,4 +356,11 @@ const ProgressFilter = ({
   );
 };
 
-export default React.memo(ProgressFilter);
+export default React.memo(ProgressFilter, (prevProps, nextProps) => {
+  return (
+    prevProps.data === nextProps.data &&
+    prevProps.isVisible === nextProps.isVisible &&
+    prevProps.onFilterChange === nextProps.onFilterChange &&
+    prevProps.onPropagationChange === nextProps.onPropagationChange
+  );
+});

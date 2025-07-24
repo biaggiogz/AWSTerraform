@@ -22,20 +22,24 @@ import {
 const ProgressTestpackTable = ({ data, selectedSubsystem, isProgressFilterVisible }) => {
     const columnHelper = createColumnHelper();
 
+    // Memoize selected TPs to avoid recalculation
+    const selectedTPs = useMemo(() => {
+        if (!isProgressFilterVisible) return null;
+        const state = window.progressFilterState;
+        return state?.filteredData
+            ? state.filteredData.map((d) => String(d.tp_id || d.testPack || d.id || ''))
+            : null;
+    }, [isProgressFilterVisible]);
+
     // Flattened rows: each row is one test pack
     const flattenedData = useMemo(() => {
         if (!data || data.length === 0) return [];
-
-        const state = window.progressFilterState;
-        const selectedTPs = isProgressFilterVisible && state?.filteredData
-            ? state.filteredData.map((d) => String(d.tp_id || d.testPack || d.id || ''))
-            : null;
 
         return data
             .filter(row => row.tp_id && row.subsystem)
             .filter(row => !selectedSubsystem || row.subsystem === selectedSubsystem)
             .filter(row => {
-                if (!isProgressFilterVisible || !selectedTPs) return true;
+                if (!selectedTPs) return true;
                 return selectedTPs.includes(String(row.tp_id));
             })
             .map(row => ({
@@ -43,7 +47,16 @@ const ProgressTestpackTable = ({ data, selectedSubsystem, isProgressFilterVisibl
                 subsystem: row.subsystem,
                 progress: parseFloat(row.progress_tp || 0),
             }));
-    }, [data, selectedSubsystem, isProgressFilterVisible]);
+    }, [data, selectedSubsystem, selectedTPs]);
+
+    // Memoize progress color calculation
+    const getProgressColor = useMemo(() => {
+        return (progress) => {
+            if (progress >= 1) return '#437057';
+            if (progress >= 0.9) return '#97B067';
+            return '#E86A33';
+        };
+    }, []);
 
     const columns = useMemo(
         () => [
@@ -64,9 +77,7 @@ const ProgressTestpackTable = ({ data, selectedSubsystem, isProgressFilterVisibl
                 cell: info => {
                     const progress = info.getValue();
                     const percent = Math.round(progress * 100);
-                    let color = '#E86A33';
-                    if (progress >= 1) color = '#437057';
-                    else if (progress >= 0.9) color = '#97B067';
+                    const color = getProgressColor(progress);
 
                     return (
                         <Tooltip label={`${percent}%`} hasArrow>
@@ -78,7 +89,7 @@ const ProgressTestpackTable = ({ data, selectedSubsystem, isProgressFilterVisibl
                 },
             }),
         ],
-        []
+        [columnHelper, getProgressColor]
     );
 
     const table = useReactTable({

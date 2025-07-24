@@ -218,6 +218,30 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
       )
     },
+    {
+      accessorKey: 'total_items',
+      header: 'TOTAL ITEMS',
+      size: 60,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'done_items',
+      header: 'DONE ITEMS',
+      size: 60,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'pending_items',
+      header: 'PENDING ITEMS',
+      size: 60,
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
 
     {
       accessorKey: 'total_loop',
@@ -421,38 +445,45 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             color: '#0082A9'
           },
           { 
+            id: 'summary_items', 
+            title: 'SUMMARY ITEMS BY SUBSYSTEM', 
+            colspan: 3,
+            startCol: 6,
+            color: '#FF6B35'
+          },
+          { 
             id: 'loop_testing', 
             title: 'LOOP SIGNAL PROGRESS', 
             colspan: 3, 
-            startCol: 6,
+            startCol: 9,
             color: '#8AB3DB'
           },
           { 
             id: 'instruments', 
             title: 'INSTRUMENTS PROGRESS',
             colspan: 3, 
-            startCol: 9,
+            startCol: 12,
             color: '#A888B5'
           },
           { 
             id: 'tracing', 
             title: 'TRACING PROGRESS',
             colspan: 3, 
-            startCol: 12,
+            startCol: 15,
             color: '#0ABAB5'
           },
           { 
             id: 'insulation_progress',
             title: 'INSULATION PROGRESS',
             colspan: 3, 
-            startCol: 15,
+            startCol: 18,
             color: '#E5D6AC'
           },
           {
             id: 'punch',
             title: 'PUNCH LIST PROGRESS',
             colspan: 4,
-            startCol: 18,
+            startCol: 21,
             color: '#748DAE'
           }
         ]
@@ -463,38 +494,45 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         headers: [
           { id: 'empty_1', title: '', colspan: 6, startCol: 0, color: 'transparent' },
           { 
+            id: 'item_status', 
+            title: 'ITEM STATUS',
+            colspan: 3, 
+            startCol: 6,
+            color: '#E55A2B'
+          },
+          { 
             id: 'loop_metrics', 
             title: 'LOOP STATUS',
             colspan: 3, 
-            startCol: 6,
+            startCol: 9,
             color: '#7CA2C5'
           },
           { 
             id: 'instrument_metrics', 
             title: 'INSTRUMENT STATUS',
             colspan: 3, 
-            startCol: 9,
+            startCol: 12,
             color: '#977AA3'
           },
           { 
             id: 'tracing_metrics', 
             title: 'TRACING STATUS',
             colspan: 3, 
-            startCol: 12,
+            startCol: 15,
             color: '#09A7A3'
           },
           { 
             id: 'insulation_status',
             title: 'INSULATION STATUS',
             colspan: 3, 
-            startCol: 15,
+            startCol: 18,
             color: '#CEC19B'
           },
           {
             id: 'punch_metrics',
             title: 'PUNCH LIST STATUS',
             colspan: 4,
-            startCol: 18,
+            startCol: 21,
             color: '#687F9D'
           }
         ]
@@ -645,6 +683,11 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'hito_isos': '#007598', // HITO is part of subsystem information
               'description': '#007598',
               'n_distinct_tps': '#007598', // N°TP is now part of subsystem information
+
+              // Summary Items by Subsystem
+              'total_items': '#E55A2B',
+              'done_items': '#E55A2B',
+              'pending_items': '#E55A2B',
 
               // Loop Signal Progress
               'total_loop': '#7CA2C5',
