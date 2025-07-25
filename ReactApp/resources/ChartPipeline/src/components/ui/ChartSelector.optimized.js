@@ -16,6 +16,7 @@ import { useIsometricRelationshipFilter } from '../filters/IsometricRelationship
 import { useTestPackFilter } from '../filters/TestPackRelationshipFilter.optimized';
 import { useSubsystemFilter } from '../filters/SubsystemRelationshipFilter.optimized';
 import { InstrumentsTableFilterProvider } from '../filters/InstrumentsTableFilter';
+import { LazosTableSqlFilterProvider } from '../filters/LazosTableFilter';
 import FilterStatusBar from '../filters/FilterStatusBar';
 
 // Lazy load chart components
@@ -23,6 +24,7 @@ const LoopTestProgressChart = lazy(() => import('../../charts/LoopTestProgressCh
 const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationProgressControlChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
 const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
+const LazosTableSql = lazy(() => import('../tables/LazosTableSqlDuckDb'));
 const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
 const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric.optimized'));
 const DynamicInstrumentsTable = lazy(() => import('../tables/DynamicInstrumentsTable.optimized'));
@@ -116,7 +118,9 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                       onProgressFilter={onProgressFilter}
                       progressFilter={progressFilter}
                   />
-                  <LazosTable data={data} />
+                  <LazosTableSqlFilterProvider>
+                    <LazosTableSql />
+                  </LazosTableSqlFilterProvider>
                 </VStack>
               </Suspense>
             </TabPanel>

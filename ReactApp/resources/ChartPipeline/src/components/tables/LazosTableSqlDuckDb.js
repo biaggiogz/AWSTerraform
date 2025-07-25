@@ -180,20 +180,37 @@ const LazosTableSqlLoopTestControl = () => {
 
     // Load data function
     const lazosTableSqlLoadData = async () => {
-        const startTime = performance.now();
-        setLazosTableSqlLoading(true);
-        setLazosTableSqlError(null);
-
         try {
-            // Create table from parquet
-            await createTableFromParquet('master_subsystem', '/data/master_subsystem.parquet');
-            const loadEndTime = performance.now();
-            setLazosTableSqlLoadTime(Math.round(loadEndTime - startTime));
+            setLazosTableSqlLoading(true);
+            setLazosTableSqlError(null);
+            
+            // Only proceed if not loading and no error
+            if (dbLoading || dbError) {
+                return;
+            }
+
+            // Start measuring load time
+            const startLoadTime = performance.now();
+
+            // Try to fetch Parquet file
+            try {
+                const res = await fetch('/data/master_subsystem.parquet');
+                
+                if (!res.ok) throw new Error(`Failed to fetch Parquet: ${res.status}`);
+                
+                const parquetBuffer = await res.arrayBuffer();
+                await createTableFromParquet('master_subsystem', parquetBuffer);
+            } catch (parquetError) {
+                console.error('Error loading Parquet:', parquetError);
+                throw new Error('Failed to load data source');
+            }
+
+            // Get SQL where clause from filter context
+            const whereClause = getSqlWhereClause();
 
             // Execute query
-            const queryStartTime = performance.now();
-            const whereClause = getSqlWhereClause();
-            const query = `
+            const startQueryTime = performance.now();
+            const result = await executeQuery(`
                 SELECT code_tlp AS "CODE",
                 subsystem AS "SUBSYSTEM",
                 tag_loop_tlp AS "TAG LOOP",
@@ -218,16 +235,23 @@ const LazosTableSqlLoopTestControl = () => {
                 FROM master_subsystem
                 WHERE tag_loop_tlp is not null
                 ${whereClause ? ` AND ${whereClause}` : ''}
-            `;
-
-            const result = await executeQuery(query);
-            const queryEndTime = performance.now();
-            setLazosTableSqlQueryTime(Math.round(queryEndTime - queryStartTime));
+            `, { 
+                useCache: true,
+                cacheKey: `loop_test_control_${selectedSubsystem || 'all'}`
+            });
+            
+            const endQueryTime = performance.now();
+            setLazosTableSqlQueryTime(Math.round(endQueryTime - startQueryTime));
 
             setLazosTableSqlData(result || []);
+            
+            // Calculate and set load time
+            const endLoadTime = performance.now();
+            setLazosTableSqlLoadTime(Math.round(endLoadTime - startLoadTime));
         } catch (err) {
             console.error('Error loading Loop Test Control data:', err);
             setLazosTableSqlError(err.message);
+            setLazosTableSqlData([]);
         } finally {
             setLazosTableSqlLoading(false);
         }
@@ -236,7 +260,7 @@ const LazosTableSqlLoopTestControl = () => {
     // Load data on component mount and when filters change
     useEffect(() => {
         lazosTableSqlLoadData();
-    }, [selectedSubsystem]);
+    }, [createTableFromParquet, executeQuery, dbLoading, dbError, selectedSubsystem, getSqlWhereClause]);
 
     // Create table instance
     const lazosTableSqlTable = useReactTable({
