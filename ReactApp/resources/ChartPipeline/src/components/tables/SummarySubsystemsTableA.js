@@ -79,20 +79,28 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     return result;
   }, []);
   
-  // Debounced filter processing
-  const processFilterChange = useCallback((filterState) => {
+  // Optimized filter processing with immediate clear handling
+  const processFilterChange = useCallback((filterState, immediate = false) => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
     
-    debounceTimeoutRef.current = setTimeout(() => {
+    const applyFilter = () => {
       const filteredTPs = filterState.map(item => item.testPack);
       const newFilteredData = filterDataByTPs(data, filteredTPs);
       setFilteredData(newFilteredData);
-    }, 150);
+    };
+    
+    if (immediate || filterState.length === 0) {
+      // Apply immediately for clearing filters or when explicitly requested
+      applyFilter();
+    } else {
+      // Use debounce for normal filtering
+      debounceTimeoutRef.current = setTimeout(applyFilter, 150);
+    }
   }, [data, filterDataByTPs]);
   
-  // Optimized effect with debouncing
+  // Optimized effect with immediate clearing
   useEffect(() => {
     if (!window.progressFilterState) {
       window.progressFilterState = { selectedTPs: {}, filteredData: [] };
@@ -104,13 +112,20 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       
       if (lastFilterStateRef.current !== currentFilterState) {
         lastFilterStateRef.current = currentFilterState;
-        processFilterChange(currentFilterData);
+        
+        // Determine if this is a clearing operation (empty or significantly smaller dataset)
+        const wasLarger = lastFilterStateRef.current && 
+          JSON.parse(lastFilterStateRef.current).length > currentFilterData.length * 2;
+        const isClearing = currentFilterData.length === 0 || wasLarger;
+        
+        processFilterChange(currentFilterData, isClearing);
       }
     } else {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
       lastFilterStateRef.current = null;
+      // Immediate reset when filter is turned off
       setFilteredData(data);
     }
     
@@ -580,9 +595,11 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     return rowHeights.get(index) || 70;
   }, [rowHeights]);
   
-  // Memoized table data to prevent unnecessary recalculations
+  // Memoized table data with subsystem selection priority
   const tableData = useMemo(() => {
-    return isProgressFilterVisible ? filteredData || [] : data || [];
+    const baseData = isProgressFilterVisible ? filteredData || [] : data || [];
+    // Ensure immediate response for subsystem changes by not blocking on filter state
+    return baseData;
   }, [isProgressFilterVisible, filteredData, data]);
   
   const table = useReactTable({
