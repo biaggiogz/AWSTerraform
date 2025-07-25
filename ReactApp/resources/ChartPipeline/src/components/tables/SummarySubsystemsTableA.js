@@ -39,6 +39,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   const lastFilterStateRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
   const filterCacheRef = useRef(new Map());
+  const heightCacheRef = useRef(new Map());
   
   // Optimized filter function with caching
   const filterDataByTPs = useCallback((sourceData, filteredTPs) => {
@@ -120,9 +121,10 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     };
   }, [isProgressFilterVisible, data, processFilterChange]);
   
-  // Clear cache when data changes
+  // Clear caches when data changes
   useEffect(() => {
     filterCacheRef.current.clear();
+    heightCacheRef.current.clear();
   }, [data]);
 
   const columns = useMemo(() => [
@@ -525,33 +527,58 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
 
   const listRef = useRef();
   
-  // Memoized row height calculation
-  const getRowHeight = useCallback((index) => {
-    const currentData = isProgressFilterVisible ? filteredData : data;
-    const row = currentData?.[index];
-    if (!row) return 60;
-
-    const tpIds = row.list_includes_tp_id || '';
-    const tpCount = tpIds && typeof tpIds === 'string' ? tpIds.split('|').length : 0;
-
-    let boxHeight;
+  // Optimized height calculation function
+  const calculateRowHeight = useCallback((tpCount) => {
     if (tpCount > 6) {
       const rowsNeeded = Math.ceil(tpCount / 4);
-      boxHeight = Math.max(80, rowsNeeded * 42 + 24);
+      return Math.max(80, rowsNeeded * 42 + 24);
     } else if (tpCount > 4) {
       const rowsNeeded = Math.ceil(tpCount / 3);
-      boxHeight = Math.max(80, rowsNeeded * 42 + 24);
+      return Math.max(80, rowsNeeded * 42 + 24);
     } else if (tpCount > 2) {
       const rowsNeeded = Math.ceil(tpCount / 2);
-      boxHeight = rowsNeeded * 42 + 20;
+      return rowsNeeded * 42 + 20;
     } else if (tpCount > 0) {
-      boxHeight = tpCount * 42 + 12;
-    } else {
-      boxHeight = 50;
+      return tpCount * 42 + 12;
     }
-
-    return Math.max(70, boxHeight);
-  }, [data, filteredData, isProgressFilterVisible]);
+    return 50;
+  }, []);
+  
+  // Memoized row heights with caching
+  const rowHeights = useMemo(() => {
+    const currentData = isProgressFilterVisible ? filteredData : data;
+    const heights = new Map();
+    
+    currentData?.forEach((row, index) => {
+      const tpIds = row.list_includes_tp_id || '';
+      const cacheKey = `${row.id || index}_${tpIds}`;
+      
+      if (heightCacheRef.current.has(cacheKey)) {
+        heights.set(index, heightCacheRef.current.get(cacheKey));
+      } else {
+        const tpCount = tpIds && typeof tpIds === 'string' ? tpIds.split('|').length : 0;
+        const height = Math.max(70, calculateRowHeight(tpCount));
+        heights.set(index, height);
+        heightCacheRef.current.set(cacheKey, height);
+      }
+    });
+    
+    // Limit cache size
+    if (heightCacheRef.current.size > 100) {
+      const entries = Array.from(heightCacheRef.current.entries());
+      heightCacheRef.current.clear();
+      entries.slice(-50).forEach(([key, value]) => {
+        heightCacheRef.current.set(key, value);
+      });
+    }
+    
+    return heights;
+  }, [data, filteredData, isProgressFilterVisible, calculateRowHeight]);
+  
+  // Optimized getRowHeight function
+  const getRowHeight = useCallback((index) => {
+    return rowHeights.get(index) || 70;
+  }, [rowHeights]);
   
   // Memoized table data to prevent unnecessary recalculations
   const tableData = useMemo(() => {
