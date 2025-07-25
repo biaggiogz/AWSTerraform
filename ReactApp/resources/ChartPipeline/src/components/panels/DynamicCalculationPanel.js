@@ -17,7 +17,6 @@ import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import InsulStatusFilter from '../filters/InsulationStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
 // Import directly without lazy loading
-import HitoFilter from '../filters/HitoFilter';
 import HitoFilterA from '../filters/HitoFilterA';
 import SubsystemFilterA from '../filters/SubsystemFilterA'
 

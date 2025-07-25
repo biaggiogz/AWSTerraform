@@ -48,7 +48,6 @@ The "SUMMARY SUBSYSTEMS" tab provides a comprehensive dashboard for subsystem an
 - **ProgressFilter.js** - Test Pack progress filtering
 - **InsulationStatusFilter.js** - Items status filtering
 - **LoopStatusFilter.js** - Loop status filtering
-- **HitoFilter.js** - Hitol Filter
 
 ### WASM Optimization Components
 - **ultra-processor.wasm.js** - Ultra-optimized data processing
@@ -97,7 +96,6 @@ This hybrid architecture represents Phase 1 of a migration plan to gradually mov
 - **ProgressFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/ProgressFilter.js`
 - **InsulationStatusFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/InsulationStatusFilter.js`
 - **LoopStatusFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/LoopStatusFilter.js`
-- **HitoFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/HitoFilter.js`
 
 ## Configuration Files
 - **activate-solidjs.js**: `ReactApp/resources/ChartPipeline/activate-solidjs.js`
