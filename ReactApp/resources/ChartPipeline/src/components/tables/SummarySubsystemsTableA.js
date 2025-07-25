@@ -157,50 +157,9 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'hito_isos',
       header: 'HITO',
       size: 104,
-      cell: ({ getValue, row }) => {
-        // Generate a consistent color based on the hito string for highlighting when filter is active
-        const getHitoColor = (hito) => {
-          if (!hito) return "#007598";
-          const hash = hito.split('').reduce((acc, char) => {
-            return char.charCodeAt(0) + ((acc << 5) - acc);
-          }, 0);
-          
-          const h = Math.abs(hash) % 360;
-          const s = 60 + (Math.abs(hash) % 30); // 60-90%
-          const l = 35 + (Math.abs(hash) % 15); // 35-50%
-          
-          return `hsl(${h}, ${s}%, ${l}%)`;
-        };
-
-        const hitoValue = getValue();
-        
-        // Only apply special styling when the filter is active or when this specific hito is selected
-        const isSelected = selectedSubsystem === hitoValue;
-        const bgColor = isHitoFilterVisible ? getHitoColor(hitoValue) : (isSelected ? "#007598" : "white");
-        const textColor = isHitoFilterVisible || isSelected ? "white" : "blue.600";
-        
-        return (
-          <Button
-            size="xs"
-            variant={isHitoFilterVisible || isSelected ? "solid" : "outline"}
-            onClick={() => onSubsystemSelect(hitoValue)}
-            _hover={{ bg: isHitoFilterVisible || isSelected ? bgColor : "blue.200" }}
-            fontSize="10px"
-            fontWeight="medium"
-            color={textColor}
-            bg={bgColor}
-            borderColor={isHitoFilterVisible ? bgColor : "blue.500"}
-            minWidth="30px"
-            height="18px"
-            px={2}
-            borderRadius="sm"
-            title={hitoValue}
-            isTruncated
-          >
-            {hitoValue}
-          </Button>
-        );
-      }
+      cell: ({ getValue }) => (
+        <Text fontSize="xs" fontWeight="bold" textAlign="center" title={getValue()}>{getValue()}</Text>
+      )
     },
     {
       accessorKey: 'description',
