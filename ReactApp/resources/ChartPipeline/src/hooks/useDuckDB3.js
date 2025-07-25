@@ -19,7 +19,7 @@ const queryCache = new Map();
 const useDuckDB3 = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Initialize DuckDB with WASM optimizations
   useEffect(() => {
     const initDB = async () => {
@@ -30,38 +30,38 @@ const useDuckDB3 = () => {
           setLoading(false);
           return;
         }
-        
+
         // If already initialized, use existing instance
         if (dbInstance && dbConnection) {
           setLoading(false);
           return;
         }
-        
+
         // Create initialization promise
         initPromise = (async () => {
           // Create a minimal logger to improve performance
           const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.ERROR);
-          
+
           // Select the appropriate WASM bundle
           const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
-          
+
           // Create a worker URL
           const workerUrl = URL.createObjectURL(
-            new Blob([`importScripts("${bundle.mainWorker}");`], { type: 'text/javascript' })
+              new Blob([`importScripts("${bundle.mainWorker}");`], { type: 'text/javascript' })
           );
-          
+
           // Create worker and instantiate database
           const worker = new Worker(workerUrl);
           const db = new duckdb.AsyncDuckDB(logger, worker);
           await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
           URL.revokeObjectURL(workerUrl);
-          
+
           // Create connection with optimized settings
           const conn = await db.connect();
-          
+
           // Configure DuckDB for better performance
           await conn.query("PRAGMA memory_limit='2GB'");
-          
+
           // Try to enable threading if supported
           try {
             const threads = navigator.hardwareConcurrency || 4;
@@ -70,7 +70,7 @@ const useDuckDB3 = () => {
           } catch (e) {
             console.log('Threading not fully supported in this browser');
           }
-          
+
           // Enable WASM SIMD if available
           try {
             await conn.query("PRAGMA enable_optimizer");
@@ -79,14 +79,14 @@ const useDuckDB3 = () => {
           } catch (e) {
             console.log('Some optimizations not available');
           }
-          
+
           // Store shared instances
           dbInstance = db;
           dbConnection = conn;
-          
+
           return { db, conn };
         })();
-        
+
         await initPromise;
         setLoading(false);
       } catch (err) {
@@ -95,26 +95,26 @@ const useDuckDB3 = () => {
         setLoading(false);
       }
     };
-    
+
     initDB();
   }, []);
-  
+
   // Create table from Parquet data
   const createTableFromParquet = useCallback(async (tableName, parquetBuffer) => {
     if (!dbInstance || !dbConnection) {
       throw new Error('DuckDB not initialized');
     }
-    
+
     try {
       // Register the Parquet data
       await dbInstance.registerFileBuffer(`${tableName}.parquet`, new Uint8Array(parquetBuffer));
-      
+
       // Create table with optimized settings
       await dbConnection.query(`
         CREATE OR REPLACE TABLE ${tableName} AS 
         SELECT * FROM read_parquet('${tableName}.parquet', binary_as_string=true)
       `);
-      
+
       // Create indexes for commonly filtered columns
       if (tableName === 'master_subsystem') {
         try {
@@ -126,32 +126,32 @@ const useDuckDB3 = () => {
           console.warn('Could not create all indexes:', e);
         }
       }
-      
+
       return true;
     } catch (err) {
       console.error('Error creating table from Parquet:', err);
       throw err;
     }
   }, []);
-  
+
   // Execute SQL query with caching
   const executeQuery = useCallback(async (sql, options = {}) => {
     if (!dbConnection) {
       throw new Error('DuckDB connection not ready');
     }
-    
-    const { 
+
+    const {
       useCache = true,
       cacheKey = sql,
       maxRows = 2000
     } = options;
-    
+
     try {
       // Check cache first
       if (useCache && queryCache.has(cacheKey)) {
         return queryCache.get(cacheKey);
       }
-      
+
       // Add row limit if not already present
       let optimizedSql = sql;
       if (!optimizedSql.toLowerCase().includes('limit ') && maxRows) {
@@ -161,39 +161,39 @@ const useDuckDB3 = () => {
         }
         optimizedSql = `${optimizedSql} LIMIT ${maxRows};`;
       }
-      
+
       // Execute query with timeout protection
       const queryPromise = dbConnection.query(optimizedSql);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout after 15s')), 15000)
+      const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Query timeout after 15s')), 15000)
       );
-      
+
       const result = await Promise.race([queryPromise, timeoutPromise]);
       const data = result.toArray();
-      
+
       // Store in cache
       if (useCache) {
         queryCache.set(cacheKey, data);
-        
+
         // Limit cache size
         if (queryCache.size > 50) {
           const firstKey = queryCache.keys().next().value;
           queryCache.delete(firstKey);
         }
       }
-      
+
       return data;
     } catch (err) {
       console.error('Error executing query:', err);
       throw err;
     }
   }, []);
-  
+
   // Clear query cache
   const clearQueryCache = useCallback(() => {
     queryCache.clear();
   }, []);
-  
+
   // Return the hook API
   return useMemo(() => ({
     db: dbInstance,

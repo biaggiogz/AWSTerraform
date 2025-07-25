@@ -70,7 +70,6 @@ ChartPipeline/
 │   │   ├── useDashboardConfig.optimized.js # Dashboard configuration management
 │   │   ├── useDataLoader.optimized.js # Optimized data loading with caching
 │   │   ├── useDuckDB.js            # SQL query interface
-│   │   ├── useDuckDB.wasm.js       # WASM-enhanced SQL hook
 │   │   ├── useInstrumentsDataLoader.optimized.js # Specialized instruments data loader
 │   │   ├── useInstrumentsFilter.js # Instruments-specific filtering logic
 │   │   └── useMultiValueFilter.js # Multi-value filtering hook

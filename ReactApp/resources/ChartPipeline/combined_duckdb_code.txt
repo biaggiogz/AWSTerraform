@@ -1174,7 +1174,6 @@ export const useSummarySubsystemsData = (filteredData = []) => {
 };
 
 
-===== FILE: ./src/hooks/useDuckDB.wasm.js =====
 /**
  * WASM-enhanced DuckDB hook with fallback to original implementation
  * Maintains API compatibility while providing performance improvements
