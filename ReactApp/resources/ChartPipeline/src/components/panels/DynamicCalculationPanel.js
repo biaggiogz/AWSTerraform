@@ -20,7 +20,7 @@ import LoopStatusFilter from '../filters/LoopStatusFilter';
 import HitoFilterA from '../filters/HitoFilterA';
 import SubsystemFilterA from '../filters/SubsystemFilterA'
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
@@ -43,6 +43,7 @@ FROM "Subsystem Overview";`);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [isSubsystemFilterAVisible, setIsSubsystemFilterAVisible] = useState(false);
+  const [isProgressTableVisible, setIsProgressTableVisible] = useState(true);
   const textareaRef = useRef(null);
 
   // Restore query from persistent state
@@ -400,6 +401,20 @@ FROM "Subsystem Overview";`);
               }}
               aria-label="Toggle subsystem "
               title="Subsystem Filter"
+            />
+            <IconButton
+              icon={<MdPrecisionManufacturing />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const newVisibility = !isProgressTableVisible;
+                setIsProgressTableVisible(newVisibility);
+                if (onProgressTableVisibilityChange) {
+                  onProgressTableVisibilityChange(newVisibility);
+                }
+              }}
+              aria-label="Toggle progress table"
+              title="Toggle Progress Table"
             />
             <IconButton
               icon={isInterfaceVisible ? <MdExpandLess /> : <MdExpandMore />}

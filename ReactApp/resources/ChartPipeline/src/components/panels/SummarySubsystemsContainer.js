@@ -14,6 +14,7 @@ const SummarySubsystemsContainer = ({
 }) => {
   const [tpProgressData, setTpProgressData] = useState([]);
   const [topZIndex, setTopZIndex] = useState(100);
+  const [isProgressTableVisible, setIsProgressTableVisible] = useState(true);
   
   // Centralized filter state management
   const [filterState, setFilterState] = useState({
@@ -253,6 +254,7 @@ const SummarySubsystemsContainer = ({
           onSubsystemFilteredDataChange={handleSubsystemFilterChange}
           onSubsystemFilterVisibilityChange={(visible) => updateFilter('subsystem', { visible })}
           onSubsystemPropagationChange={handleSubsystemPropagationChange}
+          onProgressTableVisibilityChange={setIsProgressTableVisible}
           onBringToFront={handleFilterBringToFront}
         />
       </Suspense>
@@ -283,24 +285,26 @@ const SummarySubsystemsContainer = ({
           />
         </ResizableDraggablePanel>
 
-        <ResizableDraggablePanel
-          title="Test Pack Progress Details"
-          initialWidth={470}
-          initialHeight={550}
-          initialX={10 + 1660 + 5}
-          initialY={10}
-          minWidth={470}
-          minHeight={700}
-          onBringToFront={handleBringToFront}
-          disableDragging={true}
-          zIndex={10}
-        >
-          <ProgressTestpackTable
-            data={tpProgressData}
-            selectedSubsystem={selectedSubsystem}
-            isProgressFilterVisible={filterState.progress.visible}
-          />
-        </ResizableDraggablePanel>
+        {isProgressTableVisible && (
+          <ResizableDraggablePanel
+            title="Test Pack Progress Details"
+            initialWidth={470}
+            initialHeight={550}
+            initialX={10 + 1660 + 5}
+            initialY={10}
+            minWidth={470}
+            minHeight={700}
+            onBringToFront={handleBringToFront}
+            disableDragging={true}
+            zIndex={10}
+          >
+            <ProgressTestpackTable
+              data={tpProgressData}
+              selectedSubsystem={selectedSubsystem}
+              isProgressFilterVisible={filterState.progress.visible}
+            />
+          </ResizableDraggablePanel>
+        )}
       </Box>
     </VStack>
   );
