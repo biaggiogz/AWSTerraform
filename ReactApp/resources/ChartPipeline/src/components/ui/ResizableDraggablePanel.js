@@ -10,7 +10,8 @@ const ResizableDraggablePanel = ({
   minWidth = 300,
   minHeight = 200,
   title = "Panel",
-  onBringToFront
+  onBringToFront,
+  disableDragging = false
 }) => {
   const [dimensions, setDimensions] = useState({
     width: initialWidth,
@@ -42,7 +43,7 @@ const ResizableDraggablePanel = ({
     
     bringToFront();
     
-    if (action === 'drag') {
+    if (action === 'drag' && !disableDragging) {
       setIsDragging(true);
       setDragStart({
         x: e.clientX - dimensions.x,
@@ -162,10 +163,10 @@ const ResizableDraggablePanel = ({
         justifyContent="center"
         fontSize="sm"
         fontWeight="bold"
-        cursor="grab"
-        onMouseDown={(e) => handleMouseDown(e, 'drag')}
+        cursor={disableDragging ? 'default' : 'grab'}
+        onMouseDown={disableDragging ? undefined : (e) => handleMouseDown(e, 'drag')}
         onClick={bringToFront}
-        _active={{ cursor: 'grabbing' }}
+        _active={disableDragging ? {} : { cursor: 'grabbing' }}
         borderTopRadius="md"
       >
         {title}
@@ -184,44 +185,48 @@ const ResizableDraggablePanel = ({
       </Box>
 
       {/* Visible Drag Handles around the table */}
-      {/* Left border drag handle */}
-      <Box
-        position="absolute"
-        left="0"
-        top="30px"
-        bottom="0"
-        width="8px"
-        cursor="move"
-        onMouseDown={(e) => handleMouseDown(e, 'drag')}
-        _hover={{ bg: 'rgba(0, 117, 152, 0.1)' }}
-        zIndex={2}
-      />
-      
-      {/* Right border drag handle */}
-      <Box
-        position="absolute"
-        right="0"
-        top="30px"
-        bottom="0"
-        width="8px"
-        cursor="move"
-        onMouseDown={(e) => handleMouseDown(e, 'drag')}
-        _hover={{ bg: 'rgba(0, 117, 152, 0.1)' }}
-        zIndex={2}
-      />
-      
-      {/* Bottom border drag handle */}
-      <Box
-        position="absolute"
-        bottom="0"
-        left="0"
-        right="0"
-        height="8px"
-        cursor="move"
-        onMouseDown={(e) => handleMouseDown(e, 'drag')}
-        _hover={{ bg: 'rgba(0, 117, 152, 0.1)' }}
-        zIndex={2}
-      />
+      {!disableDragging && (
+        <>
+          {/* Left border drag handle */}
+          <Box
+            position="absolute"
+            left="0"
+            top="30px"
+            bottom="0"
+            width="8px"
+            cursor="move"
+            onMouseDown={(e) => handleMouseDown(e, 'drag')}
+            _hover={{ bg: 'rgba(0, 117, 152, 0.1)' }}
+            zIndex={2}
+          />
+          
+          {/* Right border drag handle */}
+          <Box
+            position="absolute"
+            right="0"
+            top="30px"
+            bottom="0"
+            width="8px"
+            cursor="move"
+            onMouseDown={(e) => handleMouseDown(e, 'drag')}
+            _hover={{ bg: 'rgba(0, 117, 152, 0.1)' }}
+            zIndex={2}
+          />
+          
+          {/* Bottom border drag handle */}
+          <Box
+            position="absolute"
+            bottom="0"
+            left="0"
+            right="0"
+            height="8px"
+            cursor="move"
+            onMouseDown={(e) => handleMouseDown(e, 'drag')}
+            _hover={{ bg: 'rgba(0, 117, 152, 0.1)' }}
+            zIndex={2}
+          />
+        </>
+      )}
 
       {/* Resize Handles */}
       {/* Left edge */}

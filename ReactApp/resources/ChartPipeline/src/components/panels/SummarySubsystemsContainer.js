@@ -301,6 +301,7 @@ const SummarySubsystemsContainer = ({
           minWidth={1657}
           minHeight={700}
           onBringToFront={handleBringToFront}
+          disableDragging={true}
         >
           <SummarySubsystemsTableA
             data={filteredTableAData}
@@ -318,11 +319,12 @@ const SummarySubsystemsContainer = ({
           title="Test Pack Progress Details"
           initialWidth={470}
           initialHeight={550}
-          initialX={10 + 1660 + 10}
+          initialX={10 + 1660 + 5}
           initialY={10}
           minWidth={470}
           minHeight={700}
           onBringToFront={handleBringToFront}
+          disableDragging={true}
         >
           <ProgressTestpackTable
             data={tpProgressData}
