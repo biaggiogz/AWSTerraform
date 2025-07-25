@@ -184,8 +184,8 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                     <FilterStatusBar />
                     <DynamicInstrumentsTable/>
                     <DetailsInstrumentsTable/>
-                    <ControlInstrumentsByIsometric/>nstrumentsByIsometric/>ByIsometric/>
-                  </InstrumentsTableFilterProvider>/InstrumentsTableFilterProvider>
+                    <ControlInstrumentsByIsometric/>
+                  </InstrumentsTableFilterProvider>
                 </VStack>
               </Suspense>
             </TabPanel>

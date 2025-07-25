@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useMemo, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useMemo, useEffect, useCallback } from 'react';
 import { Box, VStack, Center, Spinner } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import ProgressTestpackTable from '../tables/ProgressTespackTable';
@@ -13,17 +13,24 @@ const SummarySubsystemsContainer = ({
   tableBData
 }) => {
   const [tpProgressData, setTpProgressData] = useState([]);
-  const [progressFilteredData, setProgressFilteredData] = useState(tableBData);
-  const [statusFilteredData, setStatusFilteredData] = useState(tableAData);
-  const [loopFilteredData, setLoopFilteredData] = useState(tableAData);
-  const [hitoFilteredData, setHitoFilteredData] = useState(tableBData);
-  const [isProgressFilterVisible, setIsProgressFilterVisible] = useState(false);
-  const [isItemsFilterVisible, setIsItemsFilterVisible] = useState(false);
-  const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
-  const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
-  const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
-  const [subsystemFilteredData, setSubsystemFilteredData] = useState(tableAData);
   const [topZIndex, setTopZIndex] = useState(100);
+  
+  // Centralized filter state management
+  const [filterState, setFilterState] = useState({
+    progress: { data: tableBData, visible: false },
+    status: { data: tableAData, visible: false },
+    loop: { data: tableAData, visible: false },
+    hito: { data: tableBData, visible: false },
+    subsystem: { data: tableAData, visible: false }
+  });
+  
+  // Centralized filter update function
+  const updateFilter = useCallback((filterType, updates) => {
+    setFilterState(prev => ({
+      ...prev,
+      [filterType]: { ...prev[filterType], ...updates }
+    }));
+  }, []);
   
   // Load CSV data and transform for ProgressFilter compatibility
   useEffect(() => {
@@ -62,33 +69,32 @@ const SummarySubsystemsContainer = ({
     loadCSVData();
   }, []);
   
-  // Apply status, loop, hito, and subsystem filters
+  // Optimized combined filter logic
   const combinedFilteredTableAData = useMemo(() => {
-    const statusFiltered = statusFilteredData;
-    const loopFiltered = loopFilteredData;
-    const subsystemFiltered = subsystemFilteredData;
+    const { status, loop, subsystem } = filterState;
     
-    // Find intersection of all filters
-    const statusSubsystems = new Set(statusFiltered.map(row => row.subsystem));
-    const loopSubsystems = new Set(loopFiltered.map(row => row.subsystem));
-    const subsystemSubsystems = new Set(subsystemFiltered.map(row => row.subsystem));
+    // Find intersection of all TableA filters
+    const statusSubsystems = new Set(status.data.map(row => row.subsystem));
+    const loopSubsystems = new Set(loop.data.map(row => row.subsystem));
+    const subsystemSubsystems = new Set(subsystem.data.map(row => row.subsystem));
     
     return tableAData.filter(row => 
       statusSubsystems.has(row.subsystem) && 
       loopSubsystems.has(row.subsystem) &&
       subsystemSubsystems.has(row.subsystem)
     );
-  }, [tableAData, statusFilteredData, loopFilteredData, subsystemFilteredData]);
+  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.subsystem.data]);
   
   const combinedFilteredTableBData = useMemo(() => {
-    // Apply hito filter to progressFilteredData
-    if (hitoFilteredData.length === 0) {
-      return progressFilteredData;
+    const { progress, hito } = filterState;
+    
+    if (hito.data.length === 0) {
+      return progress.data;
     }
     
-    const hitoSubsystems = new Set(hitoFilteredData.map(row => row.subsystem));
-    return progressFilteredData.filter(row => hitoSubsystems.has(row.subsystem));
-  }, [progressFilteredData, hitoFilteredData]);
+    const hitoSubsystems = new Set(hito.data.map(row => row.subsystem));
+    return progress.data.filter(row => hitoSubsystems.has(row.subsystem));
+  }, [filterState.progress.data, filterState.hito.data]);
   
   const {
     selectedSubsystem,
@@ -98,159 +104,113 @@ const SummarySubsystemsContainer = ({
     clearFilter
   } = useSubsystemBidirectionalFilter(combinedFilteredTableAData, combinedFilteredTableBData);
   
-  React.useEffect(() => {
-    setProgressFilteredData(tableBData);
-  }, [tableBData]);
+  // Initialize filter data when source data changes
+  useEffect(() => {
+    setFilterState(prev => ({
+      progress: { ...prev.progress, data: tableBData },
+      status: { ...prev.status, data: tableAData },
+      loop: { ...prev.loop, data: tableAData },
+      hito: { ...prev.hito, data: tableBData },
+      subsystem: { ...prev.subsystem, data: tableAData }
+    }));
+  }, [tableAData, tableBData]);
   
-  React.useEffect(() => {
-    setStatusFilteredData(tableAData);
-  }, [tableAData]);
+  // Centralized filter change handlers
+  const handleProgressFilterChange = useCallback((filteredData) => {
+    updateFilter('progress', { data: filteredData });
+  }, [updateFilter]);
   
-  React.useEffect(() => {
-    setLoopFilteredData(tableAData);
-  }, [tableAData]);
+  const handleStatusFilterChange = useCallback((filteredData) => {
+    updateFilter('status', { data: filteredData });
+  }, [updateFilter]);
   
-  React.useEffect(() => {
-    setHitoFilteredData(tableBData);
-  }, [tableBData]);
+  const handleLoopFilterChange = useCallback((filteredData) => {
+    updateFilter('loop', { data: filteredData });
+  }, [updateFilter]);
   
-  React.useEffect(() => {
-    setSubsystemFilteredData(tableAData);
-  }, [tableAData]);
+  const handleHitoFilterChange = useCallback((filteredData) => {
+    updateFilter('hito', { data: filteredData });
+  }, [updateFilter]);
   
-  const handleProgressFilterChange = (filteredData) => {
-    // If we're receiving the original data, it means the filter is being reset
-    const isReset = filteredData === tableBData;
-    setProgressFilteredData(filteredData);
-  };
+  const handleSubsystemFilterChange = useCallback((filteredData) => {
+    updateFilter('subsystem', { data: filteredData });
+  }, [updateFilter]);
   
-  const handleStatusFilterChange = (filteredData) => {
-    // If we're receiving the original data, it means the filter is being reset
-    const isReset = filteredData === tableAData;
-    setStatusFilteredData(filteredData);
-  };
-  
-  const handleLoopFilterChange = (filteredData) => {
-    // If we're receiving the original data, it means the filter is being reset
-    const isReset = filteredData === tableAData;
-    setLoopFilteredData(filteredData);
-  };
-  
-  const handleHitoFilterChange = (filteredData) => {
-    // If we're receiving the original data, it means the filter is being reset
-    const isReset = filteredData === tableBData;
-    setHitoFilteredData(filteredData);
-  };
-  
-  const handleLoopPropagationChange = (filteredData, target) => {
+  // Optimized propagation handlers
+  const handleLoopPropagationChange = useCallback((filteredData, target) => {
     if (target === 'tableB') {
-      // Extract subsystems from filtered TableA data
       const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
-      // Filter TableB data based on subsystems
-      const propagatedTableBData = tableBData.filter(row => 
-        allowedSubsystems.has(row.subsystem)
-      );
-      setProgressFilteredData(propagatedTableBData);
+      const propagatedData = tableBData.filter(row => allowedSubsystems.has(row.subsystem));
+      updateFilter('progress', { data: propagatedData });
     } else if (target === 'nothing') {
-      // Reset TableB to original state when propagation is disabled
-      setProgressFilteredData(tableBData);
+      updateFilter('progress', { data: tableBData });
     }
-  };
+  }, [tableBData, updateFilter]);
   
-  const handleItemsPropagationChange = (filteredData, target) => {
+  const handleItemsPropagationChange = useCallback((filteredData, target) => {
     if (target === 'tableB') {
-      // Extract subsystems from filtered TableA data
       const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
-      // Filter TableB data based on subsystems
-      const propagatedTableBData = tableBData.filter(row => 
-        allowedSubsystems.has(row.subsystem)
-      );
-      setProgressFilteredData(propagatedTableBData);
+      const propagatedData = tableBData.filter(row => allowedSubsystems.has(row.subsystem));
+      updateFilter('progress', { data: propagatedData });
     } else if (target === 'nothing') {
-      // Reset TableB to original state when propagation is disabled
-      setProgressFilteredData(tableBData);
+      updateFilter('progress', { data: tableBData });
     }
-  };
+  }, [tableBData, updateFilter]);
   
-  const handleProgressPropagationChange = (filteredData, target) => {
-    console.log('Progress propagation:', { filteredData, target });
-    
-    // Only handle TableA propagation here
+  const handleProgressPropagationChange = useCallback((filteredData, target) => {
     if (target === 'tableA' || target === 'both') {
       if (filteredData.length === 0) {
-        setStatusFilteredData(tableAData);
+        updateFilter('status', { data: tableAData });
         return;
       }
       
-      // Extract test packs from filtered data (handle both formats)
       const filteredTestPacks = filteredData.map(row => 
         String(row.testPack || row.tp_id || '')
       ).filter(Boolean);
       
-      console.log('Filtered test packs for propagation:', filteredTestPacks.slice(0, 5));
-      
-      // Filter TableA data based on test packs in list_includes_tp_id
-      const propagatedTableAData = tableAData.filter(row => {
-        try {
-          const tpIds = row.list_includes_tp_id;
-          if (!tpIds) return false;
-          
-          let tpIdArray = [];
-          if (typeof tpIds === 'string') {
-            tpIdArray = tpIds.split('|');
-          } else if (Array.isArray(tpIds)) {
-            tpIdArray = tpIds;
-          } else if (typeof tpIds === 'number') {
-            tpIdArray = [String(tpIds)];
-          } else {
-            return false;
-          }
-          
-          return tpIdArray.some(tpId => filteredTestPacks.includes(String(tpId)));
-        } catch (error) {
-          console.error('Error filtering row:', error);
+      const propagatedData = tableAData.filter(row => {
+        const tpIds = row.list_includes_tp_id;
+        if (!tpIds) return false;
+        
+        let tpIdArray = [];
+        if (typeof tpIds === 'string') {
+          tpIdArray = tpIds.split('|');
+        } else if (Array.isArray(tpIds)) {
+          tpIdArray = tpIds;
+        } else if (typeof tpIds === 'number') {
+          tpIdArray = [String(tpIds)];
+        } else {
           return false;
         }
+        
+        return tpIdArray.some(tpId => filteredTestPacks.includes(String(tpId)));
       });
       
-      console.log('Propagated TableA rows:', propagatedTableAData.length);
-      setStatusFilteredData(propagatedTableAData);
+      updateFilter('status', { data: propagatedData });
     } else if (target === 'nothing') {
-      setStatusFilteredData(tableAData);
+      updateFilter('status', { data: tableAData });
     }
-  };
+  }, [tableAData, updateFilter]);
   
-  const handleHitoPropagationChange = (filteredData, target) => {
+  const handleHitoPropagationChange = useCallback((filteredData, target) => {
     if (target === 'tableA') {
-      // Extract subsystems from filtered TableB data
       const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
-      // Filter TableA data based on subsystems
-      const propagatedTableAData = tableAData.filter(row => 
-        allowedSubsystems.has(row.subsystem)
-      );
-      setStatusFilteredData(propagatedTableAData);
+      const propagatedData = tableAData.filter(row => allowedSubsystems.has(row.subsystem));
+      updateFilter('status', { data: propagatedData });
     } else if (target === 'nothing') {
-      // Reset TableA to original state when propagation is disabled
-      setHitoFilteredData(tableBData);
+      updateFilter('hito', { data: tableBData });
     }
-  };
+  }, [tableAData, tableBData, updateFilter]);
   
-  const handleSubsystemFilterChange = (filteredData) => {
-    const isReset = filteredData === tableAData;
-    setSubsystemFilteredData(filteredData);
-  };
-  
-  const handleSubsystemPropagationChange = (filteredData, target) => {
+  const handleSubsystemPropagationChange = useCallback((filteredData, target) => {
     if (target === 'tableB') {
       const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
-      const propagatedTableBData = tableBData.filter(row => 
-        allowedSubsystems.has(row.subsystem)
-      );
-      setProgressFilteredData(propagatedTableBData);
+      const propagatedData = tableBData.filter(row => allowedSubsystems.has(row.subsystem));
+      updateFilter('progress', { data: propagatedData });
     } else if (target === 'nothing') {
-      setSubsystemFilteredData(tableAData);
+      updateFilter('subsystem', { data: tableAData });
     }
-  };
+  }, [tableAData, tableBData, updateFilter]);
   
   const handleBringToFront = () => {
     const newZIndex = topZIndex + 1;
@@ -276,15 +236,15 @@ const SummarySubsystemsContainer = ({
           onLoopFilteredControlDataChange={handleLoopFilterChange}
           onLoopPropagationChange={handleLoopPropagationChange}
           onItemsPropagationChange={handleItemsPropagationChange}
-          onProgressFilterVisibilityChange={setIsProgressFilterVisible}
-          onItemsFilterVisibilityChange={setIsItemsFilterVisible}
-          onLoopFilterVisibilityChange={setIsLoopFilterVisible}
+          onProgressFilterVisibilityChange={(visible) => updateFilter('progress', { visible })}
+          onItemsFilterVisibilityChange={(visible) => updateFilter('status', { visible })}
+          onLoopFilterVisibilityChange={(visible) => updateFilter('loop', { visible })}
           onProgressPropagationChange={handleProgressPropagationChange}
           onHitoFilteredDataChange={handleHitoFilterChange}
-          onHitoFilterVisibilityChange={setIsHitoFilterVisible}
+          onHitoFilterVisibilityChange={(visible) => updateFilter('hito', { visible })}
           onHitoPropagationChange={handleHitoPropagationChange}
           onSubsystemFilteredDataChange={handleSubsystemFilterChange}
-          onSubsystemFilterVisibilityChange={setIsSubsystemFilterVisible}
+          onSubsystemFilterVisibilityChange={(visible) => updateFilter('subsystem', { visible })}
           onSubsystemPropagationChange={handleSubsystemPropagationChange}
           onBringToFront={handleBringToFront}
         />
@@ -307,11 +267,11 @@ const SummarySubsystemsContainer = ({
             data={filteredTableAData}
             selectedSubsystem={selectedSubsystem}
             onSubsystemSelect={handleSubsystemSelect}
-            isItemsFilterVisible={isItemsFilterVisible}
-            isLoopFilterVisible={isLoopFilterVisible}
-            isHitoFilterVisible={isHitoFilterVisible}
-            isProgressFilterVisible={isProgressFilterVisible}
-            isSubsystemFilterVisible={isSubsystemFilterVisible}
+            isItemsFilterVisible={filterState.status.visible}
+            isLoopFilterVisible={filterState.loop.visible}
+            isHitoFilterVisible={filterState.hito.visible}
+            isProgressFilterVisible={filterState.progress.visible}
+            isSubsystemFilterVisible={filterState.subsystem.visible}
           />
         </ResizableDraggablePanel>
 
@@ -329,7 +289,7 @@ const SummarySubsystemsContainer = ({
           <ProgressTestpackTable
             data={tpProgressData}
             selectedSubsystem={selectedSubsystem}
-            isProgressFilterVisible={isProgressFilterVisible}
+            isProgressFilterVisible={filterState.progress.visible}
           />
         </ResizableDraggablePanel>
       </Box>
