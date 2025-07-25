@@ -112,6 +112,17 @@ const LazosTableSqlLoopTestControl = () => {
     const [lazosTableSqlQueryTime, setLazosTableSqlQueryTime] = useState(null);
     const lazosTableSqlContainerRef = useRef(null);
 
+    // Helper function to format timestamp to date
+    const formatDate = (timestamp) => {
+        if (!timestamp) return '';
+        // Convert timestamp to milliseconds if it's in seconds
+        const ts = timestamp > 9999999999 ? timestamp : timestamp * 1000;
+        try {
+            return new Date(ts).toLocaleDateString();
+        } catch (e) {
+            return 'Invalid date';
+        }
+    };
     // Define columns using TanStack's column helper
     const lazosTableSqlColumnHelper = createColumnHelper();
 
@@ -154,7 +165,7 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('SIEMSA', {
             header: 'SIEMSA',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
         }),
         lazosTableSqlColumnHelper.accessor('LOOP', {
             header: 'LOOP',
@@ -188,8 +199,8 @@ const LazosTableSqlLoopTestControl = () => {
             header: 'QCF',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        lazosTableSqlColumnHelper.accessor('OK=100&', {
-            header: 'OK=100&',
+        lazosTableSqlColumnHelper.accessor('OK=100%', {
+            header: 'OK=100%',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('DOSSIER', {

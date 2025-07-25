@@ -132,7 +132,7 @@ const LoopTestProgressChart = ({
       groupedData[subsystem].totalLoops++;
       
       // Process OK value - use the exact field name from the table
-      const okValue = item['OK=100&'];
+      const okValue = item['OK=100%'];
       const okPercent = parseFloat(okValue?.toString().replace('%', '').trim()) || 0;
       
       // Check metrics in a single pass
