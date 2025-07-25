@@ -133,7 +133,7 @@ const SubsystemFilterA = ({
     }, [data, selectedSubsystems, onPropagationChange]);
 
     const getSubsystemColor = useCallback(() => {
-        return '#A4CCD9';
+        return '#007598';
     }, []);
 
     const filteredSubsystems = useMemo(() => {
