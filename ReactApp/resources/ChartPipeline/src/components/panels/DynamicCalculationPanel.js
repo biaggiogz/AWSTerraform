@@ -922,7 +922,7 @@ FROM "Subsystem Overview";`);
             onBringToFront={onBringToFront}
           />
         ) : (
-          <HitoFilter
+          <HitoFilterA
             data={detailsData}
             onFilterChange={onHitoFilteredDataChange || (() => {})}
             isVisible={isHitoFilterVisible}
