@@ -278,7 +278,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
     let uniqueTestPacks = 0;
     let totalItemsSum = 0;
     let totaldoneInsulSum = 0;
-    let totalPendingItemsSum = 0;
+    let totalPendingInsulSum = 0;
     let totalLoopsSum = 0;
     let totalPendingLoopsSum = 0;
     let progressSum = 0;
@@ -289,7 +289,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
       uniqueTestPacks += (item.n_distinct_tps || 0);
       totalItemsSum += (item.total_insulation || 0);
       totaldoneInsulSum += (item.done_insulation || 0);
-      totalPendingItemsSum += (item.pending_insulation || 0);
+      totalPendingInsulSum += (item.pending_insulation || 0);
       totalLoopsSum += (item.total_loop || 0);
       totalPendingLoopsSum += (item.pending_loop || 0);
       
@@ -313,7 +313,7 @@ export const useSummarySubsystemsData = (filteredData = []) => {
       uniqueTestPacks,
       totalItemsSum,
       totaldoneInsulSum,
-      totalPendingItemsSum,
+      totalPendingInsulSum,
       totalLoopsSum,
       totalPendingLoopsSum,
       doneTestPacks,

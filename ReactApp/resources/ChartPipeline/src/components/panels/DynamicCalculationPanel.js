@@ -94,13 +94,15 @@ FROM "Subsystem Overview";`);
       inst: '#977AA3',
       tracing: '#09A7A3',
       punch: '#687F9D',
+      items:'#B03052',
       'total isos': '#007598',
       'total test pack': '#7CA2C5',
       'total scope teiga': '#977AA3',
       'total scope siemsa': '#977AA3',
       'total installed teiga': '#977AA3',
       'total installed': '#977AA3',
-      'trac yes': '#09A7A3'
+      'trac yes': '#09A7A3',
+      'total items': '#B03052'
     };
     
     return (metricName) => {
@@ -448,6 +450,15 @@ FROM "Subsystem Overview";`);
                     <HStack spacing={2} wrap="wrap">
                       <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT COUNT(DISTINCT subsystem) AS "Total Subsystems _Global"\nFROM "Subsystem Overview";\n\nSELECT COUNT(DISTINCT subsystem) AS "Total Subsystems _Local"\nFROM "Subsystem Overview";')}>
                         Total Subsystems
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_items) AS "Total Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_items) AS "Total Items _Local"\nFROM "Subsystem Overview";')}>
+                        Total Items
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(done_items) AS "Total Done Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(done_items) AS "Total Done Items _Local"\nFROM "Subsystem Overview";')}>
+                        Total Done Items
+                      </Button>
+                      <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(pending_items) AS "Total Pending Items _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(pending_items) AS "Total Pending Items _Local"\nFROM "Subsystem Overview";')}>
+                        Total Pending Items
                       </Button>
                       <Button size="xs" variant="outline" onClick={() => addMetricQuery('SELECT SUM(total_insulation) AS "Total Insul _Global"\nFROM "Subsystem Overview";\n\nSELECT SUM(total_insulation) AS "Total Insul _Local"\nFROM "Subsystem Overview";')}>
                         Total Insul
