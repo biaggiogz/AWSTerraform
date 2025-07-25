@@ -9,7 +9,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   
   return (
     <div style={style}>
-      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', height: '100%' }}>
+      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', height: '100%', minHeight: '40px' }}>
         {row.getVisibleCells().map(cell => (
           <div
             key={cell.id}
@@ -18,10 +18,10 @@ const VirtualizedRow = ({ index, style, data }) => {
               width: `${cell.column.getSize()}px`,
               minWidth: `${cell.column.getSize()}px`,
               maxWidth: `${cell.column.getSize()}px`,
-              padding: '8px',
+              padding: '4px',
               borderRight: '1px solid #e2e8f0',
               display: 'flex',
-              alignItems: 'center',
+              alignItems: cell.column.id === 'description' ? 'flex-start' : 'center',
               justifyContent: 'center',
               fontSize: '12px'
             }}
@@ -199,7 +199,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'DESCRIPTION',
       size: 112,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" title={getValue()} noOfLines={2} wordBreak="break-word" textAlign="center">{getValue()}</Text>
+          <Text fontSize="xs" title={getValue()} wordBreak="break-word" textAlign="left" lineHeight="1.2" py={1}>{getValue()}</Text>
       )
     },
     {
@@ -542,37 +542,32 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
 
   const listRef = useRef();
   
-  // Optimized height calculation function
-  const calculateRowHeight = useCallback((tpCount) => {
-    if (tpCount > 6) {
-      const rowsNeeded = Math.ceil(tpCount / 4);
-      return Math.max(80, rowsNeeded * 42 + 24);
-    } else if (tpCount > 4) {
-      const rowsNeeded = Math.ceil(tpCount / 3);
-      return Math.max(80, rowsNeeded * 42 + 24);
-    } else if (tpCount > 2) {
-      const rowsNeeded = Math.ceil(tpCount / 2);
-      return rowsNeeded * 42 + 20;
-    } else if (tpCount > 0) {
-      return tpCount * 42 + 12;
-    }
-    return 50;
+  // Calculate row height based on description length
+  const calculateRowHeight = useCallback((description) => {
+    if (!description) return 40;
+    
+    const textLength = description.length;
+    const charsPerLine = 15; // Approximate chars per line in description column
+    const linesNeeded = Math.ceil(textLength / charsPerLine);
+    const baseHeight = 40;
+    const lineHeight = 16;
+    
+    return Math.max(baseHeight, baseHeight + (linesNeeded - 1) * lineHeight);
   }, []);
   
-  // Memoized row heights with caching
+  // Memoized row heights based on description length
   const rowHeights = useMemo(() => {
     const currentData = isProgressFilterVisible ? filteredData : data;
     const heights = new Map();
     
     currentData?.forEach((row, index) => {
-      const tpIds = row.list_includes_tp_id || '';
-      const cacheKey = `${row.id || index}_${tpIds}`;
+      const description = row.description || '';
+      const cacheKey = `${row.id || index}_${description.substring(0, 50)}`;
       
       if (heightCacheRef.current.has(cacheKey)) {
         heights.set(index, heightCacheRef.current.get(cacheKey));
       } else {
-        const tpCount = tpIds && typeof tpIds === 'string' ? tpIds.split('|').length : 0;
-        const height = Math.max(70, calculateRowHeight(tpCount));
+        const height = calculateRowHeight(description);
         heights.set(index, height);
         heightCacheRef.current.set(cacheKey, height);
       }
@@ -592,7 +587,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   
   // Optimized getRowHeight function
   const getRowHeight = useCallback((index) => {
-    return rowHeights.get(index) || 70;
+    return rowHeights.get(index) || 40;
   }, [rowHeights]);
   
   // Memoized table data with subsystem selection priority
@@ -807,7 +802,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         <Box width={`${headerGroups[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content" flex={1}>
           <List
             ref={listRef}
-            height={600}
+            height={Math.min(800, window.innerHeight - 300)}
             itemCount={rows.length}
             itemSize={getRowHeight}
             itemData={{ rows, table }}
