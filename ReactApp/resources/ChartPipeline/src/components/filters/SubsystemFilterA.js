@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
     Box,
     HStack,
@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { MdClose } from 'react-icons/md';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
+import { useFilterDebounce } from './hooks/useFilterDebounce';
 
 const SubsystemFilterA = ({
                               data,
@@ -59,37 +60,21 @@ const SubsystemFilterA = ({
         }
     }, [sortedSubsystems]);
 
-    const debounceRef = useRef(null);
+    const filteredData = useMemo(() => {
+        if (!data || data.length === 0) return [];
+        return data.filter(row => row.subsystem && selectedSubsystems[row.subsystem]);
+    }, [data, selectedSubsystems]);
+
+    const debouncedFilterChange = useFilterDebounce(useCallback((filteredData) => {
+        onFilterChange(filteredData);
+        if (onPropagationChange && propagationTarget !== 'nothing') {
+            onPropagationChange(filteredData, propagationTarget);
+        }
+    }, [onFilterChange, onPropagationChange, propagationTarget]));
 
     React.useEffect(() => {
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
-
-        debounceRef.current = setTimeout(() => {
-            if (!data || data.length === 0) {
-                onFilterChange([]);
-                return;
-            }
-
-            const filteredData = data.filter(row => {
-                if (!row.subsystem || !selectedSubsystems[row.subsystem]) return false;
-                return true;
-            });
-
-            onFilterChange(filteredData);
-
-            if (onPropagationChange && propagationTarget !== 'nothing') {
-                onPropagationChange(filteredData, propagationTarget);
-            }
-        }, 100);
-
-        return () => {
-            if (debounceRef.current) {
-                clearTimeout(debounceRef.current);
-            }
-        };
-    }, [data, selectedSubsystems, onFilterChange, onPropagationChange, propagationTarget]);
+        debouncedFilterChange(filteredData);
+    }, [filteredData, debouncedFilterChange]);
 
     const toggleSubsystem = useCallback((subsystem) => {
         setSelectedSubsystems(prev => ({
@@ -118,19 +103,10 @@ const SubsystemFilterA = ({
 
     const handlePropagationChange = useCallback((value) => {
         setPropagationTarget(value);
-
         if (onPropagationChange) {
-            if (value === 'nothing') {
-                onPropagationChange([], 'nothing');
-            } else {
-                const currentFilteredData = data.filter(row => {
-                    if (!row.subsystem || !selectedSubsystems[row.subsystem]) return false;
-                    return true;
-                });
-                onPropagationChange(currentFilteredData, value);
-            }
+            onPropagationChange(value === 'nothing' ? [] : filteredData, value);
         }
-    }, [data, selectedSubsystems, onPropagationChange]);
+    }, [onPropagationChange, filteredData]);
 
     const getSubsystemColor = useCallback(() => {
         return '#007598';

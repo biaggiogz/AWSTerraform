@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   HStack,
@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { MdClose } from 'react-icons/md';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
+import { useFilterDebounce } from './hooks/useFilterDebounce';
 
 const HitoFilterA = ({ 
   data, 
@@ -59,38 +60,21 @@ const HitoFilterA = ({
     }
   }, [sortedHitos]);
 
-  const debounceRef = useRef(null);
-  
-  React.useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
+  const filteredData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return data.filter(row => row.hito_isos && selectedHitos[row.hito_isos]);
+  }, [data, selectedHitos]);
+
+  const debouncedFilterChange = useFilterDebounce(useCallback((filteredData) => {
+    onFilterChange(filteredData);
+    if (onPropagationChange && propagationTarget !== 'nothing') {
+      onPropagationChange(filteredData, propagationTarget);
     }
-    
-    debounceRef.current = setTimeout(() => {
-      if (!data || data.length === 0) {
-        onFilterChange([]);
-        return;
-      }
-      
-      const filteredData = data.filter(row => {
-        if (!row.hito_isos || !selectedHitos[row.hito_isos]) return false;
-        return true;
-      });
-      
-      onFilterChange(filteredData);
-      
-      // Handle propagation based on selected target
-      if (onPropagationChange && propagationTarget !== 'nothing') {
-        onPropagationChange(filteredData, propagationTarget);
-      }
-    }, 100);
-    
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, [data, selectedHitos, onFilterChange, onPropagationChange, propagationTarget]);
+  }, [onFilterChange, onPropagationChange, propagationTarget]));
+
+  React.useEffect(() => {
+    debouncedFilterChange(filteredData);
+  }, [filteredData, debouncedFilterChange]);
 
   const toggleHito = useCallback((hito) => {
     setSelectedHitos(prev => ({
@@ -119,21 +103,10 @@ const HitoFilterA = ({
 
   const handlePropagationChange = useCallback((value) => {
     setPropagationTarget(value);
-    
-    // Immediately trigger propagation when dropdown changes
     if (onPropagationChange) {
-      if (value === 'nothing') {
-        onPropagationChange([], 'nothing');
-      } else {
-        // Get current filtered data and propagate
-        const currentFilteredData = data.filter(row => {
-          if (!row.hito_isos || !selectedHitos[row.hito_isos]) return false;
-          return true;
-        });
-        onPropagationChange(currentFilteredData, value);
-      }
+      onPropagationChange(value === 'nothing' ? [] : filteredData, value);
     }
-  }, [data, selectedHitos, onPropagationChange]);
+  }, [onPropagationChange, filteredData]);
 
   const getHitoColor = useCallback((hito) => {
     // Generate a consistent color based on the hito string
