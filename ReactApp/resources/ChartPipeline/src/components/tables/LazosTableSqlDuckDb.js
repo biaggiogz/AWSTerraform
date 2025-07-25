@@ -57,12 +57,42 @@ const LazosTableSqlSubsystemCell = React.memo(({ subsystem, onSubsystemSelect, s
     );
 });
 
+// Area Cell Component
+const LazosTableSqlAreaCell = React.memo(({ area, onAreaSelect, selectedArea }) => {
+    if (!area || area === '') {
+        return <Text fontSize="xs" color="gray.500">-</Text>;
+    }
+
+    return (
+        <Button
+            size="xs"
+            variant={selectedArea === area ? "solid" : "outline"}
+            onClick={() => onAreaSelect && onAreaSelect(area)}
+            _hover={{ bg: selectedArea === area ? "orange.200" : "blue.200" }}
+            fontSize="10px"
+            fontWeight="medium"
+            color={selectedArea === area ? "white" : "blue.600"}
+            bg={selectedArea === area ? "orange.500" : "white"}
+            borderColor={selectedArea === area ? "orange.500" : "blue.500"}
+            minWidth="30px"
+            height="18px"
+            px={2}
+            borderRadius="sm"
+        >
+            {area}
+        </Button>
+    );
+});
+
 const LazosTableSqlLoopTestControl = () => {
     // Get filter context
     const {
         selectedSubsystem,
+        selectedArea,
         handleSubsystemClick,
-        getSqlWhereClause
+        handleAreaClick,
+        getSqlWhereClause,
+        setTableData
     } = useLazosTableSqlFilterContext();
 
     const {
@@ -106,7 +136,13 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('AREA', {
             header: 'AREA',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            cell: info => (
+                <LazosTableSqlAreaCell
+                    area={info.getValue()}
+                    onAreaSelect={handleAreaClick}
+                    selectedArea={selectedArea}
+                />
+            )
         }),
         lazosTableSqlColumnHelper.accessor('PRIORITY', {
             header: 'PRIORITY',
@@ -176,7 +212,7 @@ const LazosTableSqlLoopTestControl = () => {
             header: 'Status Closed&Open (C/O)',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         })
-    ], [selectedSubsystem, handleSubsystemClick]);
+    ], [selectedSubsystem, selectedArea, handleSubsystemClick, handleAreaClick]);
 
     // Load data function
     const lazosTableSqlLoadData = async () => {
@@ -245,6 +281,11 @@ const LazosTableSqlLoopTestControl = () => {
 
             setLazosTableSqlData(result || []);
             
+            // Set data in context for chart to use
+            if (setTableData) {
+                setTableData(result || []);
+            }
+            
             // Calculate and set load time
             const endLoadTime = performance.now();
             setLazosTableSqlLoadTime(Math.round(endLoadTime - startLoadTime));
@@ -260,7 +301,7 @@ const LazosTableSqlLoopTestControl = () => {
     // Load data on component mount and when filters change
     useEffect(() => {
         lazosTableSqlLoadData();
-    }, [createTableFromParquet, executeQuery, dbLoading, dbError, selectedSubsystem, getSqlWhereClause]);
+    }, [createTableFromParquet, executeQuery, dbLoading, dbError, selectedSubsystem, selectedArea, getSqlWhereClause]);
 
     // Create table instance
     const lazosTableSqlTable = useReactTable({

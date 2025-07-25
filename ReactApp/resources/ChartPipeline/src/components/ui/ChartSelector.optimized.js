@@ -20,7 +20,7 @@ import { LazosTableSqlFilterProvider } from '../filters/LazosTableFilter';
 import FilterStatusBar from '../filters/FilterStatusBar';
 
 // Lazy load chart components
-const LoopTestProgressChart = lazy(() => import('../../charts/LoopTestProgressChart.optimized'));
+const LoopTestProgressChart = lazy(() => import('../../charts/LazosTestProgressChart.optimized'));
 const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationProgressControlChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
 const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
@@ -111,17 +111,17 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
           <TabPanels>
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <VStack spacing={0} align="stretch">
-                  <LoopTestProgressChart
-                      data={data}
-                      rawData={rawData}
-                      onProgressFilter={onProgressFilter}
-                      progressFilter={progressFilter}
-                  />
-                  <LazosTableSqlFilterProvider>
+                <LazosTableSqlFilterProvider>
+                  <VStack spacing={0} align="stretch">
+                    <LoopTestProgressChart
+                        data={data}
+                        rawData={rawData}
+                        onProgressFilter={onProgressFilter}
+                        progressFilter={progressFilter}
+                    />
                     <LazosTableSql />
-                  </LazosTableSqlFilterProvider>
-                </VStack>
+                  </VStack>
+                </LazosTableSqlFilterProvider>
               </Suspense>
             </TabPanel>
             <TabPanel p={0}>

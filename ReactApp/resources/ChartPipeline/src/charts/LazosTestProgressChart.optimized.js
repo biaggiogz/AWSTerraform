@@ -14,6 +14,7 @@ import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import GlobalMetricsDisplay from '../components/ui/GlobalMetricsDisplay';
 import useMultiValueFilter from '../hooks/useMultiValueFilter';
+import { useLazosTableSqlFilterContext } from '../components/filters/LazosTableFilter';
 
 // Register the plugin
 Chart.register(ChartDataLabels);
@@ -32,10 +33,19 @@ const LoopTestProgressChart = ({
   rawData, 
   onProgressFilter, 
   progressFilter,
-  filterMappings = { area: 'Area', subsystem: 'SUBS_PRE' }
+  filterMappings = { area: 'area_tlp', subsystem: 'subsystem' }
 }) => {
-  // Use filtered data passed from parent
-  const filteredData = data;
+  // Get filter context from LazosTableSql
+  const {
+    selectedSubsystem,
+    selectedArea,
+    handleSubsystemClick,
+    handleAreaClick,
+    tableData
+  } = useLazosTableSqlFilterContext();
+  
+  // Use table data from context as primary source
+  const filteredData = tableData || [];
   
   // State for sort field and direction
   const [sortField, setSortField] = useState('totalLoops');
@@ -106,11 +116,11 @@ const LoopTestProgressChart = ({
     
     // Single pass through data for all metrics
     filteredData.forEach(item => {
-      const subsPre = item['SUBS_PRE'];
-      if (!subsPre) return;
+      const subsystem = item['SUBSYSTEM'];
+      if (!subsystem) return;
       
-      if (!groupedData[subsPre]) {
-        groupedData[subsPre] = {
+      if (!groupedData[subsystem]) {
+        groupedData[subsystem] = {
           totalLoops: 0,
           loopSignalDone: 0,
           dossierCompleted: 0,
@@ -119,33 +129,33 @@ const LoopTestProgressChart = ({
       }
       
       // Count this loop (TOTAL LOOP Signal)
-      groupedData[subsPre].totalLoops++;
+      groupedData[subsystem].totalLoops++;
       
-      // Process OK value once
-      const okValue = item['OK=100%']?.toString().replace('%', '').trim();
-      const okPercent = parseFloat(okValue);
+      // Process OK value - use the exact field name from the table
+      const okValue = item['OK=100&'];
+      const okPercent = parseFloat(okValue?.toString().replace('%', '').trim()) || 0;
       
       // Check metrics in a single pass
       // LOOP (Signal) DONE: OK=100%
       if (okPercent === 100) {
-        groupedData[subsPre].loopSignalDone++;
+        groupedData[subsystem].loopSignalDone++;
       }
       
       // DOSSIER COMPLETED: non-null DOSSIER
       if (item['DOSSIER']) {
-        groupedData[subsPre].dossierCompleted++;
+        groupedData[subsystem].dossierCompleted++;
       }
       
       // LOOP (Signal) PENDING: OK<100%
       if (okPercent < 100) {
-        groupedData[subsPre].loopsSignalPending++;
+        groupedData[subsystem].loopsSignalPending++;
       }
     });
     
     // Convert to array format for chart
     return Object.entries(groupedData)
-      .map(([subsPre, values]) => ({
-        subsPre,
+      .map(([subsystem, values]) => ({
+        subsystem,
         ...values
       }));
   }, [filteredData]);
@@ -239,7 +249,7 @@ const LoopTestProgressChart = ({
     const allDatasets = reorderedDatasets.map(({ sortField, ...dataset }) => dataset);
     
     return {
-      labels: sortedCompleteMetrics.map(item => item.subsPre),
+      labels: sortedCompleteMetrics.map(item => item.subsystem),
       datasets: allDatasets
     };
   }, [sortedCompleteMetrics, sortField, progressFilter]);
@@ -332,6 +342,15 @@ const LoopTestProgressChart = ({
           // Dynamic spacing based on number of bars
           barPercentage,
           categoryPercentage
+        }
+      },
+      onClick: (event, elements) => {
+        if (elements.length > 0) {
+          const index = elements[0].index;
+          const clickedSubsystem = sortedCompleteMetrics[index]?.subsystem;
+          if (clickedSubsystem && handleSubsystemClick) {
+            handleSubsystemClick(clickedSubsystem);
+          }
         }
       }
     };

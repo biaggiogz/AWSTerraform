@@ -5,36 +5,47 @@ const LazosTableSqlFilterContext = createContext();
 
 // Provider component
 export const LazosTableSqlFilterProvider = ({ children }) => {
-    // Filter state - only subsystem filter needed
+    // Filter state - subsystem and area filters
     const [lazosTableSqlSelectedSubsystem, setLazosTableSqlSelectedSubsystem] = useState(null);
+    const [lazosTableSqlSelectedArea, setLazosTableSqlSelectedArea] = useState(null);
 
     // Table data for chart visualization
     const [lazosTableSqlTableData, setLazosTableSqlTableData] = useState([]);
-    const [lazosTableSqlGroupBy, setLazosTableSqlGroupBy] = useState(['SUBSYSTEM']);
+    const [lazosTableSqlGroupBy, setLazosTableSqlGroupBy] = useState(['SUBSYSTEM', 'AREA']);
 
     // Handle subsystem selection
     const lazosTableSqlHandleSubsystemClick = useCallback((subsystem) => {
         setLazosTableSqlSelectedSubsystem(prev => prev === subsystem ? null : subsystem);
     }, []);
 
+    // Handle area selection
+    const lazosTableSqlHandleAreaClick = useCallback((area) => {
+        setLazosTableSqlSelectedArea(prev => prev === area ? null : area);
+    }, []);
+
     // Clear all filters
     const lazosTableSqlClearAllFilters = useCallback(() => {
         setLazosTableSqlSelectedSubsystem(null);
+        setLazosTableSqlSelectedArea(null);
     }, []);
 
     // Filter function for Loop Test Control table
     const lazosTableSqlFilterData = useCallback((data) => {
         if (!data || !data.length) return [];
-        if (!lazosTableSqlSelectedSubsystem) return data;
+        if (!lazosTableSqlSelectedSubsystem && !lazosTableSqlSelectedArea) return data;
 
         return data.filter(row => {
             // Filter by subsystem
             if (lazosTableSqlSelectedSubsystem && row['SUBSYSTEM'] !== lazosTableSqlSelectedSubsystem) {
                 return false;
             }
+            // Filter by area
+            if (lazosTableSqlSelectedArea && row['AREA'] !== lazosTableSqlSelectedArea) {
+                return false;
+            }
             return true;
         });
-    }, [lazosTableSqlSelectedSubsystem]);
+    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea]);
 
     // Create SQL WHERE clauses for direct filtering in queries
     const lazosTableSqlGetSqlWhereClause = useCallback(() => {
@@ -44,16 +55,22 @@ export const LazosTableSqlFilterProvider = ({ children }) => {
             conditions.push(`subsystem = '${lazosTableSqlSelectedSubsystem}'`);
         }
 
+        if (lazosTableSqlSelectedArea) {
+            conditions.push(`area_tlp = '${lazosTableSqlSelectedArea}'`);
+        }
+
         return conditions.length > 0 ? conditions.join(' AND ') : '';
-    }, [lazosTableSqlSelectedSubsystem]);
+    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea]);
 
     // Context value
     const lazosTableSqlValue = useMemo(() => ({
         // Filter state
         selectedSubsystem: lazosTableSqlSelectedSubsystem,
+        selectedArea: lazosTableSqlSelectedArea,
 
         // Filter handlers
         handleSubsystemClick: lazosTableSqlHandleSubsystemClick,
+        handleAreaClick: lazosTableSqlHandleAreaClick,
         clearAllFilters: lazosTableSqlClearAllFilters,
 
         // Filter functions
@@ -69,7 +86,9 @@ export const LazosTableSqlFilterProvider = ({ children }) => {
         setGroupBy: setLazosTableSqlGroupBy
     }), [
         lazosTableSqlSelectedSubsystem,
+        lazosTableSqlSelectedArea,
         lazosTableSqlHandleSubsystemClick,
+        lazosTableSqlHandleAreaClick,
         lazosTableSqlClearAllFilters,
         lazosTableSqlFilterData,
         lazosTableSqlGetSqlWhereClause,

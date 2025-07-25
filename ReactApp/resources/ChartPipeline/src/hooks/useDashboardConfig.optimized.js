@@ -9,10 +9,10 @@ const useDashboardConfig = (activeDashboard) => {
   // Memoize the dashboard configurations to avoid recreating objects on each render
   const dashboardConfigs = useMemo(() => ({
     'LOOP SIGNAL PROGRESS REPORT': {
-      datasetPath: '/data/test_of_lazos_updated.csv',
+      datasetPath: '/data/master_subsystem.parquet',
       filterMappings: {
-        area: 'Area',
-        subsystem: 'SUBS_PRE'
+        area: 'area_tlp',
+        subsystem: 'subsystem'
       }
     },
     'INSULATION PROGRESS REPORT': {

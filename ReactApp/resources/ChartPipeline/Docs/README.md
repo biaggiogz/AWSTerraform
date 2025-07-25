@@ -44,7 +44,7 @@ ChartPipeline/
 ├── src/                    # Source code
 │   ├── charts/             # Modular chart components
 │   │   ├── IsolationProgressControlChart.optimized.js # Isolation-specific progress chart
-│   │   ├── LoopTestProgressChart.optimized.js # Interactive loop test progress with metric isolation
+│   │   ├── LazosTestProgressChart.optimized.js # Interactive loop test progress with metric isolation
 │   │   └── TestPackProgressChart.optimized.js # Adaptive test pack progress chart
 │   ├── wasm/               # WebAssembly optimization modules
 │   │   ├── wasm-loader.js              # WASM loading with fallback mechanism
@@ -110,7 +110,7 @@ ChartPipeline/
 ### Chart Components (Dynamic & Adaptive with Advanced Features)
 
 - **IsolationProgressControlChart.optimized.js**: ✅ **Production-Ready Component** - Vertical stacked bar chart implementing weighted average calculations for six isolation metrics (Spacer, Insulation, Sheet Metal, Boxes, Finish, Mleq Total). Features responsive metrics header with badge display, dual-segment bars (Complete/Incomplete), centered percentage labels, and integration with Design Area/Subsystem filtering. Uses Chart.js with chartjs-plugin-datalabels for optimal performance.
-- **LoopTestProgressChart.optimized.js**: ✅ **Enhanced with Full Interactive System** - Interactive stacked bar chart with one-click metric isolation, global metrics display, synchronized table filtering, smart visual feedback, and enterprise-grade performance optimization.
+- **LazosTestProgressChart.optimized.js**: ✅ **Enhanced with Full Interactive System** - Interactive stacked bar chart with one-click metric isolation, global metrics display, synchronized table filtering, smart visual feedback, and enterprise-grade performance optimization.
 - **TestPackProgressChart.optimized.js**: Adaptive horizontal bar chart with chunked rendering, dynamic height calculation, and optimized event handling for large datasets.
 
 ### Main Application (Flexible Integration)
