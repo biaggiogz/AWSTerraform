@@ -201,7 +201,34 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('OK=100%', {
             header: 'OK=100%',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            cell: info => {
+                const value = parseFloat(info.getValue()) || 0;
+                const percentage = Math.min(Math.max(value, 0), 1) * 100;
+                return (
+                    <Box w="100%" position="relative">
+                        <Box 
+                            h="16px" 
+                            w={`${percentage}%`} 
+                            bg="green.500"
+                            borderRadius="sm"
+                        />
+                        <Text 
+                            fontSize="xs" 
+                            position="absolute" 
+                            top="0" 
+                            left="0" 
+                            right="0" 
+                            textAlign="center"
+                            color="white"
+                            fontWeight="bold"
+                            textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+                        >
+                            {percentage.toFixed(0)}%
+                        </Text>
+                    </Box>
+                );
+            },
+            size: 95,
         }),
         lazosTableSqlColumnHelper.accessor('DOSSIER', {
             header: 'DOSSIER',
@@ -273,7 +300,7 @@ const LazosTableSqlLoopTestControl = () => {
                 connected_tlp AS "CONNECTED",
                 cable_test_tlp AS "CABLE TEST",
                 qcf_tlp AS "QCF",
-                ok100_tlp AS "OK=100&",
+                ok100_tlp AS "OK=100%",
                 dossier_tlp AS "DOSSIER",
                 test_loop_tlp AS "TEST LOOP",
                 action_tlp AS "ACTION",
