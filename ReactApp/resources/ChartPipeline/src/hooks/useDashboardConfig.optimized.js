@@ -30,10 +30,10 @@ const useDashboardConfig = (activeDashboard) => {
       }
     },
     'TEST PACK PROGRESS': {
-      datasetPath: '/data/pipelinedata.csv',
+      datasetPath: '/data/tp_with_progress.csv',
       filterMappings: {
-        area: 'Design Area',
-        subsystem: 'SUBSYSTEM'
+        area: 'subsystem',
+        subsystem: 'subsystem'
       }
     },
     'SUMMARY SUBSYSTEMS': {

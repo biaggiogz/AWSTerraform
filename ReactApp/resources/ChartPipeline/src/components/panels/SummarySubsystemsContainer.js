@@ -316,12 +316,12 @@ const SummarySubsystemsContainer = ({
 
         <ResizableDraggablePanel
           title="Test Pack Progress Details"
-          initialWidth={700}
+          initialWidth={200}
           initialHeight={550}
           initialX={1180}
           initialY={20}
-          minWidth={400}
-          minHeight={300}
+          minWidth={200}
+          minHeight={700}
           onBringToFront={handleBringToFront}
         >
           <ProgressTestpackTable
