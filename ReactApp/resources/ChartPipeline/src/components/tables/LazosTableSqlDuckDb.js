@@ -19,7 +19,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import useDuckDB from '../../hooks/useDuckDB3';
-import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
+import { useInstrumentsTableFilterContext } from '../filters/LazosTableFilter';
 
 // Performance measurement component
 const PerformanceMetric = React.memo(({ label, value, description }) => (

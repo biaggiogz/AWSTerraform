@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import { Box, Heading, Text, HStack, Button, Tooltip, Grid, Progress, VStack } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { VariableSizeList as List } from 'react-window';
@@ -35,59 +35,95 @@ const VirtualizedRow = ({ index, style, data }) => {
 };
 
 const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
-  const [filteredData, setFilteredData] = React.useState(data);
+  const [filteredData, setFilteredData] = useState(data);
   const lastFilterStateRef = useRef(null);
+  const debounceTimeoutRef = useRef(null);
+  const filterCacheRef = useRef(new Map());
   
-  // Memoized filter function to avoid recreating on every render
+  // Optimized filter function with caching
   const filterDataByTPs = useCallback((sourceData, filteredTPs) => {
     if (!filteredTPs || filteredTPs.length === 0) return sourceData;
     
-    return sourceData.filter(row => {
-      try {
-        const tpIds = row.list_includes_tp_id;
-        if (!tpIds) return false;
-        
-        let tpIdArray = [];
-        if (typeof tpIds === 'string') {
-          tpIdArray = tpIds.split('|');
-        } else if (Array.isArray(tpIds)) {
-          tpIdArray = tpIds;
-        } else if (typeof tpIds === 'number') {
-          tpIdArray = [String(tpIds)];
-        } else {
-          return false;
-        }
-        
-        return tpIdArray.some(tpId => filteredTPs.includes(String(tpId)));
-      } catch (error) {
-        console.error('Error filtering row:', error, row);
+    const cacheKey = `${filteredTPs.join(',')}_${sourceData.length}`;
+    if (filterCacheRef.current.has(cacheKey)) {
+      return filterCacheRef.current.get(cacheKey);
+    }
+    
+    const filteredTPsSet = new Set(filteredTPs.map(String));
+    
+    const result = sourceData.filter(row => {
+      const tpIds = row.list_includes_tp_id;
+      if (!tpIds) return false;
+      
+      let tpIdArray;
+      if (typeof tpIds === 'string') {
+        tpIdArray = tpIds.split('|');
+      } else if (Array.isArray(tpIds)) {
+        tpIdArray = tpIds;
+      } else if (typeof tpIds === 'number') {
+        tpIdArray = [String(tpIds)];
+      } else {
         return false;
       }
+      
+      return tpIdArray.some(tpId => filteredTPsSet.has(String(tpId)));
     });
+    
+    // Cache result with size limit
+    if (filterCacheRef.current.size > 10) {
+      filterCacheRef.current.clear();
+    }
+    filterCacheRef.current.set(cacheKey, result);
+    
+    return result;
   }, []);
   
-  // Optimized effect that only runs when necessary
+  // Debounced filter processing
+  const processFilterChange = useCallback((filterState) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    debounceTimeoutRef.current = setTimeout(() => {
+      const filteredTPs = filterState.map(item => item.testPack);
+      const newFilteredData = filterDataByTPs(data, filteredTPs);
+      setFilteredData(newFilteredData);
+    }, 150);
+  }, [data, filterDataByTPs]);
+  
+  // Optimized effect with debouncing
   useEffect(() => {
     if (!window.progressFilterState) {
       window.progressFilterState = { selectedTPs: {}, filteredData: [] };
     }
     
     if (isProgressFilterVisible && window.progressFilterState?.filteredData) {
-      const currentFilterState = JSON.stringify(window.progressFilterState.filteredData);
+      const currentFilterData = window.progressFilterState.filteredData;
+      const currentFilterState = JSON.stringify(currentFilterData);
       
-      // Only update if filter state actually changed
       if (lastFilterStateRef.current !== currentFilterState) {
         lastFilterStateRef.current = currentFilterState;
-        
-        const filteredTPs = window.progressFilterState.filteredData.map(item => item.testPack);
-        const newFilteredData = filterDataByTPs(data, filteredTPs);
-        setFilteredData(newFilteredData);
+        processFilterChange(currentFilterData);
       }
     } else {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
       lastFilterStateRef.current = null;
       setFilteredData(data);
     }
-  }, [isProgressFilterVisible, data, filterDataByTPs]);
+    
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [isProgressFilterVisible, data, processFilterChange]);
+  
+  // Clear cache when data changes
+  useEffect(() => {
+    filterCacheRef.current.clear();
+  }, [data]);
 
   const columns = useMemo(() => [
     // {
