@@ -217,6 +217,13 @@ const SummarySubsystemsContainer = ({
     setTopZIndex(newZIndex);
     return newZIndex;
   };
+  
+  // Enhanced filter bring to front with higher z-index
+  const handleFilterBringToFront = () => {
+    const newZIndex = topZIndex + 100; // Ensure filters are always above tables
+    setTopZIndex(newZIndex + 1);
+    return newZIndex;
+  };
 
   return (
     <VStack spacing={4} align="stretch">
@@ -246,12 +253,12 @@ const SummarySubsystemsContainer = ({
           onSubsystemFilteredDataChange={handleSubsystemFilterChange}
           onSubsystemFilterVisibilityChange={(visible) => updateFilter('subsystem', { visible })}
           onSubsystemPropagationChange={handleSubsystemPropagationChange}
-          onBringToFront={handleBringToFront}
+          onBringToFront={handleFilterBringToFront}
         />
       </Suspense>
       
       {/* Draggable Tables */}
-      <Box position="relative" width="120%" height="800px" overflow="hidden">
+      <Box position="relative" width="120%" height="800px" overflow="hidden" zIndex={1}>
         <ResizableDraggablePanel
           title="Subsystem Overview"
           initialWidth={1660}
@@ -262,6 +269,7 @@ const SummarySubsystemsContainer = ({
           minHeight={700}
           onBringToFront={handleBringToFront}
           disableDragging={true}
+          zIndex={10}
         >
           <SummarySubsystemsTableA
             data={filteredTableAData}
@@ -285,6 +293,7 @@ const SummarySubsystemsContainer = ({
           minHeight={700}
           onBringToFront={handleBringToFront}
           disableDragging={true}
+          zIndex={10}
         >
           <ProgressTestpackTable
             data={tpProgressData}
