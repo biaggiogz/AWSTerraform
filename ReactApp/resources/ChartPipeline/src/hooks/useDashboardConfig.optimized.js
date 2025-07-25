@@ -32,7 +32,7 @@ const useDashboardConfig = (activeDashboard) => {
     'TEST PACK PROGRESS': {
       datasetPath: '/data/tp_with_progress.csv',
       filterMappings: {
-        area: 'subsystem',
+        area: 'tp_unit_tp',
         subsystem: 'subsystem'
       }
     },
