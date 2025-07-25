@@ -103,7 +103,7 @@ resource "null_resource" "build_and_deploy_react_app" {
       export PATH="./node_modules/.bin:/usr/bin:/usr/local/bin:$PATH" && \
       /usr/bin/npm install && \
       chmod +x node_modules/.bin/* && \
-      /usr/bin/npm run build && \
+      REACT_APP_CACHE_VERSION=$(date +%s) /usr/bin/npm run build && \
       aws s3 sync build/ s3://${aws_s3_bucket.react_app_bucket.bucket} --delete
     EOT
   }
