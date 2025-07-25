@@ -71,7 +71,7 @@ const ProgressTestpackTable = ({ data, selectedSubsystem, isProgressFilterVisibl
                 ),
             }),
             columnHelper.accessor('id', {
-                header: 'Test Pack ID',
+                header: 'Test Pack',
                 cell: info => <Text>{info.getValue()}</Text>,
             }),
             columnHelper.accessor('progress', {
@@ -102,9 +102,9 @@ const ProgressTestpackTable = ({ data, selectedSubsystem, isProgressFilterVisibl
 
     return (
         <Box border="1px solid" borderColor="gray.200" borderRadius="md" bg="white" overflow="hidden">
-            <Box p={2} bg="#0082A9" color="white" fontWeight="bold" fontSize="sm" textAlign="center">
-                TEST PACKS PROGRESS BY SUBSYSTEM
-            </Box>
+            {/*<Box p={2} bg="#0082A9" color="white" fontWeight="bold" fontSize="sm" textAlign="center">*/}
+            {/*    TEST PACKS PROGRESS BY SUBSYSTEM*/}
+            {/*</Box>*/}
 
             {flattenedData.length === 0 ? (
                 <Box p={4} textAlign="center" color="gray.500">
