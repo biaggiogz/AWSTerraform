@@ -1,18 +1,29 @@
 import { useState, useEffect, useMemo } from 'react';
 import { processCSVData, getUniqueValues } from '../utils/dataProcessor.optimized';
+import useDuckDB from './useDuckDB3';
 
 /**
- * Custom hook to load and process CSV data with memoization
- * @param {string} csvPath - Path to the CSV file
+ * Custom hook to load and process CSV/Parquet data with memoization
+ * @param {string} dataPath - Path to the CSV or Parquet file
  * @param {Object} filterMappings - Mappings for filter columns
  * @returns {Object} - Processed data and loading state
  */
-const useDataLoader = (csvPath, filterMappings = {}) => {
+const useDataLoader = (dataPath, filterMappings = {}) => {
   const [rawData, setRawData] = useState(null);
+  const [processedData, setProcessedData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const {
+    createTableFromParquet,
+    executeQuery,
+    loading: dbLoading,
+    error: dbError,
+  } = useDuckDB();
+  
+  const isParquetFile = dataPath && dataPath.endsWith('.parquet');
 
-  // Fetch data only once
+  // Fetch and process data
   useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
@@ -20,9 +31,35 @@ const useDataLoader = (csvPath, filterMappings = {}) => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(csvPath, { signal });
-        const csvText = await response.text();
-        setRawData(csvText);
+        setError(null);
+        
+        if (isParquetFile) {
+          // Handle parquet files with DuckDB
+          if (dbLoading || dbError) {
+            return;
+          }
+          
+          const response = await fetch(dataPath, { signal });
+          if (!response.ok) throw new Error(`Failed to fetch Parquet: ${response.status}`);
+          
+          const parquetBuffer = await response.arrayBuffer();
+          await createTableFromParquet('filter_data', parquetBuffer);
+          
+          // Get all data for filter processing
+          const result = await executeQuery(`
+            SELECT *
+            FROM filter_data
+            WHERE tag_loop_tlp is not null
+          `);
+          
+          setProcessedData(result || []);
+        } else {
+          // Handle CSV files
+          const response = await fetch(dataPath, { signal });
+          const csvText = await response.text();
+          setRawData(csvText);
+        }
+        
         setLoading(false);
       } catch (err) {
         if (err.name !== 'AbortError') {
@@ -32,46 +69,48 @@ const useDataLoader = (csvPath, filterMappings = {}) => {
       }
     };
 
-    if (csvPath) {
+    if (dataPath) {
       loadData();
     }
     
-    // Cleanup function to abort fetch if component unmounts
     return () => controller.abort();
-  }, [csvPath]);
+  }, [dataPath, isParquetFile, createTableFromParquet, executeQuery, dbLoading, dbError]);
 
-  // Process data with memoization to avoid unnecessary recalculations
-  const processedData = useMemo(() => {
-    if (!rawData) return [];
+  // Process CSV data with memoization
+  const csvProcessedData = useMemo(() => {
+    if (!rawData || isParquetFile) return [];
     return processCSVData(rawData);
-  }, [rawData]);
+  }, [rawData, isParquetFile]);
+  
+  // Use appropriate processed data
+  const finalProcessedData = isParquetFile ? processedData : csvProcessedData;
 
   // Extract unique values with memoization using the provided mappings
   const areas = useMemo(() => {
     const areaColumn = filterMappings.area || 'Design Area';
-    return getUniqueValues(processedData, areaColumn);
-  }, [processedData, filterMappings.area]);
+    return getUniqueValues(finalProcessedData, areaColumn);
+  }, [finalProcessedData, filterMappings.area]);
 
   const isometric = useMemo(() => {
     const areaColumn = filterMappings.isometric || 'ISOMETRIC';
-    return getUniqueValues(processedData, areaColumn);
-  }, [processedData, filterMappings.isometric]);
+    return getUniqueValues(finalProcessedData, areaColumn);
+  }, [finalProcessedData, filterMappings.isometric]);
 
   const subsystems = useMemo(() => {
     const subsystemColumn = filterMappings.subsystem || 'SUBSYSTEM';
-    return getUniqueValues(processedData, subsystemColumn);
-  }, [processedData, filterMappings.subsystem]);
+    return getUniqueValues(finalProcessedData, subsystemColumn);
+  }, [finalProcessedData, filterMappings.subsystem]);
 
   const testPacks = useMemo(() => {
     // Test Pack column might be different between datasets
-    const testPackColumn = processedData[0] && 'TEST PACK' in processedData[0] ? 'TEST PACK' : 'TEST LOOP';
-    return getUniqueValues(processedData, testPackColumn);
-  }, [processedData]);
+    const testPackColumn = finalProcessedData[0] && 'TEST PACK' in finalProcessedData[0] ? 'TEST PACK' : 'TEST LOOP';
+    return getUniqueValues(finalProcessedData, testPackColumn);
+  }, [finalProcessedData]);
 
   return {
-    data: processedData,
-    loading,
-    error,
+    data: finalProcessedData,
+    loading: loading || dbLoading,
+    error: error || dbError,
     areas,
     subsystems,
     testPacks,
