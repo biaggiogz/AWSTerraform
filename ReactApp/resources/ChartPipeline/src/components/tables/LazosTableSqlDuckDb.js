@@ -19,7 +19,7 @@ import {
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import useDuckDB from '../../hooks/useDuckDB3';
-import { useInstrumentsTableFilterContext } from '../filters/LazosTableFilter';
+import { useLazosTableSqlFilterContext } from '../filters/LazosTableFilter';
 
 // Performance measurement component
 const LazosTableSqlPerformanceMetric = React.memo(({ label, value, description }) => (
@@ -63,7 +63,7 @@ const LazosTableSqlLoopTestControl = () => {
         selectedSubsystem,
         handleSubsystemClick,
         getSqlWhereClause
-    } = useInstrumentsTableFilterContext();
+    } = useLazosTableSqlFilterContext();
 
     const {
         createTableFromParquet,

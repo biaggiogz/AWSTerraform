@@ -1,307 +1,148 @@
 import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 
 // Create context
-const InstrumentsTableFilterContext = createContext();
-
-// Split test pack string into array
-function splitTestPack(testPackStr) {
-    if (!testPackStr || testPackStr === '' || testPackStr === 'NOT_APPLY') return [];
-    return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v !== '');
-}
+const LazosTableSqlFilterContext = createContext();
 
 // Provider component
-export const InstrumentsTableFilterProvider = ({ children }) => {
-    // Filter state
-    const [selectedIsometric, setSelectedIsometric] = useState(null);
-    const [selectedTestPack, setSelectedTestPack] = useState(null);
-    const [selectedSubsystem, setSelectedSubsystem] = useState(null);
+export const LazosTableSqlFilterProvider = ({ children }) => {
+    // Filter state - only subsystem filter needed
+    const [lazosTableSqlSelectedSubsystem, setLazosTableSqlSelectedSubsystem] = useState(null);
 
     // Table data for chart visualization
-    const [tableData, setTableData] = useState([]);
-    const [groupBy, setGroupBy] = useState(['SUBSYSTEM', 'HITO']);
-
-    // Handle isometric selection
-    const onIsometricSelect = useCallback((isoId) => {
-        setSelectedIsometric(prev => prev === isoId ? null : isoId);
-    }, []);
-
-    // Handle test pack selection
-    const handleTestPackClick = useCallback((testPack) => {
-        setSelectedTestPack(prev => prev === testPack ? null : testPack);
-    }, []);
+    const [lazosTableSqlTableData, setLazosTableSqlTableData] = useState([]);
+    const [lazosTableSqlGroupBy, setLazosTableSqlGroupBy] = useState(['SUBSYSTEM']);
 
     // Handle subsystem selection
-    const handleSubsystemClick = useCallback((subsystem) => {
-        setSelectedSubsystem(prev => prev === subsystem ? null : subsystem);
+    const lazosTableSqlHandleSubsystemClick = useCallback((subsystem) => {
+        setLazosTableSqlSelectedSubsystem(prev => prev === subsystem ? null : subsystem);
     }, []);
 
     // Clear all filters
-    const clearAllFilters = useCallback(() => {
-        setSelectedIsometric(null);
-        setSelectedTestPack(null);
-        setSelectedSubsystem(null);
+    const lazosTableSqlClearAllFilters = useCallback(() => {
+        setLazosTableSqlSelectedSubsystem(null);
     }, []);
 
-    // Filter functions for each table type
-    const filterDetailsTable = useCallback((data) => {
+    // Filter function for Loop Test Control table
+    const lazosTableSqlFilterData = useCallback((data) => {
         if (!data || !data.length) return [];
-        if (!selectedIsometric && !selectedTestPack && !selectedSubsystem) return data;
+        if (!lazosTableSqlSelectedSubsystem) return data;
 
         return data.filter(row => {
-            // Filter by isometric
-            if (selectedIsometric && row['MOUNTING ON ISO/EQUI/PACK'] !== selectedIsometric) {
-                return false;
-            }
-
-            // Filter by test pack
-            if (selectedTestPack) {
-                const testPacks = splitTestPack(row['TPs']);
-                if (!testPacks.includes(selectedTestPack)) {
-                    return false;
-                }
-            }
-
             // Filter by subsystem
-            if (selectedSubsystem && row['SUBSYSTEM'] !== selectedSubsystem) {
+            if (lazosTableSqlSelectedSubsystem && row['SUBSYSTEM'] !== lazosTableSqlSelectedSubsystem) {
                 return false;
             }
-
             return true;
         });
-    }, [selectedIsometric, selectedTestPack, selectedSubsystem]);
-
-    const filterControlTable = useCallback((data) => {
-        if (!data || !data.length) return [];
-        if (!selectedIsometric && !selectedTestPack && !selectedSubsystem) return data;
-
-        return data.filter(row => {
-            // Filter by isometric
-            if (selectedIsometric && row['ISOMETRIC'] !== selectedIsometric) {
-                return false;
-            }
-
-            // Filter by test pack
-            if (selectedTestPack) {
-                const testPacks = splitTestPack(row['TPs']);
-                if (!testPacks.includes(selectedTestPack)) {
-                    return false;
-                }
-            }
-
-            // Filter by subsystem
-            if (selectedSubsystem && row['SUBSYSTEM'] !== selectedSubsystem) {
-                return false;
-            }
-
-            return true;
-        });
-    }, [selectedIsometric, selectedTestPack, selectedSubsystem]);
-
-    const filterDynamicTable = useCallback((data) => {
-        if (!data || !data.length) return [];
-        if (!selectedTestPack && !selectedSubsystem) return data;
-
-        return data.filter(row => {
-            // Filter by test pack
-            if (selectedTestPack && row['TP'] !== selectedTestPack) {
-                return false;
-            }
-
-            // Filter by subsystem
-            if (selectedSubsystem && row['SUBSYSTEM'] !== selectedSubsystem) {
-                return false;
-            }
-
-            return true;
-        });
-    }, [selectedTestPack, selectedSubsystem]);
+    }, [lazosTableSqlSelectedSubsystem]);
 
     // Create SQL WHERE clauses for direct filtering in queries
-    const getSqlWhereClause = useCallback((tableType) => {
+    const lazosTableSqlGetSqlWhereClause = useCallback(() => {
         const conditions = [];
 
-        if (selectedIsometric) {
-            if (tableType === 'details') {
-                conditions.push(`mounting_on_isoequipack_isoinst = '${selectedIsometric}'`);
-            } else if (tableType === 'control') {
-                conditions.push(`mounting_on_isoequipack_isoinst = '${selectedIsometric}'`);
-            }
+        if (lazosTableSqlSelectedSubsystem) {
+            conditions.push(`subsystem = '${lazosTableSqlSelectedSubsystem}'`);
         }
 
-        if (selectedSubsystem) {
-            conditions.push(`subsystem = '${selectedSubsystem}'`);
-        }
-
-        if (selectedTestPack) {
-            conditions.push(`tp_include_isoinst LIKE '%${selectedTestPack}%'`);
-        }
-
-        return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    }, [selectedIsometric, selectedTestPack, selectedSubsystem]);
+        return conditions.length > 0 ? conditions.join(' AND ') : '';
+    }, [lazosTableSqlSelectedSubsystem]);
 
     // Context value
-    const value = useMemo(() => ({
+    const lazosTableSqlValue = useMemo(() => ({
         // Filter state
-        selectedIsometric,
-        selectedTestPack,
-        selectedSubsystem,
+        selectedSubsystem: lazosTableSqlSelectedSubsystem,
 
         // Filter handlers
-        onIsometricSelect,
-        handleTestPackClick,
-        handleSubsystemClick,
-        clearAllFilters,
+        handleSubsystemClick: lazosTableSqlHandleSubsystemClick,
+        clearAllFilters: lazosTableSqlClearAllFilters,
 
         // Filter functions
-        filterDetailsTable,
-        filterControlTable,
-        filterDynamicTable,
+        filterData: lazosTableSqlFilterData,
 
         // SQL helpers
-        getSqlWhereClause,
+        getSqlWhereClause: lazosTableSqlGetSqlWhereClause,
 
         // Table data for chart visualization
-        tableData,
-        setTableData,
-        groupBy,
-        setGroupBy
+        tableData: lazosTableSqlTableData,
+        setTableData: setLazosTableSqlTableData,
+        groupBy: lazosTableSqlGroupBy,
+        setGroupBy: setLazosTableSqlGroupBy
     }), [
-        selectedIsometric,
-        selectedTestPack,
-        selectedSubsystem,
-        onIsometricSelect,
-        handleTestPackClick,
-        handleSubsystemClick,
-        clearAllFilters,
-        filterDetailsTable,
-        filterControlTable,
-        filterDynamicTable,
-        getSqlWhereClause,
-        tableData,
-        setTableData,
-        groupBy,
-        setGroupBy
+        lazosTableSqlSelectedSubsystem,
+        lazosTableSqlHandleSubsystemClick,
+        lazosTableSqlClearAllFilters,
+        lazosTableSqlFilterData,
+        lazosTableSqlGetSqlWhereClause,
+        lazosTableSqlTableData,
+        setLazosTableSqlTableData,
+        lazosTableSqlGroupBy,
+        setLazosTableSqlGroupBy
     ]);
 
     return (
-        <InstrumentsTableFilterContext.Provider value={value}>
+        <LazosTableSqlFilterContext.Provider value={lazosTableSqlValue}>
             {children}
-        </InstrumentsTableFilterContext.Provider>
+        </LazosTableSqlFilterContext.Provider>
     );
 };
 
 // Hook to use the filter context
-export const useInstrumentsTableFilterContext = () => {
-    const context = useContext(InstrumentsTableFilterContext);
+export const useLazosTableSqlFilterContext = () => {
+    const context = useContext(LazosTableSqlFilterContext);
     if (!context) {
-        throw new Error('useInstrumentsTableFilterContext must be used within InstrumentsTableFilterProvider');
+        throw new Error('useLazosTableSqlFilterContext must be used within LazosTableSqlFilterProvider');
     }
     return context;
 };
 
 // Custom hook for filter state
-export const useInstrumentsTableFilter = () => {
-    const [selectedIsometric, setSelectedIsometric] = useState(null);
-    const [selectedTestPack, setSelectedTestPack] = useState(null);
-    const [selectedSubsystem, setSelectedSubsystem] = useState(null);
-
-    // Handle isometric selection
-    const onIsometricSelect = useCallback((isoId) => {
-        setSelectedIsometric(prev => prev === isoId ? null : isoId);
-    }, []);
-
-    // Handle test pack selection
-    const handleTestPackClick = useCallback((testPack) => {
-        setSelectedTestPack(prev => prev === testPack ? null : testPack);
-    }, []);
+export const useLazosTableSqlFilter = () => {
+    const [lazosTableSqlSelectedSubsystem, setLazosTableSqlSelectedSubsystem] = useState(null);
 
     // Handle subsystem selection
-    const handleSubsystemClick = useCallback((subsystem) => {
-        setSelectedSubsystem(prev => prev === subsystem ? null : subsystem);
+    const lazosTableSqlHandleSubsystemClick = useCallback((subsystem) => {
+        setLazosTableSqlSelectedSubsystem(prev => prev === subsystem ? null : subsystem);
     }, []);
 
     // Clear all filters
-    const clearAllFilters = useCallback(() => {
-        setSelectedIsometric(null);
-        setSelectedTestPack(null);
-        setSelectedSubsystem(null);
+    const lazosTableSqlClearAllFilters = useCallback(() => {
+        setLazosTableSqlSelectedSubsystem(null);
     }, []);
 
-    // Filter functions
-    const filterDetailsTable = useCallback((data) => {
+    // Filter function
+    const lazosTableSqlFilterData = useCallback((data) => {
         if (!data) return [];
 
         let filteredData = [...data];
 
-        // Filter by isometric
-        if (selectedIsometric) {
-            filteredData = filteredData.filter(row =>
-                row['MOUNTING ON ISO/EQUI/PACK'] === selectedIsometric
-            );
-        }
-
-        // Filter by test pack
-        if (selectedTestPack) {
-            filteredData = filteredData.filter(row => {
-                const testPacks = splitTestPack(row['TPs']);
-                return testPacks.includes(selectedTestPack);
-            });
-        }
-
         // Filter by subsystem
-        if (selectedSubsystem) {
+        if (lazosTableSqlSelectedSubsystem) {
             filteredData = filteredData.filter(row =>
-                row['SUBSYSTEM'] === selectedSubsystem
+                row['SUBSYSTEM'] === lazosTableSqlSelectedSubsystem
             );
         }
 
         return filteredData;
-    }, [selectedIsometric, selectedTestPack, selectedSubsystem]);
-
-    const filterControlData = useCallback((data) => {
-        if (!data) return [];
-
-        let filteredData = [...data];
-
-        // Filter by isometric
-        if (selectedIsometric) {
-            filteredData = filteredData.filter(row =>
-                row['ISOMETRIC'] === selectedIsometric
-            );
-        }
-
-        // Filter by test pack
-        if (selectedTestPack) {
-            filteredData = filteredData.filter(row => {
-                const testPacks = splitTestPack(row['TPs']);
-                return testPacks.includes(selectedTestPack);
-            });
-        }
-
-        // Filter by subsystem
-        if (selectedSubsystem) {
-            filteredData = filteredData.filter(row =>
-                row['SUBSYSTEM'] === selectedSubsystem
-            );
-        }
-
-        return filteredData;
-    }, [selectedIsometric, selectedTestPack, selectedSubsystem]);
+    }, [lazosTableSqlSelectedSubsystem]);
 
     return {
-        selectedIsometric,
-        selectedTestPack,
-        selectedSubsystem,
-        onIsometricSelect,
-        handleTestPackClick,
-        handleSubsystemClick,
-        clearAllFilters,
-        filterDetailData: filterDetailsTable,
-        filterControlData
+        selectedSubsystem: lazosTableSqlSelectedSubsystem,
+        handleSubsystemClick: lazosTableSqlHandleSubsystemClick,
+        clearAllFilters: lazosTableSqlClearAllFilters,
+        filterData: lazosTableSqlFilterData
     };
 };
 
+// Keep original exports for backward compatibility
+export const InstrumentsTableFilterProvider = LazosTableSqlFilterProvider;
+export const useInstrumentsTableFilterContext = useLazosTableSqlFilterContext;
+export const useInstrumentsTableFilter = useLazosTableSqlFilter;
+
 export default {
+    LazosTableSqlFilterProvider,
+    useLazosTableSqlFilterContext,
+    useLazosTableSqlFilter,
+    // Backward compatibility
     InstrumentsTableFilterProvider,
     useInstrumentsTableFilterContext,
     useInstrumentsTableFilter
