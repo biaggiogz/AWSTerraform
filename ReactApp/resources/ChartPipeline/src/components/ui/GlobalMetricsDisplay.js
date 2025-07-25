@@ -42,17 +42,17 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
       // Count every loop (TOTAL LOOP Signal)
       totalLoopSignal++;
       
-      // Process OK value
-      const okValue = item['OK=100%']?.toString().replace('%', '').trim();
+      // Process OK value - using the correct field name
+      const okValue = item['OK100'];
       const okPercent = parseFloat(okValue) || 0;
       
-      // LOOP (Signal) DONE: OK=100%
-      if (okPercent === 100) {
+      // LOOP (Signal) DONE: OK100 = 1.0 (100%)
+      if (okPercent === 1.0) {
         loopSignalDone++;
       }
       
-      // LOOP (Signal) PENDING: OK<100%
-      if (okPercent < 100) {
+      // LOOP (Signal) PENDING: OK100 < 1.0 (less than 100%)
+      if (okPercent < 1.0) {
         loopSignalPending++;
       }
       

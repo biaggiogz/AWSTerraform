@@ -131,13 +131,13 @@ const LoopTestProgressChart = ({
       // Count this loop (TOTAL LOOP Signal)
       groupedData[subsystem].totalLoops++;
       
-      // Process OK value - use the exact field name from the table
-      const okValue = item['OK=100%'];
-      const okPercent = parseFloat(okValue?.toString().replace('%', '').trim()) || 0;
+      // Process OK value - use the correct field name from the table
+      const okValue = item['OK100'];
+      const okPercent = parseFloat(okValue) || 0;
       
       // Check metrics in a single pass
-      // LOOP (Signal) DONE: OK=100%
-      if (okPercent === 100) {
+      // LOOP (Signal) DONE: OK100 = 1.0 (100%)
+      if (okPercent === 1.0) {
         groupedData[subsystem].loopSignalDone++;
       }
       
@@ -146,8 +146,8 @@ const LoopTestProgressChart = ({
         groupedData[subsystem].dossierCompleted++;
       }
       
-      // LOOP (Signal) PENDING: OK<100%
-      if (okPercent < 100) {
+      // LOOP (Signal) PENDING: OK100 < 1.0 (less than 100%)
+      if (okPercent < 1.0) {
         groupedData[subsystem].loopsSignalPending++;
       }
     });

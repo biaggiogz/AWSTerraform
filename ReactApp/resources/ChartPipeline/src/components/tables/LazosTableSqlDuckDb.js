@@ -159,8 +159,8 @@ const LazosTableSqlLoopTestControl = () => {
             header: 'PRIORITY',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        lazosTableSqlColumnHelper.accessor('HITO_TLP', {
-            header: 'HITO_TLP',
+        lazosTableSqlColumnHelper.accessor('HITO', {
+            header: 'HITO',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('SIEMSA', {
@@ -171,16 +171,16 @@ const LazosTableSqlLoopTestControl = () => {
             header: 'LOOP',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        lazosTableSqlColumnHelper.accessor('TAGs', {
-            header: 'TAGs',
+        lazosTableSqlColumnHelper.accessor('TAGS', {
+            header: 'TAGS',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        lazosTableSqlColumnHelper.accessor('Service', {
-            header: 'Service',
+        lazosTableSqlColumnHelper.accessor('SERVICE', {
+            header: 'SERVICE',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        lazosTableSqlColumnHelper.accessor('Installed', {
-            header: 'Installed',
+        lazosTableSqlColumnHelper.accessor('INSTALLED', {
+            header: 'INSTALLED',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('WIRED', {
@@ -191,7 +191,7 @@ const LazosTableSqlLoopTestControl = () => {
             header: 'CONNECTED',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        lazosTableSqlColumnHelper.accessor('CABLE TEST', {
+        lazosTableSqlColumnHelper.accessor('CABLE_TEST', {
             header: 'CABLE TEST',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
@@ -199,11 +199,11 @@ const LazosTableSqlLoopTestControl = () => {
             header: 'QCF',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        lazosTableSqlColumnHelper.accessor('OK=100%', {
+        lazosTableSqlColumnHelper.accessor('OK100', {
             header: 'OK=100%',
             cell: info => {
                 const value = parseFloat(info.getValue()) || 0;
-                const percentage = Math.min(Math.max(value, 0), 1) * 100;
+                const percentage = Math.min(Math.max(value * 100, 0), 100);
                 return (
                     <Box w="100%" position="relative">
                         <Box 
@@ -232,11 +232,11 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('DOSSIER', {
             header: 'DOSSIER',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>,
         }),
-        lazosTableSqlColumnHelper.accessor('TEST LOOP', {
+        lazosTableSqlColumnHelper.accessor('TEST_LOOP', {
             header: 'TEST LOOP',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('ACTION', {
             header: 'ACTION',
@@ -246,8 +246,8 @@ const LazosTableSqlLoopTestControl = () => {
             header: 'BY',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        lazosTableSqlColumnHelper.accessor('Status Closed&Open (C/O)', {
-            header: 'Status Closed&Open (C/O)',
+        lazosTableSqlColumnHelper.accessor('STATUS_CO', {
+            header: 'Status C/O',
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         })
     ], [selectedSubsystem, selectedArea, handleSubsystemClick, handleAreaClick]);
@@ -290,22 +290,22 @@ const LazosTableSqlLoopTestControl = () => {
                 tag_loop_tlp AS "TAG LOOP",
                 area_tlp AS "AREA",
                 priority_tlp AS "PRIORITY",
-                hito_tlp AS "HITO_TLP",
+                hito_tlp AS "HITO",
                 siemsa_tlp AS "SIEMSA",
                 loop_tlp AS "LOOP",
-                tags_tlp AS "TAGs",
-                service_tlp AS "Service",
-                installed_tlp AS "Installed",
+                tags_tlp AS "TAGS",
+                service_tlp AS "SERVICE",
+                installed_tlp AS "INSTALLED",
                 wired_tlp AS "WIRED",
                 connected_tlp AS "CONNECTED",
-                cable_test_tlp AS "CABLE TEST",
+                cable_test_tlp AS "CABLE_TEST",
                 qcf_tlp AS "QCF",
-                ok100_tlp AS "OK=100%",
+                ok100_tlp AS "OK100",
                 dossier_tlp AS "DOSSIER",
-                test_loop_tlp AS "TEST LOOP",
+                test_loop_tlp AS "TEST_LOOP",
                 action_tlp AS "ACTION",
                 by_tlp AS "BY",
-                status_closedopen_co_tlp AS "Status Closed&Open (C/O)"
+                status_closedopen_co_tlp AS "STATUS_CO"
                 FROM master_subsystem
                 WHERE tag_loop_tlp is not null
                 ${whereClause ? ` AND ${whereClause}` : ''}
