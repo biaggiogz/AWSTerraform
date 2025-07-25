@@ -4,6 +4,19 @@ data "archive_file" "react_assets" {
   source_dir  = var.path_to_app_dir != null ? var.path_to_app_dir : "${path.root}/../ChartPipeline/"
   output_path = "${var.app_name_react}-assets.zip"
 }
+
+# Create a hash of data files to detect changes
+data "archive_file" "react_data_assets" {
+  type        = "zip"
+  source_dir  = var.path_to_app_dir != null ? "${var.path_to_app_dir}/data" : "${path.root}/../ChartPipeline/data"
+  output_path = "${var.app_name_react}-data-assets.zip"
+}
+
+data "archive_file" "react_public_data_assets" {
+  type        = "zip"
+  source_dir  = var.path_to_app_dir != null ? "${var.path_to_app_dir}/public/data" : "${path.root}/../ChartPipeline/public/data"
+  output_path = "${var.app_name_react}-public-data-assets.zip"
+}
 resource "random_string" "react_s3_bucket" {
   length  = 4
   special = false
@@ -80,6 +93,8 @@ resource "aws_s3_bucket_policy" "react_app_bucket_policy" {
 resource "null_resource" "build_and_deploy_react_app" {
   triggers = {
     src_hash = data.archive_file.react_assets.output_md5
+    data_hash = data.archive_file.react_data_assets.output_md5
+    public_data_hash = data.archive_file.react_public_data_assets.output_md5
   }
 
   provisioner "local-exec" {
