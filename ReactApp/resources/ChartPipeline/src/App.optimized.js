@@ -185,6 +185,7 @@ function App() {
                   onDashboardChange={handleDashboardChange}
                   onProgressFilter={handleProgressFilter}
                   progressFilter={progressFilter}
+                  multiFilters={multiFilters}
                 />
               </Suspense>
             </GridItem>

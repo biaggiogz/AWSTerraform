@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useMemo, useCallback } from
 const LazosTableSqlFilterContext = createContext();
 
 // Provider component
-export const LazosTableSqlFilterProvider = ({ children }) => {
+export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) => {
     // Filter state - subsystem and area filters
     const [lazosTableSqlSelectedSubsystem, setLazosTableSqlSelectedSubsystem] = useState(null);
     const [lazosTableSqlSelectedArea, setLazosTableSqlSelectedArea] = useState(null);
@@ -50,7 +50,10 @@ export const LazosTableSqlFilterProvider = ({ children }) => {
     // Create SQL WHERE clauses for direct filtering in queries
     const lazosTableSqlGetSqlWhereClause = useCallback(() => {
         const conditions = [];
+        
+        console.log('External filters received:', externalFilters);
 
+        // Internal filters (from table clicks)
         if (lazosTableSqlSelectedSubsystem) {
             conditions.push(`subsystem = '${lazosTableSqlSelectedSubsystem}'`);
         }
@@ -59,8 +62,23 @@ export const LazosTableSqlFilterProvider = ({ children }) => {
             conditions.push(`area_tlp = '${lazosTableSqlSelectedArea}'`);
         }
 
-        return conditions.length > 0 ? conditions.join(' AND ') : '';
-    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea]);
+        // External filters (from main filter panel)
+        if (externalFilters.area_tlp && externalFilters.area_tlp.length > 0) {
+            const areaValues = externalFilters.area_tlp.map(area => `'${area}'`).join(', ');
+            conditions.push(`area_tlp IN (${areaValues})`);
+            console.log('Added area filter:', `area_tlp IN (${areaValues})`);
+        }
+
+        if (externalFilters.subsystem && externalFilters.subsystem.length > 0) {
+            const subsystemValues = externalFilters.subsystem.map(sub => `'${sub}'`).join(', ');
+            conditions.push(`subsystem IN (${subsystemValues})`);
+            console.log('Added subsystem filter:', `subsystem IN (${subsystemValues})`);
+        }
+
+        const finalClause = conditions.length > 0 ? conditions.join(' AND ') : '';
+        console.log('Final WHERE clause:', finalClause);
+        return finalClause;
+    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea, externalFilters]);
 
     // Context value
     const lazosTableSqlValue = useMemo(() => ({

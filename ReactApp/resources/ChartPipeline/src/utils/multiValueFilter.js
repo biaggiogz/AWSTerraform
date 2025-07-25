@@ -59,16 +59,30 @@ export const createVirtualDataset = (rawData, physicalFilters, virtualFilters = 
   // Apply progress filter if present
   if (virtualFilters.progressFilter) {
     virtuallyFiltered = physicallyFiltered.filter(item => {
-      const progressStr = item['OK=100%']?.toString().replace('%', '').trim();
-      const progress = parseFloat(progressStr) || 0;
+      // Handle both CSV and parquet field names
+      const okField = item['OK100'] !== undefined ? 'OK100' : 'OK=100%';
+      const dossierField = item['DOSSIER'] !== undefined ? 'DOSSIER' : 'DOSSIER';
+      
+      const progressValue = item[okField];
+      let progress = 0;
+      
+      if (okField === 'OK100') {
+        // Parquet data: values are 0.0-1.0
+        progress = parseFloat(progressValue) || 0;
+      } else {
+        // CSV data: values might be percentages
+        const progressStr = progressValue?.toString().replace('%', '').trim();
+        progress = parseFloat(progressStr) || 0;
+        if (progress > 1) progress = progress / 100; // Convert percentage to decimal
+      }
       
       switch (virtualFilters.progressFilter) {
         case 'LOOP (Signal) DONE':
-          return progress === 100;
+          return progress === 1.0;
         case 'LOOP (Signal) PENDING':
-          return progress < 100;
+          return progress < 1.0;
         case 'DOSSIER COMPLETED':
-          return item['DOSSIER'] && item['DOSSIER'].toString().trim() !== '';
+          return item[dossierField] && item[dossierField].toString().trim() !== '';
         case 'TOTAL LOOP (Signal)':
           return true; // Show all loops
         default:

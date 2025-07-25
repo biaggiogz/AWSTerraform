@@ -44,8 +44,9 @@ const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
  * @param {Function} props.onDashboardChange - Function to call when dashboard changes
  * @param {Function} props.onProgressFilter - Function to handle progress filtering
  * @param {string} props.progressFilter - Current progress filter
+ * @param {Object} props.multiFilters - External filters from main filter panel
  */
-const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboard, onDashboardChange, onProgressFilter, progressFilter }) => {
+const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboard, onDashboardChange, onProgressFilter, progressFilter, multiFilters = {} }) => {
   // Initialize isometric relationship filter for INSTRUMENTS REPORT
   const isometricFilter = useIsometricRelationshipFilter(
     activeDashboard === 'INSTRUMENTS REPORT' ? controlData : null,
@@ -111,7 +112,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
           <TabPanels>
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <LazosTableSqlFilterProvider>
+                <LazosTableSqlFilterProvider externalFilters={multiFilters}>
                   <VStack spacing={0} align="stretch">
                     <LoopTestProgressChart
                         data={data}

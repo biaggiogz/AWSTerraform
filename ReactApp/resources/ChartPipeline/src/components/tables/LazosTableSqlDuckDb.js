@@ -252,38 +252,40 @@ const LazosTableSqlLoopTestControl = () => {
         })
     ], [selectedSubsystem, selectedArea, handleSubsystemClick, handleAreaClick]);
 
-    // Load data function
-    const lazosTableSqlLoadData = async () => {
+    // State to track if parquet is loaded
+    const [parquetLoaded, setParquetLoaded] = useState(false);
+    
+    // Load parquet file once
+    const loadParquetFile = async () => {
+        if (parquetLoaded || dbLoading || dbError) return;
+        
+        try {
+            const startLoadTime = performance.now();
+            const res = await fetch('/data/master_subsystem.parquet');
+            
+            if (!res.ok) throw new Error(`Failed to fetch Parquet: ${res.status}`);
+            
+            const parquetBuffer = await res.arrayBuffer();
+            await createTableFromParquet('master_subsystem', parquetBuffer);
+            
+            const endLoadTime = performance.now();
+            setLazosTableSqlLoadTime(Math.round(endLoadTime - startLoadTime));
+            setParquetLoaded(true);
+        } catch (parquetError) {
+            console.error('Error loading Parquet:', parquetError);
+            setLazosTableSqlError('Failed to load data source');
+        }
+    };
+    
+    // Query data with current filters
+    const queryData = async () => {
+        if (!parquetLoaded) return;
+        
         try {
             setLazosTableSqlLoading(true);
-            setLazosTableSqlError(null);
-            
-            // Only proceed if not loading and no error
-            if (dbLoading || dbError) {
-                return;
-            }
-
-            // Start measuring load time
-            const startLoadTime = performance.now();
-
-            // Try to fetch Parquet file
-            try {
-                const res = await fetch('/data/master_subsystem.parquet');
-                
-                if (!res.ok) throw new Error(`Failed to fetch Parquet: ${res.status}`);
-                
-                const parquetBuffer = await res.arrayBuffer();
-                await createTableFromParquet('master_subsystem', parquetBuffer);
-            } catch (parquetError) {
-                console.error('Error loading Parquet:', parquetError);
-                throw new Error('Failed to load data source');
-            }
-
-            // Get SQL where clause from filter context
             const whereClause = getSqlWhereClause();
-
-            // Execute query
             const startQueryTime = performance.now();
+            
             const result = await executeQuery(`
                 SELECT code_tlp AS "CODE",
                 subsystem AS "SUBSYSTEM",
@@ -309,37 +311,34 @@ const LazosTableSqlLoopTestControl = () => {
                 FROM master_subsystem
                 WHERE tag_loop_tlp is not null
                 ${whereClause ? ` AND ${whereClause}` : ''}
-            `, { 
-                useCache: true,
-                cacheKey: `loop_test_control_${selectedSubsystem || 'all'}`
-            });
+            `);
             
             const endQueryTime = performance.now();
             setLazosTableSqlQueryTime(Math.round(endQueryTime - startQueryTime));
-
             setLazosTableSqlData(result || []);
             
-            // Set data in context for chart to use
             if (setTableData) {
                 setTableData(result || []);
             }
-            
-            // Calculate and set load time
-            const endLoadTime = performance.now();
-            setLazosTableSqlLoadTime(Math.round(endLoadTime - startLoadTime));
         } catch (err) {
-            console.error('Error loading Loop Test Control data:', err);
+            console.error('Error querying data:', err);
             setLazosTableSqlError(err.message);
-            setLazosTableSqlData([]);
         } finally {
             setLazosTableSqlLoading(false);
         }
     };
 
-    // Load data on component mount and when filters change
+    // Load parquet file once on mount
     useEffect(() => {
-        lazosTableSqlLoadData();
-    }, [createTableFromParquet, executeQuery, dbLoading, dbError, selectedSubsystem, selectedArea, getSqlWhereClause]);
+        loadParquetFile();
+    }, [createTableFromParquet, dbLoading, dbError]);
+    
+    // Query data when parquet is loaded or filters change
+    useEffect(() => {
+        if (parquetLoaded) {
+            queryData();
+        }
+    }, [parquetLoaded, getSqlWhereClause, selectedSubsystem, selectedArea]);
 
     // Create table instance
     const lazosTableSqlTable = useReactTable({
