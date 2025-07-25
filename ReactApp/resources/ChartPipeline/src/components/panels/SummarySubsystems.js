@@ -40,7 +40,7 @@ const SummarySubsystems = ({ data: filteredData = [], isZoomed = false }) => {
   }
 
   return (
-    <Box p={6} width="100%" height="100vh" maxWidth={isZoomed ? "166.67vw" : "150vw"} overflow="hidden">
+    <Box p={6} width="100%" height="100vh" maxWidth={isZoomed ? "146.67vw" : "150vw"} overflow="hidden">
       <PersistentStateNotification tabName="summarySubsystems" />
       <VStack spacing={4} align="stretch">
         <PersistentMetricCards tabName="summarySubsystems" />
