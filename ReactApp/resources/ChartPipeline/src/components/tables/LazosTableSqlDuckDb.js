@@ -22,7 +22,7 @@ import useDuckDB from '../../hooks/useDuckDB3';
 import { useInstrumentsTableFilterContext } from '../filters/LazosTableFilter';
 
 // Performance measurement component
-const PerformanceMetric = React.memo(({ label, value, description }) => (
+const LazosTableSqlPerformanceMetric = React.memo(({ label, value, description }) => (
     <Tooltip label={description} placement="top">
         <Badge colorScheme="blue" fontSize="xs" px={2} py={1} mr={2} cursor="help">
             {label}: {value}
@@ -30,143 +30,8 @@ const PerformanceMetric = React.memo(({ label, value, description }) => (
     </Tooltip>
 ));
 
-// Test Pack Progress Cell Component
-const TestPackProgressCell = React.memo(({ testPacks, progressValues }) => {
-    if (!testPacks || testPacks.length === 0) {
-        return <Text fontSize="xs" color="gray.500">NOT APPLY</Text>;
-    }
-
-    // Get progress values for each test pack
-    const progressData = testPacks.map((_, index) => {
-        const progressKey = `progress_ac_tp_${index + 1}`;
-        return progressValues && progressValues[progressKey] ? progressValues[progressKey] : 0;
-    });
-
-    if (testPacks.length === 1) {
-        const progress = progressData[0];
-        const percentage = Math.round(progress * 100);
-
-        return (
-            <Box position="relative" width="100%" height="18px">
-                <Box
-                    height="18px"
-                    width={`${percentage}%`}
-                    bg="green.500"
-                    borderRadius="sm"
-                />
-                <Text
-                    fontSize="10px"
-                    position="absolute"
-                    top="0"
-                    left="0"
-                    right="0"
-                    height="18px"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    color="white"
-                    fontWeight="bold"
-                    textShadow="0px 0px 2px rgba(0,0,0,0.7)"
-                >
-                    {percentage}%
-                </Text>
-            </Box>
-        );
-    }
-
-    return (
-        <Box>
-            {testPacks.map((testPack, index) => {
-                const progress = progressData[index] || 0;
-                const percentage = Math.round(progress * 100);
-
-                return (
-                    <Box key={`${testPack}-progress-${index}`} position="relative" width="100%" height="18px" mb={1}>
-                        <Box
-                            height="18px"
-                            width={`${percentage}%`}
-                            bg="green.500"
-                            borderRadius="sm"
-                        />
-                        <Text
-                            fontSize="10px"
-                            position="absolute"
-                            top="0"
-                            left="0"
-                            right="0"
-                            height="18px"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                            color="white"
-                            fontWeight="bold"
-                            textShadow="0px 0px 2px rgba(0,0,0,0.7)"
-                        >
-                            {percentage}%
-                        </Text>
-                    </Box>
-                );
-            })}
-        </Box>
-    );
-});
-
-// Test Pack Cell Component
-const TestPackCell = React.memo(({ testPacks, onTestPackSelect, selectedTestPack }) => {
-    if (!testPacks || testPacks.length === 0) {
-        return <Text fontSize="xs" color="gray.500">NOT APPLY</Text>;
-    }
-
-    if (testPacks.length === 1) {
-        return (
-            <Button
-                size="xs"
-                variant={selectedTestPack === testPacks[0] ? "solid" : "outline"}
-                onClick={() => onTestPackSelect && onTestPackSelect(testPacks[0])}
-                _hover={{ bg: selectedTestPack === testPacks[0] ? "green.200" : "blue.200" }}
-                fontSize="10px"
-                fontWeight="medium"
-                color={selectedTestPack === testPacks[0] ? "white" : "blue.600"}
-                bg={selectedTestPack === testPacks[0] ? "green.500" : "white"}
-                borderColor={selectedTestPack === testPacks[0] ? "green.500" : "blue.500"}
-                minWidth="30px"
-                height="18px"
-                px={2}
-                borderRadius="sm"
-            >
-                {testPacks[0]}
-            </Button>
-        );
-    }
-
-    return (
-        <HStack spacing={1} wrap="wrap" justify="center">
-            {testPacks.map((testPack, index) => (
-                <Button
-                    key={`${testPack}-${index}`}
-                    size="xs"
-                    variant={selectedTestPack === testPack ? "solid" : "outline"}
-                    onClick={() => onTestPackSelect && onTestPackSelect(testPack)}
-                    _hover={{ bg: selectedTestPack === testPack ? "green.200" : "blue.200" }}
-                    fontSize="10px"
-                    fontWeight="medium"
-                    color={selectedTestPack === testPack ? "white" : "blue.600"}
-                    bg={selectedTestPack === testPack ? "green.500" : "white"}
-                    borderColor={selectedTestPack === testPack ? "green.500" : "blue.500"}
-                    minWidth="30px"
-                    height="18px"
-                    px={2}
-                    borderRadius="sm"
-                >
-                    {testPack}
-                </Button>
-            ))}
-        </HStack>
-    );
-});
-
 // Subsystem Cell Component
-const SubsystemCell = React.memo(({ subsystem, onSubsystemSelect, selectedSubsystem }) => {
+const LazosTableSqlSubsystemCell = React.memo(({ subsystem, onSubsystemSelect, selectedSubsystem }) => {
     if (!subsystem || subsystem === '') {
         return <Text fontSize="xs" color="gray.500">-</Text>;
     }
@@ -192,14 +57,10 @@ const SubsystemCell = React.memo(({ subsystem, onSubsystemSelect, selectedSubsys
     );
 });
 
-const ControlInstrumentsByIsometric = () => {
+const LazosTableSqlLoopTestControl = () => {
     // Get filter context
     const {
-        selectedIsometric,
-        selectedTestPack,
         selectedSubsystem,
-        onIsometricSelect,
-        handleTestPackClick,
         handleSubsystemClick,
         getSqlWhereClause
     } = useInstrumentsTableFilterContext();
@@ -212,466 +73,313 @@ const ControlInstrumentsByIsometric = () => {
     } = useDuckDB();
 
     // State declarations
-    const [tableData, setTableData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [lazosTableSqlData, setLazosTableSqlData] = useState([]);
+    const [lazosTableSqlLoading, setLazosTableSqlLoading] = useState(true);
+    const [lazosTableSqlError, setLazosTableSqlError] = useState(null);
 
     // Performance metrics
-    const [loadTime, setLoadTime] = useState(null);
-    const [queryTime, setQueryTime] = useState(null);
-    const tableContainerRef = useRef(null);
-
-    // Helper function to format timestamp to date
-    const formatDate = (timestamp) => {
-        if (!timestamp) return '';
-        const ts = timestamp > 9999999999 ? timestamp : timestamp * 1000;
-        try {
-            return new Date(ts).toLocaleDateString();
-        } catch (e) {
-            return 'Invalid date';
-        }
-    };
-
-    // Split test pack function
-    const splitTestPack = (testPackStr) => {
-        if (!testPackStr || testPackStr === '' || testPackStr === 'NOT_APPLY') return [];
-        return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v !== '');
-    };
+    const [lazosTableSqlLoadTime, setLazosTableSqlLoadTime] = useState(null);
+    const [lazosTableSqlQueryTime, setLazosTableSqlQueryTime] = useState(null);
+    const lazosTableSqlContainerRef = useRef(null);
 
     // Define columns using TanStack's column helper
-    const columnHelper = createColumnHelper();
+    const lazosTableSqlColumnHelper = createColumnHelper();
 
-    const columns = useMemo(() => [
-        columnHelper.accessor('ISOMETRIC', {
-            header: 'ISOMETRIC',
-            cell: info => {
-                const isometric = info.getValue();
-                return (
-                    <Button
-                        size="xs"
-                        variant={selectedIsometric === isometric ? "solid" : "outline"}
-                        onClick={() => onIsometricSelect && onIsometricSelect(isometric)}
-                        _hover={{ bg: selectedIsometric === isometric ? "purple.200" : "blue.200" }}
-                        fontSize="10px"
-                        fontWeight="medium"
-                        color={selectedIsometric === isometric ? "white" : "blue.600"}
-                        bg={selectedIsometric === isometric ? "purple.500" : "white"}
-                        borderColor={selectedIsometric === isometric ? "purple.500" : "blue.500"}
-                        minWidth="30px"
-                        height="18px"
-                        px={2}
-                        borderRadius="sm"
-                        fontFamily="mono"
-                    >
-                        {String(isometric)}
-                    </Button>
-                );
-            },
-            size: 120,
+    const lazosTableSqlColumns = useMemo(() => [
+        lazosTableSqlColumnHelper.accessor('CODE', {
+            header: 'CODE',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        columnHelper.accessor('PROGRESS FW+SW', {
-            header: 'PROGRESS FW+SW',
-            cell: info => {
-                const value = parseFloat(info.getValue()) || 0;
-                const percentage = Math.min(Math.max(value, 0), 1) * 100;
-                return (
-                    <Box w="100%" position="relative">
-                        <Box
-                            h="16px"
-                            w={`${percentage}%`}
-                            bg="green.500"
-                            borderRadius="sm"
-                        />
-                        <Text
-                            fontSize="xs"
-                            position="absolute"
-                            top="0"
-                            left="0"
-                            right="0"
-                            textAlign="center"
-                            color="white"
-                            fontWeight="bold"
-                            textShadow="0px 0px 2px rgba(0,0,0,0.7)"
-                        >
-                            {percentage.toFixed(0)}%
-                        </Text>
-                    </Box>
-                );
-            },
-            size: 90,
-        }),
-        columnHelper.accessor('SUBSYSTEM', {
+        lazosTableSqlColumnHelper.accessor('SUBSYSTEM', {
             header: 'SUBSYSTEM',
             cell: info => (
-                <SubsystemCell
+                <LazosTableSqlSubsystemCell
                     subsystem={info.getValue()}
                     onSubsystemSelect={handleSubsystemClick}
                     selectedSubsystem={selectedSubsystem}
                 />
-            ),
-            size: 95,
+            )
         }),
-        columnHelper.accessor('HITO', {
-            header: 'HITO',
-            cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
-            size: 120,
+        lazosTableSqlColumnHelper.accessor('TAG LOOP', {
+            header: 'TAG LOOP',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        columnHelper.accessor('TEIGA INSULATION', {
-            header: 'TEIGA INSULATION',
-            cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
-            size: 95,
+        lazosTableSqlColumnHelper.accessor('AREA', {
+            header: 'AREA',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        columnHelper.accessor('SIEMSA', {
+        lazosTableSqlColumnHelper.accessor('PRIORITY', {
+            header: 'PRIORITY',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('HITO_TLP', {
+            header: 'HITO_TLP',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('SIEMSA', {
             header: 'SIEMSA',
-            cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
-            size: 90,
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        columnHelper.accessor('TECHNIP', {
-            header: 'TECHNIP',
-            cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
-            size: 90,
+        lazosTableSqlColumnHelper.accessor('LOOP', {
+            header: 'LOOP',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        columnHelper.accessor('TPs', {
-            header: 'TPs',
-            cell: info => {
-                const testPackValue = info.getValue();
-                const testPacks = splitTestPack(testPackValue);
+        lazosTableSqlColumnHelper.accessor('TAGs', {
+            header: 'TAGs',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('Service', {
+            header: 'Service',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('Installed', {
+            header: 'Installed',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('WIRED', {
+            header: 'WIRED',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('CONNECTED', {
+            header: 'CONNECTED',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('CABLE TEST', {
+            header: 'CABLE TEST',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('QCF', {
+            header: 'QCF',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('OK=100&', {
+            header: 'OK=100&',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('DOSSIER', {
+            header: 'DOSSIER',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('TEST LOOP', {
+            header: 'TEST LOOP',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('ACTION', {
+            header: 'ACTION',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('BY', {
+            header: 'BY',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        lazosTableSqlColumnHelper.accessor('Status Closed&Open (C/O)', {
+            header: 'Status Closed&Open (C/O)',
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        })
+    ], [selectedSubsystem, handleSubsystemClick]);
 
-                return (
-                    <TestPackCell
-                        testPacks={testPacks}
-                        onTestPackSelect={handleTestPackClick}
-                        selectedTestPack={selectedTestPack}
-                    />
-                );
-            },
-            size: 95,
-        }),
-        columnHelper.accessor('PROGRESS TP', {
-            header: 'PROGRESS TP',
-            cell: info => {
-                const row = info.row.original;
-                const testPackValue = row['TPs'];
-                const testPacks = splitTestPack(testPackValue);
+    // Load data function
+    const lazosTableSqlLoadData = async () => {
+        const startTime = performance.now();
+        setLazosTableSqlLoading(true);
+        setLazosTableSqlError(null);
 
-                // Get progress values from the row
-                const progressValues = {
-                    progress_ac_tp_1: row.progress_ac_tp_1,
-                    progress_ac_tp_2: row.progress_ac_tp_2,
-                    progress_ac_tp_3: row.progress_ac_tp_3
-                };
+        try {
+            // Create table from parquet
+            await createTableFromParquet('master_subsystem', '/data/master_subsystem.parquet');
+            const loadEndTime = performance.now();
+            setLazosTableSqlLoadTime(Math.round(loadEndTime - startTime));
 
-                return (
-                    <TestPackProgressCell
-                        testPacks={testPacks}
-                        progressValues={progressValues}
-                    />
-                );
-            },
-            size: 95,
-        }),
-        columnHelper.accessor('QTY INST', {
-            header: 'QTY INST',
-            cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
-            size: 90,
-        }),
-        columnHelper.accessor('SCOPE BY TEIGA-TMI', {
-            header: 'SCOPE BY TEIGA-TMI',
-            cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
-            size: 90,
-        }),
-        columnHelper.accessor('SCOPE BY SIEMSA', {
-            header: 'SCOPE BY SIEMSA',
-            cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
-            size: 90,
-        }),
-        columnHelper.accessor('INSTALLED BY TEIGA-TMI', {
-            header: 'INSTALLED BY TEIGA-TMI',
-            cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
-            size: 90,
-        }),
-        columnHelper.accessor('INSTALLED BY SIEMSA', {
-            header: 'INSTALLED BY SIEMSA',
-            cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
-            size: 90,
-        }),
-        columnHelper.accessor('PENDING', {
-            header: 'PENDING',
-            cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
-            size: 90,
-        }),
-    ], [formatDate, handleSubsystemClick, handleTestPackClick, onIsometricSelect, selectedIsometric, selectedSubsystem, selectedTestPack]);
+            // Execute query
+            const queryStartTime = performance.now();
+            const whereClause = getSqlWhereClause();
+            const query = `
+                SELECT code_tlp AS "CODE",
+                subsystem AS "SUBSYSTEM",
+                tag_loop_tlp AS "TAG LOOP",
+                area_tlp AS "AREA",
+                priority_tlp AS "PRIORITY",
+                hito_tlp AS "HITO_TLP",
+                siemsa_tlp AS "SIEMSA",
+                loop_tlp AS "LOOP",
+                tags_tlp AS "TAGs",
+                service_tlp AS "Service",
+                installed_tlp AS "Installed",
+                wired_tlp AS "WIRED",
+                connected_tlp AS "CONNECTED",
+                cable_test_tlp AS "CABLE TEST",
+                qcf_tlp AS "QCF",
+                ok100_tlp AS "OK=100&",
+                dossier_tlp AS "DOSSIER",
+                test_loop_tlp AS "TEST LOOP",
+                action_tlp AS "ACTION",
+                by_tlp AS "BY",
+                status_closedopen_co_tlp AS "Status Closed&Open (C/O)"
+                FROM master_subsystem
+                WHERE tag_loop_tlp is not null
+                ${whereClause ? ` AND ${whereClause}` : ''}
+            `;
+
+            const result = await executeQuery(query);
+            const queryEndTime = performance.now();
+            setLazosTableSqlQueryTime(Math.round(queryEndTime - queryStartTime));
+
+            setLazosTableSqlData(result || []);
+        } catch (err) {
+            console.error('Error loading Loop Test Control data:', err);
+            setLazosTableSqlError(err.message);
+        } finally {
+            setLazosTableSqlLoading(false);
+        }
+    };
+
+    // Load data on component mount and when filters change
+    useEffect(() => {
+        lazosTableSqlLoadData();
+    }, [selectedSubsystem]);
 
     // Create table instance
-    const table = useReactTable({
-        data: tableData,
-        columns,
+    const lazosTableSqlTable = useReactTable({
+        data: lazosTableSqlData,
+        columns: lazosTableSqlColumns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
     });
 
-    // Set up virtualization
-    const { rows } = table.getRowModel();
-
-    const rowVirtualizer = useVirtualizer({
-        count: rows.length,
-        getScrollElement: () => tableContainerRef.current,
-        estimateSize: () => 30,
+    // Virtualization setup
+    const lazosTableSqlVirtualizer = useVirtualizer({
+        count: lazosTableSqlTable.getRowModel().rows.length,
+        getScrollElement: () => lazosTableSqlContainerRef.current,
+        estimateSize: () => 35,
         overscan: 10,
-        measureElement: typeof window !== 'undefined' && document.getElementById ?
-            (element) => element?.getBoundingClientRect().height || 30 :
-            undefined,
     });
 
-    // Load data from DuckDB
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                setLoading(true);
-
-                // Only proceed if not loading and no error
-                if (dbLoading || dbError) {
-                    return;
-                }
-
-                // Start measuring load time
-                const startLoadTime = performance.now();
-
-                // Try to fetch Parquet file
-                try {
-                    const res = await fetch('/data/master_subsystem.parquet');
-
-                    if (!res.ok) throw new Error(`Failed to fetch Parquet: ${res.status}`);
-
-                    const parquetBuffer = await res.arrayBuffer();
-                    await createTableFromParquet('master_subsystem', parquetBuffer);
-                } catch (parquetError) {
-                    console.error('Error loading Parquet:', parquetError);
-                    throw new Error('Failed to load data source');
-                }
-
-                // Get SQL where clause from filter context
-                const whereClause = getSqlWhereClause('control');
-
-                // Execute optimized query with all needed columns
-                const startQueryTime = performance.now();
-                const results = await executeQuery(`
-          WITH inst_data AS (
-            SELECT
-              mounting_on_isoequipack_isoinst AS isometric,
-              MAX(subsystem) AS subsystem,
-              MAX(tp_include_isoinst) AS tps,
-              MAX(progress_ac_tp_1) AS progress_ac_tp_1,
-              MAX(progress_ac_tp_2) AS progress_ac_tp_2,
-              MAX(progress_ac_tp_3) AS progress_ac_tp_3,
-              COUNT(tag_inst_isoinst) AS qty_inst,
-              COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'TEIGA-TMI') AS scope_teiga_tmi,
-              COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'SIEMSA') AS scope_siemsa,
-              COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'TEIGA-TMI' AND ok100_isoinst = 1) AS installed_teiga_tmi,
-              COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'SIEMSA' AND ok100_isoinst = 1) AS installed_siemsa
-            FROM master_subsystem
-            WHERE on_isoinst = 'PIP'
-            ${whereClause ? 'AND ' + whereClause.substring(6) : ''}
-            GROUP BY mounting_on_isoequipack_isoinst
-          ),
-          progress_data AS (
-            SELECT
-              isometricos_ifc3_isos AS isometric,
-              isometric__progress__isos AS isometric_progress,
-              hito_isos AS hito,
-              teiga_reinstatement_isos AS teiga_reinstatement,
-              teiga_insulation_isos AS teiga_insulation,
-              siemsa_isos AS siemsa,
-              ten_isos AS ten
-            FROM master_subsystem
-            WHERE isometricos_ifc3_isos IS NOT NULL
-          )
-          SELECT
-            i.isometric AS "ISOMETRIC",
-            p.isometric_progress AS "PROGRESS FW+SW",
-            i.subsystem AS "SUBSYSTEM",
-            p.hito AS "HITO",
-            p.teiga_reinstatement AS "TEIGA REINSTATEMENT",
-            p.teiga_insulation AS "TEIGA INSULATION",
-            p.siemsa AS "SIEMSA",
-            p.ten AS "TECHNIP",
-            i.tps AS "TPs",
-            i.qty_inst AS "QTY INST",
-            i.scope_teiga_tmi AS "SCOPE BY TEIGA-TMI",
-            i.scope_siemsa AS "SCOPE BY SIEMSA",
-            i.installed_teiga_tmi AS "INSTALLED BY TEIGA-TMI",
-            i.installed_siemsa AS "INSTALLED BY SIEMSA",
-            i.qty_inst - i.installed_teiga_tmi - i.installed_siemsa AS "PENDING",
-            i.progress_ac_tp_1,
-            i.progress_ac_tp_2,
-            i.progress_ac_tp_3
-          FROM inst_data i
-          LEFT JOIN progress_data p ON i.isometric = p.isometric
-          LIMIT 1000
-        `, {
-                    useCache: true,
-                    cacheKey: `control_${selectedIsometric || 'all'}_${selectedSubsystem || 'all'}_${selectedTestPack || 'all'}`
-                });
-
-                const endQueryTime = performance.now();
-                setQueryTime((endQueryTime - startQueryTime).toFixed(2));
-
-                setTableData(results);
-                setError(null);
-
-                // Calculate and set load time
-                const endLoadTime = performance.now();
-                setLoadTime((endLoadTime - startLoadTime).toFixed(2));
-            } catch (err) {
-                console.error('DuckDB error:', err);
-                setError(err.message || 'Unknown error');
-                setTableData([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadData();
-    }, [createTableFromParquet, executeQuery, dbLoading, dbError, selectedIsometric, selectedSubsystem, selectedTestPack, getSqlWhereClause]);
-
-    if (loading || dbLoading) {
+    if (lazosTableSqlLoading) {
         return (
-            <Box mt={6}>
-                <Heading size="xs" color="gray.700" mb={2}>
-                    Control Instruments by Isometric
-                </Heading>
-                <Center p={8}>
-                    <Spinner size="xs" color="blue.500" />
-                    <Text ml={2} color="gray.600">
-                        Loading data with DuckDB...
-                    </Text>
-                </Center>
-            </Box>
+            <Center h="400px">
+                <Spinner size="lg" />
+            </Center>
         );
     }
 
-    if (error || dbError) {
+    if (lazosTableSqlError) {
         return (
-            <Box mt={6} p={4} bg="red.50" borderRadius="md">
-                <Heading size="md" color="red.600" mb={2}>
-                    Error
-                </Heading>
-                <Text color="red.700">{error || dbError}</Text>
-            </Box>
+            <Center h="400px">
+                <Text color="red.500">Error: {lazosTableSqlError}</Text>
+            </Center>
         );
     }
 
     return (
-        <Box mt={6}>
-            <HStack justify="space-between" align="center" mb={4}>
-                <Heading size="md" color="gray.700">Controls Instruments By Isometric</Heading>
+        <Box>
+            <HStack mb={4} justify="space-between" align="center">
+                <Heading size="md">Loop Test Control-Precommissioning</Heading>
                 <HStack>
-                    {loadTime && <PerformanceMetric label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" />}
-                    {queryTime && <PerformanceMetric label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
-                    <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
-                        {table.getFilteredRowModel().rows.length} Records
+                    {lazosTableSqlLoadTime && (
+                        <LazosTableSqlPerformanceMetric
+                            label="Load"
+                            value={`${lazosTableSqlLoadTime}ms`}
+                            description="Time to load parquet file into DuckDB"
+                        />
+                    )}
+                    {lazosTableSqlQueryTime && (
+                        <LazosTableSqlPerformanceMetric
+                            label="Query"
+                            value={`${lazosTableSqlQueryTime}ms`}
+                            description="Time to execute SQL query"
+                        />
+                    )}
+                    <Badge colorScheme="green" fontSize="xs" px={2} py={1}>
+                        Rows: {lazosTableSqlData.length}
                     </Badge>
                 </HStack>
             </HStack>
 
             <Box
+                ref={lazosTableSqlContainerRef}
+                height="600px"
+                overflowY="auto"
                 border="1px solid"
                 borderColor="gray.200"
-                borderRadius="lg"
-                overflow="hidden"
-                bg="white"
-                boxShadow="sm"
-                width="100%"
-                height="500px"
+                borderRadius="md"
             >
-                <Box ref={tableContainerRef} style={{ height: '100%', overflow: 'auto' }}>
+                <Box height={`${lazosTableSqlVirtualizer.getTotalSize()}px`} position="relative">
+                    {/* Header */}
                     <Box
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
-                            position: 'relative',
-                            width: 'fit-content',
-                        }}
+                        position="sticky"
+                        top={0}
+                        bg="gray.50"
+                        zIndex={1}
+                        borderBottom="1px solid"
+                        borderColor="gray.200"
                     >
-                        {/* Header */}
-                        <Box style={{ display: 'contents' }}>
-                            {table.getHeaderGroups().map(headerGroup => (
-                                <React.Fragment key={headerGroup.id}>
-                                    {headerGroup.headers.map(header => (
-                                        <Box
-                                            key={header.id}
-                                            bg="purple.600"
-                                            color="white"
-                                            p={1}
-                                            textAlign="center"
-                                            fontWeight="bold"
-                                            fontSize="xs"
-                                            borderRight="1px solid"
-                                            borderColor="purple.400"
-                                            style={{
-                                                position: 'sticky',
-                                                top: 0,
-                                                zIndex: 1,
-                                            }}
-                                        >
-                                            {flexRender(header.column.columnDef.header, header.getContext())}
-                                        </Box>
-                                    ))}
-                                </React.Fragment>
-                            ))}
-                        </Box>
-
-                        {/* Virtualized Rows */}
-                        <Box
-                            style={{
-                                height: `${rowVirtualizer.getTotalSize()}px`,
-                                width: '100%',
-                                position: 'relative',
-                            }}
-                        >
-                            {rowVirtualizer.getVirtualItems().map(virtualRow => {
-                                const row = rows[virtualRow.index];
-                                return (
+                        {lazosTableSqlTable.getHeaderGroups().map(headerGroup => (
+                            <HStack key={headerGroup.id} spacing={0}>
+                                {headerGroup.headers.map(header => (
                                     <Box
-                                        key={row.id}
-                                        data-index={virtualRow.index}
-                                        ref={rowVirtualizer.measureElement}
-                                        style={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            width: '100%',
-                                            minHeight: `${virtualRow.size}px`,
-                                            transform: `translateY(${virtualRow.start}px)`,
-                                            display: 'grid',
-                                            gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
-                                            alignItems: 'stretch'
+                                        key={header.id}
+                                        minWidth="120px"
+                                        maxWidth="200px"
+                                        px={2}
+                                        py={2}
+                                        borderRight="1px solid"
+                                        borderColor="gray.200"
+                                        cursor={header.column.getCanSort() ? 'pointer' : 'default'}
+                                        onClick={header.column.getToggleSortingHandler()}
+                                        _hover={{
+                                            bg: header.column.getCanSort() ? 'gray.100' : 'gray.50'
                                         }}
                                     >
-                                        {row.getVisibleCells().map(cell => (
-                                            <Box
-                                                key={cell.id}
-                                                p={2}
-                                                textAlign="center"
-                                                borderBottom="1px solid"
-                                                borderColor="gray.200"
-                                                _hover={{ bg: 'gray.50' }}
-                                                overflow="hidden"
-                                                textOverflow="ellipsis"
-                                                whiteSpace="nowrap"
-                                            >
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </Box>
-                                        ))}
+                                        <Text fontSize="xs" fontWeight="bold" noOfLines={2}>
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                        </Text>
                                     </Box>
-                                );
-                            })}
-                        </Box>
+                                ))}
+                            </HStack>
+                        ))}
                     </Box>
+
+                    {/* Virtual rows */}
+                    {lazosTableSqlVirtualizer.getVirtualItems().map(virtualRow => {
+                        const row = lazosTableSqlTable.getRowModel().rows[virtualRow.index];
+                        return (
+                            <Box
+                                key={row.id}
+                                position="absolute"
+                                top={0}
+                                left={0}
+                                width="100%"
+                                height={`${virtualRow.size}px`}
+                                transform={`translateY(${virtualRow.start}px)`}
+                                borderBottom="1px solid"
+                                borderColor="gray.100"
+                                _hover={{ bg: 'blue.50' }}
+                            >
+                                <HStack spacing={0} height="100%">
+                                    {row.getVisibleCells().map(cell => (
+                                        <Box
+                                            key={cell.id}
+                                            minWidth="120px"
+                                            maxWidth="200px"
+                                            px={2}
+                                            py={1}
+                                            borderRight="1px solid"
+                                            borderColor="gray.100"
+                                            display="flex"
+                                            alignItems="center"
+                                            height="100%"
+                                        >
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </Box>
+                                    ))}
+                                </HStack>
+                            </Box>
+                        );
+                    })}
                 </Box>
             </Box>
         </Box>
     );
 };
 
-export default ControlInstrumentsByIsometric;
+export default LazosTableSqlLoopTestControl;
