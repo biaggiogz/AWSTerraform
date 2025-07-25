@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect } from 'react';
 import { Box, Heading, Text, HStack, Button, Tooltip, Grid, Progress, VStack } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { VariableSizeList as List } from 'react-window';
@@ -35,80 +35,60 @@ const VirtualizedRow = ({ index, style, data }) => {
 };
 
 const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
-  // Force re-render when progress filter selection changes
-  const [, setForceUpdate] = React.useState(0);
-  
-  // State to store filtered data
   const [filteredData, setFilteredData] = React.useState(data);
+  const lastFilterStateRef = useRef(null);
   
-  React.useEffect(() => {
-    // Initialize global state if needed
+  // Memoized filter function to avoid recreating on every render
+  const filterDataByTPs = useCallback((sourceData, filteredTPs) => {
+    if (!filteredTPs || filteredTPs.length === 0) return sourceData;
+    
+    return sourceData.filter(row => {
+      try {
+        const tpIds = row.list_includes_tp_id;
+        if (!tpIds) return false;
+        
+        let tpIdArray = [];
+        if (typeof tpIds === 'string') {
+          tpIdArray = tpIds.split('|');
+        } else if (Array.isArray(tpIds)) {
+          tpIdArray = tpIds;
+        } else if (typeof tpIds === 'number') {
+          tpIdArray = [String(tpIds)];
+        } else {
+          return false;
+        }
+        
+        return tpIdArray.some(tpId => filteredTPs.includes(String(tpId)));
+      } catch (error) {
+        console.error('Error filtering row:', error, row);
+        return false;
+      }
+    });
+  }, []);
+  
+  // Optimized effect that only runs when necessary
+  useEffect(() => {
     if (!window.progressFilterState) {
       window.progressFilterState = { selectedTPs: {}, filteredData: [] };
     }
     
-    // Set up a timer to check for changes in the global progressFilterState
-    const intervalId = setInterval(() => {
-      setForceUpdate(prev => prev + 1); // Force re-render periodically when filter is visible
+    if (isProgressFilterVisible && window.progressFilterState?.filteredData) {
+      const currentFilterState = JSON.stringify(window.progressFilterState.filteredData);
       
-      // Apply filtering based on progressFilterState
-      if (isProgressFilterVisible && window.progressFilterState && window.progressFilterState.filteredData) {
-        const filteredTPs = window.progressFilterState.filteredData.map(item => item.testPack);
+      // Only update if filter state actually changed
+      if (lastFilterStateRef.current !== currentFilterState) {
+        lastFilterStateRef.current = currentFilterState;
         
-        if (filteredTPs.length > 0) {
-          // Filter rows that have at least one matching TP ID
-          const newFilteredData = data.filter(row => {
-            try {
-              const tpIds = row.list_includes_tp_id;
-              
-              // Handle different data types
-              if (!tpIds) return false;
-              
-              let tpIdArray = [];
-              if (typeof tpIds === 'string') {
-                tpIdArray = tpIds.split('|');
-              } else if (Array.isArray(tpIds)) {
-                tpIdArray = tpIds;
-              } else if (typeof tpIds === 'number') {
-                tpIdArray = [String(tpIds)];
-              } else {
-                console.warn('Unexpected TP IDs type:', typeof tpIds, tpIds);
-                return false;
-              }
-              
-              return tpIdArray.some(tpId => filteredTPs.includes(String(tpId)));
-            } catch (error) {
-              console.error('Error filtering row:', error, row);
-              return false;
-            }
-          });
-          
-          setFilteredData(newFilteredData);
-        } else {
-          setFilteredData(data);
-        }
-      } else {
-        setFilteredData(data);
+        const filteredTPs = window.progressFilterState.filteredData.map(item => item.testPack);
+        const newFilteredData = filterDataByTPs(data, filteredTPs);
+        setFilteredData(newFilteredData);
       }
-    }, 500); // Check every 500ms
-    
-    return () => clearInterval(intervalId);
-  }, [isProgressFilterVisible, data]);
-  
-  // Reset filtered data when progress filter is turned off
-  React.useEffect(() => {
-    if (!isProgressFilterVisible) {
+    } else {
+      lastFilterStateRef.current = null;
       setFilteredData(data);
     }
-  }, [isProgressFilterVisible, data]);
-  // Log the data structure to help with debugging
-  React.useEffect(() => {
-    if (data && data.length > 0) {
-      console.log('Table A data sample:', data[0]);
-      console.log('TP IDs type:', typeof data[0].list_includes_tp_id);
-      console.log('TP IDs value:', data[0].list_includes_tp_id);
-    }
-  }, [data]);
+  }, [isProgressFilterVisible, data, filterDataByTPs]);
+
   const columns = useMemo(() => [
     // {
     //   accessorKey: 's_n',
@@ -507,25 +487,24 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     ];
   }, []);
 
-  // Create a ref for the list component
-  const listRef = React.useRef();
+  const listRef = useRef();
   
-  // Function to calculate row heights based on TP IDs box height
-  const getRowHeight = React.useCallback((index) => {
-    const row = data?.[index];
+  // Memoized row height calculation
+  const getRowHeight = useCallback((index) => {
+    const currentData = isProgressFilterVisible ? filteredData : data;
+    const row = currentData?.[index];
     if (!row) return 60;
 
     const tpIds = row.list_includes_tp_id || '';
     const tpCount = tpIds && typeof tpIds === 'string' ? tpIds.split('|').length : 0;
 
     let boxHeight;
-
     if (tpCount > 6) {
       const rowsNeeded = Math.ceil(tpCount / 4);
-      boxHeight = Math.max(80, rowsNeeded * 42 + 24); // Ensure minimum height for 4-column grid
+      boxHeight = Math.max(80, rowsNeeded * 42 + 24);
     } else if (tpCount > 4) {
       const rowsNeeded = Math.ceil(tpCount / 3);
-      boxHeight = Math.max(80, rowsNeeded * 42 + 24); // Ensure minimum height for 3-column grid
+      boxHeight = Math.max(80, rowsNeeded * 42 + 24);
     } else if (tpCount > 2) {
       const rowsNeeded = Math.ceil(tpCount / 2);
       boxHeight = rowsNeeded * 42 + 20;
@@ -535,11 +514,16 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       boxHeight = 50;
     }
 
-    return Math.max(70, boxHeight); // slightly bump base height
-  }, [data]);
+    return Math.max(70, boxHeight);
+  }, [data, filteredData, isProgressFilterVisible]);
+  
+  // Memoized table data to prevent unnecessary recalculations
+  const tableData = useMemo(() => {
+    return isProgressFilterVisible ? filteredData || [] : data || [];
+  }, [isProgressFilterVisible, filteredData, data]);
   
   const table = useReactTable({
-    data: isProgressFilterVisible ? filteredData || [] : data || [],
+    data: tableData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     enableColumnResizing: true,
