@@ -177,8 +177,8 @@ const HitoFilterA = ({
       title="Hito Filter"
       initialWidth={400}
       initialHeight={600}
-      initialX={250}
-      initialY={250}
+      initialX={40 + 1660 + 5}
+      initialY={500}
       minWidth={350}
       minHeight={400}
       onBringToFront={onBringToFront}
@@ -212,18 +212,18 @@ const HitoFilterA = ({
             />
           </Box>
           
-          <Box>
-            <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>
-            <Select
-              size="sm"
-              value={propagationTarget}
-              onChange={(e) => handlePropagationChange(e.target.value)}
-              bg="white"
-            >
-              <option value="nothing">Nothing</option>
-              <option value="tableB">Table B (Test Pack Details)</option>
-            </Select>
-          </Box>
+          {/*<Box>*/}
+          {/*  <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>*/}
+          {/*  <Select*/}
+          {/*    size="sm"*/}
+          {/*    value={propagationTarget}*/}
+          {/*    onChange={(e) => handlePropagationChange(e.target.value)}*/}
+          {/*    bg="white"*/}
+          {/*  >*/}
+          {/*    <option value="nothing">Nothing</option>*/}
+          {/*    <option value="tableB">Table B (Test Pack Details)</option>*/}
+          {/*  </Select>*/}
+          {/*</Box>*/}
         </VStack>
 
         <Divider />

@@ -164,7 +164,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'subsystem',
       header: 'SUBSYSTEM',
-      size: 114,
+      size: 118,
       cell: ({ getValue, row }) => (
         <Button
           size="xs"
@@ -280,7 +280,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             py={colors.bg !== 'transparent' ? 1 : 0}
             borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
           >
-            {(getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
+            {isLoopFilterVisible && (getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
           </Text>
         );
       }
@@ -384,7 +384,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             py={colors.bg !== 'transparent' ? 1 : 0}
             borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
           >
-            {(getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
+            {isInsulFilterVisible && (getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
           </Text>
         );
       }
