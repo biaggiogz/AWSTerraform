@@ -1,10 +1,11 @@
 import React, { lazy, Suspense, useState, useMemo, useEffect, useCallback } from 'react';
-import { Box, VStack, Center, Spinner } from '@chakra-ui/react';
+import { Box, VStack, HStack, Center, Spinner } from '@chakra-ui/react';
 import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import ProgressTestpackTable from '../tables/ProgressTespackTable';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
-import CompletedLoopMetric from '../ui/CompletedLoopMetric';
+import StatusLoopMetric from '../ui/StatusLoopMetric';
+import StatusInstMetric from "../ui/StatusInstMetric";
 import Papa from 'papaparse';
 
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
@@ -230,9 +231,10 @@ const SummarySubsystemsContainer = ({
   return (
     <VStack spacing={4} align="stretch">
       {/* Completed Loop Metric */}
-      <Box alignSelf="flex-start">
-        <CompletedLoopMetric data={tableAData} />
-      </Box>
+      <HStack alignSelf="flex-start" spacing={4}>
+        <StatusLoopMetric data={tableAData} />
+        <StatusInstMetric data={tableAData} />
+      </HStack>
       
       {/* SQL Query Interface */}
       <Suspense fallback={<Center p={4}><Spinner /></Center>}>

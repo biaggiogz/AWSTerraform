@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Box, Text, VStack, Divider } from '@chakra-ui/react';
 
-const CompletedLoopMetric = ({ data }) => {
+const StatusLoopMetric = ({ data }) => {
   const metrics = useMemo(() => {
     if (!data || data.length === 0) return { subsystems: 0, done: 0, pending: 0 };
     
@@ -41,25 +41,25 @@ const CompletedLoopMetric = ({ data }) => {
       boxShadow="md"
     >
       <VStack spacing={0} divider={<Divider borderColor="white" />}>
-        <Box p={2} textAlign="center" width="100%">
+        <Box p={1} textAlign="center" width="100%">
           <Text fontSize="sm" fontWeight="bold" color="white">
-            Status Signal<br />by Subsystem
+            Loop Signal Status <br />by Subsystem
           </Text>
         </Box>
         
-        <Box p={2} textAlign="left" width="100%">
+        <Box p={1} textAlign="center" width="100%">
           <Text fontSize="sm" color="white">
             Subsystems: {metrics.subsystems}
           </Text>
         </Box>
         
-        <Box p={2} textAlign="left" width="100%">
+        <Box p={1} textAlign="center" width="100%">
           <Text fontSize="sm" color="white">
             Done: {metrics.done}
           </Text>
         </Box>
         
-        <Box p={2} textAlign="left" width="100%">
+        <Box p={2} textAlign="center" width="100%">
           <Text fontSize="sm" color="white">
             Pending: {metrics.pending}
           </Text>
@@ -69,4 +69,4 @@ const CompletedLoopMetric = ({ data }) => {
   );
 };
 
-export default CompletedLoopMetric;
+export default StatusLoopMetric;
