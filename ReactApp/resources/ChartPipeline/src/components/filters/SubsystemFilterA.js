@@ -23,9 +23,17 @@ const SubsystemFilterA = ({
                               onPropagationChange,
                               onBringToFront
                           }) => {
+    const [topZIndex, setTopZIndex] = useState(100);
     const [selectedSubsystems, setSelectedSubsystems] = useState({});
     const [propagationTarget, setPropagationTarget] = useState('nothing');
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Enhanced filter bring to front with higher z-index
+    const handleFilterBringToFront = () => {
+        const newZIndex = topZIndex + 100; // Ensure filters are always above tables
+        setTopZIndex(newZIndex + 1);
+        return newZIndex;
+    };
 
     const subsystemValues = useMemo(() => {
         if (!data || data.length === 0) return {};
@@ -163,13 +171,14 @@ const SubsystemFilterA = ({
     return (
         <ResizableDraggablePanel
             title="Subsystem Filter"
+
             initialWidth={400}
             initialHeight={600}
-            initialX={1675}
-            initialY={500}
+            initialX={1690}
+            initialY={230}
             minWidth={350}
             minHeight={400}
-            onBringToFront={onBringToFront}
+            onBringToFront={handleFilterBringToFront}
         >
             <VStack spacing={3} align="stretch" p={3} height="100%">
                 <HStack justify="flex-end" align="center">

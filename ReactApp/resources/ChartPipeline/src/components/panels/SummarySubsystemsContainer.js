@@ -4,6 +4,7 @@ import SummarySubsystemsTableA from '../tables/SummarySubsystemsTableA';
 import ProgressTestpackTable from '../tables/ProgressTespackTable';
 import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
+import CompletedLoopMetric from '../ui/CompletedLoopMetric';
 import Papa from 'papaparse';
 
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
@@ -228,6 +229,11 @@ const SummarySubsystemsContainer = ({
 
   return (
     <VStack spacing={4} align="stretch">
+      {/* Completed Loop Metric */}
+      <Box alignSelf="flex-start">
+        <CompletedLoopMetric data={tableAData} />
+      </Box>
+      
       {/* SQL Query Interface */}
       <Suspense fallback={<Center p={4}><Spinner /></Center>}>
         <DynamicCalculationPanel
