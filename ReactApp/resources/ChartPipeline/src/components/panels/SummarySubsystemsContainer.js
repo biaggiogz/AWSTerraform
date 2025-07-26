@@ -7,6 +7,7 @@ import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirec
 import StatusLoopMetric from '../ui/StatusLoopMetric';
 import StatusInstMetric from "../ui/StatusInstMetric";
 import Papa from 'papaparse';
+import StatusTracingMetric from "../ui/StatusTracingMetric";
 
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 
@@ -234,6 +235,7 @@ const SummarySubsystemsContainer = ({
       <HStack alignSelf="flex-start" spacing={4}>
         <StatusLoopMetric data={tableAData} />
         <StatusInstMetric data={tableAData} />
+        <StatusTracingMetric data={tableAData} />
       </HStack>
       
       {/* SQL Query Interface */}
