@@ -41,6 +41,7 @@ FROM "Subsystem Overview";`);
 
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
+  const [isInsulFilterVisible, setIsInsulFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [isSubsystemFilterAVisible, setIsSubsystemFilterAVisible] = useState(false);
   const [isProgressTableVisible, setIsProgressTableVisible] = useState(true);

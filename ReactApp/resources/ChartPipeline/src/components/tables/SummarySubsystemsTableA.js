@@ -35,7 +35,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
+const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
   const [filteredData, setFilteredData] = useState(data);
   const lastFilterStateRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
@@ -252,13 +252,19 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         const getLoopStatusColor = () => {
           if (!isLoopFilterVisible) return { bg: 'transparent', color: 'inherit' };
           
-          const totalLoops = getValue() || 0;
+          const totalLoops = getValue();
           const doneLoops = row.original.done_loop || 0;
+          
+          // Check if total_loop is null, undefined, empty, or 0 - "Not Apply" case
+          if (totalLoops === null || totalLoops === undefined || totalLoops === '' || totalLoops === 0) {
+            return { bg: '#212121', color: 'white' };
+          }
+          
           // Check if all loops are done (total equals done) and there are loops
           const isDone = (totalLoops === doneLoops) && (totalLoops > 0);
           
           // Green for completed, orange for in progress
-          const bgColor = isDone ? '#2F5249' : '#E85C0D';
+          const bgColor = isDone ? '#06923E' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
         
@@ -274,7 +280,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             py={colors.bg !== 'transparent' ? 1 : 0}
             borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
           >
-            {getValue()?.toLocaleString()}
+            {(getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
           </Text>
         );
       }
@@ -345,23 +351,28 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     },
     {
       accessorKey: 'total_insulation',
-      header: 'Total Insul',
+      header: 'TOTAL INSUL',
       size: 60,
       cell: ({ getValue, row }) => {
-        const getItemsStatusColor = () => {
-          if (!isItemsFilterVisible) return { bg: 'transparent', color: 'inherit' };
+        const getInsulStatusColor = () => {
+          if (!isInsulFilterVisible) return { bg: 'transparent', color: 'inherit' };
           
-          const totalItems = getValue() || 0;
+          const totalInsul = getValue() || 0;
           const doneInsul = row.original.done_insulation || 0;
-          // Check if all items are done (total equals done) and there are items
-          const isDone = (totalItems === doneInsul) && (totalItems > 0);
+
+          // Check if total_loop is null, undefined, empty, or 0 - "Not Apply" case
+          if (totalInsul === null || totalInsul === undefined || totalInsul === '' || totalInsul === 0) {
+            return { bg: '#212121', color: 'white' };
+          }
+          // Check if all insul are done (total equals done) and there are insul
+          const isDone = (totalInsul === doneInsul) && (totalInsul > 0);
           
           // Green for completed, orange for in progress
-          const bgColor = isDone ? '#2F5249' : '#E85C0D';
+          const bgColor = isDone ? '#06923E' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
         
-        const colors = getItemsStatusColor();
+        const colors = getInsulStatusColor();
         
         return (
           <Text 
@@ -373,7 +384,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             py={colors.bg !== 'transparent' ? 1 : 0}
             borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
           >
-            {getValue()?.toLocaleString()}
+            {(getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
           </Text>
         );
       }
@@ -427,7 +438,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     }
 
-  ], [selectedSubsystem, onSubsystemSelect, isItemsFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
+  ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {
@@ -726,7 +737,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'done_tracing': '#0ABAB5',
               'pending_tracing': '#0ABAB5',
 
-              // Items progress
+              // Insul progress
               'total_insulation': '#CEC19B',
               'done_insulation': '#CEC19B',
               'pending_insulation': '#CEC19B',

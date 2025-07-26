@@ -35,13 +35,26 @@ const InsulationStatusFilter = ({
     
     const metrics = {};
     data.forEach(row => {
-      if (row.subsystem && row.total_insulation !== undefined && row.done_insulation !== undefined) {
-        const isDone = (row.total_insulation === row.done_insulation) && (row.total_insulation > 0);
-        metrics[row.subsystem] = {
-          status: isDone ? 'Done' : 'Pending',
-          totalItems: row.total_insulation,
-          doneInsul: row.done_insulation
-        };
+      if (row.subsystem) {
+        // Check if total_loop is empty, null, or undefined
+        const totalInsul = row.total_insulation;
+        const doneInsul = row.done_insulation;
+
+        if (totalInsul === null || totalInsul === undefined || totalInsul === '' || totalInsul === 0){
+          metrics[row.subsystem] = {
+            status: 'Not Apply',
+            totalItems: totalInsul,
+            doneInsul: doneInsul
+          };
+        } else {
+          const isDone = (row.total_insulation === row.done_insulation) && (row.total_insulation > 0);
+          metrics[row.subsystem] = {
+            status: isDone ? 'Done' : 'Pending',
+            totalItems: row.total_insulation,
+            doneInsul: row.done_insulation
+
+          };
+        }
       }
     });
     
@@ -73,10 +86,18 @@ const InsulationStatusFilter = ({
     return data.filter(row => {
       if (!selectedSubsystems[row.subsystem]) return false;
       if (exclusiveFilter) {
-        const isDone = (row.total_insulation === row.done_insulation) && (row.total_insulation > 0);
-        const status = isDone ? 'Done' : 'Pending';
+        const totalInsul = row.total_insulation;
+        let status;
+        if (totalInsul === null || totalInsul === undefined  || totalInsul === '' || totalInsul === 0 ) {
+          status = 'Not Apply';
+        } else {
+          const isDone = (row.total_insulation === row.done_insulation) && (row.total_insulation > 0);
+          status = isDone ? 'Done' : 'Pending';
+
+        }
         if (exclusiveFilter === 'done') return status === 'Done';
         if (exclusiveFilter === 'pending') return status === 'Pending';
+        if (exclusiveFilter === 'notapply') return status === 'Not Apply';
       }
       return true;
     });
@@ -130,7 +151,8 @@ const InsulationStatusFilter = ({
   }, [onPropagationChange, filteredData]);
 
   const getStatusColor = useCallback((status) => {
-    if (status === 'Done') return '#2F5249';
+    if (status === 'Done') return '#06923E';
+    if (status === 'Not Apply') return '#212121';
     return '#E85C0D';
   }, []);
 
@@ -152,7 +174,9 @@ const InsulationStatusFilter = ({
       const isSelected = selectedSubsystems[subsystem] || false;
       const isVisible = !exclusiveFilter ||
                       (exclusiveFilter === 'done' && status === 'Done') ||
-                      (exclusiveFilter === 'pending' && status === 'Pending');
+                      (exclusiveFilter === 'pending' && status === 'Pending') ||
+                      (exclusiveFilter === 'notapply' && status === 'Not Apply');
+
 
       return (
         <Button
@@ -224,7 +248,7 @@ const InsulationStatusFilter = ({
               borderColor={exclusiveFilter === 'done' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
-              <Box width="15px" height="15px" bg="#2F5249" borderWidth="1px" />
+              <Box width="15px" height="15px" bg="#06923E" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'done' ? "bold" : "normal"}>Done</Text>
             </HStack>
           </Tooltip>
@@ -244,6 +268,23 @@ const InsulationStatusFilter = ({
               <Text fontWeight={exclusiveFilter === 'pending' ? "bold" : "normal"}>Pending</Text>
             </HStack>
           </Tooltip>
+
+          <Tooltip label="Click to show only not applicable insulation" placement="top">
+            <HStack
+                onClick={() => toggleExclusiveFilter('notapply')}
+                cursor="pointer"
+                p={1}
+                borderRadius="md"
+                bg={exclusiveFilter === 'notapply' ? "blue.50" : "transparent"}
+                borderWidth="1px"
+                borderColor={exclusiveFilter === 'notapply' ? "blue.300" : "transparent"}
+                _hover={{ bg: "gray.100" }}
+            >
+              <Box width="15px" height="15px" bg="#212121" borderWidth="1px" />
+              <Text fontWeight={exclusiveFilter === 'notapply' ? "bold" : "normal"} color="black">Not Apply</Text>
+            </HStack>
+          </Tooltip>
+
         </HStack>
 
         <HStack spacing={2}>

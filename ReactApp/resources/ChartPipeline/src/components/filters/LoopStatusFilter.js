@@ -151,7 +151,7 @@ const LoopStatusFilter = ({
   }, [onPropagationChange, filteredData]);
 
   const getStatusColor = useCallback((status) => {
-    if (status === 'Done') return '#2F5249';
+    if (status === 'Done') return '#06923E';
     if (status === 'Not Apply') return '#212121';
     return '#E85C0D';
   }, []);
@@ -224,7 +224,7 @@ const LoopStatusFilter = ({
       minHeight={400}
       onBringToFront={onBringToFront}
     >
-      <VStack spacing={3} align="stretch" p={3} height="100%">
+      <VStack spacing={2} align="stretch" p={3} height="100%">
         <HStack justify="flex-end" align="center">
           <IconButton
             icon={<MdClose />}
@@ -247,7 +247,7 @@ const LoopStatusFilter = ({
               borderColor={exclusiveFilter === 'done' ? "blue.300" : "transparent"}
               _hover={{ bg: "gray.100" }}
             >
-              <Box width="15px" height="15px" bg="#2F5249" borderWidth="1px" />
+              <Box width="15px" height="15px" bg="#06923E" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'done' ? "bold" : "normal"}>Done</Text>
             </HStack>
           </Tooltip>
@@ -280,7 +280,7 @@ const LoopStatusFilter = ({
               _hover={{ bg: "gray.100" }}
             >
               <Box width="15px" height="15px" bg="#212121" borderWidth="1px" />
-              <Text fontWeight={exclusiveFilter === 'notapply' ? "bold" : "normal"} color="white">Not Apply</Text>
+              <Text fontWeight={exclusiveFilter === 'notapply' ? "bold" : "normal"} color="black">Not Apply</Text>
             </HStack>
           </Tooltip>
         </HStack>
@@ -303,18 +303,18 @@ const LoopStatusFilter = ({
             />
           </Box>
           
-          <Box>
-            <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>
-            <Select
-              size="sm"
-              value={propagationTarget}
-              onChange={(e) => handlePropagationChange(e.target.value)}
-              bg="white"
-            >
-              <option value="nothing">Nothing</option>
-              <option value="tableB">Table B (Test Pack Details)</option>
-            </Select>
-          </Box>
+          {/*<Box>*/}
+          {/*  <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>*/}
+          {/*  <Select*/}
+          {/*    size="sm"*/}
+          {/*    value={propagationTarget}*/}
+          {/*    onChange={(e) => handlePropagationChange(e.target.value)}*/}
+          {/*    bg="white"*/}
+          {/*  >*/}
+          {/*    <option value="nothing">Nothing</option>*/}
+          {/*    <option value="tableB">Table B (Test Pack Details)</option>*/}
+          {/*  </Select>*/}
+          {/*</Box>*/}
         </VStack>
 
         <Divider />
