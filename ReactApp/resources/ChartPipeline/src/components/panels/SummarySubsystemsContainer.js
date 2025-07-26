@@ -239,8 +239,12 @@ const SummarySubsystemsContainer = ({
         <StatusInstMetric data={tableAData} />
         <StatusTracingMetric data={tableAData} />
         <StatusInsulMetric data={tableAData} />
-        <StatusPunchMetric data={tableAData} />
       </HStack>
+      
+      {/* StatusPunchMetric aligned with PUNCH LIST PROGRESS header */}
+      <Box position="absolute" left="1442px" top="60px" width="240px" zIndex={50}>
+        <StatusPunchMetric data={tableAData} />
+      </Box>
       
       {/* SQL Query Interface */}
       <Suspense fallback={<Center p={4}><Spinner /></Center>}>

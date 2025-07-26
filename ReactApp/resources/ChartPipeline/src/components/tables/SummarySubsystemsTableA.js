@@ -373,10 +373,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       size: 60,
       cell: ({ getValue, row }) => {
         const getInsulStatusColor = () => {
-          if (!isInsulFilterVisible) return { bg: 'transparent', color: 'inherit' };
-          
+
           const totalInsul = getValue() || 0;
           const doneInsul = row.original.done_insulation || 0;
+
+          if (!isInsulFilterVisible) {
+            // When filter is not visible, only show green when total equals done
+            const isDone = (totalInsul === doneInsul) && (totalInsul > 0);
+            return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
+          }
 
           // Check if total_loop is null, undefined, empty, or 0 - "Not Apply" case
           if (totalInsul === null || totalInsul === undefined || totalInsul === '' || totalInsul === 0) {
