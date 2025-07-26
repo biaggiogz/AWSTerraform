@@ -239,9 +239,23 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'avg_progress_subsystem',
       header: 'AVG PROGRESS SUBSYSTEM',
       size: 80,
-      cell: ({ getValue }) => (
-        <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{(getValue() || 0).toFixed(1)}%</Text>
-      )
+      cell: ({ getValue }) => {
+        const value = getValue() || 0;
+        const isComplete = value === 100;
+        return (
+          <Text 
+            fontSize="clamp(10px, 1vw, 13px)" 
+            textAlign="center"
+            bg={isComplete ? '#06923E' : 'transparent'}
+            color={isComplete ? 'white' : 'inherit'}
+            px={isComplete ? 2 : 0}
+            py={isComplete ? 1 : 0}
+            borderRadius={isComplete ? 'sm' : 0}
+          >
+            {value.toFixed(1)}%
+          </Text>
+        );
+      }
     },
 
     {
@@ -250,10 +264,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       size: 60,
       cell: ({ getValue, row }) => {
         const getLoopStatusColor = () => {
-          if (!isLoopFilterVisible) return { bg: 'transparent', color: 'inherit' };
-          
           const totalLoops = getValue();
           const doneLoops = row.original.done_loop || 0;
+          
+          if (!isLoopFilterVisible) {
+            // When filter is not visible, only show green when total equals done
+            const isDone = (totalLoops === doneLoops) && (totalLoops > 0);
+            return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
+          }
           
           // Check if total_loop is null, undefined, empty, or 0 - "Not Apply" case
           if (totalLoops === null || totalLoops === undefined || totalLoops === '' || totalLoops === 0) {
