@@ -164,7 +164,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'subsystem',
       header: 'SUBSYSTEM',
-      size: 110,
+      size: 114,
       cell: ({ getValue, row }) => (
         <Button
           size="xs"

@@ -35,13 +35,25 @@ const LoopStatusFilter = ({
     
     const metrics = {};
     data.forEach(row => {
-      if (row.subsystem && row.total_loop !== undefined && row.done_loop !== undefined) {
-        const isDone = (row.total_loop === row.done_loop) && (row.total_loop > 0);
-        metrics[row.subsystem] = {
-          status: isDone ? 'Done' : 'Pending',
-          totalLoops: row.total_loop,
-          doneLoops: row.done_loop
-        };
+      if (row.subsystem) {
+        // Check if total_loop is empty, null, or undefined
+        const totalLoop = row.total_loop;
+        const doneLoop = row.done_loop;
+        
+        if (totalLoop === null || totalLoop === undefined || totalLoop === '' || totalLoop === 0) {
+          metrics[row.subsystem] = {
+            status: 'Not Apply',
+            totalLoops: totalLoop,
+            doneLoops: doneLoop
+          };
+        } else {
+          const isDone = (totalLoop === doneLoop) && (totalLoop > 0);
+          metrics[row.subsystem] = {
+            status: isDone ? 'Done' : 'Pending',
+            totalLoops: totalLoop,
+            doneLoops: doneLoop
+          };
+        }
       }
     });
     
@@ -73,10 +85,19 @@ const LoopStatusFilter = ({
     return data.filter(row => {
       if (!selectedSubsystems[row.subsystem]) return false;
       if (exclusiveFilter) {
-        const isDone = (row.total_loop === row.done_loop) && (row.total_loop > 0);
-        const status = isDone ? 'Done' : 'Pending';
+        const totalLoop = row.total_loop;
+        let status;
+        
+        if (totalLoop === null || totalLoop === undefined || totalLoop === '' || totalLoop === 0) {
+          status = 'Not Apply';
+        } else {
+          const isDone = (totalLoop === row.done_loop) && (totalLoop > 0);
+          status = isDone ? 'Done' : 'Pending';
+        }
+        
         if (exclusiveFilter === 'done') return status === 'Done';
         if (exclusiveFilter === 'pending') return status === 'Pending';
+        if (exclusiveFilter === 'notapply') return status === 'Not Apply';
       }
       return true;
     });
@@ -131,6 +152,7 @@ const LoopStatusFilter = ({
 
   const getStatusColor = useCallback((status) => {
     if (status === 'Done') return '#2F5249';
+    if (status === 'Not Apply') return '#212121';
     return '#E85C0D';
   }, []);
 
@@ -152,7 +174,8 @@ const LoopStatusFilter = ({
       const isSelected = selectedSubsystems[subsystem] || false;
       const isVisible = !exclusiveFilter ||
                       (exclusiveFilter === 'done' && status === 'Done') ||
-                      (exclusiveFilter === 'pending' && status === 'Pending');
+                      (exclusiveFilter === 'pending' && status === 'Pending') ||
+                      (exclusiveFilter === 'notapply' && status === 'Not Apply');
 
       return (
         <Button
@@ -242,6 +265,22 @@ const LoopStatusFilter = ({
             >
               <Box width="15px" height="15px" bg="#E85C0D" borderWidth="1px" />
               <Text fontWeight={exclusiveFilter === 'pending' ? "bold" : "normal"}>Pending</Text>
+            </HStack>
+          </Tooltip>
+
+          <Tooltip label="Click to show only not applicable loops" placement="top">
+            <HStack
+              onClick={() => toggleExclusiveFilter('notapply')}
+              cursor="pointer"
+              p={1}
+              borderRadius="md"
+              bg={exclusiveFilter === 'notapply' ? "blue.50" : "transparent"}
+              borderWidth="1px"
+              borderColor={exclusiveFilter === 'notapply' ? "blue.300" : "transparent"}
+              _hover={{ bg: "gray.100" }}
+            >
+              <Box width="15px" height="15px" bg="#212121" borderWidth="1px" />
+              <Text fontWeight={exclusiveFilter === 'notapply' ? "bold" : "normal"} color="white">Not Apply</Text>
             </HStack>
           </Tooltip>
         </HStack>
