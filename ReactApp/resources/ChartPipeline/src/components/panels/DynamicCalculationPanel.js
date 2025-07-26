@@ -39,7 +39,6 @@ FROM "Subsystem Overview";`);
   const [showFieldSuggestions, setShowFieldSuggestions] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
 
-  const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isInsulFilterVisible, setIsInsulFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
@@ -354,13 +353,13 @@ FROM "Subsystem Overview";`);
               size="sm"
               variant="ghost"
               onClick={() => {
-                const newVisibility = !isSubsystemFilterVisible;
-                setIsSubsystemFilterVisible(newVisibility);
+                const newVisibility = !isInsulFilterVisible;
+                setIsInsulFilterVisible(newVisibility);
                 if (onItemsFilterVisibilityChange) {
                   onItemsFilterVisibilityChange(newVisibility);
                 }
               }}
-              aria-label="Toggle subsystem status filter"
+              aria-label="Toggle insulation status filter"
               title="Insul Status Filter"
             />
             <IconButton
@@ -877,13 +876,13 @@ FROM "Subsystem Overview";`);
       
 
       
-      {isSubsystemFilterVisible && (
+      {isInsulFilterVisible && (
         <InsulStatusFilter
           data={controlData}
           onFilterChange={onFilteredControlDataChange || (() => {})}
-          isVisible={isSubsystemFilterVisible}
+          isVisible={isInsulFilterVisible}
           onClose={() => {
-            setIsSubsystemFilterVisible(false);
+            setIsInsulFilterVisible(false);
             if (onItemsFilterVisibilityChange) {
               onItemsFilterVisibilityChange(false);
             }

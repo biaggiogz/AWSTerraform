@@ -200,18 +200,18 @@ const SubsystemFilterA = ({
                         />
                     </Box>
 
-                    <Box>
-                        <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>
-                        <Select
-                            size="sm"
-                            value={propagationTarget}
-                            onChange={(e) => handlePropagationChange(e.target.value)}
-                            bg="white"
-                        >
-                            <option value="nothing">Nothing</option>
-                            <option value="tableB">Table B (Test Pack Details)</option>
-                        </Select>
-                    </Box>
+                    {/*<Box>*/}
+                    {/*    <Text fontSize="xs" fontWeight="semibold" mb={1}>Propagate to:</Text>*/}
+                    {/*    <Select*/}
+                    {/*        size="sm"*/}
+                    {/*        value={propagationTarget}*/}
+                    {/*        onChange={(e) => handlePropagationChange(e.target.value)}*/}
+                    {/*        bg="white"*/}
+                    {/*    >*/}
+                    {/*        <option value="nothing">Nothing</option>*/}
+                    {/*        <option value="tableB">Table B (Test Pack Details)</option>*/}
+                    {/*    </Select>*/}
+                    {/*</Box>*/}
                 </VStack>
 
                 <Divider />
