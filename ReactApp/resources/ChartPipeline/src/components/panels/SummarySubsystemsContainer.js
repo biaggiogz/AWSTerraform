@@ -260,7 +260,7 @@ const SummarySubsystemsContainer = ({
       </Suspense>
       
       {/* Draggable Tables */}
-      <Box position="relative" width="120%" height="800px" overflow="hidden" zIndex={1}>
+      <Box position="relative" width="120%" height="800px" zIndex={1}>
         <ResizableDraggablePanel
           title="Subsystem Overview"
           initialWidth={1660}
