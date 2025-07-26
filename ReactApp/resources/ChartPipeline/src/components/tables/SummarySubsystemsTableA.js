@@ -9,7 +9,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   
   return (
     <div style={style}>
-      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', height: '100%', minHeight: '40px' }}>
+      <div className="table-row" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', height: '100%', minHeight: 'clamp(35px, 5vh, 50px)' }}>
         {row.getVisibleCells().map(cell => (
           <div
             key={cell.id}
@@ -18,12 +18,13 @@ const VirtualizedRow = ({ index, style, data }) => {
               width: `${cell.column.getSize()}px`,
               minWidth: `${cell.column.getSize()}px`,
               maxWidth: `${cell.column.getSize()}px`,
-              padding: '4px',
+              padding: '0.25rem',
               borderRight: '1px solid #e2e8f0',
               display: 'flex',
               alignItems: cell.column.id === 'description' ? 'flex-start' : 'center',
               justifyContent: 'center',
-              fontSize: '12px'
+              fontSize: 'clamp(10px, 1vw, 14px)',
+              lineHeight: '1.3'
             }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -157,26 +158,26 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'FLUID',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()}</Text>
       )
     },
     {
       accessorKey: 'subsystem',
       header: 'SUBSYSTEM',
-      size: 104,
+      size: 110,
       cell: ({ getValue, row }) => (
         <Button
           size="xs"
           variant={selectedSubsystem === getValue() ? "solid" : "outline"}
           onClick={() => onSubsystemSelect(getValue())}
           _hover={{ bg: selectedSubsystem === getValue() ? "#007598" : "blue.200" }}
-          fontSize="10px"
-          fontWeight="medium"
+          fontSize="15px"
+          fontWeight="small"
           color={selectedSubsystem === getValue() ? "white" : "blue.600"}
           bg={selectedSubsystem === getValue() ? "#007598" : "white"}
           borderColor={selectedSubsystem === getValue() ? "#007598" : "blue.500"}
-          minWidth="30px"
-          height="18px"
+          minWidth="40px"
+          height="26px"
           px={2}
           borderRadius="sm"
           title={getValue()}
@@ -189,9 +190,9 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     {
       accessorKey: 'hito_isos',
       header: 'HITO',
-      size: 104,
+      size: 80,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center" title={getValue()}>{getValue()}</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center" title={getValue()}>{getValue()}</Text>
       )
     },
     {
@@ -199,7 +200,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'DESCRIPTION',
       size: 112,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" title={getValue()} wordBreak="break-word" textAlign="left" lineHeight="1.2" py={1}>{getValue()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)" title={getValue()} wordBreak="break-word" textAlign="left" lineHeight="1.3" py={1}>{getValue()}</Text>
       )
     },
     {
@@ -207,7 +208,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'N°TP',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()}</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()}</Text>
       )
     },
     {
@@ -215,7 +216,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'TOTAL ITEMS',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -223,7 +224,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'DONE ITEMS',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -231,7 +232,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'PENDING ITEMS',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -239,7 +240,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'AVG PROGRESS SUBSYSTEM',
       size: 80,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{(getValue() || 0).toFixed(1)}%</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{(getValue() || 0).toFixed(1)}%</Text>
       )
     },
 
@@ -266,7 +267,6 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         return (
           <Text 
             fontSize="xs" 
-            fontWeight="bold"
             textAlign="center"
             bg={colors.bg}
             color={colors.color}
@@ -284,7 +284,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'LOOP DONE',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -292,7 +292,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'LOOP PENDING',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -300,7 +300,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'TOTAL INST',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -308,7 +308,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'DONE INST',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -316,7 +316,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'PENDING INST',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -324,7 +324,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'TOTAL TRACING',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -332,7 +332,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'DONE TRACING',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -340,7 +340,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'PENDING TRACING',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -365,8 +365,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         
         return (
           <Text 
-            fontSize="xs" 
-            fontWeight="bold"
+            fontSize="clamp(10px, 1vw, 13px)" 
             textAlign="center"
             bg={colors.bg}
             color={colors.color}
@@ -384,7 +383,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'Done Insul',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -392,7 +391,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'Pending Insul',
       size: 60,
       cell: ({ getValue }) => (
-        <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+        <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -400,7 +399,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'TOTAL PUNCH',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -408,7 +407,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'CLOSE PUNCH',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -416,7 +415,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'PENDING PUNCH',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     },
     {
@@ -424,7 +423,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       header: 'OPEN PUNCH',
       size: 60,
       cell: ({ getValue }) => (
-          <Text fontSize="xs" fontWeight="bold" textAlign="center">{getValue()?.toLocaleString()}</Text>
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
     }
 
@@ -640,7 +639,6 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                 minWidth={`${totalWidth}px`}
                 textAlign="center"
                 fontSize="xs"
-                fontWeight="bold"
                 textTransform="uppercase"
                 letterSpacing="wide"
                 color="white"
@@ -655,7 +653,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                 bg={header.color}
                 minHeight="35px"
               >
-                <Text fontSize="xs" fontWeight="bold" textAlign="center" noOfLines={2}>
+                <Text fontSize="xs" textAlign="center" noOfLines={2}>
                   {header.title}
                 </Text>
               </Box>
@@ -675,7 +673,6 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                 minWidth={`${totalWidth}px`}
                 textAlign="center"
                 fontSize="xs"
-                fontWeight="semibold"
                 textTransform="uppercase"
                 letterSpacing="wide"
                 color={header.color === 'transparent' ? 'transparent' : 'white'}
@@ -690,7 +687,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                 bg={header.color}
                 minHeight="35px"
               >
-                <Text fontSize="xs" fontWeight="semibold" textAlign="center" noOfLines={2}>
+                <Text fontSize="xs"  textAlign="center" noOfLines={2}>
                   {header.title}
                 </Text>
               </Box>
@@ -752,7 +749,6 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
                 maxWidth={`${header.getSize()}px`}
                 textAlign="center"
                 fontSize="xs"
-                fontWeight="bold"
                 textTransform="uppercase"
                 letterSpacing="wide"
                 color="white"
