@@ -8,6 +8,8 @@ import StatusLoopMetric from '../ui/StatusLoopMetric';
 import StatusInstMetric from "../ui/StatusInstMetric";
 import Papa from 'papaparse';
 import StatusTracingMetric from "../ui/StatusTracingMetric";
+import StatusInsulMetric from "../ui/StatusInsulMetric";
+import StatusPunchMetric from "../ui/StatusPunchMetric";
 
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 
@@ -236,6 +238,8 @@ const SummarySubsystemsContainer = ({
         <StatusLoopMetric data={tableAData} />
         <StatusInstMetric data={tableAData} />
         <StatusTracingMetric data={tableAData} />
+        <StatusInsulMetric data={tableAData} />
+        <StatusPunchMetric data={tableAData} />
       </HStack>
       
       {/* SQL Query Interface */}
