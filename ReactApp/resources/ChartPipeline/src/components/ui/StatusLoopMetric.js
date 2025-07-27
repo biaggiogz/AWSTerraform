@@ -106,6 +106,32 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
     }
   }, [activeFilter, metrics.validRows, onSubsystemFilter]);
 
+  const handleProcessDoneClick = useCallback(() => {
+    if (activeFilter === 'processDone') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const processDoneSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'PROCESS ' && row.total_loop === row.done_loop && row.total_loop > 0)
+        .map(row => row.subsystem);
+      setActiveFilter('processDone');
+      onSubsystemFilter && onSubsystemFilter(processDoneSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleProcessPendingClick = useCallback(() => {
+    if (activeFilter === 'processPending') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const processPendingSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'PROCESS ' && row.done_loop < row.total_loop && row.total_loop > 0)
+        .map(row => row.subsystem);
+      setActiveFilter('processPending');
+      onSubsystemFilter && onSubsystemFilter(processPendingSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
   return (
     <Box
       bg="#7CA2C5"
@@ -165,11 +191,19 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
         </HStack>
         
         <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
-          <Box p={1} textAlign="center" flex={1}>
-            <Text fontSize="sm" color="white">
-              Done: {metrics.processDone}
-            </Text>
-          </Box>
+          <Button
+            p={1}
+            textAlign="center"
+            flex={1}
+            bg={activeFilter === 'processDone' ? '#5A8DB5' : '#7CA2C5'}
+            color="white"
+            fontSize="sm"
+            variant="unstyled"
+            _hover={{ bg: '#5A8DB5' }}
+            onClick={handleProcessDoneClick}
+          >
+            Done: {metrics.processDone}
+          </Button>
           <Box p={1} textAlign="center" flex={1}>
             <Text fontSize="sm" color="white">
               Done: {metrics.noProcessDone}
@@ -178,11 +212,19 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
         </HStack>
         
         <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
-          <Box p={1} textAlign="center" flex={1}>
-            <Text fontSize="sm" color="white">
-              Pending: {metrics.processPending}
-            </Text>
-          </Box>
+          <Button
+            p={1}
+            textAlign="center"
+            flex={1}
+            bg={activeFilter === 'processPending' ? '#5A8DB5' : '#7CA2C5'}
+            color="white"
+            fontSize="sm"
+            variant="unstyled"
+            _hover={{ bg: '#5A8DB5' }}
+            onClick={handleProcessPendingClick}
+          >
+            Pending: {metrics.processPending}
+          </Button>
           <Box p={1} textAlign="center" flex={1}>
             <Text fontSize="sm" color="white">
               Pending: {metrics.noProcessPending}
