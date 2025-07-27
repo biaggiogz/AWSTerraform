@@ -534,6 +534,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       cell: ({ getValue }) => (
           <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
+    },
+    {
+      accessorKey: 'psv_total',
+      header: 'PSV TOTAL',
+      size: 60,
+      cell: ({ getValue }) => (
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
     }
 
   ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible,isInstFilterVisible, isTracingFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
