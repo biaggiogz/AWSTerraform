@@ -15,7 +15,7 @@ const StatusLoopMetric = ({ data }) => {
     
     // WHERE total_loop is not null AND total_loop != ''
     const validRows = data.filter(row => 
-      row.total_loop != null && row.total_loop !== ''
+      row.total_loop > 0 && row.subsystem !== 'AR-9000-01'
     );
     
     // Total subsystems count
@@ -105,14 +105,21 @@ const StatusLoopMetric = ({ data }) => {
             <Text fontSize="sm" color="white">
               Done: {metrics.processDone}
             </Text>
-            <Text fontSize="sm" color="white">
-              Pending: {metrics.processPending}
-            </Text>
           </Box>
           <Box p={1} textAlign="center" flex={1}>
             <Text fontSize="sm" color="white">
               Done: {metrics.noProcessDone}
             </Text>
+          </Box>
+        </HStack>
+        
+        <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
+          <Box p={1} textAlign="center" flex={1}>
+            <Text fontSize="sm" color="white">
+              Pending: {metrics.processPending}
+            </Text>
+          </Box>
+          <Box p={1} textAlign="center" flex={1}>
             <Text fontSize="sm" color="white">
               Pending: {metrics.noProcessPending}
             </Text>
