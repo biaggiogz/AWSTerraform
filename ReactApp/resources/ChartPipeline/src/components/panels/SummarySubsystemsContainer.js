@@ -31,7 +31,8 @@ const SummarySubsystemsContainer = ({
     hito: { data: tableBData, visible: false },
     subsystem: { data: tableAData, visible: false },
     statusLoopMetric: { data: tableAData, visible: false },
-    statusInstMetric: { data: tableAData, visible: false }
+    statusInstMetric: { data: tableAData, visible: false },
+    statusTracingMetric: { data: tableAData, visible: false }
   });
   
   // Centralized filter update function
@@ -59,6 +60,16 @@ const SummarySubsystemsContainer = ({
     } else {
       const filteredData = tableAData.filter(row => subsystems.includes(row.subsystem));
       updateFilter('statusInstMetric', { data: filteredData });
+    }
+  }, [tableAData, updateFilter]);
+
+  // Handle StatusTracingMetric subsystem filtering
+  const handleStatusTracingMetricFilter = useCallback((subsystems) => {
+    if (subsystems.length === 0) {
+      updateFilter('statusTracingMetric', { data: tableAData });
+    } else {
+      const filteredData = tableAData.filter(row => subsystems.includes(row.subsystem));
+      updateFilter('statusTracingMetric', { data: filteredData });
     }
   }, [tableAData, updateFilter]);
   
@@ -101,7 +112,7 @@ const SummarySubsystemsContainer = ({
   
   // Optimized combined filter logic
   const combinedFilteredTableAData = useMemo(() => {
-    const { status, loop, inst, tracing, subsystem, statusLoopMetric, statusInstMetric } = filterState;
+    const { status, loop, inst, tracing, subsystem, statusLoopMetric, statusInstMetric, statusTracingMetric } = filterState;
     
     // Find intersection of all TableA filters
     const statusSubsystems = new Set(status.data.map(row => row.subsystem));
@@ -111,6 +122,7 @@ const SummarySubsystemsContainer = ({
     const subsystemSubsystems = new Set(subsystem.data.map(row => row.subsystem));
     const statusLoopMetricSubsystems = new Set(statusLoopMetric.data.map(row => row.subsystem));
     const statusInstMetricSubsystems = new Set(statusInstMetric.data.map(row => row.subsystem));
+    const statusTracingMetricSubsystems = new Set(statusTracingMetric.data.map(row => row.subsystem));
     
     return tableAData.filter(row => 
       statusSubsystems.has(row.subsystem) && 
@@ -119,9 +131,10 @@ const SummarySubsystemsContainer = ({
       tracingSubsystems.has(row.subsystem) &&
       subsystemSubsystems.has(row.subsystem) &&
       statusLoopMetricSubsystems.has(row.subsystem) &&
-      statusInstMetricSubsystems.has(row.subsystem)
+      statusInstMetricSubsystems.has(row.subsystem) &&
+      statusTracingMetricSubsystems.has(row.subsystem)
     );
-  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.inst.data, filterState.tracing.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data]);
+  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.inst.data, filterState.tracing.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusTracingMetric.data]);
   
   const combinedFilteredTableBData = useMemo(() => {
     const { progress, hito } = filterState;
@@ -153,7 +166,8 @@ const SummarySubsystemsContainer = ({
       hito: { ...prev.hito, data: tableBData },
       subsystem: { ...prev.subsystem, data: tableAData },
       statusLoopMetric: { ...prev.statusLoopMetric, data: tableAData },
-      statusInstMetric: { ...prev.statusInstMetric, data: tableAData }
+      statusInstMetric: { ...prev.statusInstMetric, data: tableAData },
+      statusTracingMetric: { ...prev.statusTracingMetric, data: tableAData }
     }));
   }, [tableAData, tableBData]);
   
@@ -281,7 +295,7 @@ const SummarySubsystemsContainer = ({
       <HStack alignSelf="center" spacing={4}>
         <StatusLoopMetric data={tableAData} onSubsystemFilter={handleStatusLoopMetricFilter} />
         <StatusInstMetric data={tableAData} onSubsystemFilter={handleStatusInstMetricFilter} />
-        <StatusTracingMetric data={tableAData} />
+        <StatusTracingMetric data={tableAData} onSubsystemFilter={handleStatusTracingMetricFilter} />
         <StatusInsulMetric data={tableAData} />
         <StatusPunchMetric data={tableAData} />
       </HStack>

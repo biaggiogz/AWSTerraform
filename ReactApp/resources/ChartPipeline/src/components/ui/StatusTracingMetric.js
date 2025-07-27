@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
-import { Box, Text, VStack, HStack, Divider } from '@chakra-ui/react';
+import React, { useMemo, useState, useCallback } from 'react';
+import { Box, Text, VStack, HStack, Divider, Button } from '@chakra-ui/react';
 
-const StatusTracingMetric = ({ data }) => {
+const StatusTracingMetric = ({ data, onSubsystemFilter }) => {
+  const [activeFilter, setActiveFilter] = useState(null);
   const metrics = useMemo(() => {
     if (!data || data.length === 0) return {
       subsystems: 0,
@@ -62,9 +63,99 @@ const StatusTracingMetric = ({ data }) => {
       processDone,
       noProcessDone,
       processPending,
-      noProcessPending
+      noProcessPending,
+      validRows
     };
   }, [data]);
+
+  const handleSubsystemsClick = useCallback(() => {
+    if (activeFilter === 'subsystems') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const subsystems = metrics.validRows.map(row => row.subsystem);
+      setActiveFilter('subsystems');
+      onSubsystemFilter && onSubsystemFilter(subsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleProcessClick = useCallback(() => {
+    if (activeFilter === 'process') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const processSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'PROCESS ')
+        .map(row => row.subsystem);
+      setActiveFilter('process');
+      onSubsystemFilter && onSubsystemFilter(processSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleNoProcessClick = useCallback(() => {
+    if (activeFilter === 'noprocess') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const noProcessSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'NO PROCESS')
+        .map(row => row.subsystem);
+      setActiveFilter('noprocess');
+      onSubsystemFilter && onSubsystemFilter(noProcessSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleProcessDoneClick = useCallback(() => {
+    if (activeFilter === 'processDone') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const processDoneSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'PROCESS ' && row.total_tracing === row.done_tracing && row.total_tracing > 0)
+        .map(row => row.subsystem);
+      setActiveFilter('processDone');
+      onSubsystemFilter && onSubsystemFilter(processDoneSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleProcessPendingClick = useCallback(() => {
+    if (activeFilter === 'processPending') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const processPendingSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'PROCESS ' && row.done_tracing < row.total_tracing && row.total_tracing > 0)
+        .map(row => row.subsystem);
+      setActiveFilter('processPending');
+      onSubsystemFilter && onSubsystemFilter(processPendingSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleNoProcessDoneClick = useCallback(() => {
+    if (activeFilter === 'noProcessDone') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const noProcessDoneSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'NO PROCESS' && row.total_tracing === row.done_tracing && row.total_tracing > 0)
+        .map(row => row.subsystem);
+      setActiveFilter('noProcessDone');
+      onSubsystemFilter && onSubsystemFilter(noProcessDoneSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleNoProcessPendingClick = useCallback(() => {
+    if (activeFilter === 'noProcessPending') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const noProcessPendingSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'NO PROCESS' && row.done_tracing < row.total_tracing && row.total_tracing > 0)
+        .map(row => row.subsystem);
+      setActiveFilter('noProcessPending');
+      onSubsystemFilter && onSubsystemFilter(noProcessPendingSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
 
   return (
       <Box
@@ -81,49 +172,105 @@ const StatusTracingMetric = ({ data }) => {
             </Text>
           </Box>
           
-          <Box p={1} textAlign="center" width="100%">
-            <Text fontSize="sm" color="white">
-              Subsystems: {metrics.subsystems}
-            </Text>
-          </Box>
+          <Button
+            p={1}
+            textAlign="center"
+            width="100%"
+            bg={activeFilter === 'subsystems' ? '#007074' : '#0ABAB5'}
+            color="white"
+            fontSize="sm"
+            variant="unstyled"
+            _hover={{ bg: '#08A5A0' }}
+            onClick={handleSubsystemsClick}
+          >
+            Subsystems: {metrics.subsystems}
+          </Button>
           
           <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
-            <Box p={1} textAlign="center" flex={1}>
-              <Text fontSize="sm" color="white">
-                Process: {metrics.processSubsystems}
-              </Text>
-            </Box>
-            <Box p={1} textAlign="center" flex={1}>
-              <Text fontSize="sm" color="white">
-                No Process: {metrics.noProcessSubsystems}
-              </Text>
-            </Box>
+            <Button
+              p={1}
+              textAlign="center"
+              flex={1}
+              bg={activeFilter === 'process' ? '#007074' : '#0ABAB5'}
+              color="white"
+              fontSize="sm"
+              variant="unstyled"
+              _hover={{ bg: '#08A5A0' }}
+              onClick={handleProcessClick}
+            >
+              Process: {metrics.processSubsystems}
+            </Button>
+            <Button
+              p={1}
+              textAlign="center"
+              flex={1}
+              bg={activeFilter === 'noprocess' ? '#007074' : '#0ABAB5'}
+              color="white"
+              fontSize="sm"
+              variant="unstyled"
+              _hover={{ bg: '#08A5A0' }}
+              onClick={handleNoProcessClick}
+            >
+              No Process: {metrics.noProcessSubsystems}
+            </Button>
           </HStack>
           
           <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
-            <Box p={1} textAlign="center" flex={1}>
-              <Text fontSize="sm" color="white">
-                Done: {metrics.processDone}
-              </Text>
-            </Box>
-            <Box p={1} textAlign="center" flex={1}>
-              <Text fontSize="sm" color="white">
-                Done: {metrics.noProcessDone}
-              </Text>
-            </Box>
+            <Button
+              p={1}
+              textAlign="center"
+              flex={1}
+              bg={activeFilter === 'processDone' ? '#007074' : '#0ABAB5'}
+              color="white"
+              fontSize="sm"
+              variant="unstyled"
+              _hover={{ bg: '#08A5A0' }}
+              onClick={handleProcessDoneClick}
+            >
+              Done: {metrics.processDone}
+            </Button>
+            <Button
+              p={1}
+              textAlign="center"
+              flex={1}
+              bg={activeFilter === 'noProcessDone' ? '#007074' : '#0ABAB5'}
+              color="white"
+              fontSize="sm"
+              variant="unstyled"
+              _hover={{ bg: '#08A5A0' }}
+              onClick={handleNoProcessDoneClick}
+            >
+              Done: {metrics.noProcessDone}
+            </Button>
           </HStack>
           
           <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
-            <Box p={1} textAlign="center" flex={1}>
-              <Text fontSize="sm" color="white">
-                Pending: {metrics.processPending}
-              </Text>
-            </Box>
-            <Box p={1} textAlign="center" flex={1}>
-              <Text fontSize="sm" color="white">
-                Pending: {metrics.noProcessPending}
-              </Text>
-            </Box>
+            <Button
+              p={1}
+              textAlign="center"
+              flex={1}
+              bg={activeFilter === 'processPending' ? '#007074' : '#0ABAB5'}
+              color="white"
+              fontSize="sm"
+              variant="unstyled"
+              _hover={{ bg: '#08A5A0' }}
+              onClick={handleProcessPendingClick}
+            >
+              Pending: {metrics.processPending}
+            </Button>
+            <Button
+              p={1}
+              textAlign="center"
+              flex={1}
+              bg={activeFilter === 'noProcessPending' ? '#007074' : '#0ABAB5'}
+              color="white"
+              fontSize="sm"
+              variant="unstyled"
+              _hover={{ bg: '#08A5A0' }}
+              onClick={handleNoProcessPendingClick}
+            >
+              Pending: {metrics.noProcessPending}
+            </Button>
           </HStack>
         </VStack>
       </Box>
