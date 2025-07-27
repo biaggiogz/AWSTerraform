@@ -35,7 +35,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible,isInstFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
+const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible,isInstFilterVisible, isTracingFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
   const [filteredData, setFilteredData] = useState(data);
   const lastFilterStateRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
@@ -385,9 +385,46 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'total_tracing',
       header: 'TOTAL TRACING',
       size: 60,
-      cell: ({ getValue }) => (
-          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
-      )
+      cell: ({ getValue, row }) => {
+        const getTracingStatusColor = () => {
+          const totalTracing = getValue();
+          const doneTracing = row.original.done_tracing;
+
+          if (!isTracingFilterVisible) {
+            // When filter is not visible, only show green when total equals done
+            const isDone = (totalTracing === doneTracing) && (totalTracing > 0);
+            return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
+          }
+
+          // Check if total_tracing is null, undefined, empty, or 0 - "Not Apply" case
+          if (totalTracing === null || totalTracing === undefined || totalTracing === '' || totalTracing === 0) {
+            return { bg: '#212121', color: 'white' };
+          }
+
+          // Check if all tracing are done (total equals done) and there are tracing
+          const isDone = (totalTracing === doneTracing) && (totalTracing > 0);
+
+          // Green for completed, orange for in progress
+          const bgColor = isDone ? '#06923E' : '#E85C0D';
+          return { bg: bgColor, color: 'white' };
+        };
+
+        const colors = getTracingStatusColor();
+
+        return (
+            <Text
+                fontSize="xs"
+                textAlign="center"
+                bg={colors.bg}
+                color={colors.color}
+                px={colors.bg !== 'transparent' ? 2 : 0}
+                py={colors.bg !== 'transparent' ? 1 : 0}
+                borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
+            >
+              {isTracingFilterVisible && (getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
+            </Text>
+        );
+      }
     },
     {
       accessorKey: 'done_tracing',
@@ -499,7 +536,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     }
 
-  ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible,isInstFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
+  ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible,isInstFilterVisible, isTracingFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {

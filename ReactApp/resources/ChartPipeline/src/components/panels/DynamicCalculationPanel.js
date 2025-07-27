@@ -11,7 +11,7 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory, MdBuild} from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory, MdBuild, MdCable} from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import InsulStatusFilter from '../filters/InsulationStatusFilter';
@@ -19,8 +19,9 @@ import LoopStatusFilter from '../filters/LoopStatusFilter';
 import HitoFilterA from '../filters/HitoFilterA';
 import SubsystemFilterA from '../filters/SubsystemFilterA'
 import InstStatusFilter from "../filters/InstStatusFilter";
+import TracingStatusFilter from "../filters/TracingStatusFilter";
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onTracingFilteredControlDataChange, onTracingFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
@@ -42,6 +43,7 @@ FROM "Subsystem Overview";`);
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isInsulFilterVisible, setIsInsulFilterVisible] = useState(false);
   const [isInstFilterVisible, setIsInstFilterVisible] = useState(false);
+  const [isTracingFilterVisible, setIsTracingFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [isSubsystemFilterAVisible, setIsSubsystemFilterAVisible] = useState(false);
   const [isProgressTableVisible, setIsProgressTableVisible] = useState(true);
@@ -390,6 +392,20 @@ FROM "Subsystem Overview";`);
               }}
               aria-label="Toggle inst status filter"
               title="Inst Status Filter"
+            />
+            <IconButton
+              icon={<MdCable />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const newVisibility = !isTracingFilterVisible;
+                setIsTracingFilterVisible(newVisibility);
+                if (onTracingFilterVisibilityChange) {
+                  onTracingFilterVisibilityChange(newVisibility);
+                }
+              }}
+              aria-label="Toggle tracing status filter"
+              title="Tracing Status Filter"
             />
             <IconButton
               icon={<MdFlag />}
@@ -1000,6 +1016,26 @@ FROM "Subsystem Overview";`);
             // Reset this filter's effect by passing the original data
             if (onInstFilteredControlDataChange) {
               onInstFilteredControlDataChange(controlData);
+            }
+          }}
+          onPropagationChange={onLoopPropagationChange || (() => {})}
+          onBringToFront={onBringToFront}
+        />
+      )}
+      
+      {isTracingFilterVisible && (
+        <TracingStatusFilter
+          data={controlData}
+          onFilterChange={onTracingFilteredControlDataChange || (() => {})}
+          isVisible={isTracingFilterVisible}
+          onClose={() => {
+            setIsTracingFilterVisible(false);
+            if (onTracingFilterVisibilityChange) {
+              onTracingFilterVisibilityChange(false);
+            }
+            // Reset this filter's effect by passing the original data
+            if (onTracingFilteredControlDataChange) {
+              onTracingFilteredControlDataChange(controlData);
             }
           }}
           onPropagationChange={onLoopPropagationChange || (() => {})}
