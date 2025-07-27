@@ -26,6 +26,7 @@ const SummarySubsystemsContainer = ({
     progress: { data: tableBData, visible: false },
     status: { data: tableAData, visible: false },
     loop: { data: tableAData, visible: false },
+    inst: { data: tableAData, visible: false },
     hito: { data: tableBData, visible: false },
     subsystem: { data: tableAData, visible: false }
   });
@@ -77,19 +78,21 @@ const SummarySubsystemsContainer = ({
   
   // Optimized combined filter logic
   const combinedFilteredTableAData = useMemo(() => {
-    const { status, loop, subsystem } = filterState;
+    const { status, loop, inst, subsystem } = filterState;
     
     // Find intersection of all TableA filters
     const statusSubsystems = new Set(status.data.map(row => row.subsystem));
     const loopSubsystems = new Set(loop.data.map(row => row.subsystem));
+    const instSubsystems = new Set(inst.data.map(row => row.subsystem));
     const subsystemSubsystems = new Set(subsystem.data.map(row => row.subsystem));
     
     return tableAData.filter(row => 
       statusSubsystems.has(row.subsystem) && 
       loopSubsystems.has(row.subsystem) &&
+      instSubsystems.has(row.subsystem) &&
       subsystemSubsystems.has(row.subsystem)
     );
-  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.subsystem.data]);
+  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.inst.data, filterState.subsystem.data]);
   
   const combinedFilteredTableBData = useMemo(() => {
     const { progress, hito } = filterState;
@@ -116,6 +119,7 @@ const SummarySubsystemsContainer = ({
       progress: { ...prev.progress, data: tableBData },
       status: { ...prev.status, data: tableAData },
       loop: { ...prev.loop, data: tableAData },
+      inst: { ...prev.inst, data: tableAData },
       hito: { ...prev.hito, data: tableBData },
       subsystem: { ...prev.subsystem, data: tableAData }
     }));
@@ -132,6 +136,10 @@ const SummarySubsystemsContainer = ({
   
   const handleLoopFilterChange = useCallback((filteredData) => {
     updateFilter('loop', { data: filteredData });
+  }, [updateFilter]);
+
+  const handleInstFilterChange = useCallback((filteredData) => {
+    updateFilter('inst', { data: filteredData });
   }, [updateFilter]);
   
   const handleHitoFilterChange = useCallback((filteredData) => {
@@ -234,17 +242,14 @@ const SummarySubsystemsContainer = ({
   return (
     <VStack spacing={4} align="stretch">
       {/* Completed Loop Metric */}
-      <HStack alignSelf="flex-start" spacing={4}>
+      <HStack alignSelf="center" spacing={4}>
         <StatusLoopMetric data={tableAData} />
         <StatusInstMetric data={tableAData} />
         <StatusTracingMetric data={tableAData} />
         <StatusInsulMetric data={tableAData} />
-      </HStack>
-      
-      {/* StatusPunchMetric aligned with PUNCH LIST PROGRESS header */}
-      <Box position="absolute" left="1442px" top="60px" width="240px" zIndex={50}>
         <StatusPunchMetric data={tableAData} />
-      </Box>
+      </HStack>
+
       
       {/* SQL Query Interface */}
       <Suspense fallback={<Center p={4}><Spinner /></Center>}>
@@ -265,6 +270,8 @@ const SummarySubsystemsContainer = ({
           onProgressFilterVisibilityChange={(visible) => updateFilter('progress', { visible })}
           onItemsFilterVisibilityChange={(visible) => updateFilter('status', { visible })}
           onLoopFilterVisibilityChange={(visible) => updateFilter('loop', { visible })}
+          onInstFilteredControlDataChange={handleInstFilterChange}
+          onInstFilterVisibilityChange={(visible) => updateFilter('inst', { visible })}
           onProgressPropagationChange={handleProgressPropagationChange}
           onHitoFilteredDataChange={handleHitoFilterChange}
           onHitoFilterVisibilityChange={(visible) => updateFilter('hito', { visible })}
@@ -297,6 +304,7 @@ const SummarySubsystemsContainer = ({
             onSubsystemSelect={handleSubsystemSelect}
             isInsulFilterVisible={filterState.status.visible}
             isLoopFilterVisible={filterState.loop.visible}
+            isInstFilterVisible={filterState.inst.visible}
             isHitoFilterVisible={filterState.hito.visible}
             isProgressFilterVisible={filterState.progress.visible}
             isSubsystemFilterVisible={filterState.subsystem.visible}

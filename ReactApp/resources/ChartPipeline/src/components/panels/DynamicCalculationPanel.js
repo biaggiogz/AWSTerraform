@@ -11,16 +11,16 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory} from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory, MdBuild} from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import InsulStatusFilter from '../filters/InsulationStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
-// Import directly without lazy loading
 import HitoFilterA from '../filters/HitoFilterA';
 import SubsystemFilterA from '../filters/SubsystemFilterA'
+import InstStatusFilter from "../filters/InstStatusFilter";
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
@@ -41,6 +41,7 @@ FROM "Subsystem Overview";`);
 
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isInsulFilterVisible, setIsInsulFilterVisible] = useState(false);
+  const [isInstFilterVisible, setIsInstFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [isSubsystemFilterAVisible, setIsSubsystemFilterAVisible] = useState(false);
   const [isProgressTableVisible, setIsProgressTableVisible] = useState(true);
@@ -375,6 +376,20 @@ FROM "Subsystem Overview";`);
               }}
               aria-label="Toggle loop status filter"
               title="Loop Status Filter"
+            />
+            <IconButton
+              icon={<MdBuild />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const newVisibility = !isInstFilterVisible;
+                setIsInstFilterVisible(newVisibility);
+                if (onInstFilterVisibilityChange) {
+                  onInstFilterVisibilityChange(newVisibility);
+                }
+              }}
+              aria-label="Toggle inst status filter"
+              title="Inst Status Filter"
             />
             <IconButton
               icon={<MdFlag />}
@@ -970,6 +985,26 @@ FROM "Subsystem Overview";`);
             onBringToFront={onBringToFront}
           />
         )
+      )}
+      
+      {isInstFilterVisible && (
+        <InstStatusFilter
+          data={controlData}
+          onFilterChange={onInstFilteredControlDataChange || (() => {})}
+          isVisible={isInstFilterVisible}
+          onClose={() => {
+            setIsInstFilterVisible(false);
+            if (onInstFilterVisibilityChange) {
+              onInstFilterVisibilityChange(false);
+            }
+            // Reset this filter's effect by passing the original data
+            if (onInstFilteredControlDataChange) {
+              onInstFilteredControlDataChange(controlData);
+            }
+          }}
+          onPropagationChange={onLoopPropagationChange || (() => {})}
+          onBringToFront={onBringToFront}
+        />
       )}
       
       {isSubsystemFilterAVisible && (

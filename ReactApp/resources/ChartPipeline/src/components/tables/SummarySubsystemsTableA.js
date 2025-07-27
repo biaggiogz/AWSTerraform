@@ -35,7 +35,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
+const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible,isInstFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
   const [filteredData, setFilteredData] = useState(data);
   const lastFilterStateRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
@@ -323,9 +323,47 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'total_inst',
       header: 'TOTAL INST',
       size: 60,
-      cell: ({ getValue }) => (
-          <Text fontSize="clamp(10px, 1vw, 13px)"  textAlign="center">{getValue()?.toLocaleString()}</Text>
-      )
+      cell: ({ getValue, row }) => {
+        const getInstStatusColor = () => {
+          const totalInst = getValue();
+          const doneInst = row.original.done_inst || 0;
+
+          if (!isInstFilterVisible) {
+            // When filter is not visible, only show green when total equals done
+            const isDone = (totalInst === doneInst) && (totalInst > 0);
+            return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
+          }
+
+          // Check if total_loop is null, undefined, empty, or 0 - "Not Apply" case
+          if (totalInst === null || totalInst === undefined || totalInst === '' || totalInst === 0) {
+            return { bg: '#212121', color: 'white' };
+          }
+
+          // Check if all loops are done (total equals done) and there are loops
+          const isDone = (totalInst === doneInst) && (totalInst > 0);
+
+          // Green for completed, orange for in progress
+          const bgColor = isDone ? '#06923E' : '#E85C0D';
+          return { bg: bgColor, color: 'white' };
+        };
+
+        const colors = getInstStatusColor();
+
+        return (
+            <Text
+                fontSize="xs"
+                textAlign="center"
+                bg={colors.bg}
+                color={colors.color}
+                px={colors.bg !== 'transparent' ? 2 : 0}
+                py={colors.bg !== 'transparent' ? 1 : 0}
+                borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
+            >
+              {isInstFilterVisible && (getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
+            </Text>
+        );
+      }
+
     },
     {
       accessorKey: 'done_inst',
@@ -461,7 +499,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     }
 
-  ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
+  ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible,isInstFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {
