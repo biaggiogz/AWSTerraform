@@ -132,6 +132,32 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
     }
   }, [activeFilter, metrics.validRows, onSubsystemFilter]);
 
+  const handleNoProcessDoneClick = useCallback(() => {
+    if (activeFilter === 'noProcessDone') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const noProcessDoneSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'NO PROCESS' && row.total_loop === row.done_loop && row.total_loop > 0)
+        .map(row => row.subsystem);
+      setActiveFilter('noProcessDone');
+      onSubsystemFilter && onSubsystemFilter(noProcessDoneSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleNoProcessPendingClick = useCallback(() => {
+    if (activeFilter === 'noProcessPending') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const noProcessPendingSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'NO PROCESS' && row.done_loop < row.total_loop && row.total_loop > 0)
+        .map(row => row.subsystem);
+      setActiveFilter('noProcessPending');
+      onSubsystemFilter && onSubsystemFilter(noProcessPendingSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
   return (
     <Box
       bg="#7CA2C5"
@@ -204,11 +230,19 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
           >
             Done: {metrics.processDone}
           </Button>
-          <Box p={1} textAlign="center" flex={1}>
-            <Text fontSize="sm" color="white">
-              Done: {metrics.noProcessDone}
-            </Text>
-          </Box>
+          <Button
+            p={1}
+            textAlign="center"
+            flex={1}
+            bg={activeFilter === 'noProcessDone' ? '#5A8DB5' : '#7CA2C5'}
+            color="white"
+            fontSize="sm"
+            variant="unstyled"
+            _hover={{ bg: '#5A8DB5' }}
+            onClick={handleNoProcessDoneClick}
+          >
+            Done: {metrics.noProcessDone}
+          </Button>
         </HStack>
         
         <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
@@ -225,11 +259,19 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
           >
             Pending: {metrics.processPending}
           </Button>
-          <Box p={1} textAlign="center" flex={1}>
-            <Text fontSize="sm" color="white">
-              Pending: {metrics.noProcessPending}
-            </Text>
-          </Box>
+          <Button
+            p={1}
+            textAlign="center"
+            flex={1}
+            bg={activeFilter === 'noProcessPending' ? '#5A8DB5' : '#7CA2C5'}
+            color="white"
+            fontSize="sm"
+            variant="unstyled"
+            _hover={{ bg: '#5A8DB5' }}
+            onClick={handleNoProcessPendingClick}
+          >
+            Pending: {metrics.noProcessPending}
+          </Button>
         </HStack>
       </VStack>
     </Box>
