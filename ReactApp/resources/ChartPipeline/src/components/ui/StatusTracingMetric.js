@@ -162,7 +162,7 @@ const StatusTracingMetric = ({ data, onSubsystemFilter }) => {
           bg="#0ABAB5"
           border="3px solid #0ABAB5"
           borderRadius="lg"
-          minW="180px"
+          minW="230px"
           boxShadow="md"
       >
         <VStack spacing={0} divider={<Divider borderColor="white" />}>
