@@ -646,14 +646,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             id: 'psv',
             title: 'PSV PROGRESS',
             colspan: 3,
-            startCol: 22,
+            startCol: 25,
             color: '#e29d61'
           },
           {
             id: 'motor',
             title: 'MOTOR PROGRESS',
             colspan: 3,
-            startCol: 25,
+            startCol: 28,
             color: '#943168'
           }
         ]
@@ -709,14 +709,14 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             id: 'psv_metrics',
             title: 'PSV STATUS',
             colspan: 3,
-            startCol: 22,
+            startCol: 25,
             color: '#cc8d57'
           },
           {
             id: 'motor_metrics',
             title: 'MOTOR STATUS',
             colspan: 3,
-            startCol: 25,
+            startCol: 28,
             color: '#842c5e'
           }
         ]
