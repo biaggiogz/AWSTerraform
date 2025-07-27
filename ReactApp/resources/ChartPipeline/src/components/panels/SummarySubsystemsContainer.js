@@ -29,7 +29,8 @@ const SummarySubsystemsContainer = ({
     inst: { data: tableAData, visible: false },
     tracing: { data: tableAData, visible: false },
     hito: { data: tableBData, visible: false },
-    subsystem: { data: tableAData, visible: false }
+    subsystem: { data: tableAData, visible: false },
+    statusLoopMetric: { data: tableAData, visible: false }
   });
   
   // Centralized filter update function
@@ -39,6 +40,16 @@ const SummarySubsystemsContainer = ({
       [filterType]: { ...prev[filterType], ...updates }
     }));
   }, []);
+
+  // Handle StatusLoopMetric subsystem filtering
+  const handleStatusLoopMetricFilter = useCallback((subsystems) => {
+    if (subsystems.length === 0) {
+      updateFilter('statusLoopMetric', { data: tableAData });
+    } else {
+      const filteredData = tableAData.filter(row => subsystems.includes(row.subsystem));
+      updateFilter('statusLoopMetric', { data: filteredData });
+    }
+  }, [tableAData, updateFilter]);
   
   // Load CSV data and transform for ProgressFilter compatibility
   useEffect(() => {
@@ -79,7 +90,7 @@ const SummarySubsystemsContainer = ({
   
   // Optimized combined filter logic
   const combinedFilteredTableAData = useMemo(() => {
-    const { status, loop, inst, tracing, subsystem } = filterState;
+    const { status, loop, inst, tracing, subsystem, statusLoopMetric } = filterState;
     
     // Find intersection of all TableA filters
     const statusSubsystems = new Set(status.data.map(row => row.subsystem));
@@ -87,15 +98,17 @@ const SummarySubsystemsContainer = ({
     const instSubsystems = new Set(inst.data.map(row => row.subsystem));
     const tracingSubsystems = new Set(tracing.data.map(row => row.subsystem));
     const subsystemSubsystems = new Set(subsystem.data.map(row => row.subsystem));
+    const statusLoopMetricSubsystems = new Set(statusLoopMetric.data.map(row => row.subsystem));
     
     return tableAData.filter(row => 
       statusSubsystems.has(row.subsystem) && 
       loopSubsystems.has(row.subsystem) &&
       instSubsystems.has(row.subsystem) &&
       tracingSubsystems.has(row.subsystem) &&
-      subsystemSubsystems.has(row.subsystem)
+      subsystemSubsystems.has(row.subsystem) &&
+      statusLoopMetricSubsystems.has(row.subsystem)
     );
-  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.inst.data, filterState.tracing.data, filterState.subsystem.data]);
+  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.inst.data, filterState.tracing.data, filterState.subsystem.data, filterState.statusLoopMetric.data]);
   
   const combinedFilteredTableBData = useMemo(() => {
     const { progress, hito } = filterState;
@@ -125,7 +138,8 @@ const SummarySubsystemsContainer = ({
       inst: { ...prev.inst, data: tableAData },
       tracing: { ...prev.tracing, data: tableAData },
       hito: { ...prev.hito, data: tableBData },
-      subsystem: { ...prev.subsystem, data: tableAData }
+      subsystem: { ...prev.subsystem, data: tableAData },
+      statusLoopMetric: { ...prev.statusLoopMetric, data: tableAData }
     }));
   }, [tableAData, tableBData]);
   
@@ -251,7 +265,7 @@ const SummarySubsystemsContainer = ({
     <VStack spacing={4} align="stretch">
       {/* Completed Loop Metric */}
       <HStack alignSelf="center" spacing={4}>
-        <StatusLoopMetric data={tableAData} />
+        <StatusLoopMetric data={tableAData} onSubsystemFilter={handleStatusLoopMetricFilter} />
         <StatusInstMetric data={tableAData} />
         <StatusTracingMetric data={tableAData} />
         <StatusInsulMetric data={tableAData} />
@@ -291,6 +305,7 @@ const SummarySubsystemsContainer = ({
           onSubsystemPropagationChange={handleSubsystemPropagationChange}
           onProgressTableVisibilityChange={setIsProgressTableVisible}
           onBringToFront={handleFilterBringToFront}
+          onStatusLoopMetricFilterChange={handleStatusLoopMetricFilter}
         />
       </Suspense>
       

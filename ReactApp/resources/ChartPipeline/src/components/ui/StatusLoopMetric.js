@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
-import { Box, Text, VStack, HStack, Divider } from '@chakra-ui/react';
+import React, { useMemo, useState, useCallback } from 'react';
+import { Box, Text, VStack, HStack, Divider, Button } from '@chakra-ui/react';
 
-const StatusLoopMetric = ({ data }) => {
+const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
+  const [activeFilter, setActiveFilter] = useState(null);
+
   const metrics = useMemo(() => {
     if (!data || data.length === 0) return {
       subsystems: 0,
@@ -62,9 +64,47 @@ const StatusLoopMetric = ({ data }) => {
       processDone,
       noProcessDone,
       processPending,
-      noProcessPending
+      noProcessPending,
+      validRows
     };
   }, [data]);
+
+  const handleSubsystemsClick = useCallback(() => {
+    if (activeFilter === 'subsystems') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const subsystems = metrics.validRows.map(row => row.subsystem);
+      setActiveFilter('subsystems');
+      onSubsystemFilter && onSubsystemFilter(subsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleProcessClick = useCallback(() => {
+    if (activeFilter === 'process') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const processSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'PROCESS ')
+        .map(row => row.subsystem);
+      setActiveFilter('process');
+      onSubsystemFilter && onSubsystemFilter(processSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
+
+  const handleNoProcessClick = useCallback(() => {
+    if (activeFilter === 'noprocess') {
+      setActiveFilter(null);
+      onSubsystemFilter && onSubsystemFilter([]);
+    } else {
+      const noProcessSubsystems = metrics.validRows
+        .filter(row => row.type_1 === 'NO PROCESS')
+        .map(row => row.subsystem);
+      setActiveFilter('noprocess');
+      onSubsystemFilter && onSubsystemFilter(noProcessSubsystems);
+    }
+  }, [activeFilter, metrics.validRows, onSubsystemFilter]);
 
   return (
     <Box
@@ -81,23 +121,47 @@ const StatusLoopMetric = ({ data }) => {
           </Text>
         </Box>
         
-        <Box p={1} textAlign="center" width="100%">
-          <Text fontSize="sm" color="white">
-            Subsystems: {metrics.subsystems}
-          </Text>
-        </Box>
+        <Button
+          p={1}
+          textAlign="center"
+          width="100%"
+          bg={activeFilter === 'subsystems' ? '#5A8DB5' : '#7CA2C5'}
+          color="white"
+          fontSize="sm"
+          variant="unstyled"
+          _hover={{ bg: '#5A8DB5' }}
+          onClick={handleSubsystemsClick}
+        >
+          Subsystems: {metrics.subsystems}
+        </Button>
         
         <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
-          <Box p={1} textAlign="center" flex={1}>
-            <Text fontSize="sm" color="white">
-              Process: {metrics.processSubsystems}
-            </Text>
-          </Box>
-          <Box p={1} textAlign="center" flex={1}>
-            <Text fontSize="sm" color="white">
-              No Process: {metrics.noProcessSubsystems}
-            </Text>
-          </Box>
+          <Button
+            p={1}
+            textAlign="center"
+            flex={1}
+            bg={activeFilter === 'process' ? '#5A8DB5' : '#7CA2C5'}
+            color="white"
+            fontSize="sm"
+            variant="unstyled"
+            _hover={{ bg: '#5A8DB5' }}
+            onClick={handleProcessClick}
+          >
+            Process: {metrics.processSubsystems}
+          </Button>
+          <Button
+            p={1}
+            textAlign="center"
+            flex={1}
+            bg={activeFilter === 'noprocess' ? '#5A8DB5' : '#7CA2C5'}
+            color="white"
+            fontSize="sm"
+            variant="unstyled"
+            _hover={{ bg: '#5A8DB5' }}
+            onClick={handleNoProcessClick}
+          >
+            No Process: {metrics.noProcessSubsystems}
+          </Button>
         </HStack>
         
         <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
