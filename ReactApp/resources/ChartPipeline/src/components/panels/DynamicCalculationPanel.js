@@ -907,165 +907,168 @@ FROM "Subsystem Overview";`);
       
 
       
-      {isInsulFilterVisible && (
-        <InsulStatusFilter
-          data={controlData}
-          onFilterChange={onFilteredControlDataChange || (() => {})}
-          isVisible={isInsulFilterVisible}
-          onClose={() => {
-            setIsInsulFilterVisible(false);
-            if (onItemsFilterVisibilityChange) {
-              onItemsFilterVisibilityChange(false);
-            }
-            // Reset this filter's effect by passing the original data
-            if (onFilteredControlDataChange) {
-              onFilteredControlDataChange(controlData);
-            }
-            // Reset propagation if it was active
-            if (onItemsPropagationChange) {
-              onItemsPropagationChange([], 'nothing');
-            }
-          }}
-          onPropagationChange={onItemsPropagationChange || (() => {})}
-          onBringToFront={onBringToFront}
-        />
-      )}
-      
-      {isLoopFilterVisible && (
-        <LoopStatusFilter
-          data={controlData}
-          onFilterChange={onLoopFilteredControlDataChange || (() => {})}
-          isVisible={isLoopFilterVisible}
-          onClose={() => {
-            setIsLoopFilterVisible(false);
-            if (onLoopFilterVisibilityChange) {
-              onLoopFilterVisibilityChange(false);
-            }
-            // Reset this filter's effect by passing the original data
-            if (onLoopFilteredControlDataChange) {
-              onLoopFilteredControlDataChange(controlData);
-            }
-            // Reset propagation if it was active
-            if (onLoopPropagationChange) {
-              onLoopPropagationChange([], 'nothing');
-            }
-          }}
-          onPropagationChange={onLoopPropagationChange || (() => {})}
-          onBringToFront={onBringToFront}
-        />
-      )}
-      
-      {isHitoFilterVisible && (
-        isSubsystemsTab ? (
-          <HitoFilterA
+      {/* Filters Container - Always rendered with high z-index when visible */}
+      <Box position="relative" zIndex={9999}>
+        {isInsulFilterVisible && (
+          <InsulStatusFilter
             data={controlData}
             onFilterChange={onFilteredControlDataChange || (() => {})}
-            isVisible={isHitoFilterVisible}
+            isVisible={isInsulFilterVisible}
             onClose={() => {
-              setIsHitoFilterVisible(false);
-              if (onHitoFilterVisibilityChange) {
-                onHitoFilterVisibilityChange(false);
+              setIsInsulFilterVisible(false);
+              if (onItemsFilterVisibilityChange) {
+                onItemsFilterVisibilityChange(false);
               }
               // Reset this filter's effect by passing the original data
               if (onFilteredControlDataChange) {
                 onFilteredControlDataChange(controlData);
               }
               // Reset propagation if it was active
-              if (onHitoPropagationChange) {
-                onHitoPropagationChange([], 'nothing');
+              if (onItemsPropagationChange) {
+                onItemsPropagationChange([], 'nothing');
               }
             }}
-            onPropagationChange={onHitoPropagationChange || (() => {})}
+            onPropagationChange={onItemsPropagationChange || (() => {})}
             onBringToFront={onBringToFront}
           />
-        ) : (
-          <HitoFilterA
-            data={detailsData}
-            onFilterChange={onHitoFilteredDataChange || (() => {})}
-            isVisible={isHitoFilterVisible}
+        )}
+      
+        {isLoopFilterVisible && (
+          <LoopStatusFilter
+            data={controlData}
+            onFilterChange={onLoopFilteredControlDataChange || (() => {})}
+            isVisible={isLoopFilterVisible}
             onClose={() => {
-              setIsHitoFilterVisible(false);
-              if (onHitoFilterVisibilityChange) {
-                onHitoFilterVisibilityChange(false);
+              setIsLoopFilterVisible(false);
+              if (onLoopFilterVisibilityChange) {
+                onLoopFilterVisibilityChange(false);
               }
               // Reset this filter's effect by passing the original data
-              if (onHitoFilteredDataChange) {
-                onHitoFilteredDataChange(detailsData);
+              if (onLoopFilteredControlDataChange) {
+                onLoopFilteredControlDataChange(controlData);
               }
               // Reset propagation if it was active
-              if (onHitoPropagationChange) {
-                onHitoPropagationChange([], 'nothing');
+              if (onLoopPropagationChange) {
+                onLoopPropagationChange([], 'nothing');
               }
             }}
-            onPropagationChange={onHitoPropagationChange || (() => {})}
+            onPropagationChange={onLoopPropagationChange || (() => {})}
             onBringToFront={onBringToFront}
           />
-        )
-      )}
+        )}
       
-      {isInstFilterVisible && (
-        <InstStatusFilter
-          data={controlData}
-          onFilterChange={onInstFilteredControlDataChange || (() => {})}
-          isVisible={isInstFilterVisible}
-          onClose={() => {
-            setIsInstFilterVisible(false);
-            if (onInstFilterVisibilityChange) {
-              onInstFilterVisibilityChange(false);
-            }
-            // Reset this filter's effect by passing the original data
-            if (onInstFilteredControlDataChange) {
-              onInstFilteredControlDataChange(controlData);
-            }
-          }}
-          onPropagationChange={onLoopPropagationChange || (() => {})}
-          onBringToFront={onBringToFront}
-        />
-      )}
+        {isHitoFilterVisible && (
+          isSubsystemsTab ? (
+            <HitoFilterA
+              data={controlData}
+              onFilterChange={onFilteredControlDataChange || (() => {})}
+              isVisible={isHitoFilterVisible}
+              onClose={() => {
+                setIsHitoFilterVisible(false);
+                if (onHitoFilterVisibilityChange) {
+                  onHitoFilterVisibilityChange(false);
+                }
+                // Reset this filter's effect by passing the original data
+                if (onFilteredControlDataChange) {
+                  onFilteredControlDataChange(controlData);
+                }
+                // Reset propagation if it was active
+                if (onHitoPropagationChange) {
+                  onHitoPropagationChange([], 'nothing');
+                }
+              }}
+              onPropagationChange={onHitoPropagationChange || (() => {})}
+              onBringToFront={onBringToFront}
+            />
+          ) : (
+            <HitoFilterA
+              data={detailsData}
+              onFilterChange={onHitoFilteredDataChange || (() => {})}
+              isVisible={isHitoFilterVisible}
+              onClose={() => {
+                setIsHitoFilterVisible(false);
+                if (onHitoFilterVisibilityChange) {
+                  onHitoFilterVisibilityChange(false);
+                }
+                // Reset this filter's effect by passing the original data
+                if (onHitoFilteredDataChange) {
+                  onHitoFilteredDataChange(detailsData);
+                }
+                // Reset propagation if it was active
+                if (onHitoPropagationChange) {
+                  onHitoPropagationChange([], 'nothing');
+                }
+              }}
+              onPropagationChange={onHitoPropagationChange || (() => {})}
+              onBringToFront={onBringToFront}
+            />
+          )
+        )}
       
-      {isTracingFilterVisible && (
-        <TracingStatusFilter
-          data={controlData}
-          onFilterChange={onTracingFilteredControlDataChange || (() => {})}
-          isVisible={isTracingFilterVisible}
-          onClose={() => {
-            setIsTracingFilterVisible(false);
-            if (onTracingFilterVisibilityChange) {
-              onTracingFilterVisibilityChange(false);
-            }
-            // Reset this filter's effect by passing the original data
-            if (onTracingFilteredControlDataChange) {
-              onTracingFilteredControlDataChange(controlData);
-            }
-          }}
-          onPropagationChange={onLoopPropagationChange || (() => {})}
-          onBringToFront={onBringToFront}
-        />
-      )}
+        {isInstFilterVisible && (
+          <InstStatusFilter
+            data={controlData}
+            onFilterChange={onInstFilteredControlDataChange || (() => {})}
+            isVisible={isInstFilterVisible}
+            onClose={() => {
+              setIsInstFilterVisible(false);
+              if (onInstFilterVisibilityChange) {
+                onInstFilterVisibilityChange(false);
+              }
+              // Reset this filter's effect by passing the original data
+              if (onInstFilteredControlDataChange) {
+                onInstFilteredControlDataChange(controlData);
+              }
+            }}
+            onPropagationChange={onLoopPropagationChange || (() => {})}
+            onBringToFront={onBringToFront}
+          />
+        )}
       
-      {isSubsystemFilterAVisible && (
-        <SubsystemFilterA
-          data={controlData}
-          onFilterChange={onSubsystemFilteredDataChange || (() => {})}
-          isVisible={isSubsystemFilterAVisible}
-          onClose={() => {
-            setIsSubsystemFilterAVisible(false);
-            if (onSubsystemFilterVisibilityChange) {
-              onSubsystemFilterVisibilityChange(false);
-            }
-            // Reset this filter's effect by passing the original data
-            if (onSubsystemFilteredDataChange) {
-              onSubsystemFilteredDataChange(controlData);
-            }
-            // Reset propagation if it was active
-            if (onSubsystemPropagationChange) {
-              onSubsystemPropagationChange([], 'nothing');
-            }
-          }}
-          onPropagationChange={onSubsystemPropagationChange || (() => {})}
-          onBringToFront={onBringToFront}
-        />
-      )}
+        {isTracingFilterVisible && (
+          <TracingStatusFilter
+            data={controlData}
+            onFilterChange={onTracingFilteredControlDataChange || (() => {})}
+            isVisible={isTracingFilterVisible}
+            onClose={() => {
+              setIsTracingFilterVisible(false);
+              if (onTracingFilterVisibilityChange) {
+                onTracingFilterVisibilityChange(false);
+              }
+              // Reset this filter's effect by passing the original data
+              if (onTracingFilteredControlDataChange) {
+                onTracingFilteredControlDataChange(controlData);
+              }
+            }}
+            onPropagationChange={onLoopPropagationChange || (() => {})}
+            onBringToFront={onBringToFront}
+          />
+        )}
+      
+        {isSubsystemFilterAVisible && (
+          <SubsystemFilterA
+            data={controlData}
+            onFilterChange={onSubsystemFilteredDataChange || (() => {})}
+            isVisible={isSubsystemFilterAVisible}
+            onClose={() => {
+              setIsSubsystemFilterAVisible(false);
+              if (onSubsystemFilterVisibilityChange) {
+                onSubsystemFilterVisibilityChange(false);
+              }
+              // Reset this filter's effect by passing the original data
+              if (onSubsystemFilteredDataChange) {
+                onSubsystemFilteredDataChange(controlData);
+              }
+              // Reset propagation if it was active
+              if (onSubsystemPropagationChange) {
+                onSubsystemPropagationChange([], 'nothing');
+              }
+            }}
+            onPropagationChange={onSubsystemPropagationChange || (() => {})}
+            onBringToFront={onBringToFront}
+          />
+        )}
+      </Box>
     </Box>
   );
 };
