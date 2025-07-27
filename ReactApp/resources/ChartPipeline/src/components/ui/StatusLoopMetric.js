@@ -163,7 +163,7 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
       bg="#7CA2C5"
       border="3px solid #7CA2C5"
       borderRadius="lg"
-      minW="180px"
+      minW="230px"
       boxShadow="md"
     >
       <VStack spacing={0} divider={<Divider borderColor="white" />}>
