@@ -542,6 +542,46 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       cell: ({ getValue }) => (
           <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
       )
+    },
+    {
+      accessorKey: 'psv_calibrated',
+      header: 'PSV CALIBRATED',
+      size: 80,
+      cell: ({ getValue }) => (
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'psv_to_calibrate',
+      header: 'PSV TO CALIBRATE',
+      size: 80,
+      cell: ({ getValue }) => (
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'motor_tot',
+      header: 'MOTOR TOTAL',
+      size: 80,
+      cell: ({ getValue }) => (
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'motor_solo_run_done',
+      header: 'MOTOR Solo Run DONE',
+      size: 80,
+      cell: ({ getValue }) => (
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
+    },
+    {
+      accessorKey: 'solo_run_pending',
+      header: 'MOTOR Solo Run PENDING',
+      size: 80,
+      cell: ({ getValue }) => (
+          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
+      )
     }
 
   ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible,isInstFilterVisible, isTracingFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
@@ -601,6 +641,20 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             colspan: 4,
             startCol: 21,
             color: '#748DAE'
+          },
+          {
+            id: 'psv',
+            title: 'PSV PROGRESS',
+            colspan: 3,
+            startCol: 22,
+            color: '#e29d61'
+          },
+          {
+            id: 'motor',
+            title: 'MOTOR PROGRESS',
+            colspan: 3,
+            startCol: 25,
+            color: '#943168'
           }
         ]
       },
@@ -650,6 +704,20 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             colspan: 4,
             startCol: 21,
             color: '#687F9D'
+          },
+          {
+            id: 'psv_metrics',
+            title: 'PSV STATUS',
+            colspan: 3,
+            startCol: 22,
+            color: '#cc8d57'
+          },
+          {
+            id: 'motor_metrics',
+            title: 'MOTOR STATUS',
+            colspan: 3,
+            startCol: 25,
+            color: '#842c5e'
           }
         ]
       }
@@ -851,7 +919,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'total_punch': '#748DAE',
               'pending_punch': '#748DAE',
               'close_punch': '#748DAE',
-              'open_punch': '#748DAE'
+              'open_punch': '#748DAE',
+
+              'psv_total':'#cc8d57',
+              'psv_calibrated':'#cc8d57',
+              'psv_to_calibrate':'#cc8d57',
+
+              'motor_tot': '#943168',
+              'motor_solo_run_done': '#943168',
+              'solo_run_pending': '#943168'
 
 
             };
