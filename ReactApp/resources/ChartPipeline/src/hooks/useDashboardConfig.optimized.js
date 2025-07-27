@@ -8,25 +8,18 @@ import { useState, useEffect, useMemo } from 'react';
 const useDashboardConfig = (activeDashboard) => {
   // Memoize the dashboard configurations to avoid recreating objects on each render
   const dashboardConfigs = useMemo(() => ({
+    'SUMMARY SUBSYSTEMS': {
+      datasetPath: '/data/pipelinedata.csv',
+      filterMappings: {
+        area: 'Design Area',
+        subsystem: 'SUBSYSTEM'
+      }
+    },
     'LOOP SIGNAL PROGRESS REPORT': {
       datasetPath: '/data/master_subsystem.parquet',
       filterMappings: {
         area: 'area_tlp',
         subsystem: 'subsystem'
-      }
-    },
-    'INSULATION PROGRESS REPORT': {
-      datasetPath: '/data/aislamientos.csv',
-      filterMappings: {
-        area: 'Area',
-        subsystem: 'SUBSYSTEM'
-      }
-    },
-    'INSTRUMENTS REPORT': {
-      datasetPath: '/data/control_inst_by_isos.csv',
-      filterMappings: {
-        isometric: 'ISOMETRIC',
-        subsystem: 'SUBSYSTEM' // Use SUBSYSTEM field
       }
     },
     'TEST PACK PROGRESS': {
@@ -36,10 +29,17 @@ const useDashboardConfig = (activeDashboard) => {
         subsystem: 'subsystem'
       }
     },
-    'SUMMARY SUBSYSTEMS': {
-      datasetPath: '/data/pipelinedata.csv',
+    'INSTRUMENTS REPORT': {
+      datasetPath: '/data/control_inst_by_isos.csv',
       filterMappings: {
-        area: 'Design Area',
+        isometric: 'ISOMETRIC',
+        subsystem: 'SUBSYSTEM' // Use SUBSYSTEM field
+      }
+    },
+    'INSULATION PROGRESS REPORT': {
+      datasetPath: '/data/aislamientos.csv',
+      filterMappings: {
+        area: 'Area',
         subsystem: 'SUBSYSTEM'
       }
     },

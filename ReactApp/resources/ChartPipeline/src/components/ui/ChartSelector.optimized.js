@@ -77,11 +77,11 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
   }, [activeDashboard, isometricFilter.filteredDetailData, detailsData, testPackFilter.filterDetailData, subsystemFilter.filterDetailData]);
   // Map tab index to dashboard name
   const dashboardNames = [
+    'SUMMARY SUBSYSTEMS',
     'LOOP SIGNAL PROGRESS REPORT',
-    'INSULATION PROGRESS REPORT',
     'TEST PACK PROGRESS',
     'INSTRUMENTS REPORT',
-    'SUMMARY SUBSYSTEMS'
+    'INSULATION PROGRESS REPORT'
   ];
 
   // Find the index of the active dashboard
@@ -99,17 +99,22 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             variant="enclosed"
             colorScheme="blue"
             lazyBehavior="keepMounted"
-            index={activeIndex !== -1 ? activeIndex : 0} // Default to LOOP SIGNAL PROGRESS REPORT if not found
+            index={activeIndex !== -1 ? activeIndex : 0} // Default to SUMMARY SUBSYSTEMS if not found
             onChange={handleTabChange}
         >
           <TabList mb="1em">
-            <Tab>LOOP SIGNAL PROGRESS REPORT</Tab>
-            <Tab>INSULATION PROGRESS REPORT</Tab>
-            <Tab>TEST PACK PROGRESS REPORT</Tab>
-            <Tab>INSTRUMENTS REPORT</Tab>
             <Tab>SUMMARY SUBSYSTEMS</Tab>
+            <Tab>LOOP SIGNAL PROGRESS REPORT</Tab>
+            <Tab>TEST PACK PROGRESS</Tab>
+            <Tab>INSTRUMENTS REPORT</Tab>
+            <Tab>INSULATION PROGRESS REPORT</Tab>
           </TabList>
           <TabPanels>
+            <TabPanel p={0}>
+              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
+                <SummarySubsystems data={data} />
+              </Suspense>
+            </TabPanel>
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
                 <LazosTableSqlFilterProvider externalFilters={multiFilters}>
@@ -125,15 +130,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                 </LazosTableSqlFilterProvider>
               </Suspense>
             </TabPanel>
-            <TabPanel p={0}>
-              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <VStack spacing={0} align="stretch">
-                  <IsolationProgressControlChart data={data} />
-                  <InsulationProgressTable data={data} />
-                </VStack>
-              </Suspense>
-            </TabPanel>
-
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
                 <TestPackProgressChart data={data} />
@@ -197,9 +193,10 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
 
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <Box transform="scale(0.95)" transformOrigin="top left" width="107.11%">
-                  <SummarySubsystems data={data} isZoomed={true} />
-                </Box>
+                <VStack spacing={0} align="stretch">
+                  <IsolationProgressControlChart data={data} />
+                  <InsulationProgressTable data={data} />
+                </VStack>
               </Suspense>
             </TabPanel>
           </TabPanels>
