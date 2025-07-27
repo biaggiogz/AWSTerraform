@@ -177,7 +177,7 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
           p={1}
           textAlign="center"
           width="100%"
-          bg={activeFilter === 'subsystems' ? '#5A8DB5' : '#7CA2C5'}
+          bg={activeFilter === 'subsystems' ? '#007074' : '#7CA2C5'}
           color="white"
           fontSize="sm"
           variant="unstyled"
@@ -192,7 +192,7 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
             p={1}
             textAlign="center"
             flex={1}
-            bg={activeFilter === 'process' ? '#5A8DB5' : '#7CA2C5'}
+            bg={activeFilter === 'process' ? '#007074' : '#7CA2C5'}
             color="white"
             fontSize="sm"
             variant="unstyled"
@@ -205,7 +205,7 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
             p={1}
             textAlign="center"
             flex={1}
-            bg={activeFilter === 'noprocess' ? '#5A8DB5' : '#7CA2C5'}
+            bg={activeFilter === 'noprocess' ? '#007074' : '#7CA2C5'}
             color="white"
             fontSize="sm"
             variant="unstyled"
@@ -221,7 +221,7 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
             p={1}
             textAlign="center"
             flex={1}
-            bg={activeFilter === 'processDone' ? '#5A8DB5' : '#7CA2C5'}
+            bg={activeFilter === 'processDone' ? '#007074' : '#7CA2C5'}
             color="white"
             fontSize="sm"
             variant="unstyled"
@@ -234,7 +234,7 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
             p={1}
             textAlign="center"
             flex={1}
-            bg={activeFilter === 'noProcessDone' ? '#5A8DB5' : '#7CA2C5'}
+            bg={activeFilter === 'noProcessDone' ? '#007074' : '#7CA2C5'}
             color="white"
             fontSize="sm"
             variant="unstyled"
@@ -250,7 +250,7 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
             p={1}
             textAlign="center"
             flex={1}
-            bg={activeFilter === 'processPending' ? '#5A8DB5' : '#7CA2C5'}
+            bg={activeFilter === 'processPending' ? '#007074' : '#7CA2C5'}
             color="white"
             fontSize="sm"
             variant="unstyled"
@@ -263,7 +263,7 @@ const StatusLoopMetric = ({ data, onSubsystemFilter }) => {
             p={1}
             textAlign="center"
             flex={1}
-            bg={activeFilter === 'noProcessPending' ? '#5A8DB5' : '#7CA2C5'}
+            bg={activeFilter === 'noProcessPending' ? '#007074' : '#7CA2C5'}
             color="white"
             fontSize="sm"
             variant="unstyled"
