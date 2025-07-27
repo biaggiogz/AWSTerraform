@@ -1,35 +1,69 @@
 import React, { useMemo } from 'react';
-import { Box, Text, VStack, Divider } from '@chakra-ui/react';
+import { Box, Text, VStack, HStack, Divider } from '@chakra-ui/react';
 
 const StatusTracingMetric = ({ data }) => {
   const metrics = useMemo(() => {
-    if (!data || data.length === 0) return { subsystems: 0, done: 0, pending: 0 };
-
-    const subsystems = data.filter(row =>
-        row.total_tracing != null && row.total_tracing !== ''
-    ).length;
-
-    const done = data.reduce((count, row) => {
-      const totalTracing = row.total_tracing;
-      const doneTracing = row.done_tracing;
-
-      if (totalTracing != null && totalTracing !== '' && totalTracing > 0 && totalTracing === doneTracing) {
+    if (!data || data.length === 0) return {
+      subsystems: 0,
+      processSubsystems: 0,
+      noProcessSubsystems: 0,
+      processDone: 0,
+      noProcessDone: 0,
+      processPending: 0,
+      noProcessPending: 0
+    };
+    
+    // WHERE total_tracing is not null AND total_tracing != ''
+    const validRows = data.filter(row => 
+      row.total_tracing > 0 && row.subsystem !== 'AR-9000-01'
+    );
+    
+    // Total subsystems count
+    const subsystems = validRows.length;
+    
+    // Count by type_1
+    const processSubsystems = validRows.filter(row => row.type_1 === 'PROCESS ').length;
+    const noProcessSubsystems = validRows.filter(row => row.type_1 === 'NO PROCESS').length;
+    
+    // Done by type_1: total_tracing = done_tracing AND total_tracing > 0
+    const processDone = validRows.reduce((count, row) => {
+      if (row.type_1 === 'PROCESS ' && row.total_tracing > 0 && row.total_tracing === row.done_tracing) {
         return count + 1;
       }
       return count;
     }, 0);
-
-    const pending = data.reduce((count, row) => {
-      const totalTracing = row.total_tracing;
-      const doneTracing = row.done_tracing;
-
-      if (totalTracing != null && totalTracing !== '' && totalTracing > 0 && totalTracing !== doneTracing) {
+    
+    const noProcessDone = validRows.reduce((count, row) => {
+      if (row.type_1 === 'NO PROCESS' && row.total_tracing > 0 && row.total_tracing === row.done_tracing) {
         return count + 1;
       }
       return count;
     }, 0);
-
-    return { subsystems, done, pending };
+    
+    // Pending by type_1: total_tracing != done_tracing AND total_tracing > 0
+    const processPending = validRows.reduce((count, row) => {
+      if (row.type_1 === 'PROCESS ' && row.total_tracing > 0 && row.total_tracing !== row.done_tracing) {
+        return count + 1;
+      }
+      return count;
+    }, 0);
+    
+    const noProcessPending = validRows.reduce((count, row) => {
+      if (row.type_1 === 'NO PROCESS' && row.total_tracing > 0 && row.total_tracing !== row.done_tracing) {
+        return count + 1;
+      }
+      return count;
+    }, 0);
+    
+    return {
+      subsystems,
+      processSubsystems,
+      noProcessSubsystems,
+      processDone,
+      noProcessDone,
+      processPending,
+      noProcessPending
+    };
   }, [data]);
 
   return (
@@ -46,24 +80,51 @@ const StatusTracingMetric = ({ data }) => {
               Tracing Status <br />by Subsystem
             </Text>
           </Box>
-
+          
           <Box p={1} textAlign="center" width="100%">
             <Text fontSize="sm" color="white">
               Subsystems: {metrics.subsystems}
             </Text>
           </Box>
-
-          <Box p={1} textAlign="center" width="100%">
-            <Text fontSize="sm" color="white">
-              Done: {metrics.done}
-            </Text>
-          </Box>
-
-          <Box p={2} textAlign="center" width="100%">
-            <Text fontSize="sm" color="white">
-              Pending: {metrics.pending}
-            </Text>
-          </Box>
+          
+          <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
+            <Box p={1} textAlign="center" flex={1}>
+              <Text fontSize="sm" color="white">
+                Process: {metrics.processSubsystems}
+              </Text>
+            </Box>
+            <Box p={1} textAlign="center" flex={1}>
+              <Text fontSize="sm" color="white">
+                No Process: {metrics.noProcessSubsystems}
+              </Text>
+            </Box>
+          </HStack>
+          
+          <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
+            <Box p={1} textAlign="center" flex={1}>
+              <Text fontSize="sm" color="white">
+                Done: {metrics.processDone}
+              </Text>
+            </Box>
+            <Box p={1} textAlign="center" flex={1}>
+              <Text fontSize="sm" color="white">
+                Done: {metrics.noProcessDone}
+              </Text>
+            </Box>
+          </HStack>
+          
+          <HStack spacing={0} width="100%" divider={<Divider orientation="vertical" borderColor="white" />}>
+            <Box p={1} textAlign="center" flex={1}>
+              <Text fontSize="sm" color="white">
+                Pending: {metrics.processPending}
+              </Text>
+            </Box>
+            <Box p={1} textAlign="center" flex={1}>
+              <Text fontSize="sm" color="white">
+                Pending: {metrics.noProcessPending}
+              </Text>
+            </Box>
+          </HStack>
         </VStack>
       </Box>
   );

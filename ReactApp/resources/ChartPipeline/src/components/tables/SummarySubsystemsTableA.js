@@ -633,7 +633,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             title: 'INSULATION PROGRESS',
             colspan: 3, 
             startCol: 18,
-            color: '#E5D6AC'
+            color: '#ab9f81'
           },
           {
             id: 'punch',
@@ -696,7 +696,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
             title: 'INSULATION STATUS',
             colspan: 3, 
             startCol: 18,
-            color: '#CEC19B'
+            color: '#96896e'
           },
           {
             id: 'punch_metrics',
@@ -912,9 +912,9 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
               'pending_tracing': '#0ABAB5',
 
               // Insul progress
-              'total_insulation': '#CEC19B',
-              'done_insulation': '#CEC19B',
-              'pending_insulation': '#CEC19B',
+              'total_insulation': '#ab9f81',
+              'done_insulation': '#ab9f81',
+              'pending_insulation': '#ab9f81',
 
               'total_punch': '#748DAE',
               'pending_punch': '#748DAE',
