@@ -32,6 +32,7 @@ const SummarySubsystemsContainer = ({
     inst: { data: tableAData, visible: false },
     tracing: { data: tableAData, visible: false },
     psv: { data: tableAData, visible: false },
+    motor: { data: tableAData, visible: false },
     hito: { data: tableBData, visible: false },
     subsystem: { data: tableAData, visible: false },
     statusLoopMetric: { data: tableAData, visible: false },
@@ -149,7 +150,7 @@ const SummarySubsystemsContainer = ({
   
   // Optimized combined filter logic
   const combinedFilteredTableAData = useMemo(() => {
-    const { status, loop, itemsTotal, inst, tracing, psv, subsystem, statusLoopMetric, statusInstMetric, statusItemsMetric, statusTracingMetric, statusInsulMetric, statusPSVMetric } = filterState;
+    const { status, loop, itemsTotal, inst, tracing, psv, motor, subsystem, statusLoopMetric, statusInstMetric, statusItemsMetric, statusTracingMetric, statusInsulMetric, statusPSVMetric } = filterState;
     
     // Find intersection of all TableA filters
     const statusSubsystems = new Set(status.data.map(row => row.subsystem));
@@ -158,6 +159,7 @@ const SummarySubsystemsContainer = ({
     const instSubsystems = new Set(inst.data.map(row => row.subsystem));
     const tracingSubsystems = new Set(tracing.data.map(row => row.subsystem));
     const psvSubsystems = new Set(psv.data.map(row => row.subsystem));
+    const motorSubsystems = new Set(motor.data.map(row => row.subsystem));
     const subsystemSubsystems = new Set(subsystem.data.map(row => row.subsystem));
     const statusLoopMetricSubsystems = new Set(statusLoopMetric.data.map(row => row.subsystem));
     const statusInstMetricSubsystems = new Set(statusInstMetric.data.map(row => row.subsystem));
@@ -173,6 +175,7 @@ const SummarySubsystemsContainer = ({
       instSubsystems.has(row.subsystem) &&
       tracingSubsystems.has(row.subsystem) &&
       psvSubsystems.has(row.subsystem) &&
+      motorSubsystems.has(row.subsystem) &&
       subsystemSubsystems.has(row.subsystem) &&
       statusLoopMetricSubsystems.has(row.subsystem) &&
       statusInstMetricSubsystems.has(row.subsystem) &&
@@ -181,7 +184,7 @@ const SummarySubsystemsContainer = ({
       statusInsulMetricSubsystems.has(row.subsystem) &&
       statusPSVMetricSubsystems.has(row.subsystem)
     );
-  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.itemsTotal.data, filterState.inst.data, filterState.tracing.data, filterState.psv.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusItemsMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data, filterState.statusPSVMetric.data]);
+  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.itemsTotal.data, filterState.inst.data, filterState.tracing.data, filterState.psv.data, filterState.motor.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusItemsMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data, filterState.statusPSVMetric.data]);
   
   const combinedFilteredTableBData = useMemo(() => {
     const { progress, hito } = filterState;
@@ -212,6 +215,7 @@ const SummarySubsystemsContainer = ({
       inst: { ...prev.inst, data: tableAData },
       tracing: { ...prev.tracing, data: tableAData },
       psv: { ...prev.psv, data: tableAData },
+      motor: { ...prev.motor, data: tableAData },
       hito: { ...prev.hito, data: tableBData },
       subsystem: { ...prev.subsystem, data: tableAData },
       statusLoopMetric: { ...prev.statusLoopMetric, data: tableAData },
@@ -250,6 +254,10 @@ const SummarySubsystemsContainer = ({
   
   const handlePSVFilterChange = useCallback((filteredData) => {
     updateFilter('psv', { data: filteredData });
+  }, [updateFilter]);
+  
+  const handleMotorFilterChange = useCallback((filteredData) => {
+    updateFilter('motor', { data: filteredData });
   }, [updateFilter]);
   
   const handleHitoFilterChange = useCallback((filteredData) => {
@@ -401,6 +409,8 @@ const SummarySubsystemsContainer = ({
           onTracingFilterVisibilityChange={(visible) => updateFilter('tracing', { visible })}
           onPSVFilteredControlDataChange={handlePSVFilterChange}
           onPSVFilterVisibilityChange={(visible) => updateFilter('psv', { visible })}
+          onMotorFilteredControlDataChange={handleMotorFilterChange}
+          onMotorFilterVisibilityChange={(visible) => updateFilter('motor', { visible })}
           onProgressPropagationChange={handleProgressPropagationChange}
           onHitoFilteredDataChange={handleHitoFilterChange}
           onHitoFilterVisibilityChange={(visible) => updateFilter('hito', { visible })}
@@ -438,6 +448,7 @@ const SummarySubsystemsContainer = ({
             isInstFilterVisible={filterState.inst.visible}
             isTracingFilterVisible={filterState.tracing.visible}
             isPSVFilterVisible={filterState.psv.visible}
+            isMotorFilterVisible={filterState.motor.visible}
             isHitoFilterVisible={filterState.hito.visible}
             isProgressFilterVisible={filterState.progress.visible}
             isSubsystemFilterVisible={filterState.subsystem.visible}

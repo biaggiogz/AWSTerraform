@@ -35,7 +35,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isItemsTotalFilterVisible, isInstFilterVisible, isTracingFilterVisible, isPSVFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
+const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isItemsTotalFilterVisible, isInstFilterVisible, isTracingFilterVisible, isPSVFilterVisible, isMotorFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
   const [filteredData, setFilteredData] = useState(data);
   const lastFilterStateRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
@@ -637,9 +637,46 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'motor_tot',
       header: 'MOTOR TOTAL',
       size: 80,
-      cell: ({ getValue }) => (
-          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
-      )
+      cell: ({ getValue, row }) => {
+        const getMotorStatusColor = () => {
+          const totalMotor = getValue();
+          const doneMotor = row.original.motor_solo_run_done || 0;
+          
+          if (!isMotorFilterVisible) {
+            // When filter is not visible, only show green when total equals done
+            const isDone = (totalMotor === doneMotor) && (totalMotor > 0);
+            return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
+          }
+          
+          // Check if total_motor is null, undefined, empty, or 0 - "Not Apply" case
+          if (totalMotor === null || totalMotor === undefined || totalMotor === '' || totalMotor === 0) {
+            return { bg: '#212121', color: 'white' };
+          }
+          
+          // Check if all motors are done (total equals done) and there are motors
+          const isDone = (totalMotor === doneMotor) && (totalMotor > 0);
+          
+          // Green for completed, orange for in progress
+          const bgColor = isDone ? '#06923E' : '#E85C0D';
+          return { bg: bgColor, color: 'white' };
+        };
+        
+        const colors = getMotorStatusColor();
+        
+        return (
+          <Text 
+            fontSize="xs" 
+            textAlign="center"
+            bg={colors.bg}
+            color={colors.color}
+            px={colors.bg !== 'transparent' ? 2 : 0}
+            py={colors.bg !== 'transparent' ? 1 : 0}
+            borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
+          >
+            {isMotorFilterVisible && (getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
+          </Text>
+        );
+      }
     },
     {
       accessorKey: 'motor_solo_run_done',
@@ -658,7 +695,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     }
 
-  ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isItemsTotalFilterVisible, isInstFilterVisible, isTracingFilterVisible, isPSVFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
+  ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isItemsTotalFilterVisible, isInstFilterVisible, isTracingFilterVisible, isPSVFilterVisible, isMotorFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {

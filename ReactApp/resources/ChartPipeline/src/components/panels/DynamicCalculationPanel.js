@@ -11,7 +11,7 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory, MdBuild, MdCable, MdInventory, MdSecurity} from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory, MdBuild, MdCable, MdInventory, MdSecurity, MdElectricBolt} from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import InsulStatusFilter from '../filters/InsulationStatusFilter';
@@ -22,8 +22,9 @@ import SubsystemFilterA from '../filters/SubsystemFilterA'
 import InstStatusFilter from "../filters/InstStatusFilter";
 import TracingStatusFilter from "../filters/TracingStatusFilter";
 import PSVStatusFilter from "../filters/PSVStatusFilter";
+import MotorStatusFilter from "../filters/MotorStatusFilter";
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onItemsTotalFilteredControlDataChange, onItemsTotalPropagationChange, onItemsTotalFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onTracingFilteredControlDataChange, onTracingFilterVisibilityChange, onPSVFilteredControlDataChange, onPSVFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onItemsTotalFilteredControlDataChange, onItemsTotalPropagationChange, onItemsTotalFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onTracingFilteredControlDataChange, onTracingFilterVisibilityChange, onPSVFilteredControlDataChange, onPSVFilterVisibilityChange, onMotorFilteredControlDataChange, onMotorFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
@@ -48,6 +49,7 @@ FROM "Subsystem Overview";`);
   const [isInstFilterVisible, setIsInstFilterVisible] = useState(false);
   const [isTracingFilterVisible, setIsTracingFilterVisible] = useState(false);
   const [isPSVFilterVisible, setIsPSVFilterVisible] = useState(false);
+  const [isMotorFilterVisible, setIsMotorFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [isSubsystemFilterAVisible, setIsSubsystemFilterAVisible] = useState(false);
   const [isProgressTableVisible, setIsProgressTableVisible] = useState(true);
@@ -438,6 +440,20 @@ FROM "Subsystem Overview";`);
               }}
               aria-label="Toggle PSV status filter"
               title="PSV Status Filter"
+            />
+            <IconButton
+              icon={<MdElectricBolt />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const newVisibility = !isMotorFilterVisible;
+                setIsMotorFilterVisible(newVisibility);
+                if (onMotorFilterVisibilityChange) {
+                  onMotorFilterVisibilityChange(newVisibility);
+                }
+              }}
+              aria-label="Toggle motor status filter"
+              title="Motor Status Filter"
             />
             <IconButton
               icon={<MdFlag />}
@@ -1114,6 +1130,26 @@ FROM "Subsystem Overview";`);
               // Reset this filter's effect by passing the original data
               if (onPSVFilteredControlDataChange) {
                 onPSVFilteredControlDataChange(controlData);
+              }
+            }}
+            onPropagationChange={onLoopPropagationChange || (() => {})}
+            onBringToFront={onBringToFront}
+          />
+        )}
+      
+        {isMotorFilterVisible && (
+          <MotorStatusFilter
+            data={controlData}
+            onFilterChange={onMotorFilteredControlDataChange || (() => {})}
+            isVisible={isMotorFilterVisible}
+            onClose={() => {
+              setIsMotorFilterVisible(false);
+              if (onMotorFilterVisibilityChange) {
+                onMotorFilterVisibilityChange(false);
+              }
+              // Reset this filter's effect by passing the original data
+              if (onMotorFilteredControlDataChange) {
+                onMotorFilteredControlDataChange(controlData);
               }
             }}
             onPropagationChange={onLoopPropagationChange || (() => {})}
