@@ -285,28 +285,33 @@ const ItemsTotalStatusFilter = ({
           </Tooltip>
         </HStack>
 
-        <Divider />
+        {/*<Divider />*/}
 
-        <HStack spacing={2} align="center">
-          <Text fontSize="sm" fontWeight="bold">Propagate to:</Text>
-          <Select
-            size="sm"
-            value={propagationTarget}
-            onChange={(e) => handlePropagationChange(e.target.value)}
-            width="150px"
-          >
-            <option value="nothing">Nothing</option>
-            <option value="progress">Progress</option>
-            <option value="items">Items</option>
-            <option value="loop">Loop</option>
-            <option value="inst">Inst</option>
-            <option value="tracing">Tracing</option>
-            <option value="hito">Hito</option>
-            <option value="subsystem">Subsystem</option>
-          </Select>
+        {/*<HStack spacing={2} align="center">*/}
+        {/*  <Text fontSize="sm" fontWeight="bold">Propagate to:</Text>*/}
+        {/*  <Select*/}
+        {/*    size="sm"*/}
+        {/*    value={propagationTarget}*/}
+        {/*    onChange={(e) => handlePropagationChange(e.target.value)}*/}
+        {/*    width="150px"*/}
+        {/*  >*/}
+        {/*    <option value="nothing">Nothing</option>*/}
+        {/*    <option value="progress">Progress</option>*/}
+        {/*    <option value="items">Items</option>*/}
+        {/*    <option value="loop">Loop</option>*/}
+        {/*    <option value="inst">Inst</option>*/}
+        {/*    <option value="tracing">Tracing</option>*/}
+        {/*    <option value="hito">Hito</option>*/}
+        {/*    <option value="subsystem">Subsystem</option>*/}
+        {/*  </Select>*/}
+        {/*</HStack>*/}
+
+        {/*<Divider />*/}
+        <HStack spacing={2}>
+          <Button size="xs" colorScheme="blue" onClick={() => toggleAllSubsystems(true)}>Select All</Button>
+          <Button size="xs" colorScheme="gray" onClick={() => toggleAllSubsystems(false)}>Clear All</Button>
+          <Button size="xs" colorScheme="teal" onClick={invertSubsystemSelection}>Invert</Button>
         </HStack>
-
-        <Divider />
 
         <HStack spacing={2} align="center">
           <Input
@@ -317,17 +322,6 @@ const ItemsTotalStatusFilter = ({
           />
         </HStack>
 
-        <HStack spacing={2} justify="center">
-          <Button size="xs" onClick={() => toggleAllSubsystems(true)}>
-            Select All
-          </Button>
-          <Button size="xs" onClick={() => toggleAllSubsystems(false)}>
-            Deselect All
-          </Button>
-          <Button size="xs" onClick={invertSubsystemSelection}>
-            Invert
-          </Button>
-        </HStack>
 
         <Divider />
 
