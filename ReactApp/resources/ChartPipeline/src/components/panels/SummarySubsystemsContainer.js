@@ -6,6 +6,7 @@ import ResizableDraggablePanel from '../ui/ResizableDraggablePanel';
 import { useSubsystemBidirectionalFilter } from '../../hooks/useSubsystemBidirectionalFilter';
 import StatusLoopMetric from '../ui/StatusLoopMetric';
 import StatusInstMetric from "../ui/StatusInstMetric";
+import StatusItemsMetric from "../ui/StatusItemsMetric";
 import Papa from 'papaparse';
 import StatusTracingMetric from "../ui/StatusTracingMetric";
 import StatusInsulMetric from "../ui/StatusInsulMetric";
@@ -33,6 +34,7 @@ const SummarySubsystemsContainer = ({
     subsystem: { data: tableAData, visible: false },
     statusLoopMetric: { data: tableAData, visible: false },
     statusInstMetric: { data: tableAData, visible: false },
+    statusItemsMetric: { data: tableAData, visible: false },
     statusTracingMetric: { data: tableAData, visible: false },
     statusInsulMetric: { data: tableAData, visible: false }
   });
@@ -72,6 +74,16 @@ const SummarySubsystemsContainer = ({
     } else {
       const filteredData = tableAData.filter(row => subsystems.includes(row.subsystem));
       updateFilter('statusTracingMetric', { data: filteredData });
+    }
+  }, [tableAData, updateFilter]);
+
+  // Handle StatusItemsMetric subsystem filtering
+  const handleStatusItemsMetricFilter = useCallback((subsystems) => {
+    if (subsystems.length === 0) {
+      updateFilter('statusItemsMetric', { data: tableAData });
+    } else {
+      const filteredData = tableAData.filter(row => subsystems.includes(row.subsystem));
+      updateFilter('statusItemsMetric', { data: filteredData });
     }
   }, [tableAData, updateFilter]);
 
@@ -124,7 +136,7 @@ const SummarySubsystemsContainer = ({
   
   // Optimized combined filter logic
   const combinedFilteredTableAData = useMemo(() => {
-    const { status, loop, itemsTotal, inst, tracing, subsystem, statusLoopMetric, statusInstMetric, statusTracingMetric, statusInsulMetric } = filterState;
+    const { status, loop, itemsTotal, inst, tracing, subsystem, statusLoopMetric, statusInstMetric, statusItemsMetric, statusTracingMetric, statusInsulMetric } = filterState;
     
     // Find intersection of all TableA filters
     const statusSubsystems = new Set(status.data.map(row => row.subsystem));
@@ -135,6 +147,7 @@ const SummarySubsystemsContainer = ({
     const subsystemSubsystems = new Set(subsystem.data.map(row => row.subsystem));
     const statusLoopMetricSubsystems = new Set(statusLoopMetric.data.map(row => row.subsystem));
     const statusInstMetricSubsystems = new Set(statusInstMetric.data.map(row => row.subsystem));
+    const statusItemsMetricSubsystems = new Set(statusItemsMetric.data.map(row => row.subsystem));
     const statusTracingMetricSubsystems = new Set(statusTracingMetric.data.map(row => row.subsystem));
     const statusInsulMetricSubsystems = new Set(statusInsulMetric.data.map(row => row.subsystem));
     
@@ -147,10 +160,11 @@ const SummarySubsystemsContainer = ({
       subsystemSubsystems.has(row.subsystem) &&
       statusLoopMetricSubsystems.has(row.subsystem) &&
       statusInstMetricSubsystems.has(row.subsystem) &&
+      statusItemsMetricSubsystems.has(row.subsystem) &&
       statusTracingMetricSubsystems.has(row.subsystem) &&
       statusInsulMetricSubsystems.has(row.subsystem)
     );
-  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.itemsTotal.data, filterState.inst.data, filterState.tracing.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data]);
+  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.itemsTotal.data, filterState.inst.data, filterState.tracing.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusItemsMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data]);
   
   const combinedFilteredTableBData = useMemo(() => {
     const { progress, hito } = filterState;
@@ -184,6 +198,7 @@ const SummarySubsystemsContainer = ({
       subsystem: { ...prev.subsystem, data: tableAData },
       statusLoopMetric: { ...prev.statusLoopMetric, data: tableAData },
       statusInstMetric: { ...prev.statusInstMetric, data: tableAData },
+      statusItemsMetric: { ...prev.statusItemsMetric, data: tableAData },
       statusTracingMetric: { ...prev.statusTracingMetric, data: tableAData },
       statusInsulMetric: { ...prev.statusInsulMetric, data: tableAData }
     }));
@@ -325,6 +340,7 @@ const SummarySubsystemsContainer = ({
     <VStack spacing={4} align="stretch">
       {/* Completed Loop Metric */}
       <HStack alignSelf="center" spacing={4}>
+        <StatusItemsMetric data={tableAData} onSubsystemFilter={handleStatusItemsMetricFilter} />
         <StatusLoopMetric data={tableAData} onSubsystemFilter={handleStatusLoopMetricFilter} />
         <StatusInstMetric data={tableAData} onSubsystemFilter={handleStatusInstMetricFilter} />
         <StatusTracingMetric data={tableAData} onSubsystemFilter={handleStatusTracingMetricFilter} />
