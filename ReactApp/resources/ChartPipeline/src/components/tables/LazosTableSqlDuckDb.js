@@ -177,7 +177,15 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('SERVICE', {
             header: 'SERVICE',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            cell: info => (
+                <Text 
+                    fontSize="xs" 
+                    wordBreak="break-word" 
+                    whiteSpace="normal"
+                >
+                    {info.getValue() || '-'}
+                </Text>
+            )
         }),
         lazosTableSqlColumnHelper.accessor('INSTALLED', {
             header: 'INSTALLED',
@@ -352,7 +360,8 @@ const LazosTableSqlLoopTestControl = () => {
     const lazosTableSqlVirtualizer = useVirtualizer({
         count: lazosTableSqlTable.getRowModel().rows.length,
         getScrollElement: () => lazosTableSqlContainerRef.current,
-        estimateSize: () => 35,
+        estimateSize: () => 50,
+        measureElement: (element) => element?.getBoundingClientRect().height,
         overscan: 10,
     });
 
@@ -447,11 +456,13 @@ const LazosTableSqlLoopTestControl = () => {
                         return (
                             <Box
                                 key={row.id}
+                                data-index={virtualRow.index}
+                                ref={lazosTableSqlVirtualizer.measureElement}
                                 position="absolute"
                                 top={0}
                                 left={0}
                                 width="100%"
-                                height={`${virtualRow.size}px`}
+                                minHeight={`${virtualRow.size}px`}
                                 transform={`translateY(${virtualRow.start}px)`}
                                 borderBottom="1px solid"
                                 borderColor="gray.100"
