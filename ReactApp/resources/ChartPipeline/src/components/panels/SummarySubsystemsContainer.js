@@ -12,6 +12,7 @@ import StatusTracingMetric from "../ui/StatusTracingMetric";
 import StatusInsulMetric from "../ui/StatusInsulMetric";
 import StatusPunchMetric from "../ui/StatusPunchMetric";
 import StatusPSVMetric from "../ui/StatusPSVMetric";
+import StatusMotorMetric from "../ui/StatusMotorMetric";
 
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 
@@ -40,7 +41,8 @@ const SummarySubsystemsContainer = ({
     statusItemsMetric: { data: tableAData, visible: false },
     statusTracingMetric: { data: tableAData, visible: false },
     statusInsulMetric: { data: tableAData, visible: false },
-    statusPSVMetric: { data: tableAData, visible: false }
+    statusPSVMetric: { data: tableAData, visible: false },
+    statusMotorMetric: { data: tableAData, visible: false }
   });
   
   // Centralized filter update function
@@ -110,6 +112,16 @@ const SummarySubsystemsContainer = ({
       updateFilter('statusPSVMetric', { data: filteredData });
     }
   }, [tableAData, updateFilter]);
+
+  // Handle StatusMotorMetric subsystem filtering
+  const handleStatusMotorMetricFilter = useCallback((subsystems) => {
+    if (subsystems.length === 0) {
+      updateFilter('statusMotorMetric', { data: tableAData });
+    } else {
+      const filteredData = tableAData.filter(row => subsystems.includes(row.subsystem));
+      updateFilter('statusMotorMetric', { data: filteredData });
+    }
+  }, [tableAData, updateFilter]);
   
   // Load CSV data and transform for ProgressFilter compatibility
   useEffect(() => {
@@ -150,7 +162,7 @@ const SummarySubsystemsContainer = ({
   
   // Optimized combined filter logic
   const combinedFilteredTableAData = useMemo(() => {
-    const { status, loop, itemsTotal, inst, tracing, psv, motor, subsystem, statusLoopMetric, statusInstMetric, statusItemsMetric, statusTracingMetric, statusInsulMetric, statusPSVMetric } = filterState;
+    const { status, loop, itemsTotal, inst, tracing, psv, motor, subsystem, statusLoopMetric, statusInstMetric, statusItemsMetric, statusTracingMetric, statusInsulMetric, statusPSVMetric, statusMotorMetric } = filterState;
     
     // Find intersection of all TableA filters
     const statusSubsystems = new Set(status.data.map(row => row.subsystem));
@@ -167,6 +179,7 @@ const SummarySubsystemsContainer = ({
     const statusTracingMetricSubsystems = new Set(statusTracingMetric.data.map(row => row.subsystem));
     const statusInsulMetricSubsystems = new Set(statusInsulMetric.data.map(row => row.subsystem));
     const statusPSVMetricSubsystems = new Set(statusPSVMetric.data.map(row => row.subsystem));
+    const statusMotorMetricSubsystems = new Set(statusMotorMetric.data.map(row => row.subsystem));
     
     return tableAData.filter(row => 
       statusSubsystems.has(row.subsystem) && 
@@ -182,9 +195,10 @@ const SummarySubsystemsContainer = ({
       statusItemsMetricSubsystems.has(row.subsystem) &&
       statusTracingMetricSubsystems.has(row.subsystem) &&
       statusInsulMetricSubsystems.has(row.subsystem) &&
-      statusPSVMetricSubsystems.has(row.subsystem)
+      statusPSVMetricSubsystems.has(row.subsystem) &&
+      statusMotorMetricSubsystems.has(row.subsystem)
     );
-  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.itemsTotal.data, filterState.inst.data, filterState.tracing.data, filterState.psv.data, filterState.motor.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusItemsMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data, filterState.statusPSVMetric.data]);
+  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.itemsTotal.data, filterState.inst.data, filterState.tracing.data, filterState.psv.data, filterState.motor.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusItemsMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data, filterState.statusPSVMetric.data, filterState.statusMotorMetric.data]);
   
   const combinedFilteredTableBData = useMemo(() => {
     const { progress, hito } = filterState;
@@ -223,7 +237,8 @@ const SummarySubsystemsContainer = ({
       statusItemsMetric: { ...prev.statusItemsMetric, data: tableAData },
       statusTracingMetric: { ...prev.statusTracingMetric, data: tableAData },
       statusInsulMetric: { ...prev.statusInsulMetric, data: tableAData },
-      statusPSVMetric: { ...prev.statusPSVMetric, data: tableAData }
+      statusPSVMetric: { ...prev.statusPSVMetric, data: tableAData },
+      statusMotorMetric: { ...prev.statusMotorMetric, data: tableAData }
     }));
   }, [tableAData, tableBData]);
   
@@ -377,6 +392,7 @@ const SummarySubsystemsContainer = ({
         <StatusTracingMetric data={tableAData} onSubsystemFilter={handleStatusTracingMetricFilter} />
         <StatusInsulMetric data={tableAData} onSubsystemFilter={handleStatusInsulMetricFilter} />
         <StatusPSVMetric data={tableAData} onSubsystemFilter={handleStatusPSVMetricFilter} />
+        <StatusMotorMetric data={tableAData} onSubsystemFilter={handleStatusMotorMetricFilter} />
         <StatusPunchMetric data={tableAData} />
       </HStack>
 
