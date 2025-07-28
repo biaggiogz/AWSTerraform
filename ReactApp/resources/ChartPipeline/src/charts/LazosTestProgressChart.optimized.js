@@ -13,6 +13,7 @@ import {
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import GlobalMetricsDisplay from '../components/ui/GlobalMetricsDisplay';
+import SubsystemCompletionChart from './SubsystemCompletionChart';
 import useMultiValueFilter from '../hooks/useMultiValueFilter';
 import { useLazosTableSqlFilterContext } from '../components/filters/LazosTableFilter';
 
@@ -366,9 +367,11 @@ const LoopTestProgressChart = ({
 
   return (
     <Box>
-      {/* Chart container */}
-      <Box p={4} borderWidth="1px" borderRadius="lg" bg="white" mt={4}>
-        <Heading size="md" mb={2}>LOOP TEST PROGRESS</Heading>
+      {/* Charts container */}
+      <HStack spacing={4} align="flex-start">
+        {/* Main chart container */}
+        <Box flex={2} p={4} borderWidth="1px" borderRadius="lg" bg="white" mt={4}>
+          <Heading size="md" mb={2}>LOOP TEST PROGRESS</Heading>
         
         {/* Summary statistics */}
         <VStack mb={4} align="flex-start">
@@ -439,7 +442,13 @@ const LoopTestProgressChart = ({
             />
           </Box>
         </Box>
-      </Box>
+        </Box>
+        
+        {/* Subsystem Completion Chart */}
+        <Box flex={1}>
+          <SubsystemCompletionChart data={filteredData} />
+        </Box>
+      </HStack>
     </Box>
   );
 };
