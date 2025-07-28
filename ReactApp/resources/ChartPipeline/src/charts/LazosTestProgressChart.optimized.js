@@ -52,6 +52,9 @@ const LoopTestProgressChart = ({
   const [sortField, setSortField] = useState('totalLoops');
   const [sortDirection, setSortDirection] = useState('desc');
   
+  // State for completion filter
+  const [completionFilter, setCompletionFilter] = useState(null);
+  
   // Reference to chart container for layout recalculation
   const chartRef = useRef(null);
   
@@ -75,6 +78,11 @@ const LoopTestProgressChart = ({
   const handleSortChange = useCallback((field, direction) => {
     setSortField(field);
     setSortDirection(direction);
+  }, []);
+  
+  // Handle completion filter changes
+  const handleCompletionFilter = useCallback((filterType) => {
+    setCompletionFilter(prev => prev === filterType ? null : filterType);
   }, []);
 
   // Resize handlers
@@ -161,14 +169,23 @@ const LoopTestProgressChart = ({
       }));
   }, [filteredData]);
   
-  // Create complete sorted metrics for chart data (unaffected by filtering)
+  // Create complete sorted metrics for chart data (filtered by completion status)
   const sortedCompleteMetrics = useMemo(() => {
-    return [...metrics].sort((a, b) => {
+    let filteredMetrics = [...metrics];
+    
+    // Apply completion filter
+    if (completionFilter === 'DONE') {
+      filteredMetrics = filteredMetrics.filter(item => item.totalLoops === item.loopSignalDone);
+    } else if (completionFilter === 'PENDING') {
+      filteredMetrics = filteredMetrics.filter(item => item.loopSignalDone < item.totalLoops);
+    }
+    
+    return filteredMetrics.sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
       return sortDirection === 'desc' ? bValue - aValue : aValue - bValue;
     });
-  }, [metrics, sortField, sortDirection]);
+  }, [metrics, sortField, sortDirection, completionFilter]);
   
   // Update chart when filters change
   useEffect(() => {
@@ -383,6 +400,9 @@ const LoopTestProgressChart = ({
             {progressFilter && (
               <Badge ml={2} colorScheme="orange">Isolated: {progressFilter}</Badge>
             )}
+            {completionFilter && (
+              <Badge ml={2} colorScheme="purple">Filter: {completionFilter} Subsystems</Badge>
+            )}
           </Text>
         </VStack>
         
@@ -446,7 +466,11 @@ const LoopTestProgressChart = ({
         
         {/* Subsystem Completion Chart */}
         <Box flex={1}>
-          <SubsystemCompletionChart data={filteredData} />
+          <SubsystemCompletionChart 
+            data={filteredData} 
+            onCompletionFilter={handleCompletionFilter}
+            completionFilter={completionFilter}
+          />
         </Box>
       </HStack>
     </Box>

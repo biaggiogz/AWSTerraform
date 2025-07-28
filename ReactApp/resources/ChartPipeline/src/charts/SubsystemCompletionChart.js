@@ -18,8 +18,10 @@ Chart.register(ChartDataLabels);
  * Subsystem Completion Chart showing DONE vs PENDING subsystems
  * @param {Object} props - Component props
  * @param {Array} props.data - Filtered dataset from table
+ * @param {Function} props.onCompletionFilter - Function to handle completion filtering
+ * @param {string} props.completionFilter - Current completion filter
  */
-const SubsystemCompletionChart = ({ data }) => {
+const SubsystemCompletionChart = ({ data, onCompletionFilter, completionFilter }) => {
   // Calculate subsystem completion metrics
   const completionMetrics = useMemo(() => {
     if (!data || data.length === 0) return { done: 0, pending: 0, doneSubsystems: [], pendingSubsystems: [] };
@@ -68,14 +70,17 @@ const SubsystemCompletionChart = ({ data }) => {
     };
   }, [data]);
   
-  // Chart data
+  // Chart data with dynamic styling based on filter
   const chartData = {
     labels: ['DONE SUBSYSTEMS', 'PENDING SUBSYSTEMS'],
     datasets: [{
       data: [completionMetrics.done, completionMetrics.pending],
-      backgroundColor: ['#22C55E', '#F97316'],
+      backgroundColor: [
+        completionFilter === 'DONE' ? '#16A34A' : (completionFilter === 'PENDING' ? '#22C55E80' : '#22C55E'),
+        completionFilter === 'PENDING' ? '#EA580C' : (completionFilter === 'DONE' ? '#F9731680' : '#F97316')
+      ],
       borderColor: ['#16A34A', '#EA580C'],
-      borderWidth: 2
+      borderWidth: completionFilter ? 3 : 2
     }]
   };
   
@@ -116,6 +121,13 @@ const SubsystemCompletionChart = ({ data }) => {
           return value > 0 ? `${value}\n(${percentage}%)` : '';
         }
       }
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0 && onCompletionFilter) {
+        const index = elements[0].index;
+        const filterType = index === 0 ? 'DONE' : 'PENDING';
+        onCompletionFilter(filterType);
+      }
     }
   };
   
@@ -128,7 +140,13 @@ const SubsystemCompletionChart = ({ data }) => {
       {/* Global metrics */}
       <HStack mb={4} justify="center" spacing={6}>
         <VStack>
-          <Badge colorScheme="green" fontSize="md" px={3} py={1}>
+          <Badge 
+            colorScheme={completionFilter === 'DONE' ? "green" : "gray"} 
+            fontSize="md" 
+            px={3} 
+            py={1}
+            opacity={completionFilter && completionFilter !== 'DONE' ? 0.5 : 1}
+          >
             DONE: {completionMetrics.done}
           </Badge>
           <Text fontSize="xs" color="gray.600">
@@ -136,7 +154,13 @@ const SubsystemCompletionChart = ({ data }) => {
           </Text>
         </VStack>
         <VStack>
-          <Badge colorScheme="orange" fontSize="md" px={3} py={1}>
+          <Badge 
+            colorScheme={completionFilter === 'PENDING' ? "orange" : "gray"} 
+            fontSize="md" 
+            px={3} 
+            py={1}
+            opacity={completionFilter && completionFilter !== 'PENDING' ? 0.5 : 1}
+          >
             PENDING: {completionMetrics.pending}
           </Badge>
           <Text fontSize="xs" color="gray.600">
