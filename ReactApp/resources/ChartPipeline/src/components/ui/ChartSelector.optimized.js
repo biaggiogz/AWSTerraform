@@ -29,7 +29,6 @@ const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressT
 const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric.optimized'));
 const DynamicInstrumentsTable = lazy(() => import('../tables/DynamicInstrumentsTable.optimized'));
 const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable.superoptimized'));
-const IsometricRelationshipPanel = lazy(() => import('../panels/IsometricRelationshipPanel.optimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
 
@@ -152,14 +151,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                       </Badge>
                     )}
                   </HStack>
-                  <IsometricRelationshipPanel
-                    selectedIsometric={isometricFilter.selectedIsometric}
-                    matchingChains={isometricFilter.matchingChains}
-                    relationshipStats={isometricFilter.relationshipStats}
-                    onClearFilter={isometricFilter.onClearFilter}
-                    onChainSelect={isometricFilter.onChainSelect}
-                    selectedChainIndex={isometricFilter.selectedChainIndex}
-                  />
                   <DynamicCalculationPanel
                     controlData={controlData}
                     detailsData={detailsData}

@@ -53,7 +53,6 @@ Based on my comprehensive search through the codebase, here's a detailed breakdo
 - **Lines 159-169:** Specific handling for instruments report calculations
 - **Function:** Provides SQL-based dynamic calculations and metrics for the instruments data
 
-**File:** `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/panels/IsometricRelationshipPanel.optimized.js`
 - **Function:** Visual component for relationship status and controls (currently hidden but available)
 
 ### **8. Data Files**
