@@ -111,17 +111,7 @@ The INSTRUMENTS REPORT tab is a sophisticated component that handles dual datase
     - Global/Local metric separation (lines 524-675)
     - Real-time query execution (lines 90-95)
 
-### 2. **SQL Intellisense Components**
 
-#### **SQLIntellisense.js**
-- **File Path**: `/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/components/ui/SQLIntellisense.js`
-- **Lines**: 1-211 (complete component)
-- **Purpose**: Provides autocomplete functionality for SQL queries
-- **Features**:
-    - Field name suggestions (lines 11-23)
-    - SQL keyword suggestions (lines 25-31)
-    - Smart text completion (lines 111-130)
-    - Keyboard navigation (lines 86-109)
 
 ### 3. **Database Integration Hooks**
 
