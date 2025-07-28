@@ -11,7 +11,7 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory, MdBuild, MdCable, MdInventory} from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory, MdBuild, MdCable, MdInventory, MdSecurity} from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import InsulStatusFilter from '../filters/InsulationStatusFilter';
@@ -21,8 +21,9 @@ import HitoFilterA from '../filters/HitoFilterA';
 import SubsystemFilterA from '../filters/SubsystemFilterA'
 import InstStatusFilter from "../filters/InstStatusFilter";
 import TracingStatusFilter from "../filters/TracingStatusFilter";
+import PSVStatusFilter from "../filters/PSVStatusFilter";
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onItemsTotalFilteredControlDataChange, onItemsTotalPropagationChange, onItemsTotalFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onTracingFilteredControlDataChange, onTracingFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onItemsTotalFilteredControlDataChange, onItemsTotalPropagationChange, onItemsTotalFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onTracingFilteredControlDataChange, onTracingFilterVisibilityChange, onPSVFilteredControlDataChange, onPSVFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
@@ -46,6 +47,7 @@ FROM "Subsystem Overview";`);
   const [isItemsTotalFilterVisible, setIsItemsTotalFilterVisible] = useState(false);
   const [isInstFilterVisible, setIsInstFilterVisible] = useState(false);
   const [isTracingFilterVisible, setIsTracingFilterVisible] = useState(false);
+  const [isPSVFilterVisible, setIsPSVFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
   const [isSubsystemFilterAVisible, setIsSubsystemFilterAVisible] = useState(false);
   const [isProgressTableVisible, setIsProgressTableVisible] = useState(true);
@@ -422,6 +424,20 @@ FROM "Subsystem Overview";`);
               }}
               aria-label="Toggle tracing status filter"
               title="Tracing Status Filter"
+            />
+            <IconButton
+              icon={<MdSecurity />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const newVisibility = !isPSVFilterVisible;
+                setIsPSVFilterVisible(newVisibility);
+                if (onPSVFilterVisibilityChange) {
+                  onPSVFilterVisibilityChange(newVisibility);
+                }
+              }}
+              aria-label="Toggle PSV status filter"
+              title="PSV Status Filter"
             />
             <IconButton
               icon={<MdFlag />}
@@ -1081,6 +1097,26 @@ FROM "Subsystem Overview";`);
               }
             }}
             onPropagationChange={onItemsTotalPropagationChange || (() => {})}
+            onBringToFront={onBringToFront}
+          />
+        )}
+      
+        {isPSVFilterVisible && (
+          <PSVStatusFilter
+            data={controlData}
+            onFilterChange={onPSVFilteredControlDataChange || (() => {})}
+            isVisible={isPSVFilterVisible}
+            onClose={() => {
+              setIsPSVFilterVisible(false);
+              if (onPSVFilterVisibilityChange) {
+                onPSVFilterVisibilityChange(false);
+              }
+              // Reset this filter's effect by passing the original data
+              if (onPSVFilteredControlDataChange) {
+                onPSVFilteredControlDataChange(controlData);
+              }
+            }}
+            onPropagationChange={onLoopPropagationChange || (() => {})}
             onBringToFront={onBringToFront}
           />
         )}

@@ -35,7 +35,7 @@ const VirtualizedRow = ({ index, style, data }) => {
   );
 };
 
-const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isItemsTotalFilterVisible, isInstFilterVisible, isTracingFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
+const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isItemsTotalFilterVisible, isInstFilterVisible, isTracingFilterVisible, isPSVFilterVisible, isHitoFilterVisible, isProgressFilterVisible }) => {
   const [filteredData, setFilteredData] = useState(data);
   const lastFilterStateRef = useRef(null);
   const debounceTimeoutRef = useRef(null);
@@ -576,9 +576,46 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       accessorKey: 'psv_total',
       header: 'PSV TOTAL',
       size: 60,
-      cell: ({ getValue }) => (
-          <Text fontSize="clamp(10px, 1vw, 13px)" textAlign="center">{getValue()?.toLocaleString()}</Text>
-      )
+      cell: ({ getValue, row }) => {
+        const getPSVStatusColor = () => {
+          const totalPSV = getValue();
+          const donePSV = row.original.psv_calibrated || 0;
+          
+          if (!isPSVFilterVisible) {
+            // When filter is not visible, only show green when total equals done
+            const isDone = (totalPSV === donePSV) && (totalPSV > 0);
+            return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
+          }
+          
+          // Check if total_psv is null, undefined, empty, or 0 - "Not Apply" case
+          if (totalPSV === null || totalPSV === undefined || totalPSV === '' || totalPSV === 0) {
+            return { bg: '#212121', color: 'white' };
+          }
+          
+          // Check if all PSV are done (total equals done) and there are PSV
+          const isDone = (totalPSV === donePSV) && (totalPSV > 0);
+          
+          // Green for completed, orange for in progress
+          const bgColor = isDone ? '#06923E' : '#E85C0D';
+          return { bg: bgColor, color: 'white' };
+        };
+        
+        const colors = getPSVStatusColor();
+        
+        return (
+          <Text 
+            fontSize="xs" 
+            textAlign="center"
+            bg={colors.bg}
+            color={colors.color}
+            px={colors.bg !== 'transparent' ? 2 : 0}
+            py={colors.bg !== 'transparent' ? 1 : 0}
+            borderRadius={colors.bg !== 'transparent' ? 'sm' : 0}
+          >
+            {isPSVFilterVisible && (getValue() === null || getValue() === undefined || getValue() === '' || getValue() === 0) ? 'NOT APPLY' : getValue()?.toLocaleString()}
+          </Text>
+        );
+      }
     },
     {
       accessorKey: 'psv_calibrated',
@@ -621,7 +658,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       )
     }
 
-  ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isItemsTotalFilterVisible, isInstFilterVisible, isTracingFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
+  ], [selectedSubsystem, onSubsystemSelect, isInsulFilterVisible, isLoopFilterVisible, isItemsTotalFilterVisible, isInstFilterVisible, isTracingFilterVisible, isPSVFilterVisible, isHitoFilterVisible, isProgressFilterVisible]);
 
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {
