@@ -45,7 +45,6 @@ The "SUMMARY SUBSYSTEMS" tab provides a comprehensive dashboard for subsystem an
   - See detailed documentation in `RESIZABLE_DRAGGABLE_PANEL.md`
 
 ### Filter Components
-- **ProgressFilter.js** - Test Pack progress filtering
 - **InsulationStatusFilter.js** - Items status filtering
 - **LoopStatusFilter.js** - Loop status filtering
 
@@ -93,7 +92,6 @@ This hybrid architecture represents Phase 1 of a migration plan to gradually mov
 - **PersistentMetricCards.js**: `ReactApp/resources/ChartPipeline/src/components/ui/PersistentMetricCards.js`
 
 ## Filter Components
-- **ProgressFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/ProgressFilter.js`
 - **InsulationStatusFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/InsulationStatusFilter.js`
 - **LoopStatusFilter.js**: `ReactApp/resources/ChartPipeline/src/components/filters/LoopStatusFilter.js`
 
