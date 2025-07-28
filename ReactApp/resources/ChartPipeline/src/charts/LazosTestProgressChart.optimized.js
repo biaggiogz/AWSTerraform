@@ -42,6 +42,8 @@ const LoopTestProgressChart = ({
     selectedArea,
     handleSubsystemClick,
     handleAreaClick,
+    completionFilter,
+    handleCompletionFilter,
     tableData
   } = useLazosTableSqlFilterContext();
   
@@ -51,9 +53,6 @@ const LoopTestProgressChart = ({
   // State for sort field and direction
   const [sortField, setSortField] = useState('totalLoops');
   const [sortDirection, setSortDirection] = useState('desc');
-  
-  // State for completion filter
-  const [completionFilter, setCompletionFilter] = useState(null);
   
   // Reference to chart container for layout recalculation
   const chartRef = useRef(null);
@@ -78,11 +77,6 @@ const LoopTestProgressChart = ({
   const handleSortChange = useCallback((field, direction) => {
     setSortField(field);
     setSortDirection(direction);
-  }, []);
-  
-  // Handle completion filter changes
-  const handleCompletionFilter = useCallback((filterType) => {
-    setCompletionFilter(prev => prev === filterType ? null : filterType);
   }, []);
 
   // Resize handlers
