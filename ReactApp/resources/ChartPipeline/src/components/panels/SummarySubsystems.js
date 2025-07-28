@@ -6,14 +6,21 @@ import PersistentStateNotification from '../ui/PersistentStateNotification';
 import { useSummarySubsystemsData } from '../../hooks/useSummarySubsystemsData';
 import WasmPerformanceMonitor from '../ui/WasmPerformanceMonitor';
 import wasmUtils from '../../wasm/wasmUtils.js';
+import usePerformanceStore from '../../stores/performanceStore.js';
 
 const SummarySubsystems = ({ data: filteredData = [], isZoomed = false }) => {
   const [performanceMetrics, setPerformanceMetrics] = useState({});
   
-  // Initialize WASM on component mount
+  // Initialize WASM and performance tracking
+  const { setWasmInitialized } = usePerformanceStore();
+  
   useEffect(() => {
-    wasmUtils.initializeWasm();
-  }, []);
+    const initWasm = async () => {
+      const initialized = await wasmUtils.initializeWasm();
+      setWasmInitialized(initialized);
+    };
+    initWasm();
+  }, [setWasmInitialized]);
   
   const {
     tableAData,

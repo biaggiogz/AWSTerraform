@@ -14,6 +14,8 @@ import StatusPunchMetric from "../ui/StatusPunchMetric";
 import StatusPSVMetric from "../ui/StatusPSVMetric";
 import StatusMotorMetric from "../ui/StatusMotorMetric";
 import wasmUtils from '../../wasm/wasmUtils.js';
+import useFilterStore from '../../stores/filterStore.js';
+import usePerformanceStore from '../../stores/performanceStore.js';
 
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 
@@ -25,34 +27,9 @@ const SummarySubsystemsContainer = ({
   const [topZIndex, setTopZIndex] = useState(100);
   const [isProgressTableVisible, setIsProgressTableVisible] = useState(true);
   
-  // Centralized filter state management
-  const [filterState, setFilterState] = useState({
-    progress: { data: tableBData, visible: false },
-    status: { data: tableAData, visible: false },
-    loop: { data: tableAData, visible: false },
-    itemsTotal: { data: tableAData, visible: false },
-    inst: { data: tableAData, visible: false },
-    tracing: { data: tableAData, visible: false },
-    psv: { data: tableAData, visible: false },
-    motor: { data: tableAData, visible: false },
-    hito: { data: tableBData, visible: false },
-    subsystem: { data: tableAData, visible: false },
-    statusLoopMetric: { data: tableAData, visible: false },
-    statusInstMetric: { data: tableAData, visible: false },
-    statusItemsMetric: { data: tableAData, visible: false },
-    statusTracingMetric: { data: tableAData, visible: false },
-    statusInsulMetric: { data: tableAData, visible: false },
-    statusPSVMetric: { data: tableAData, visible: false },
-    statusMotorMetric: { data: tableAData, visible: false }
-  });
-  
-  // Centralized filter update function
-  const updateFilter = useCallback((filterType, updates) => {
-    setFilterState(prev => ({
-      ...prev,
-      [filterType]: { ...prev[filterType], ...updates }
-    }));
-  }, []);
+  // Zustand stores
+  const { filterState, updateFilter, batchUpdateFilters, setSourceData, getCombinedTableAData, getCombinedTableBData } = useFilterStore();
+  const { recordFilterExecution, recordWasmOperation } = usePerformanceStore();
 
   // Handle StatusLoopMetric subsystem filtering
   const handleStatusLoopMetricFilter = useCallback((subsystems) => {
@@ -161,46 +138,22 @@ const SummarySubsystemsContainer = ({
     loadCSVData();
   }, []);
   
-  // WASM-optimized combined filter logic
+  // Zustand-powered combined filter logic with performance tracking
   const combinedFilteredTableAData = useMemo(() => {
-    const { status, loop, itemsTotal, inst, tracing, psv, motor, subsystem, statusLoopMetric, statusInstMetric, statusItemsMetric, statusTracingMetric, statusInsulMetric, statusPSVMetric, statusMotorMetric } = filterState;
-    
-    // Extract subsystem arrays for WASM intersection
-    const subsystemSets = [
-      status.data.map(row => row.subsystem),
-      loop.data.map(row => row.subsystem),
-      itemsTotal.data.map(row => row.subsystem),
-      inst.data.map(row => row.subsystem),
-      tracing.data.map(row => row.subsystem),
-      psv.data.map(row => row.subsystem),
-      motor.data.map(row => row.subsystem),
-      subsystem.data.map(row => row.subsystem),
-      statusLoopMetric.data.map(row => row.subsystem),
-      statusInstMetric.data.map(row => row.subsystem),
-      statusItemsMetric.data.map(row => row.subsystem),
-      statusTracingMetric.data.map(row => row.subsystem),
-      statusInsulMetric.data.map(row => row.subsystem),
-      statusPSVMetric.data.map(row => row.subsystem),
-      statusMotorMetric.data.map(row => row.subsystem)
-    ];
-    
-    // Use WASM for high-performance intersection
-    const allowedSubsystems = wasmUtils.intersectFilterSets(subsystemSets);
-    const allowedSet = new Set(allowedSubsystems);
-    
-    return tableAData.filter(row => allowedSet.has(row.subsystem));
-  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.itemsTotal.data, filterState.inst.data, filterState.tracing.data, filterState.psv.data, filterState.motor.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusItemsMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data, filterState.statusPSVMetric.data, filterState.statusMotorMetric.data]);
+    const startTime = performance.now();
+    const result = getCombinedTableAData();
+    const executionTime = performance.now() - startTime;
+    recordFilterExecution('intersection', executionTime);
+    return result;
+  }, [getCombinedTableAData, recordFilterExecution]);
   
   const combinedFilteredTableBData = useMemo(() => {
-    const { progress, hito } = filterState;
-    
-    if (hito.data.length === 0) {
-      return progress.data;
-    }
-    
-    const hitoSubsystems = new Set(hito.data.map(row => row.subsystem));
-    return progress.data.filter(row => hitoSubsystems.has(row.subsystem));
-  }, [filterState.progress.data, filterState.hito.data]);
+    const startTime = performance.now();
+    const result = getCombinedTableBData();
+    const executionTime = performance.now() - startTime;
+    recordFilterExecution('intersection', executionTime);
+    return result;
+  }, [getCombinedTableBData, recordFilterExecution]);
   
   const {
     selectedSubsystem,
@@ -212,31 +165,15 @@ const SummarySubsystemsContainer = ({
   
   // Initialize filter data when source data changes
   useEffect(() => {
-    setFilterState(prev => ({
-      progress: { ...prev.progress, data: tableBData },
-      status: { ...prev.status, data: tableAData },
-      loop: { ...prev.loop, data: tableAData },
-      itemsTotal: { ...prev.itemsTotal, data: tableAData },
-      inst: { ...prev.inst, data: tableAData },
-      tracing: { ...prev.tracing, data: tableAData },
-      psv: { ...prev.psv, data: tableAData },
-      motor: { ...prev.motor, data: tableAData },
-      hito: { ...prev.hito, data: tableBData },
-      subsystem: { ...prev.subsystem, data: tableAData },
-      statusLoopMetric: { ...prev.statusLoopMetric, data: tableAData },
-      statusInstMetric: { ...prev.statusInstMetric, data: tableAData },
-      statusItemsMetric: { ...prev.statusItemsMetric, data: tableAData },
-      statusTracingMetric: { ...prev.statusTracingMetric, data: tableAData },
-      statusInsulMetric: { ...prev.statusInsulMetric, data: tableAData },
-      statusPSVMetric: { ...prev.statusPSVMetric, data: tableAData },
-      statusMotorMetric: { ...prev.statusMotorMetric, data: tableAData }
-    }));
-  }, [tableAData, tableBData]);
+    setSourceData(tableAData, tableBData);
+  }, [tableAData, tableBData, setSourceData]);
   
-  // Centralized filter change handlers
+  // Zustand-powered filter change handlers with batch updates
   const handleProgressFilterChange = useCallback((filteredData) => {
+    const startTime = performance.now();
     updateFilter('progress', { data: filteredData });
-  }, [updateFilter]);
+    recordFilterExecution('testPackFilter', performance.now() - startTime);
+  }, [updateFilter, recordFilterExecution]);
   
   const handleStatusFilterChange = useCallback((filteredData) => {
     updateFilter('status', { data: filteredData });

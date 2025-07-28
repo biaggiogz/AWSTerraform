@@ -19,6 +19,7 @@ export const intersectFilterSets = (sets) => {
   if (sets.length === 0) return [];
   if (sets.length === 1) return sets[0];
   
+  const startTime = performance.now();
   let result = sets[0];
   
   for (let i = 1; i < sets.length; i++) {
@@ -26,12 +27,27 @@ export const intersectFilterSets = (sets) => {
     if (result.length === 0) break;
   }
   
+  // Track performance if store is available
+  if (typeof window !== 'undefined' && window.__performanceStore) {
+    const executionTime = performance.now() - startTime;
+    window.__performanceStore.recordWasmOperation(executionTime, true);
+  }
+  
   return result;
 };
 
 export const calculateTableRowHeights = (descriptions) => {
+  const startTime = performance.now();
   const textLengths = descriptions.map(desc => (desc || '').length);
-  return wasmBridge.calculateRowHeights(textLengths);
+  const result = wasmBridge.calculateRowHeights(textLengths);
+  
+  // Track performance if store is available
+  if (typeof window !== 'undefined' && window.__performanceStore) {
+    const executionTime = performance.now() - startTime;
+    window.__performanceStore.recordWasmOperation(executionTime, true);
+  }
+  
+  return result;
 };
 
 export const filterRowsByTestPacks = (testPackIds, rowData) => {
