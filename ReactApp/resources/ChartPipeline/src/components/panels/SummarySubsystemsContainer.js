@@ -26,6 +26,7 @@ const SummarySubsystemsContainer = ({
     progress: { data: tableBData, visible: false },
     status: { data: tableAData, visible: false },
     loop: { data: tableAData, visible: false },
+    itemsTotal: { data: tableAData, visible: false },
     inst: { data: tableAData, visible: false },
     tracing: { data: tableAData, visible: false },
     hito: { data: tableBData, visible: false },
@@ -123,11 +124,12 @@ const SummarySubsystemsContainer = ({
   
   // Optimized combined filter logic
   const combinedFilteredTableAData = useMemo(() => {
-    const { status, loop, inst, tracing, subsystem, statusLoopMetric, statusInstMetric, statusTracingMetric, statusInsulMetric } = filterState;
+    const { status, loop, itemsTotal, inst, tracing, subsystem, statusLoopMetric, statusInstMetric, statusTracingMetric, statusInsulMetric } = filterState;
     
     // Find intersection of all TableA filters
     const statusSubsystems = new Set(status.data.map(row => row.subsystem));
     const loopSubsystems = new Set(loop.data.map(row => row.subsystem));
+    const itemsTotalSubsystems = new Set(itemsTotal.data.map(row => row.subsystem));
     const instSubsystems = new Set(inst.data.map(row => row.subsystem));
     const tracingSubsystems = new Set(tracing.data.map(row => row.subsystem));
     const subsystemSubsystems = new Set(subsystem.data.map(row => row.subsystem));
@@ -139,6 +141,7 @@ const SummarySubsystemsContainer = ({
     return tableAData.filter(row => 
       statusSubsystems.has(row.subsystem) && 
       loopSubsystems.has(row.subsystem) &&
+      itemsTotalSubsystems.has(row.subsystem) &&
       instSubsystems.has(row.subsystem) &&
       tracingSubsystems.has(row.subsystem) &&
       subsystemSubsystems.has(row.subsystem) &&
@@ -147,7 +150,7 @@ const SummarySubsystemsContainer = ({
       statusTracingMetricSubsystems.has(row.subsystem) &&
       statusInsulMetricSubsystems.has(row.subsystem)
     );
-  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.inst.data, filterState.tracing.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data]);
+  }, [tableAData, filterState.status.data, filterState.loop.data, filterState.itemsTotal.data, filterState.inst.data, filterState.tracing.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data]);
   
   const combinedFilteredTableBData = useMemo(() => {
     const { progress, hito } = filterState;
@@ -174,6 +177,7 @@ const SummarySubsystemsContainer = ({
       progress: { ...prev.progress, data: tableBData },
       status: { ...prev.status, data: tableAData },
       loop: { ...prev.loop, data: tableAData },
+      itemsTotal: { ...prev.itemsTotal, data: tableAData },
       inst: { ...prev.inst, data: tableAData },
       tracing: { ...prev.tracing, data: tableAData },
       hito: { ...prev.hito, data: tableBData },
@@ -196,6 +200,10 @@ const SummarySubsystemsContainer = ({
   
   const handleLoopFilterChange = useCallback((filteredData) => {
     updateFilter('loop', { data: filteredData });
+  }, [updateFilter]);
+
+  const handleItemsTotalFilterChange = useCallback((filteredData) => {
+    updateFilter('itemsTotal', { data: filteredData });
   }, [updateFilter]);
 
   const handleInstFilterChange = useCallback((filteredData) => {
@@ -226,6 +234,16 @@ const SummarySubsystemsContainer = ({
   }, [tableBData, updateFilter]);
   
   const handleItemsPropagationChange = useCallback((filteredData, target) => {
+    if (target === 'tableB') {
+      const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
+      const propagatedData = tableBData.filter(row => allowedSubsystems.has(row.subsystem));
+      updateFilter('progress', { data: propagatedData });
+    } else if (target === 'nothing') {
+      updateFilter('progress', { data: tableBData });
+    }
+  }, [tableBData, updateFilter]);
+
+  const handleItemsTotalPropagationChange = useCallback((filteredData, target) => {
     if (target === 'tableB') {
       const allowedSubsystems = new Set(filteredData.map(row => row.subsystem));
       const propagatedData = tableBData.filter(row => allowedSubsystems.has(row.subsystem));
@@ -331,6 +349,9 @@ const SummarySubsystemsContainer = ({
           onLoopFilteredControlDataChange={handleLoopFilterChange}
           onLoopPropagationChange={handleLoopPropagationChange}
           onItemsPropagationChange={handleItemsPropagationChange}
+          onItemsTotalFilteredControlDataChange={handleItemsTotalFilterChange}
+          onItemsTotalPropagationChange={handleItemsTotalPropagationChange}
+          onItemsTotalFilterVisibilityChange={(visible) => updateFilter('itemsTotal', { visible })}
           onProgressFilterVisibilityChange={(visible) => updateFilter('progress', { visible })}
           onItemsFilterVisibilityChange={(visible) => updateFilter('status', { visible })}
           onLoopFilterVisibilityChange={(visible) => updateFilter('loop', { visible })}
@@ -371,6 +392,7 @@ const SummarySubsystemsContainer = ({
             onSubsystemSelect={handleSubsystemSelect}
             isInsulFilterVisible={filterState.status.visible}
             isLoopFilterVisible={filterState.loop.visible}
+            isItemsTotalFilterVisible={filterState.itemsTotal.visible}
             isInstFilterVisible={filterState.inst.visible}
             isTracingFilterVisible={filterState.tracing.visible}
             isHitoFilterVisible={filterState.hito.visible}

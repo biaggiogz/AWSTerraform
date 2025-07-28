@@ -11,17 +11,18 @@ import {
   useColorModeValue,
   IconButton
 } from '@chakra-ui/react';
-import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory, MdBuild, MdCable} from 'react-icons/md';
+import { MdClose, MdLock, MdLockOpen, MdExpandLess, MdExpandMore, MdCheckCircle, MdLoop, MdFlag, MdPrecisionManufacturing ,MdCategory, MdBuild, MdCable, MdInventory} from 'react-icons/md';
 import useDynamicCalculations from '../../hooks/useDynamicCalculations';
 import { usePersistentSQLState } from '../../hooks/usePersistentSQLState';
 import InsulStatusFilter from '../filters/InsulationStatusFilter';
 import LoopStatusFilter from '../filters/LoopStatusFilter';
+import ItemsTotalStatusFilter from '../filters/ItemsTotalStatusFilter';
 import HitoFilterA from '../filters/HitoFilterA';
 import SubsystemFilterA from '../filters/SubsystemFilterA'
 import InstStatusFilter from "../filters/InstStatusFilter";
 import TracingStatusFilter from "../filters/TracingStatusFilter";
 
-const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onTracingFilteredControlDataChange, onTracingFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
+const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onItemsTotalFilteredControlDataChange, onItemsTotalPropagationChange, onItemsTotalFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onTracingFilteredControlDataChange, onTracingFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
   // Determine tab context based on data structure
   const isSubsystemsTab = controlData && detailsData && 
     controlData[0] && ('subsystem' in controlData[0] || 'serialNumber' in controlData[0]);
@@ -42,6 +43,7 @@ FROM "Subsystem Overview";`);
 
   const [isLoopFilterVisible, setIsLoopFilterVisible] = useState(false);
   const [isInsulFilterVisible, setIsInsulFilterVisible] = useState(false);
+  const [isItemsTotalFilterVisible, setIsItemsTotalFilterVisible] = useState(false);
   const [isInstFilterVisible, setIsInstFilterVisible] = useState(false);
   const [isTracingFilterVisible, setIsTracingFilterVisible] = useState(false);
   const [isHitoFilterVisible, setIsHitoFilterVisible] = useState(false);
@@ -378,6 +380,20 @@ FROM "Subsystem Overview";`);
               }}
               aria-label="Toggle loop status filter"
               title="Loop Status Filter"
+            />
+            <IconButton
+              icon={<MdInventory />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const newVisibility = !isItemsTotalFilterVisible;
+                setIsItemsTotalFilterVisible(newVisibility);
+                if (onItemsTotalFilterVisibilityChange) {
+                  onItemsTotalFilterVisibilityChange(newVisibility);
+                }
+              }}
+              aria-label="Toggle items total status filter"
+              title="Items Total Status Filter"
             />
             <IconButton
               icon={<MdBuild />}
@@ -1041,6 +1057,30 @@ FROM "Subsystem Overview";`);
               }
             }}
             onPropagationChange={onLoopPropagationChange || (() => {})}
+            onBringToFront={onBringToFront}
+          />
+        )}
+      
+        {isItemsTotalFilterVisible && (
+          <ItemsTotalStatusFilter
+            data={controlData}
+            onFilterChange={onItemsTotalFilteredControlDataChange || (() => {})}
+            isVisible={isItemsTotalFilterVisible}
+            onClose={() => {
+              setIsItemsTotalFilterVisible(false);
+              if (onItemsTotalFilterVisibilityChange) {
+                onItemsTotalFilterVisibilityChange(false);
+              }
+              // Reset this filter's effect by passing the original data
+              if (onItemsTotalFilteredControlDataChange) {
+                onItemsTotalFilteredControlDataChange(controlData);
+              }
+              // Reset propagation if it was active
+              if (onItemsTotalPropagationChange) {
+                onItemsTotalPropagationChange([], 'nothing');
+              }
+            }}
+            onPropagationChange={onItemsTotalPropagationChange || (() => {})}
             onBringToFront={onBringToFront}
           />
         )}
