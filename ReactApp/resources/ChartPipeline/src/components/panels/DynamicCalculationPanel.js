@@ -23,6 +23,7 @@ import InstStatusFilter from "../filters/InstStatusFilter";
 import TracingStatusFilter from "../filters/TracingStatusFilter";
 import PSVStatusFilter from "../filters/PSVStatusFilter";
 import MotorStatusFilter from "../filters/MotorStatusFilter";
+import wasmUtils from '../../wasm/wasmUtils.js';
 
 const DynamicCalculationPanel = ({ controlData, detailsData, filteredControlData, filteredDetailsData, csvProgressData, filters, onFilteredDataChange, onFilteredControlDataChange, onLoopFilteredControlDataChange, onLoopPropagationChange, onItemsPropagationChange, onProgressFilterVisibilityChange, onItemsFilterVisibilityChange, onLoopFilterVisibilityChange, onItemsTotalFilteredControlDataChange, onItemsTotalPropagationChange, onItemsTotalFilterVisibilityChange, onInstFilteredControlDataChange, onInstFilterVisibilityChange, onTracingFilteredControlDataChange, onTracingFilterVisibilityChange, onPSVFilteredControlDataChange, onPSVFilterVisibilityChange, onMotorFilteredControlDataChange, onMotorFilterVisibilityChange, onProgressPropagationChange, onHitoPropagationChange, onHitoFilterVisibilityChange, onHitoFilteredDataChange, onSubsystemPropagationChange, onSubsystemFilterVisibilityChange, onSubsystemFilteredDataChange, onProgressTableVisibilityChange, onBringToFront }) => {
   // Determine tab context based on data structure
@@ -248,7 +249,7 @@ FROM "Subsystem Overview";`);
     }, 0);
   };
 
-  // Update metric cards when calculations change or filtered data changes
+  // WASM-optimized metric cards update
   React.useEffect(() => {
     if (calculations.length > 0) {
       // Create a unique key for each calculation to prevent duplicates

@@ -13,6 +13,7 @@ import StatusInsulMetric from "../ui/StatusInsulMetric";
 import StatusPunchMetric from "../ui/StatusPunchMetric";
 import StatusPSVMetric from "../ui/StatusPSVMetric";
 import StatusMotorMetric from "../ui/StatusMotorMetric";
+import wasmUtils from '../../wasm/wasmUtils.js';
 
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 
@@ -160,44 +161,34 @@ const SummarySubsystemsContainer = ({
     loadCSVData();
   }, []);
   
-  // Optimized combined filter logic
+  // WASM-optimized combined filter logic
   const combinedFilteredTableAData = useMemo(() => {
     const { status, loop, itemsTotal, inst, tracing, psv, motor, subsystem, statusLoopMetric, statusInstMetric, statusItemsMetric, statusTracingMetric, statusInsulMetric, statusPSVMetric, statusMotorMetric } = filterState;
     
-    // Find intersection of all TableA filters
-    const statusSubsystems = new Set(status.data.map(row => row.subsystem));
-    const loopSubsystems = new Set(loop.data.map(row => row.subsystem));
-    const itemsTotalSubsystems = new Set(itemsTotal.data.map(row => row.subsystem));
-    const instSubsystems = new Set(inst.data.map(row => row.subsystem));
-    const tracingSubsystems = new Set(tracing.data.map(row => row.subsystem));
-    const psvSubsystems = new Set(psv.data.map(row => row.subsystem));
-    const motorSubsystems = new Set(motor.data.map(row => row.subsystem));
-    const subsystemSubsystems = new Set(subsystem.data.map(row => row.subsystem));
-    const statusLoopMetricSubsystems = new Set(statusLoopMetric.data.map(row => row.subsystem));
-    const statusInstMetricSubsystems = new Set(statusInstMetric.data.map(row => row.subsystem));
-    const statusItemsMetricSubsystems = new Set(statusItemsMetric.data.map(row => row.subsystem));
-    const statusTracingMetricSubsystems = new Set(statusTracingMetric.data.map(row => row.subsystem));
-    const statusInsulMetricSubsystems = new Set(statusInsulMetric.data.map(row => row.subsystem));
-    const statusPSVMetricSubsystems = new Set(statusPSVMetric.data.map(row => row.subsystem));
-    const statusMotorMetricSubsystems = new Set(statusMotorMetric.data.map(row => row.subsystem));
+    // Extract subsystem arrays for WASM intersection
+    const subsystemSets = [
+      status.data.map(row => row.subsystem),
+      loop.data.map(row => row.subsystem),
+      itemsTotal.data.map(row => row.subsystem),
+      inst.data.map(row => row.subsystem),
+      tracing.data.map(row => row.subsystem),
+      psv.data.map(row => row.subsystem),
+      motor.data.map(row => row.subsystem),
+      subsystem.data.map(row => row.subsystem),
+      statusLoopMetric.data.map(row => row.subsystem),
+      statusInstMetric.data.map(row => row.subsystem),
+      statusItemsMetric.data.map(row => row.subsystem),
+      statusTracingMetric.data.map(row => row.subsystem),
+      statusInsulMetric.data.map(row => row.subsystem),
+      statusPSVMetric.data.map(row => row.subsystem),
+      statusMotorMetric.data.map(row => row.subsystem)
+    ];
     
-    return tableAData.filter(row => 
-      statusSubsystems.has(row.subsystem) && 
-      loopSubsystems.has(row.subsystem) &&
-      itemsTotalSubsystems.has(row.subsystem) &&
-      instSubsystems.has(row.subsystem) &&
-      tracingSubsystems.has(row.subsystem) &&
-      psvSubsystems.has(row.subsystem) &&
-      motorSubsystems.has(row.subsystem) &&
-      subsystemSubsystems.has(row.subsystem) &&
-      statusLoopMetricSubsystems.has(row.subsystem) &&
-      statusInstMetricSubsystems.has(row.subsystem) &&
-      statusItemsMetricSubsystems.has(row.subsystem) &&
-      statusTracingMetricSubsystems.has(row.subsystem) &&
-      statusInsulMetricSubsystems.has(row.subsystem) &&
-      statusPSVMetricSubsystems.has(row.subsystem) &&
-      statusMotorMetricSubsystems.has(row.subsystem)
-    );
+    // Use WASM for high-performance intersection
+    const allowedSubsystems = wasmUtils.intersectFilterSets(subsystemSets);
+    const allowedSet = new Set(allowedSubsystems);
+    
+    return tableAData.filter(row => allowedSet.has(row.subsystem));
   }, [tableAData, filterState.status.data, filterState.loop.data, filterState.itemsTotal.data, filterState.inst.data, filterState.tracing.data, filterState.psv.data, filterState.motor.data, filterState.subsystem.data, filterState.statusLoopMetric.data, filterState.statusInstMetric.data, filterState.statusItemsMetric.data, filterState.statusTracingMetric.data, filterState.statusInsulMetric.data, filterState.statusPSVMetric.data, filterState.statusMotorMetric.data]);
   
   const combinedFilteredTableBData = useMemo(() => {

@@ -5,9 +5,15 @@ import PersistentMetricCards from '../ui/PersistentMetricCards';
 import PersistentStateNotification from '../ui/PersistentStateNotification';
 import { useSummarySubsystemsData } from '../../hooks/useSummarySubsystemsData';
 import WasmPerformanceMonitor from '../ui/WasmPerformanceMonitor';
+import wasmUtils from '../../wasm/wasmUtils.js';
 
 const SummarySubsystems = ({ data: filteredData = [], isZoomed = false }) => {
   const [performanceMetrics, setPerformanceMetrics] = useState({});
+  
+  // Initialize WASM on component mount
+  useEffect(() => {
+    wasmUtils.initializeWasm();
+  }, []);
   
   const {
     tableAData,

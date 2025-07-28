@@ -2,6 +2,7 @@ import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import { Box, Heading, Text, HStack, Button, Tooltip, Grid, Progress, VStack } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { VariableSizeList as List } from 'react-window';
+import wasmUtils from '../../wasm/wasmUtils.js';
 
 const VirtualizedRow = ({ index, style, data }) => {
   const { rows, table } = data;
@@ -42,7 +43,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   const filterCacheRef = useRef(new Map());
   const heightCacheRef = useRef(new Map());
   
-  // Optimized filter function with caching
+  // WASM-optimized filter function with caching
   const filterDataByTPs = useCallback((sourceData, filteredTPs) => {
     if (!filteredTPs || filteredTPs.length === 0) return sourceData;
     
@@ -850,35 +851,37 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     return Math.max(baseHeight, baseHeight + (linesNeeded - 1) * lineHeight);
   }, []);
   
-  // Memoized row heights based on description length
+  // WASM-optimized row heights based on description length
   const rowHeights = useMemo(() => {
     const currentData = isProgressFilterVisible ? filteredData : data;
     const heights = new Map();
     
-    currentData?.forEach((row, index) => {
-      const description = row.description || '';
-      const cacheKey = `${row.id || index}_${description.substring(0, 50)}`;
+    if (currentData?.length > 0) {
+      const descriptions = currentData.map(row => row.description || '');
       
-      if (heightCacheRef.current.has(cacheKey)) {
-        heights.set(index, heightCacheRef.current.get(cacheKey));
-      } else {
-        const height = calculateRowHeight(description);
+      // Use WASM for batch height calculation
+      const calculatedHeights = wasmUtils.calculateTableRowHeights(descriptions);
+      
+      currentData.forEach((row, index) => {
+        const cacheKey = `${row.id || index}_${descriptions[index].substring(0, 50)}`;
+        const height = calculatedHeights[index];
+        
         heights.set(index, height);
         heightCacheRef.current.set(cacheKey, height);
-      }
-    });
-    
-    // Limit cache size
-    if (heightCacheRef.current.size > 100) {
-      const entries = Array.from(heightCacheRef.current.entries());
-      heightCacheRef.current.clear();
-      entries.slice(-50).forEach(([key, value]) => {
-        heightCacheRef.current.set(key, value);
       });
+      
+      // Limit cache size
+      if (heightCacheRef.current.size > 100) {
+        const entries = Array.from(heightCacheRef.current.entries());
+        heightCacheRef.current.clear();
+        entries.slice(-50).forEach(([key, value]) => {
+          heightCacheRef.current.set(key, value);
+        });
+      }
     }
     
     return heights;
-  }, [data, filteredData, isProgressFilterVisible, calculateRowHeight]);
+  }, [data, filteredData, isProgressFilterVisible]);
   
   // Optimized getRowHeight function
   const getRowHeight = useCallback((index) => {
