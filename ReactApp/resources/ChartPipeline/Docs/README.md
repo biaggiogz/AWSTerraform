@@ -57,7 +57,6 @@ ChartPipeline/
 │   │   ├── GlobalMetricsDisplay.js # Global metrics display component
 │   │   ├── InsulationProgressTable.optimized.js # Table "Insulation Progress" for Tab 2
 │   │   ├── IsometricRelationshipFilter.optimized.js # Isometric relationship filtering
-│   │   ├── LazosTable.optimized.js # Virtualized resizable data table for Tab 1
 │   │   ├── MultiValueFilterPanel.js # Multi-value filter panel with relationship mapping
 │   │   ├── SidebarMetricContributionPanel.js # Sidebar metric contribution panel
 │   │   ├── SidebarProgressItemsPanel.js # Sidebar progress items panel
@@ -101,7 +100,6 @@ ChartPipeline/
 
 - **FilterPanel.optimized.js**: Intelligent filter panel with bidirectional relationship mapping between Design Area and Subsystem, implementing dynamic cross-filtering with visual indicators.
 - **ChartSelector.optimized.js**: Configurable tab-based interface with code-splitting and lazy loading for efficient chart switching.
-- **LazosTable.optimized.js**: ✅ **Enhanced with Resizable & Responsive Features** - Virtualized data table component with drag-to-resize functionality, mobile/tablet/desktop optimization, and detachable window support.
 - **GlobalMetricsDisplay.js**: ✅ **New Component** - Displays unfiltered global statistics with color-coded metrics that remain constant regardless of applied filters.
 - **Table "Insulation Progress"**: ✅ **Production Component** - Virtualized table for INSULATION PROGRESS CONTROL tab using @tanstack/react-virtual and @tanstack/react-table, optimized for 1,500+ rows with Area/Subsystem filtering integration.
 - **SummarySubsystems.js**: ✅ **SQL-Generated Component** - Tabular component displaying subsystem progress metrics including total items, completed items, and pending items, generated from SQL queries against the aislamientos.csv dataset.

@@ -23,7 +23,6 @@ import FilterStatusBar from '../filters/FilterStatusBar';
 const LoopTestProgressChart = lazy(() => import('../../charts/LazosTestProgressChart.optimized'));
 const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationProgressControlChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
-const LazosTable = lazy(() => import('../tables/LazosTable.optimized'));
 const LazosTableSql = lazy(() => import('../tables/LazosTableSqlDuckDb'));
 const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
 const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric.optimized'));
