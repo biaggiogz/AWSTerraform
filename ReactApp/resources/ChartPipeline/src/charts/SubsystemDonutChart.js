@@ -1,10 +1,18 @@
 import React, { useMemo } from 'react';
 import { Doughnut } from 'react-chartjs-2';
-import { Box, Heading, Text, VStack, HStack, Badge } from '@chakra-ui/react';
+import { Box, Heading, Text, VStack, HStack, Badge, Button } from '@chakra-ui/react';
 import { useLazosTableSqlFilterContext } from '../components/filters/LazosTableFilter';
 
-const SubsystemDonutChart = () => {
+const SubsystemDonutChart = ({ onProgressFilter, progressFilter }) => {
   const { tableData, selectedSubsystem, handleSubsystemClick } = useLazosTableSqlFilterContext();
+
+  // Handle progress filter changes
+  const handleProgressFilter = (filterType) => {
+    if (onProgressFilter) {
+      const newFilter = progressFilter === filterType ? null : filterType;
+      onProgressFilter(newFilter);
+    }
+  };
 
   // Calculate subsystem completion status
   const subsystemMetrics = useMemo(() => {
@@ -102,10 +110,32 @@ const SubsystemDonutChart = () => {
       <VStack spacing={4}>
         <Heading size="md">Subsystem Completion Status</Heading>
         
-        <HStack spacing={4}>
-          <Badge colorScheme="green">Done: {subsystemMetrics.done}</Badge>
-          <Badge colorScheme="red">Pending: {subsystemMetrics.pending}</Badge>
-          <Badge colorScheme="blue">Total: {total}</Badge>
+        {/* Filter Buttons */}
+        <HStack spacing={2} wrap="wrap" justify="center">
+          <Button
+            size="xs"
+            variant={progressFilter === 'LOOP (Signal) DONE' ? "solid" : "outline"}
+            colorScheme="green"
+            onClick={() => handleProgressFilter('LOOP (Signal) DONE')}
+          >
+            Done: {subsystemMetrics.done}
+          </Button>
+          <Button
+            size="xs"
+            variant={progressFilter === 'LOOP (Signal) PENDING' ? "solid" : "outline"}
+            colorScheme="red"
+            onClick={() => handleProgressFilter('LOOP (Signal) PENDING')}
+          >
+            Pending: {subsystemMetrics.pending}
+          </Button>
+          <Button
+            size="xs"
+            variant={progressFilter === 'TOTAL LOOP (Signal)' ? "solid" : "outline"}
+            colorScheme="blue"
+            onClick={() => handleProgressFilter('TOTAL LOOP (Signal)')}
+          >
+            Total: {total}
+          </Button>
         </HStack>
 
         {selectedSubsystem && (
@@ -114,16 +144,16 @@ const SubsystemDonutChart = () => {
           </Badge>
         )}
 
-        <Box height="300px" width="100%">
+        <Box height="300px" width="100%" position="relative">
           <Doughnut data={chartData} options={options} />
-        </Box>
-
-        {/* Center text showing completion percentage */}
-        <Box position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" textAlign="center">
-          <Text fontSize="2xl" fontWeight="bold" color="green.500">
-            {total > 0 ? ((subsystemMetrics.done / total) * 100).toFixed(1) : 0}%
-          </Text>
-          <Text fontSize="sm" color="gray.600">Complete</Text>
+          
+          {/* Center text showing completion percentage */}
+          <Box position="absolute" top="50%" left="50%" transform="translate(-50%, -50%)" textAlign="center" pointerEvents="none">
+            <Text fontSize="2xl" fontWeight="bold" color="green.500">
+              {total > 0 ? ((subsystemMetrics.done / total) * 100).toFixed(1) : 0}%
+            </Text>
+            <Text fontSize="sm" color="gray.600">Complete</Text>
+          </Box>
         </Box>
       </VStack>
     </Box>

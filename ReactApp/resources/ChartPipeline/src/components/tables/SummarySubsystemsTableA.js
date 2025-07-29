@@ -96,10 +96,8 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     };
     
     if (immediate || filterState.length === 0) {
-      // Apply immediately for clearing filters or when explicitly requested
       applyFilter();
     } else {
-      // Use debounce for normal filtering
       debounceTimeoutRef.current = setTimeout(applyFilter, 150);
     }
   }, [data, filterDataByTPs]);
@@ -224,20 +222,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           const doneItems = row.original.done_items || 0;
           
           if (!isItemsTotalFilterVisible) {
-            // When filter is not visible, only show green when total equals done
             const isDone = (totalItems === doneItems) && (totalItems > 0);
             return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
           }
           
-          // Check if total_items is null, undefined, empty, or 0 - "Not Apply" case
           if (totalItems === null || totalItems === undefined || totalItems === '' || totalItems === 0) {
             return { bg: '#212121', color: 'white' };
           }
           
-          // Check if all items are done (total equals done) and there are items
           const isDone = (totalItems === doneItems) && (totalItems > 0);
-          
-          // Green for completed, orange for in progress
           const bgColor = isDone ? '#06923E' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
@@ -308,20 +301,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           const doneLoops = row.original.done_loop || 0;
           
           if (!isLoopFilterVisible) {
-            // When filter is not visible, only show green when total equals done
             const isDone = (totalLoops === doneLoops) && (totalLoops > 0);
             return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
           }
           
-          // Check if total_loop is null, undefined, empty, or 0 - "Not Apply" case
           if (totalLoops === null || totalLoops === undefined || totalLoops === '' || totalLoops === 0) {
             return { bg: '#212121', color: 'white' };
           }
           
-          // Check if all loops are done (total equals done) and there are loops
           const isDone = (totalLoops === doneLoops) && (totalLoops > 0);
-          
-          // Green for completed, orange for in progress
           const bgColor = isDone ? '#06923E' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
@@ -367,22 +355,17 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
         const getInstStatusColor = () => {
           const totalInst = getValue();
           const doneInst = row.original.done_inst || 0;
-
+          
           if (!isInstFilterVisible) {
-            // When filter is not visible, only show green when total equals done
             const isDone = (totalInst === doneInst) && (totalInst > 0);
             return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
           }
-
-          // Check if total_loop is null, undefined, empty, or 0 - "Not Apply" case
+          
           if (totalInst === null || totalInst === undefined || totalInst === '' || totalInst === 0) {
             return { bg: '#212121', color: 'white' };
           }
-
-          // Check if all loops are done (total equals done) and there are loops
+          
           const isDone = (totalInst === doneInst) && (totalInst > 0);
-
-          // Green for completed, orange for in progress
           const bgColor = isDone ? '#06923E' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
@@ -428,23 +411,18 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       cell: ({ getValue, row }) => {
         const getTracingStatusColor = () => {
           const totalTracing = getValue();
-          const doneTracing = row.original.done_tracing;
-
+          const doneTracing = row.original.done_tracing || 0;
+          
           if (!isTracingFilterVisible) {
-            // When filter is not visible, only show green when total equals done
             const isDone = (totalTracing === doneTracing) && (totalTracing > 0);
             return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
           }
-
-          // Check if total_tracing is null, undefined, empty, or 0 - "Not Apply" case
+          
           if (totalTracing === null || totalTracing === undefined || totalTracing === '' || totalTracing === 0) {
             return { bg: '#212121', color: 'white' };
           }
-
-          // Check if all tracing are done (total equals done) and there are tracing
+          
           const isDone = (totalTracing === doneTracing) && (totalTracing > 0);
-
-          // Green for completed, orange for in progress
           const bgColor = isDone ? '#06923E' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
@@ -488,24 +466,19 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
       size: 60,
       cell: ({ getValue, row }) => {
         const getInsulStatusColor = () => {
-
           const totalInsul = getValue() || 0;
           const doneInsul = row.original.done_insulation || 0;
-
+          
           if (!isInsulFilterVisible) {
-            // When filter is not visible, only show green when total equals done
             const isDone = (totalInsul === doneInsul) && (totalInsul > 0);
             return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
           }
-
-          // Check if total_loop is null, undefined, empty, or 0 - "Not Apply" case
+          
           if (totalInsul === null || totalInsul === undefined || totalInsul === '' || totalInsul === 0) {
             return { bg: '#212121', color: 'white' };
           }
-          // Check if all insul are done (total equals done) and there are insul
-          const isDone = (totalInsul === doneInsul) && (totalInsul > 0);
           
-          // Green for completed, orange for in progress
+          const isDone = (totalInsul === doneInsul) && (totalInsul > 0);
           const bgColor = isDone ? '#06923E' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
@@ -585,20 +558,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           const donePSV = row.original.psv_calibrated || 0;
           
           if (!isPSVFilterVisible) {
-            // When filter is not visible, only show green when total equals done
             const isDone = (totalPSV === donePSV) && (totalPSV > 0);
             return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
           }
           
-          // Check if total_psv is null, undefined, empty, or 0 - "Not Apply" case
           if (totalPSV === null || totalPSV === undefined || totalPSV === '' || totalPSV === 0) {
             return { bg: '#212121', color: 'white' };
           }
           
-          // Check if all PSV are done (total equals done) and there are PSV
           const isDone = (totalPSV === donePSV) && (totalPSV > 0);
-          
-          // Green for completed, orange for in progress
           const bgColor = isDone ? '#06923E' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
@@ -646,20 +614,15 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
           const doneMotor = row.original.motor_solo_run_done || 0;
           
           if (!isMotorFilterVisible) {
-            // When filter is not visible, only show green when total equals done
             const isDone = (totalMotor === doneMotor) && (totalMotor > 0);
             return isDone ? { bg: '#06923E', color: 'white' } : { bg: 'transparent', color: 'inherit' };
           }
           
-          // Check if total_motor is null, undefined, empty, or 0 - "Not Apply" case
           if (totalMotor === null || totalMotor === undefined || totalMotor === '' || totalMotor === 0) {
             return { bg: '#212121', color: 'white' };
           }
           
-          // Check if all motors are done (total equals done) and there are motors
           const isDone = (totalMotor === doneMotor) && (totalMotor > 0);
-          
-          // Green for completed, orange for in progress
           const bgColor = isDone ? '#06923E' : '#E85C0D';
           return { bg: bgColor, color: 'white' };
         };
@@ -893,7 +856,6 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   // Memoized table data with subsystem selection priority
   const tableData = useMemo(() => {
     const baseData = isProgressFilterVisible ? filteredData || [] : data || [];
-    // Ensure immediate response for subsystem changes by not blocking on filter state
     return baseData;
   }, [isProgressFilterVisible, filteredData, data]);
   

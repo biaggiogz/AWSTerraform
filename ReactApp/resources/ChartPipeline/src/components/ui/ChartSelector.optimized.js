@@ -129,7 +129,10 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                         />
                       </Box>
                       <Box flex={1}>
-                        <SubsystemDonutChart />
+                        <SubsystemDonutChart 
+                          onProgressFilter={onProgressFilter}
+                          progressFilter={progressFilter}
+                        />
                       </Box>
                     </HStack>
                     <LazosTableSql />
