@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { 
   Box, 
@@ -21,9 +21,8 @@ Chart.register(ChartDataLabels);
  * @param {Array} props.data - Filtered dataset from table
  */
 const SubsystemCompletionChart = ({ data }) => {
-  // Get filter context
-  const { handleSubsystemClick, selectedSubsystem } = useLazosTableSqlFilterContext();
-  
+  const { handleSubsystemClick } = useLazosTableSqlFilterContext();
+  const [completionFilter, setCompletionFilter] = useState(null);
   // Calculate subsystem completion metrics
   const completionMetrics = useMemo(() => {
     if (!data || data.length === 0) return { done: 0, pending: 0, doneSubsystems: [], pendingSubsystems: [] };
@@ -72,25 +71,6 @@ const SubsystemCompletionChart = ({ data }) => {
     };
   }, [data]);
   
-  // Chart click handler - now properly filters by subsystem status
-  const handleChartClick = useCallback((event, elements) => {
-    if (elements.length > 0) {
-      const elementIndex = elements[0].index;
-      const clickedStatus = elementIndex === 0 ? 'DONE' : 'PENDING';
-      
-      // Get subsystems for the clicked status
-      const targetSubsystems = clickedStatus === 'DONE' ? 
-        completionMetrics.doneSubsystems : completionMetrics.pendingSubsystems;
-      
-      // If we have subsystems for this status, select the first one or cycle through them
-      if (targetSubsystems.length > 0) {
-        const currentIndex = targetSubsystems.indexOf(selectedSubsystem);
-        const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % targetSubsystems.length : 0;
-        handleSubsystemClick(targetSubsystems[nextIndex]);
-      }
-    }
-  }, [handleSubsystemClick, selectedSubsystem, completionMetrics.doneSubsystems, completionMetrics.pendingSubsystems]);
-  
   // Chart data
   const chartData = {
     labels: ['DONE SUBSYSTEMS', 'PENDING SUBSYSTEMS'],
@@ -106,7 +86,18 @@ const SubsystemCompletionChart = ({ data }) => {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    onClick: handleChartClick,
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        if (index === 0 && completionMetrics.doneSubsystems.length > 0) {
+          handleSubsystemClick(completionMetrics.doneSubsystems[0]);
+          setCompletionFilter('DONE');
+        } else if (index === 1 && completionMetrics.pendingSubsystems.length > 0) {
+          handleSubsystemClick(completionMetrics.pendingSubsystems[0]);
+          setCompletionFilter('PENDING');
+        }
+      }
+    },
     plugins: {
       legend: {
         position: 'bottom',
@@ -114,6 +105,16 @@ const SubsystemCompletionChart = ({ data }) => {
           padding: 20,
           font: {
             size: 12
+          }
+        },
+        onClick: (event, legendItem) => {
+          const index = legendItem.index;
+          if (index === 0 && completionMetrics.doneSubsystems.length > 0) {
+            handleSubsystemClick(completionMetrics.doneSubsystems[0]);
+            setCompletionFilter('DONE');
+          } else if (index === 1 && completionMetrics.pendingSubsystems.length > 0) {
+            handleSubsystemClick(completionMetrics.pendingSubsystems[0]);
+            setCompletionFilter('PENDING');
           }
         }
       },
@@ -152,7 +153,19 @@ const SubsystemCompletionChart = ({ data }) => {
       {/* Global metrics */}
       <HStack mb={4} justify="center" spacing={6}>
         <VStack>
-          <Badge colorScheme="green" fontSize="md" px={3} py={1}>
+          <Badge 
+            colorScheme={completionFilter === 'DONE' ? 'green' : 'gray'} 
+            fontSize="md" 
+            px={3} 
+            py={1}
+            cursor="pointer"
+            onClick={() => {
+              if (completionMetrics.doneSubsystems.length > 0) {
+                handleSubsystemClick(completionMetrics.doneSubsystems[0]);
+                setCompletionFilter('DONE');
+              }
+            }}
+          >
             DONE: {completionMetrics.done}
           </Badge>
           <Text fontSize="xs" color="gray.600">
@@ -160,7 +173,19 @@ const SubsystemCompletionChart = ({ data }) => {
           </Text>
         </VStack>
         <VStack>
-          <Badge colorScheme="orange" fontSize="md" px={3} py={1}>
+          <Badge 
+            colorScheme={completionFilter === 'PENDING' ? 'orange' : 'gray'} 
+            fontSize="md" 
+            px={3} 
+            py={1}
+            cursor="pointer"
+            onClick={() => {
+              if (completionMetrics.pendingSubsystems.length > 0) {
+                handleSubsystemClick(completionMetrics.pendingSubsystems[0]);
+                setCompletionFilter('PENDING');
+              }
+            }}
+          >
             PENDING: {completionMetrics.pending}
           </Badge>
           <Text fontSize="xs" color="gray.600">

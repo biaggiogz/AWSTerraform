@@ -51,7 +51,9 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
     const lazosTableSqlGetSqlWhereClause = useCallback(() => {
         const conditions = [];
         
-        // Internal filters (from table clicks) - these take priority
+        console.log('External filters received:', externalFilters);
+
+        // Internal filters (from table clicks)
         if (lazosTableSqlSelectedSubsystem) {
             conditions.push(`subsystem = '${lazosTableSqlSelectedSubsystem}'`);
         }
@@ -60,18 +62,22 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
             conditions.push(`area_tlp = '${lazosTableSqlSelectedArea}'`);
         }
 
-        // External filters (from main filter panel) - only apply if no internal filters
-        if (!lazosTableSqlSelectedSubsystem && externalFilters.subsystem && externalFilters.subsystem.length > 0) {
-            const subsystemValues = externalFilters.subsystem.map(sub => `'${sub}'`).join(', ');
-            conditions.push(`subsystem IN (${subsystemValues})`);
-        }
-
-        if (!lazosTableSqlSelectedArea && externalFilters.area_tlp && externalFilters.area_tlp.length > 0) {
+        // External filters (from main filter panel)
+        if (externalFilters.area_tlp && externalFilters.area_tlp.length > 0) {
             const areaValues = externalFilters.area_tlp.map(area => `'${area}'`).join(', ');
             conditions.push(`area_tlp IN (${areaValues})`);
+            console.log('Added area filter:', `area_tlp IN (${areaValues})`);
         }
 
-        return conditions.length > 0 ? conditions.join(' AND ') : '';
+        if (externalFilters.subsystem && externalFilters.subsystem.length > 0) {
+            const subsystemValues = externalFilters.subsystem.map(sub => `'${sub}'`).join(', ');
+            conditions.push(`subsystem IN (${subsystemValues})`);
+            console.log('Added subsystem filter:', `subsystem IN (${subsystemValues})`);
+        }
+
+        const finalClause = conditions.length > 0 ? conditions.join(' AND ') : '';
+        console.log('Final WHERE clause:', finalClause);
+        return finalClause;
     }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea, externalFilters]);
 
     // Context value

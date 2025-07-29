@@ -898,7 +898,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   }, [isProgressFilterVisible, filteredData, data]);
   
   // Excel export handler
-  const handleExcelExport = useCallback(() => {
+  const handleExcelExport = useCallback(async () => {
     const filterStates = {
       items: { visible: isItemsTotalFilterVisible },
       loop: { visible: isLoopFilterVisible },
@@ -910,7 +910,7 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     };
     
     try {
-      const filename = exportSummarySubsystemsToExcel(tableData, filterStates);
+      const filename = await exportSummarySubsystemsToExcel(tableData, filterStates);
       console.log(`Excel file exported: ${filename}`);
     } catch (error) {
       console.error('Error exporting to Excel:', error);
