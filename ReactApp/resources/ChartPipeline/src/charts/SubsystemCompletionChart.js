@@ -129,61 +129,71 @@ const SubsystemCompletionChart = () => {
     }
   }), []);
 
-  if (loading) return <Box p={4}><Text>Loading...</Text></Box>;
-  if (error) return <Box p={4}><Text color="red.500">Error: {error}</Text></Box>;
+  if (loading) return <Box><Box p={4} borderWidth="1px" borderRadius="lg" bg="white" mt={4}><Text>Loading...</Text></Box></Box>;
+  if (error) return <Box><Box p={4} borderWidth="1px" borderRadius="lg" bg="white" mt={4}><Text color="red.500">Error: {error}</Text></Box></Box>;
 
   const totalSubsystems = completionData.completedCount + completionData.pendingCount;
 
   return (
-    <Box p={4} borderWidth="1px" borderRadius="lg" bg="white">
-      <Heading size="md" mb={4} textAlign="center">
-        SUBSYSTEM COMPLETION STATUS
-      </Heading>
-      
-      {/* Filter Buttons */}
-      <HStack justify="center" mb={4} spacing={2}>
-        <Button
-          size="sm"
-          colorScheme={subsystemCompletionFilter === 'DONE' ? 'green' : 'gray'}
-          variant={subsystemCompletionFilter === 'DONE' ? 'solid' : 'outline'}
-          onClick={() => {
-            console.log('DONE button clicked, current filter:', subsystemCompletionFilter);
-            handleSubsystemCompletionFilter('DONE');
-          }}
-        >
-          DONE ({completionData.completedCount})
-        </Button>
-        <Button
-          size="sm"
-          colorScheme={subsystemCompletionFilter === 'PENDING' ? 'red' : 'gray'}
-          variant={subsystemCompletionFilter === 'PENDING' ? 'solid' : 'outline'}
-          onClick={() => handleSubsystemCompletionFilter('PENDING')}
-        >
-          PENDING ({completionData.pendingCount})
-        </Button>
-        <Button
-          size="sm"
-          colorScheme={subsystemCompletionFilter === 'TOTAL' ? 'blue' : 'gray'}
-          variant={subsystemCompletionFilter === 'TOTAL' ? 'solid' : 'outline'}
-          onClick={() => handleSubsystemCompletionFilter('TOTAL')}
-        >
-          TOTAL ({totalSubsystems})
-        </Button>
-      </HStack>
-      
-      <SimpleGrid columns={1} spacing={4}>
-        {/* Chart */}
-        <Box height="250px">
-          <Doughnut data={chartData} options={options} />
-        </Box>
+    <Box>
+      {/* Chart container - matching LoopTestProgressChart structure exactly */}
+      <Box p={4} borderWidth="1px" borderRadius="lg" bg="white"  mt={4}>
+        <Heading size="md" mb={2}>
+          SUBSYSTEM COMPLETION STATUS
+        </Heading>
         
-        {/* Completion Rate */}
-        <Text fontSize="md" fontWeight="bold" color="green.600" textAlign="center">
-          Completion Rate: {totalSubsystems > 0 ? ((completionData.completedCount / totalSubsystems) * 100).toFixed(1) : 0}%
-        </Text>
-      </SimpleGrid>
-      
-
+        {/* Summary statistics - matching LoopTestProgressChart */}
+        <VStack mb={4} align="flex-start">
+          <Text fontSize="sm">
+            <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
+            <Badge ml={2} colorScheme="green">Completion Rate: {totalSubsystems > 0 ? ((completionData.completedCount / totalSubsystems) * 100).toFixed(1) : 0}%</Badge>
+          </Text>
+        </VStack>
+        
+        {/* Filter Buttons - matching GlobalMetricsDisplay position */}
+        <HStack justify="center" mb={4} spacing={2}>
+          <Button
+            size="sm"
+            colorScheme={subsystemCompletionFilter === 'DONE' ? 'green' : 'gray'}
+            variant={subsystemCompletionFilter === 'DONE' ? 'solid' : 'outline'}
+            onClick={() => handleSubsystemCompletionFilter('DONE')}
+          >
+            DONE ({completionData.completedCount})
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={subsystemCompletionFilter === 'PENDING' ? 'red' : 'gray'}
+            variant={subsystemCompletionFilter === 'PENDING' ? 'solid' : 'outline'}
+            onClick={() => handleSubsystemCompletionFilter('PENDING')}
+          >
+            PENDING ({completionData.pendingCount})
+          </Button>
+          <Button
+            size="sm"
+            colorScheme={subsystemCompletionFilter === 'TOTAL' ? 'blue' : 'gray'}
+            variant={subsystemCompletionFilter === 'TOTAL' ? 'solid' : 'outline'}
+            onClick={() => handleSubsystemCompletionFilter('TOTAL')}
+          >
+            TOTAL ({totalSubsystems})
+          </Button>
+        </HStack>
+        
+        {/* Chart container - matching LoopTestProgressChart structure */}
+        <Box position="relative">
+          <Box 
+            height="460px"
+            border="1px solid"
+            borderColor="gray.200"
+            borderRadius="md"
+            position="relative"
+            p={4}
+          >
+            <Box height="100%">
+              <Doughnut data={chartData} options={options} />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 };

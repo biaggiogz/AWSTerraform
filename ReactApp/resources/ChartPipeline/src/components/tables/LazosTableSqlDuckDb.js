@@ -411,8 +411,8 @@ const LazosTableSqlLoopTestControl = () => {
                                 {headerGroup.headers.map(header => (
                                     <Box
                                         key={header.id}
-                                        minWidth="120px"
-                                        maxWidth="200px"
+                                        width="120px"
+                                        flexShrink={0}
                                         px={2}
                                         py={2}
                                         borderRight="1px solid"
@@ -454,8 +454,8 @@ const LazosTableSqlLoopTestControl = () => {
                                     {row.getVisibleCells().map(cell => (
                                         <Box
                                             key={cell.id}
-                                            minWidth="120px"
-                                            maxWidth="200px"
+                                            width="120px"
+                                            flexShrink={0}
                                             px={2}
                                             py={1}
                                             borderRight="1px solid"
