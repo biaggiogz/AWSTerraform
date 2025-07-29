@@ -8,7 +8,6 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
     // Filter state - subsystem and area filters
     const [lazosTableSqlSelectedSubsystem, setLazosTableSqlSelectedSubsystem] = useState(null);
     const [lazosTableSqlSelectedArea, setLazosTableSqlSelectedArea] = useState(null);
-    const [lazosTableSqlCompletionFilter, setLazosTableSqlCompletionFilter] = useState(null);
 
     // Table data for chart visualization
     const [lazosTableSqlTableData, setLazosTableSqlTableData] = useState([]);
@@ -24,22 +23,16 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
         setLazosTableSqlSelectedArea(prev => prev === area ? null : area);
     }, []);
 
-    // Handle completion filter
-    const lazosTableSqlHandleCompletionFilter = useCallback((filterType) => {
-        setLazosTableSqlCompletionFilter(prev => prev === filterType ? null : filterType);
-    }, []);
-
     // Clear all filters
     const lazosTableSqlClearAllFilters = useCallback(() => {
         setLazosTableSqlSelectedSubsystem(null);
         setLazosTableSqlSelectedArea(null);
-        setLazosTableSqlCompletionFilter(null);
     }, []);
 
     // Filter function for Loop Test Control table
     const lazosTableSqlFilterData = useCallback((data) => {
         if (!data || !data.length) return [];
-        if (!lazosTableSqlSelectedSubsystem && !lazosTableSqlSelectedArea && !lazosTableSqlCompletionFilter) return data;
+        if (!lazosTableSqlSelectedSubsystem && !lazosTableSqlSelectedArea) return data;
 
         return data.filter(row => {
             // Filter by subsystem
@@ -50,34 +43,15 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
             if (lazosTableSqlSelectedArea && row['AREA'] !== lazosTableSqlSelectedArea) {
                 return false;
             }
-            // Filter by completion status
-            if (lazosTableSqlCompletionFilter) {
-                const subsystem = row['SUBSYSTEM'];
-                if (!subsystem) return false;
-                
-                // Calculate completion status for this subsystem
-                const subsystemRows = data.filter(item => item['SUBSYSTEM'] === subsystem);
-                const totalLoops = subsystemRows.length;
-                const doneLoops = subsystemRows.filter(item => parseFloat(item['OK100']) === 1.0).length;
-                
-                if (lazosTableSqlCompletionFilter === 'DONE' && totalLoops !== doneLoops) {
-                    return false;
-                }
-                if (lazosTableSqlCompletionFilter === 'PENDING' && totalLoops === doneLoops) {
-                    return false;
-                }
-            }
             return true;
         });
-    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea, lazosTableSqlCompletionFilter]);
+    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea]);
 
     // Create SQL WHERE clauses for direct filtering in queries
     const lazosTableSqlGetSqlWhereClause = useCallback(() => {
         const conditions = [];
         
-        console.log('External filters received:', externalFilters);
-
-        // Internal filters (from table clicks)
+        // Internal filters (from table clicks) - these take priority
         if (lazosTableSqlSelectedSubsystem) {
             conditions.push(`subsystem = '${lazosTableSqlSelectedSubsystem}'`);
         }
@@ -86,22 +60,18 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
             conditions.push(`area_tlp = '${lazosTableSqlSelectedArea}'`);
         }
 
-        // External filters (from main filter panel)
-        if (externalFilters.area_tlp && externalFilters.area_tlp.length > 0) {
-            const areaValues = externalFilters.area_tlp.map(area => `'${area}'`).join(', ');
-            conditions.push(`area_tlp IN (${areaValues})`);
-            console.log('Added area filter:', `area_tlp IN (${areaValues})`);
-        }
-
-        if (externalFilters.subsystem && externalFilters.subsystem.length > 0) {
+        // External filters (from main filter panel) - only apply if no internal filters
+        if (!lazosTableSqlSelectedSubsystem && externalFilters.subsystem && externalFilters.subsystem.length > 0) {
             const subsystemValues = externalFilters.subsystem.map(sub => `'${sub}'`).join(', ');
             conditions.push(`subsystem IN (${subsystemValues})`);
-            console.log('Added subsystem filter:', `subsystem IN (${subsystemValues})`);
         }
 
-        const finalClause = conditions.length > 0 ? conditions.join(' AND ') : '';
-        console.log('Final WHERE clause:', finalClause);
-        return finalClause;
+        if (!lazosTableSqlSelectedArea && externalFilters.area_tlp && externalFilters.area_tlp.length > 0) {
+            const areaValues = externalFilters.area_tlp.map(area => `'${area}'`).join(', ');
+            conditions.push(`area_tlp IN (${areaValues})`);
+        }
+
+        return conditions.length > 0 ? conditions.join(' AND ') : '';
     }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea, externalFilters]);
 
     // Context value
@@ -109,12 +79,10 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
         // Filter state
         selectedSubsystem: lazosTableSqlSelectedSubsystem,
         selectedArea: lazosTableSqlSelectedArea,
-        completionFilter: lazosTableSqlCompletionFilter,
 
         // Filter handlers
         handleSubsystemClick: lazosTableSqlHandleSubsystemClick,
         handleAreaClick: lazosTableSqlHandleAreaClick,
-        handleCompletionFilter: lazosTableSqlHandleCompletionFilter,
         clearAllFilters: lazosTableSqlClearAllFilters,
 
         // Filter functions
@@ -131,10 +99,8 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
     }), [
         lazosTableSqlSelectedSubsystem,
         lazosTableSqlSelectedArea,
-        lazosTableSqlCompletionFilter,
         lazosTableSqlHandleSubsystemClick,
         lazosTableSqlHandleAreaClick,
-        lazosTableSqlHandleCompletionFilter,
         lazosTableSqlClearAllFilters,
         lazosTableSqlFilterData,
         lazosTableSqlGetSqlWhereClause,

@@ -122,6 +122,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                         rawData={rawData}
                         onProgressFilter={onProgressFilter}
                         progressFilter={progressFilter}
+                        filterMappings={{ area: 'area_tlp', subsystem: 'subsystem' }}
                     />
                     <LazosTableSql />
                   </VStack>

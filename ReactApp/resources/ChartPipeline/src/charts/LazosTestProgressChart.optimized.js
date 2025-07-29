@@ -42,13 +42,28 @@ const LoopTestProgressChart = ({
     selectedArea,
     handleSubsystemClick,
     handleAreaClick,
-    completionFilter,
-    handleCompletionFilter,
-    tableData
+    tableData,
+    setTableData
   } = useLazosTableSqlFilterContext();
   
-  // Use table data from context as primary source
-  const filteredData = tableData || [];
+  // Update table data in context when data changes
+  React.useEffect(() => {
+    if (data && data.length > 0 && setTableData) {
+      setTableData(data);
+    }
+  }, [data, setTableData]);
+  
+  // Use table data from context as primary source, but filter it based on current selections
+  const filteredData = useMemo(() => {
+    if (!tableData || tableData.length === 0) return data || [];
+    
+    // Apply subsystem filter if one is selected
+    if (selectedSubsystem) {
+      return tableData.filter(row => row['SUBSYSTEM'] === selectedSubsystem);
+    }
+    
+    return tableData;
+  }, [tableData, selectedSubsystem, data]);
   
   // State for sort field and direction
   const [sortField, setSortField] = useState('totalLoops');
@@ -163,23 +178,14 @@ const LoopTestProgressChart = ({
       }));
   }, [filteredData]);
   
-  // Create complete sorted metrics for chart data (filtered by completion status)
+  // Create complete sorted metrics for chart data (unaffected by filtering)
   const sortedCompleteMetrics = useMemo(() => {
-    let filteredMetrics = [...metrics];
-    
-    // Apply completion filter
-    if (completionFilter === 'DONE') {
-      filteredMetrics = filteredMetrics.filter(item => item.totalLoops === item.loopSignalDone);
-    } else if (completionFilter === 'PENDING') {
-      filteredMetrics = filteredMetrics.filter(item => item.loopSignalDone < item.totalLoops);
-    }
-    
-    return filteredMetrics.sort((a, b) => {
+    return [...metrics].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
       return sortDirection === 'desc' ? bValue - aValue : aValue - bValue;
     });
-  }, [metrics, sortField, sortDirection, completionFilter]);
+  }, [metrics, sortField, sortDirection]);
   
   // Update chart when filters change
   useEffect(() => {
@@ -205,6 +211,17 @@ const LoopTestProgressChart = ({
     return Math.max(200, count * heightPerBar);
   };
   
+  // Chart click handler to filter table by subsystem
+  const handleChartClick = useCallback((event, elements) => {
+    if (elements.length > 0) {
+      const elementIndex = elements[0].index;
+      const subsystem = sortedCompleteMetrics[elementIndex]?.subsystem;
+      if (subsystem && handleSubsystemClick) {
+        handleSubsystemClick(subsystem);
+      }
+    }
+  }, [sortedCompleteMetrics, handleSubsystemClick]);
+
   // Prepare chart data with memoization and dynamic reordering based on sort field
   const chartData = useMemo(() => {
     // Define all datasets using complete metrics (not filtered) for consistent chart display
@@ -257,116 +274,77 @@ const LoopTestProgressChart = ({
       reorderedDatasets.unshift(sortedDataset);
     }
     
-    // Remove sortField property before passing to chart
-    const allDatasets = reorderedDatasets.map(({ sortField, ...dataset }) => dataset);
-    
     return {
       labels: sortedCompleteMetrics.map(item => item.subsystem),
-      datasets: allDatasets
+      datasets: reorderedDatasets
     };
-  }, [sortedCompleteMetrics, sortField, progressFilter]);
-  
-  // Chart options with memoization
-  const options = useMemo(() => {
-    // Get optimal spacing based on number of bars
-    const { barPercentage, categoryPercentage } = getOptimalSpacing(sortedCompleteMetrics.length);
-    
-    return {
-      indexAxis: 'y', // Horizontal bar chart
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: {
-        duration: sortedCompleteMetrics.length <= 5 ? 0 : 300
+  }, [sortedCompleteMetrics, progressFilter, sortField]);
+
+  // Chart options with click handler
+  const chartOptions = useMemo(() => ({
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    onClick: handleChartClick,
+    plugins: {
+      legend: {
+        display: false
       },
-      plugins: {
-        legend: {
-          display: false, // We'll create a custom legend
-        },
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              const label = context.dataset.label || '';
-              const value = context.raw || 0;
-              return `${label}: ${value}`;
-            },
-            footer: (tooltipItems) => {
-              const index = tooltipItems[0].dataIndex;
-              const total = sortedCompleteMetrics[index].totalLoops;
-              return `TOTAL LOOP (Signal): ${total}`;
-            }
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.dataset.label || '';
+            const value = context.raw || 0;
+            return `${label}: ${value}`;
           },
-          enabled: false,
-          mode: 'index',
-          intersect: false
-        },
-        // Configure the datalabels plugin
-        datalabels: {
-          color: function(context) {
-            // Choose text color based on background color for better contrast
-            const backgroundColor = context.dataset.backgroundColor;
-            // For dark backgrounds (like blue), use white text
-            if (backgroundColor === '#3B4CCA') {
-              return 'white';
-            }
-            // For light backgrounds, use dark text
-            return '#333333';
-          },
-          font: {
-            weight: 'bold',
-            size: 11
-          },
-          formatter: function(value) {
-            // Only show value if it's greater than 0
-            return value > 0 ? value : '';
-          },
-          // Position the label in the center of the bar segment
-          align: 'center',
-          anchor: 'center',
-          // Only display if the segment is wide enough
-          display: function(context) {
-            return context.dataset.data[context.dataIndex] > 0;
+          footer: (tooltipItems) => {
+            const index = tooltipItems[0].dataIndex;
+            const total = sortedCompleteMetrics[index].totalLoops;
+            return `TOTAL LOOP (Signal): ${total}`;
           }
-        }
-      },
-      scales: {
-        x: {
-          stacked: true,
-          title: {
-            display: true,
-            text: 'TOTAL LOOPS'
-          },
-          ticks: {
-            maxTicksLimit: 10 // Limit the number of ticks for better performance
-          },
-          grid: {
-            display: true,
-            drawBorder: true,
-            color: 'rgba(0, 0, 0, 0.1)' // Light grid lines
-          },
-          beginAtZero: true
         },
-        y: {
-          stacked: true,
-          title: {
-            display: true,
-            text: 'SUBSYSTEM'
-          },
-          // Dynamic spacing based on number of bars
-          barPercentage,
-          categoryPercentage
-        }
+        mode: 'index',
+        intersect: false
       },
-      onClick: (event, elements) => {
-        if (elements.length > 0) {
-          const index = elements[0].index;
-          const clickedSubsystem = sortedCompleteMetrics[index]?.subsystem;
-          if (clickedSubsystem && handleSubsystemClick) {
-            handleSubsystemClick(clickedSubsystem);
-          }
-        }
+      datalabels: {
+        display: (context) => {
+          const value = context.dataset.data[context.dataIndex];
+          return value > 0;
+        },
+        anchor: 'center',
+        align: 'center',
+        color: 'white',
+        font: { weight: 'bold', size: 10 },
+        formatter: (value) => value > 0 ? value : ''
       }
-    };
-  }, [sortedCompleteMetrics]);
+    },
+    scales: {
+      x: {
+        stacked: true,
+        title: {
+          display: true,
+          text: 'TOTAL LOOPS'
+        },
+        ticks: {
+          maxTicksLimit: 10
+        },
+        grid: {
+          display: true,
+          drawBorder: true,
+          color: 'rgba(0, 0, 0, 0.1)'
+        },
+        beginAtZero: true
+      },
+      y: {
+        stacked: true,
+        title: {
+          display: true,
+          text: 'SUBSYSTEM'
+        },
+        ...getOptimalSpacing(sortedCompleteMetrics.length)
+      }
+    }
+  }), [handleChartClick, sortedCompleteMetrics, getOptimalSpacing]);
 
   // Calculate summary statistics once
   const totalSubsystems = sortedCompleteMetrics.length;
@@ -393,9 +371,6 @@ const LoopTestProgressChart = ({
             )}
             {progressFilter && (
               <Badge ml={2} colorScheme="orange">Isolated: {progressFilter}</Badge>
-            )}
-            {completionFilter && (
-              <Badge ml={2} colorScheme="purple">Filter: {completionFilter} Subsystems</Badge>
             )}
           </Text>
         </VStack>
@@ -426,7 +401,13 @@ const LoopTestProgressChart = ({
               height={`${Math.max(chartContainerHeight, chartHeight)}px`}
               minHeight={`${Math.max(200, sortedCompleteMetrics.length * 30)}px`}
             >
-              <Bar data={chartData} options={options} />
+              <Bar 
+                key={chartKey}
+                ref={chartRef}
+                data={chartData} 
+                options={chartOptions}
+                height={chartContainerHeight}
+              />
             </Box>
           </Box>
           
@@ -460,11 +441,7 @@ const LoopTestProgressChart = ({
         
         {/* Subsystem Completion Chart */}
         <Box flex={1}>
-          <SubsystemCompletionChart 
-            data={filteredData} 
-            onCompletionFilter={handleCompletionFilter}
-            completionFilter={completionFilter}
-          />
+          <SubsystemCompletionChart data={filteredData} />
         </Box>
       </HStack>
     </Box>

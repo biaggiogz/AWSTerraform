@@ -1,8 +1,10 @@
 import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react';
-import { Box, Heading, Text, HStack, Button, Tooltip, Grid, Progress, VStack } from '@chakra-ui/react';
+import { Box, Heading, Text, HStack, Button, Tooltip, Grid, Progress, VStack, IconButton } from '@chakra-ui/react';
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
 import { VariableSizeList as List } from 'react-window';
+import { MdFileDownload } from 'react-icons/md';
 import wasmUtils from '../../wasm/wasmUtils.js';
+import { exportSummarySubsystemsToExcel } from '../../utils/excelExport.js';
 
 const VirtualizedRow = ({ index, style, data }) => {
   const { rows, table } = data;
@@ -895,6 +897,26 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
     return baseData;
   }, [isProgressFilterVisible, filteredData, data]);
   
+  // Excel export handler
+  const handleExcelExport = useCallback(() => {
+    const filterStates = {
+      items: { visible: isItemsTotalFilterVisible },
+      loop: { visible: isLoopFilterVisible },
+      inst: { visible: isInstFilterVisible },
+      tracing: { visible: isTracingFilterVisible },
+      insul: { visible: isInsulFilterVisible },
+      psv: { visible: isPSVFilterVisible },
+      motor: { visible: isMotorFilterVisible }
+    };
+    
+    try {
+      const filename = exportSummarySubsystemsToExcel(tableData, filterStates);
+      console.log(`Excel file exported: ${filename}`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+    }
+  }, [tableData, isItemsTotalFilterVisible, isLoopFilterVisible, isInstFilterVisible, isTracingFilterVisible, isInsulFilterVisible, isPSVFilterVisible, isMotorFilterVisible]);
+  
   const table = useReactTable({
     data: tableData,
     columns,
@@ -913,7 +935,23 @@ const SummarySubsystemsTableA = ({ data, selectedSubsystem, onSubsystemSelect, i
   const headerGroups = useMemo(() => table.getHeaderGroups(), [table]);
 
   return (
-    <Box border="1px solid" borderColor="gray.200" borderRadius="md" bg="white" height="100%" display="flex" flexDirection="column">
+    <Box border="1px solid" borderColor="gray.200" borderRadius="md" bg="white" height="100%" display="flex" flexDirection="column" position="relative">
+      {/* Export Button */}
+      <Box position="absolute" top={2} right={2} zIndex={10}>
+        <Tooltip label="Export to Excel" placement="left">
+          <IconButton
+            icon={<MdFileDownload />}
+            size="sm"
+            colorScheme="green"
+            variant="solid"
+            onClick={handleExcelExport}
+            aria-label="Export to Excel"
+            bg="#06923E"
+            color="white"
+            _hover={{ bg: "#058a37" }}
+          />
+        </Tooltip>
+      </Box>
 
       {/* Scrollable Container */}
       <Box flex={1} overflowX="auto" overflowY="hidden">
