@@ -293,9 +293,10 @@ const LazosTableSqlLoopTestControl = () => {
         try {
             setLazosTableSqlLoading(true);
             const whereClause = getSqlWhereClause();
+            console.log('LazosTableSql executing query with WHERE clause:', whereClause);
             const startQueryTime = performance.now();
             
-            const result = await executeQuery(`
+            const finalQuery = `
                 SELECT code_tlp AS "CODE",
                 subsystem AS "SUBSYSTEM",
                 tag_loop_tlp AS "TAG LOOP",
@@ -320,10 +321,14 @@ const LazosTableSqlLoopTestControl = () => {
                 FROM master_subsystem
                 WHERE tag_loop_tlp is not null
                 ${whereClause ? ` AND ${whereClause}` : ''}
-            `);
+            `;
+            
+            console.log('Final SQL query:', finalQuery);
+            const result = await executeQuery(finalQuery);
             
             const endQueryTime = performance.now();
             setLazosTableSqlQueryTime(Math.round(endQueryTime - startQueryTime));
+            console.log('Query result count:', result?.length || 0);
             setLazosTableSqlData(result || []);
             
             if (setTableData) {
