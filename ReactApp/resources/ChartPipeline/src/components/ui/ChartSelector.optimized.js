@@ -21,6 +21,7 @@ import FilterStatusBar from '../filters/FilterStatusBar';
 
 // Lazy load chart components
 const LoopTestProgressChart = lazy(() => import('../../charts/LazosTestProgressChart.optimized'));
+const SubsystemDonutChart = lazy(() => import('../../charts/SubsystemDonutChart'));
 const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationProgressControlChart.optimized'));
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
 const LazosTableSql = lazy(() => import('../tables/LazosTableSqlDuckDb'));
@@ -116,14 +117,21 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
                 <LazosTableSqlFilterProvider externalFilters={multiFilters}>
-                  <VStack spacing={0} align="stretch">
-                    <LoopTestProgressChart
-                        data={data}
-                        rawData={rawData}
-                        onProgressFilter={onProgressFilter}
-                        progressFilter={progressFilter}
-                        filterMappings={{ area: 'area_tlp', subsystem: 'subsystem' }}
-                    />
+                  <VStack spacing={4} align="stretch">
+                    <HStack spacing={4} align="flex-start">
+                      <Box flex={2}>
+                        <LoopTestProgressChart
+                            data={data}
+                            rawData={rawData}
+                            onProgressFilter={onProgressFilter}
+                            progressFilter={progressFilter}
+                            filterMappings={{ area: 'area_tlp', subsystem: 'subsystem' }}
+                        />
+                      </Box>
+                      <Box flex={1}>
+                        <SubsystemDonutChart />
+                      </Box>
+                    </HStack>
                     <LazosTableSql />
                   </VStack>
                 </LazosTableSqlFilterProvider>
