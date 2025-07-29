@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as duckdb from '@duckdb/duckdb-wasm';
 import * as arrow from 'apache-arrow';
+import { startTimer } from '../utils/performanceMonitor';
 
 // Use the jsDelivr bundles
 const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
@@ -134,7 +135,7 @@ const useDuckDB3 = () => {
     }
   }, []);
 
-  // Execute SQL query with caching
+  // Execute SQL query with caching and performance monitoring
   const executeQuery = useCallback(async (sql, options = {}) => {
     if (!dbConnection) {
       throw new Error('DuckDB connection not ready');
@@ -146,9 +147,12 @@ const useDuckDB3 = () => {
       maxRows = 2000
     } = options;
 
+    const timer = startTimer(`DuckDB Query: ${cacheKey.substring(0, 30)}...`);
+
     try {
       // Check cache first
       if (useCache && queryCache.has(cacheKey)) {
+        timer?.end();
         return queryCache.get(cacheKey);
       }
 
@@ -182,8 +186,10 @@ const useDuckDB3 = () => {
         }
       }
 
+      timer?.end();
       return data;
     } catch (err) {
+      timer?.end();
       console.error('Error executing query:', err);
       throw err;
     }

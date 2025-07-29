@@ -14,6 +14,7 @@ import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import useDuckDB from '../hooks/useDuckDB3';
 import { useLazosTableSqlFilterContext } from '../components/filters/LazosTableFilter';
+import { buildSubsystemCompletionQueries } from '../utils/sqlOptimizer';
 
 // Register the plugin
 Chart.register(ChartDataLabels);
@@ -56,47 +57,15 @@ const SubsystemCompletionChart = () => {
     try {
       setLoading(true);
       
-      // Query 1: Subsystems Fully Completed
-      const fullyCompleted = await executeQuery(`
-        SELECT subsystem
-        FROM master_subsystem
-        WHERE tag_loop_tlp IS NOT NULL
-        GROUP BY subsystem
-        HAVING MIN(ok100_tlp) = 1.0
-      `);
-
-      // Query 2: Subsystems Fully Pending
-      const fullyPending = await executeQuery(`
-        SELECT subsystem
-        FROM master_subsystem
-        WHERE tag_loop_tlp IS NOT NULL
-        GROUP BY subsystem
-        HAVING MIN(ok100_tlp) < 1.0
-      `);
-
-      // Query 3: Count of Fully Completed Subsystems
-      const completedCountResult = await executeQuery(`
-        SELECT COUNT(*) AS done_subsystem_count
-        FROM (
-          SELECT subsystem
-          FROM master_subsystem
-          WHERE tag_loop_tlp IS NOT NULL
-          GROUP BY subsystem
-          HAVING MIN(ok100_tlp) = 1.0
-        ) AS completed_subsystems
-      `);
-
-      // Query 4: Count of Pending Subsystems
-      const pendingCountResult = await executeQuery(`
-        SELECT COUNT(*) AS pending_subsystem_count
-        FROM (
-          SELECT subsystem
-          FROM master_subsystem
-          WHERE tag_loop_tlp IS NOT NULL
-          GROUP BY subsystem
-          HAVING MIN(ok100_tlp) < 1.0
-        ) AS pending_subsystems
-      `);
+      // Execute optimized queries
+      const queries = buildSubsystemCompletionQueries();
+      
+      const [fullyCompleted, fullyPending, completedCountResult, pendingCountResult] = await Promise.all([
+        executeQuery(queries.fullyCompleted, { useCache: true, cacheKey: 'subsystem_completed' }),
+        executeQuery(queries.fullyPending, { useCache: true, cacheKey: 'subsystem_pending' }),
+        executeQuery(queries.completedCount, { useCache: true, cacheKey: 'completed_count' }),
+        executeQuery(queries.pendingCount, { useCache: true, cacheKey: 'pending_count' })
+      ]);
 
       setCompletionData({
         fullyCompleted: fullyCompleted || [],

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import { buildOptimizedWhereClause } from '../../utils/sqlOptimizer';
+import { applyMultipleFilters } from '../../utils/wasmFilters';
 
 // Create context
 const LazosTableSqlFilterContext = createContext();
@@ -36,101 +38,31 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {}, pr
         setLazosTableSqlSubsystemCompletionFilter(null);
     }, []);
 
-    // Filter function for Loop Test Control table
+    // Filter function for Loop Test Control table with WASM optimization
     const lazosTableSqlFilterData = useCallback((data) => {
         if (!data || !data.length) return [];
-        if (!lazosTableSqlSelectedSubsystem && !lazosTableSqlSelectedArea) return data;
+        if (!lazosTableSqlSelectedSubsystem && !lazosTableSqlSelectedArea && !progressFilter) return data;
 
-        return data.filter(row => {
-            // Filter by subsystem
-            if (lazosTableSqlSelectedSubsystem && row['SUBSYSTEM'] !== lazosTableSqlSelectedSubsystem) {
-                return false;
-            }
-            // Filter by area
-            if (lazosTableSqlSelectedArea && row['AREA'] !== lazosTableSqlSelectedArea) {
-                return false;
-            }
-            return true;
-        });
-    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea]);
-
-    // Create SQL WHERE clauses for direct filtering in queries
-    const lazosTableSqlGetSqlWhereClause = useCallback(() => {
-        const conditions = [];
+        const filters = {
+            subsystem: lazosTableSqlSelectedSubsystem,
+            area: lazosTableSqlSelectedArea,
+            progress: progressFilter
+        };
         
-        console.log('External filters received:', externalFilters);
-        console.log('Progress filter received:', progressFilter);
-        console.log('Subsystem completion filter received:', lazosTableSqlSubsystemCompletionFilter);
+        return applyMultipleFilters(data, filters);
+    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea, progressFilter]);
 
-        // Internal filters (from table clicks)
-        if (lazosTableSqlSelectedSubsystem) {
-            conditions.push(`subsystem = '${lazosTableSqlSelectedSubsystem}'`);
-        }
-
-        if (lazosTableSqlSelectedArea) {
-            conditions.push(`area_tlp = '${lazosTableSqlSelectedArea}'`);
-        }
-
-        // Progress filter (from GlobalMetricsDisplay buttons)
-        if (progressFilter) {
-            switch (progressFilter) {
-                case 'LOOP (Signal) DONE':
-                    conditions.push('ok100_tlp = 1.0');
-                    break;
-                case 'LOOP (Signal) PENDING':
-                    conditions.push('ok100_tlp < 1.0');
-                    break;
-                case 'DOSSIER COMPLETED':
-                    conditions.push("dossier_tlp IS NOT NULL AND dossier_tlp != ''");
-                    break;
-                // TOTAL LOOP (Signal) shows all records, no filter needed
-            }
-        }
-
-        // Subsystem completion filter (from SubsystemCompletionChart buttons)
-        if (lazosTableSqlSubsystemCompletionFilter) {
-            switch (lazosTableSqlSubsystemCompletionFilter) {
-                case 'DONE':
-                    conditions.push(`subsystem IN (
-                        SELECT subsystem
-                        FROM master_subsystem
-                        WHERE tag_loop_tlp IS NOT NULL
-                        GROUP BY subsystem
-                        HAVING MIN(ok100_tlp) = 1.0
-                    )`);
-                    break;
-                case 'PENDING':
-                    conditions.push(`subsystem IN (
-                        SELECT subsystem
-                        FROM master_subsystem
-                        WHERE tag_loop_tlp IS NOT NULL
-                        GROUP BY subsystem
-                        HAVING MIN(ok100_tlp) < 1.0
-                    )`);
-                    break;
-                case 'TOTAL':
-                    // Show all records, no additional filter needed
-                    break;
-            }
-        }
-
-        // External filters (from main filter panel)
-        if (externalFilters.area_tlp && externalFilters.area_tlp.length > 0) {
-            const areaValues = externalFilters.area_tlp.map(area => `'${area}'`).join(', ');
-            conditions.push(`area_tlp IN (${areaValues})`);
-            console.log('Added area filter:', `area_tlp IN (${areaValues})`);
-        }
-
-        if (externalFilters.subsystem && externalFilters.subsystem.length > 0) {
-            const subsystemValues = externalFilters.subsystem.map(sub => `'${sub}'`).join(', ');
-            conditions.push(`subsystem IN (${subsystemValues})`);
-            console.log('Added subsystem filter:', `subsystem IN (${subsystemValues})`);
-        }
-
-        const finalClause = conditions.length > 0 ? conditions.join(' AND ') : '';
-        console.log('Final WHERE clause:', finalClause);
-        console.log('All conditions:', conditions);
-        return finalClause;
+    // Create SQL WHERE clauses for direct filtering in queries with WASM optimization
+    const lazosTableSqlGetSqlWhereClause = useCallback(() => {
+        const filterParams = {
+            subsystem: lazosTableSqlSelectedSubsystem,
+            selectedArea: lazosTableSqlSelectedArea,
+            progressFilter,
+            subsystemCompletionFilter: lazosTableSqlSubsystemCompletionFilter,
+            ...externalFilters
+        };
+        
+        return buildOptimizedWhereClause(filterParams);
     }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea, lazosTableSqlSubsystemCompletionFilter, externalFilters, progressFilter]);
 
     // Context value

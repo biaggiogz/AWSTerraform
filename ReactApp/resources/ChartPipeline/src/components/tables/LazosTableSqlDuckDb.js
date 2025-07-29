@@ -20,6 +20,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import useDuckDB from '../../hooks/useDuckDB3';
 import { useLazosTableSqlFilterContext } from '../filters/LazosTableFilter';
+import { buildLoopTestProgressQuery } from '../../utils/sqlOptimizer';
 
 // Performance measurement component
 const LazosTableSqlPerformanceMetric = React.memo(({ label, value, description }) => (
@@ -296,32 +297,7 @@ const LazosTableSqlLoopTestControl = () => {
             console.log('LazosTableSql executing query with WHERE clause:', whereClause);
             const startQueryTime = performance.now();
             
-            const finalQuery = `
-                SELECT code_tlp AS "CODE",
-                subsystem AS "SUBSYSTEM",
-                tag_loop_tlp AS "TAG LOOP",
-                area_tlp AS "AREA",
-                priority_tlp AS "PRIORITY",
-                hito_tlp AS "HITO",
-                siemsa_tlp AS "SIEMSA",
-                loop_tlp AS "LOOP",
-                tags_tlp AS "TAGS",
-                service_tlp AS "SERVICE",
-                installed_tlp AS "INSTALLED",
-                wired_tlp AS "WIRED",
-                connected_tlp AS "CONNECTED",
-                cable_test_tlp AS "CABLE_TEST",
-                qcf_tlp AS "QCF",
-                ok100_tlp AS "OK100",
-                dossier_tlp AS "DOSSIER",
-                test_loop_tlp AS "TEST_LOOP",
-                action_tlp AS "ACTION",
-                by_tlp AS "BY",
-                status_closedopen_co_tlp AS "STATUS_CO"
-                FROM master_subsystem
-                WHERE tag_loop_tlp is not null
-                ${whereClause ? ` AND ${whereClause}` : ''}
-            `;
+            const finalQuery = buildLoopTestProgressQuery(whereClause);
             
             console.log('Final SQL query:', finalQuery);
             const result = await executeQuery(finalQuery);
