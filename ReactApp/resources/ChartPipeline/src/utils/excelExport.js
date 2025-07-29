@@ -157,9 +157,124 @@ export const exportSummarySubsystemsToExcel = async (data, filterStates = {}) =>
     worksheet.getColumn(index + 1).width = col.width;
   });
   
+  // Add Filter Summary Section
+  let currentRow = 1;
+  
+  // Title
+  const titleCell = worksheet.getCell(currentRow, 1);
+  titleCell.value = 'SUBSYSTEM OVERVIEW - EXPORT SUMMARY';
+  titleCell.font = { bold: true, size: 14, color: { argb: 'FF000000' } };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3FF' } };
+  worksheet.mergeCells(currentRow, 1, currentRow, 8);
+  currentRow += 2;
+  
+  // Export Info
+  const exportInfoCell = worksheet.getCell(currentRow, 1);
+  exportInfoCell.value = `Export Date: ${new Date().toLocaleString()}`;
+  exportInfoCell.font = { bold: true, size: 10 };
+  currentRow++;
+  
+  const recordCountCell = worksheet.getCell(currentRow, 1);
+  recordCountCell.value = `Total Records: ${data.length}`;
+  recordCountCell.font = { bold: true, size: 10 };
+  currentRow += 2;
+  
+  // Active Filters Section
+  const filtersHeaderCell = worksheet.getCell(currentRow, 1);
+  filtersHeaderCell.value = 'ACTIVE FILTERS:';
+  filtersHeaderCell.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+  filtersHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A90E2' } };
+  worksheet.mergeCells(currentRow, 1, currentRow, 4);
+  currentRow++;
+  
+  // Filter Status Table
+  const filterInfo = [
+    { name: 'Items Total Status', active: filterStates.items?.visible, description: 'Shows completion status for total items' },
+    { name: 'Loop Status', active: filterStates.loop?.visible, description: 'Shows completion status for loop testing' },
+    { name: 'Instrument Status', active: filterStates.inst?.visible, description: 'Shows completion status for instruments' },
+    { name: 'Tracing Status', active: filterStates.tracing?.visible, description: 'Shows completion status for tracing' },
+    { name: 'Insulation Status', active: filterStates.insul?.visible, description: 'Shows completion status for insulation' },
+    { name: 'PSV Status', active: filterStates.psv?.visible, description: 'Shows completion status for PSV' },
+    { name: 'Motor Status', active: filterStates.motor?.visible, description: 'Shows completion status for motors' }
+  ];
+  
+  // Filter table headers
+  const filterHeaderRow = worksheet.getRow(currentRow);
+  filterHeaderRow.getCell(1).value = 'Filter Name';
+  filterHeaderRow.getCell(2).value = 'Status';
+  filterHeaderRow.getCell(3).value = 'Description';
+  filterHeaderRow.eachCell((cell) => {
+    cell.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF666666' } };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+  });
+  currentRow++;
+  
+  // Filter table data
+  filterInfo.forEach(filter => {
+    const row = worksheet.getRow(currentRow);
+    row.getCell(1).value = filter.name;
+    row.getCell(2).value = filter.active ? 'ACTIVE' : 'INACTIVE';
+    row.getCell(3).value = filter.description;
+    
+    // Style based on status
+    row.getCell(2).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: filter.active ? 'FF06923E' : 'FFCCCCCC' }
+    };
+    row.getCell(2).font = { 
+      bold: true, 
+      color: { argb: filter.active ? 'FFFFFFFF' : 'FF666666' } 
+    };
+    
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        left: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+        right: { style: 'thin', color: { argb: 'FFCCCCCC' } }
+      };
+    });
+    currentRow++;
+  });
+  
+  // Color Legend Section
+  currentRow += 2;
+  const legendHeaderCell = worksheet.getCell(currentRow, 1);
+  legendHeaderCell.value = 'COLOR LEGEND:';
+  legendHeaderCell.font = { bold: true, size: 12, color: { argb: 'FFFFFFFF' } };
+  legendHeaderCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A90E2' } };
+  worksheet.mergeCells(currentRow, 1, currentRow, 4);
+  currentRow++;
+  
+  const legendItems = [
+    { color: '06923E', label: 'Completed', description: 'All items in this category are done' },
+    { color: 'E85C0D', label: 'In Progress', description: 'Some items completed, work in progress' },
+    { color: '212121', label: 'Not Apply', description: 'This category does not apply to this subsystem' }
+  ];
+  
+  legendItems.forEach(item => {
+    const row = worksheet.getRow(currentRow);
+    row.getCell(1).value = '■';
+    row.getCell(1).font = { size: 16, color: { argb: 'FF' + item.color } };
+    row.getCell(2).value = item.label;
+    row.getCell(2).font = { bold: true };
+    row.getCell(3).value = item.description;
+    currentRow++;
+  });
+  
+  currentRow += 2;
+  const tableStartRow = currentRow;
+  
   // Add multi-level headers
   MULTI_LEVEL_HEADERS.forEach((level, levelIndex) => {
-    const rowIndex = levelIndex + 1;
+    const rowIndex = tableStartRow + levelIndex;
     const row = worksheet.getRow(rowIndex);
     
     level.headers.forEach(header => {
@@ -201,7 +316,7 @@ export const exportSummarySubsystemsToExcel = async (data, filterStates = {}) =>
   });
   
   // Add column headers
-  const headerRow = worksheet.getRow(3);
+  const headerRow = worksheet.getRow(tableStartRow + 2);
   COLUMN_DEFINITIONS.forEach((col, index) => {
     const cell = headerRow.getCell(index + 1);
     cell.value = col.header;
@@ -237,7 +352,7 @@ export const exportSummarySubsystemsToExcel = async (data, filterStates = {}) =>
   
   // Add data rows
   data.forEach((rowData, rowIndex) => {
-    const row = worksheet.getRow(rowIndex + 4);
+    const row = worksheet.getRow(tableStartRow + 3 + rowIndex);
     
     COLUMN_DEFINITIONS.forEach((col, colIndex) => {
       const cell = row.getCell(colIndex + 1);

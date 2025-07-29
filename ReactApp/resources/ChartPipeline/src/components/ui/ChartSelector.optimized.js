@@ -116,7 +116,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             </TabPanel>
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <LazosTableSqlFilterProvider externalFilters={multiFilters}>
+                <LazosTableSqlFilterProvider externalFilters={multiFilters} progressFilter={progressFilter}>
                   <VStack spacing={4} align="stretch">
                     <HStack spacing={4} align="flex-start">
                       <Box flex={2}>

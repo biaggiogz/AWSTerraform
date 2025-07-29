@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useMemo, useCallback } from
 const LazosTableSqlFilterContext = createContext();
 
 // Provider component
-export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) => {
+export const LazosTableSqlFilterProvider = ({ children, externalFilters = {}, progressFilter = null }) => {
     // Filter state - subsystem and area filters
     const [lazosTableSqlSelectedSubsystem, setLazosTableSqlSelectedSubsystem] = useState(null);
     const [lazosTableSqlSelectedArea, setLazosTableSqlSelectedArea] = useState(null);
@@ -52,6 +52,7 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
         const conditions = [];
         
         console.log('External filters received:', externalFilters);
+        console.log('Progress filter received:', progressFilter);
 
         // Internal filters (from table clicks)
         if (lazosTableSqlSelectedSubsystem) {
@@ -60,6 +61,22 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
 
         if (lazosTableSqlSelectedArea) {
             conditions.push(`area_tlp = '${lazosTableSqlSelectedArea}'`);
+        }
+
+        // Progress filter (from GlobalMetricsDisplay buttons)
+        if (progressFilter) {
+            switch (progressFilter) {
+                case 'LOOP (Signal) DONE':
+                    conditions.push('ok100_tlp = 1.0');
+                    break;
+                case 'LOOP (Signal) PENDING':
+                    conditions.push('ok100_tlp < 1.0');
+                    break;
+                case 'DOSSIER COMPLETED':
+                    conditions.push("dossier_tlp IS NOT NULL AND dossier_tlp != ''");
+                    break;
+                // TOTAL LOOP (Signal) shows all records, no filter needed
+            }
         }
 
         // External filters (from main filter panel)
@@ -78,7 +95,7 @@ export const LazosTableSqlFilterProvider = ({ children, externalFilters = {} }) 
         const finalClause = conditions.length > 0 ? conditions.join(' AND ') : '';
         console.log('Final WHERE clause:', finalClause);
         return finalClause;
-    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea, externalFilters]);
+    }, [lazosTableSqlSelectedSubsystem, lazosTableSqlSelectedArea, externalFilters, progressFilter]);
 
     // Context value
     const lazosTableSqlValue = useMemo(() => ({
