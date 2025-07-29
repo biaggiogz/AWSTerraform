@@ -89,6 +89,7 @@ const LazosTableSqlLoopTestControl = () => {
     const {
         selectedSubsystem,
         selectedArea,
+        subsystemCompletionFilter,
         handleSubsystemClick,
         handleAreaClick,
         getSqlWhereClause,
@@ -346,7 +347,7 @@ const LazosTableSqlLoopTestControl = () => {
         if (parquetLoaded) {
             queryData();
         }
-    }, [parquetLoaded, getSqlWhereClause, selectedSubsystem, selectedArea]);
+    }, [parquetLoaded, getSqlWhereClause, selectedSubsystem, selectedArea, subsystemCompletionFilter]);
 
     // Create table instance
     const lazosTableSqlTable = useReactTable({
