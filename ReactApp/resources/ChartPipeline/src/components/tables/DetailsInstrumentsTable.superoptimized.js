@@ -301,104 +301,42 @@ const DetailsInstrumentsTable = () => {
             title: 'INSTRUMENT IDENTIFICATION',
             colspan: 4,
             startCol: 0,
-            color: '#0082A9'
+            color: '#625D3B'
           },
           {
             id: 'subsystem_tp',
-            title: 'SUBSYSTEM & TP',
+            title: 'SUBSYSTEM - TP',
             colspan: 3,
             startCol: 4,
-            color: '#B03052'
+            color: '#B8AD55'
           },
           {
             id: 'realistc_date',
             title: 'MC REALISTIC DATE',
             colspan: 5,
             startCol: 7,
-            color: '#8AB3DB'
+            color: '#62403B'
           },
           {
-            id: 'installation_location',
-            title: 'INSTALLATION LOCATION',
-            colspan: 3,
+            id: 'iso_scope_by',
+            title: 'ISO - SCOPE BY',
+            colspan: 5,
             startCol: 12,
-            color: '#A888B5'
+            color: '#B86255'
           },
           {
             id: 'construction_status',
             title: 'CONSTRUCTION STATUS',
-            colspan: 5,
-            startCol: 15,
-            color: '#9F7AEA'
-          },
-          {
-            id: 'testing_commissioning',
-            title: 'TESTING & COMMISSIONING',
-            colspan: 4,
-            startCol: 20,
-            color: '#ED8936'
+            colspan: 7,
+            startCol: 17,
+            color: '#6D5225'
           },
           {
             id: 'procurement',
             title: 'PROCUREMENT',
             colspan: 4,
             startCol: 24,
-            color: '#E53E3E'
-          }
-        ]
-      },
-      // Level 2 - Sub categories
-      {
-        level: 2,
-        headers: [
-          {
-            id: 'basic_info',
-            title: 'INFO INSTRUMENT',
-            colspan: 4,
-            startCol: 0,
-            color: '#0082A9'
-          },
-          {
-            id: 'assignment',
-            title: 'ASSIGNMENT',
-            colspan: 3,
-            startCol: 4,
-            color: '#B03052'
-          },
-          {
-            id: 'timeline',
-            title: 'TIMELINE',
-            colspan: 5,
-            startCol: 7,
-            color: '#48BB78'
-          },
-          {
-            id: 'mounting',
-            title: 'MOUNTING',
-            colspan: 3,
-            startCol: 12,
-            color: '#D69E2E'
-          },
-          {
-            id: 'physical_status',
-            title: 'PHYSICAL STATUS',
-            colspan: 5,
-            startCol: 15,
-            color: '#805AD5'
-          },
-          {
-            id: 'verification',
-            title: 'VERIFICATION',
-            colspan: 4,
-            startCol: 20,
-            color: '#DD6B20'
-          },
-          {
-            id: 'supply_chain',
-            title: 'SUPPLY CHAIN',
-            colspan: 4,
-            startCol: 24,
-            color: '#E53E3E'
+            color: '#B89355'
           }
         ]
       }
