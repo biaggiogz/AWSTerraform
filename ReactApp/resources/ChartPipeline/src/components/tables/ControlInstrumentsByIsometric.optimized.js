@@ -267,7 +267,7 @@ const ControlInstrumentsByIsometric = () => {
           </Button>
         );
       },
-      size: 120,
+      size: 240,
     }),
     columnHelper.accessor('PROGRESS FW+SW', {
       header: 'PROGRESS FW+SW',

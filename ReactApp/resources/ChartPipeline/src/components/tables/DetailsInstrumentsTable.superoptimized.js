@@ -362,7 +362,7 @@ const DetailsInstrumentsTable = () => {
           </Button>
         );
       },
-      size: 95,
+      size: 230,
     }),
     columnHelper.accessor('ON', {
       header: 'ON',
