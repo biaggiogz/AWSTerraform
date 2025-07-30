@@ -82,6 +82,20 @@ const useInstrumentsTableDataWasm = (tableType) => {
     return uniqueTags.size;
   }, [originalData]);
 
+  // Calculate frozen control counts from original data
+  const frozenControlCounts = useMemo(() => {
+    if (!originalData || originalData.length === 0 || tableType !== 'control') return null;
+    return {
+      isometricCount: originalData.length,
+      qtyInstSum: originalData.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0),
+      scopeTeigaSum: originalData.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0),
+      scopeSiemsaSum: originalData.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0),
+      installedTeigaSum: originalData.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0),
+      installedSiemsaSum: originalData.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0),
+      pendingSum: originalData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)
+    };
+  }, [originalData, tableType]);
+
   return {
     // Data
     data: processedData,
@@ -94,6 +108,7 @@ const useInstrumentsTableDataWasm = (tableType) => {
     
     // Counts
     frozenTagInstCount,
+    frozenControlCounts,
     
     // Filter state
     selectedIsometric,

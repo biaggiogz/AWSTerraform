@@ -35,6 +35,7 @@ const ControlInstrumentsByIsometric = () => {
     queryTime,
     processingTime,
     wasmEnabled,
+    frozenControlCounts,
     selectedIsometric,
     selectedTestPack,
     selectedSubsystem,
@@ -273,6 +274,8 @@ const ControlInstrumentsByIsometric = () => {
         columns={columns}
         width="100%"
         height="500px"
+        showControlCounts={true}
+        frozenControlCounts={frozenControlCounts}
       />
     </Box>
   );

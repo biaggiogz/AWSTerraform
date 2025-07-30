@@ -14,7 +14,9 @@ const VirtualizedTableWasm = ({
   width = "100%",
   height = "500px",
   showTagInstCount = false,
-  frozenTagInstCount = null
+  frozenTagInstCount = null,
+  showControlCounts = false,
+  frozenControlCounts = null
 }) => {
   const tableContainerRef = useRef(null);
   const [wasmInitialized, setWasmInitialized] = useState(false);
@@ -259,6 +261,106 @@ const VirtualizedTableWasm = ({
                         style={{
                           position: 'sticky',
                           top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + (frozenTagInstCount ? 30 : 0)}px` : `${45 + (frozenTagInstCount ? 30 : 0)}px`,
+                          zIndex: 1,
+                          minHeight: '30px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {countValue}
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          )}
+
+          {/* Frozen Control Counts Row (not responsive to filters) */}
+          {showControlCounts && frozenControlCounts && (
+            <React.Fragment>
+              {table.getHeaderGroups().map(headerGroup => (
+                <React.Fragment key={`frozen-control-count-${headerGroup.id}`}>
+                  {headerGroup.headers.map((header, headerIndex) => {
+                    let countValue = '';
+                    if (header.column.id === 'ISOMETRIC') countValue = `TOTAL: ${frozenControlCounts.isometricCount}`;
+                    else if (header.column.id === 'QTY INST') countValue = `TOTAL: ${frozenControlCounts.qtyInstSum}`;
+                    else if (header.column.id === 'SCOPE BY TEIGA-TMI') countValue = `TOTAL: ${frozenControlCounts.scopeTeigaSum}`;
+                    else if (header.column.id === 'SCOPE BY SIEMSA') countValue = `TOTAL: ${frozenControlCounts.scopeSiemsaSum}`;
+                    else if (header.column.id === 'INSTALLED BY TEIGA-TMI') countValue = `TOTAL: ${frozenControlCounts.installedTeigaSum}`;
+                    else if (header.column.id === 'INSTALLED BY SIEMSA') countValue = `TOTAL: ${frozenControlCounts.installedSiemsaSum}`;
+                    else if (header.column.id === 'PENDING') countValue = `TOTAL: ${frozenControlCounts.pendingSum}`;
+                    
+                    return (
+                      <Box
+                        key={`frozen-control-count-${header.id}`}
+                        bg="blue.100"
+                        color="blue.700"
+                        p={2}
+                        textAlign="center"
+                        fontWeight="bold"
+                        fontSize="xs"
+                        borderRight="1px solid"
+                        borderColor="gray.800"
+                        borderBottom="1px solid"
+                        boxSizing="border-box"
+                        width="100%"
+                        height="100%"
+                        style={{
+                          position: 'sticky',
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45}px` : '45px',
+                          zIndex: 1,
+                          minHeight: '30px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {countValue}
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          )}
+
+          {/* Responsive Control Counts Row (responsive to filters) */}
+          {showControlCounts && (
+            <React.Fragment>
+              {table.getHeaderGroups().map(headerGroup => (
+                <React.Fragment key={`control-count-${headerGroup.id}`}>
+                  {headerGroup.headers.map((header, headerIndex) => {
+                    let countValue = '';
+                    if (data && data.length > 0) {
+                      if (header.column.id === 'ISOMETRIC') countValue = `CURRENTLY: ${data.length}`;
+                      else if (header.column.id === 'QTY INST') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0)}`;
+                      else if (header.column.id === 'SCOPE BY TEIGA-TMI') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0)}`;
+                      else if (header.column.id === 'SCOPE BY SIEMSA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED BY TEIGA-TMI') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED BY SIEMSA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'PENDING') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
+                    }
+                    
+                    return (
+                      <Box
+                        key={`control-count-${header.id}`}
+                        bg="gray.100"
+                        color="gray.700"
+                        p={2}
+                        textAlign="center"
+                        fontWeight="bold"
+                        fontSize="xs"
+                        borderRight="1px solid"
+                        borderColor="gray.800"
+                        borderBottom="1px solid"
+                        boxSizing="border-box"
+                        width="100%"
+                        height="100%"
+                        style={{
+                          position: 'sticky',
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + (frozenControlCounts ? 30 : 0)}px` : `${45 + (frozenControlCounts ? 30 : 0)}px`,
                           zIndex: 1,
                           minHeight: '30px',
                           display: 'flex',
