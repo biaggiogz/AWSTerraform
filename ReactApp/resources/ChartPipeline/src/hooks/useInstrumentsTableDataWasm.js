@@ -11,14 +11,15 @@ const useInstrumentsTableDataWasm = (tableType) => {
   useEffect(() => {
     const initWasm = async () => {
       try {
+        // Try to initialize WASM modules silently
         await Promise.all([
           multiFilterWasm.initialize(),
           sqlEngineWasm.initialize()
         ]);
         setWasmInitialized(true);
       } catch (error) {
-        console.warn('WASM initialization failed, using JS fallback:', error);
-        setWasmInitialized(true); // Still proceed with JS fallback
+        // Silently fall back to JS implementation
+        setWasmInitialized(true);
       }
     };
     initWasm();

@@ -7,10 +7,13 @@ export const initializeWasm = async () => {
   
   try {
     wasmInitialized = await wasmBridge.initialize();
-    console.log('WASM Filter Engine initialized:', wasmInitialized);
+    // Only log success in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('WASM Filter Engine initialized:', wasmInitialized);
+    }
     return wasmInitialized;
   } catch (error) {
-    console.warn('WASM initialization failed:', error);
+    // Silently fail and use JS fallback
     return false;
   }
 };

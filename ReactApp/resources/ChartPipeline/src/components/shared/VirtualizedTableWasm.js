@@ -22,7 +22,7 @@ const VirtualizedTableWasm = ({
         await wasmUtils.initializeWasm();
         setWasmInitialized(true);
       } catch (error) {
-        console.warn('WASM initialization failed for table:', error);
+        // Silently fall back to JS implementation
         setWasmInitialized(false);
       }
     };
