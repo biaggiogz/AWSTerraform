@@ -35,6 +35,7 @@ const DetailsInstrumentsTable = () => {
     queryTime,
     processingTime,
     wasmEnabled,
+    frozenTagInstCount,
     selectedIsometric,
     selectedTestPack,
     selectedSubsystem,
@@ -309,7 +310,7 @@ const DetailsInstrumentsTable = () => {
         headers: [
           {
             id: 'instrument_identification',
-            title: `INSTRUMENT IDENTIFICATION (${uniqueTagInstCount} unique TAG INST)`,
+            title: 'INSTRUMENT IDENTIFICATION',
             colspan: 4,
             startCol: 0,
             color: '#625D3B'
@@ -390,6 +391,8 @@ const DetailsInstrumentsTable = () => {
         height={600}
         enableSorting
         enableFiltering
+        showTagInstCount={true}
+        frozenTagInstCount={frozenTagInstCount}
       />
     </Box>
   );

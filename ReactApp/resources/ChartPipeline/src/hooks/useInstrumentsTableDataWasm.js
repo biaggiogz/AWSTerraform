@@ -2,7 +2,7 @@ import { useInstrumentsTableFilterContext } from '../components/filters/Instrume
 import useInstrumentsDataLoader from './useInstrumentsDataLoader';
 import { multiFilterWasm } from '../wasm/multi-filter.wasm.js';
 import { sqlEngineWasm } from '../wasm/sql-engine.wasm.js';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 const useInstrumentsTableDataWasm = (tableType) => {
   const [wasmInitialized, setWasmInitialized] = useState(false);
@@ -49,6 +49,11 @@ const useInstrumentsTableDataWasm = (tableType) => {
     queryTime
   } = useInstrumentsDataLoader(tableType, whereClause, cacheKey);
 
+  // Load original unfiltered data for frozen count
+  const {
+    data: originalData
+  } = useInstrumentsDataLoader(tableType, '', `${tableType}_original`);
+
   // WASM-optimized data processing (currently disabled to prevent filtering issues)
   const [processedData, setProcessedData] = useState([]);
   const [processingTime, setProcessingTime] = useState(null);
@@ -66,6 +71,17 @@ const useInstrumentsTableDataWasm = (tableType) => {
     }
   }, [wasmInitialized, rawData]);
 
+  // Calculate frozen unique TAG INST count from original data
+  const frozenTagInstCount = useMemo(() => {
+    if (!originalData || originalData.length === 0) return 0;
+    const uniqueTags = new Set(
+      originalData
+        .map(row => row['TAG INST'])
+        .filter(tag => tag && tag !== '')
+    );
+    return uniqueTags.size;
+  }, [originalData]);
+
   return {
     // Data
     data: processedData,
@@ -75,6 +91,9 @@ const useInstrumentsTableDataWasm = (tableType) => {
     queryTime,
     processingTime,
     wasmEnabled: wasmInitialized && (multiFilterWasm.isUsingWasm() || sqlEngineWasm.isUsingWasm()),
+    
+    // Counts
+    frozenTagInstCount,
     
     // Filter state
     selectedIsometric,

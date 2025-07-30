@@ -12,7 +12,9 @@ const VirtualizedTableWasm = ({
   getSubRows,
   multiLevelHeaders,
   width = "100%",
-  height = "500px"
+  height = "500px",
+  showTagInstCount = false,
+  frozenTagInstCount = null
 }) => {
   const tableContainerRef = useRef(null);
   const [wasmInitialized, setWasmInitialized] = useState(false);
@@ -180,7 +182,98 @@ const VirtualizedTableWasm = ({
             </React.Fragment>
           ))}
 
+          {/* Frozen Count Row for TAG INST (not responsive to filters) */}
+          {showTagInstCount && frozenTagInstCount && (
+            <React.Fragment>
+              {table.getHeaderGroups().map(headerGroup => (
+                <React.Fragment key={`frozen-count-${headerGroup.id}`}>
+                  {headerGroup.headers.map((header, headerIndex) => {
+                    let countValue = '';
+                    if (header.column.id === 'TAG INST') {
+                      countValue = `${frozenTagInstCount} total`;
+                    }
+                    
+                    return (
+                      <Box
+                        key={`frozen-count-${header.id}`}
+                        bg="blue.100"
+                        color="blue.700"
+                        p={2}
+                        textAlign="center"
+                        fontWeight="bold"
+                        fontSize="xs"
+                        borderRight="1px solid"
+                        borderColor="gray.800"
+                        borderBottom="1px solid"
+                        boxSizing="border-box"
+                        width="100%"
+                        height="100%"
+                        style={{
+                          position: 'sticky',
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45}px` : '45px',
+                          zIndex: 1,
+                          minHeight: '30px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {countValue}
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          )}
 
+          {/* Responsive Count Row for TAG INST (responsive to filters) */}
+          {showTagInstCount && (
+            <React.Fragment>
+              {table.getHeaderGroups().map(headerGroup => (
+                <React.Fragment key={`count-${headerGroup.id}`}>
+                  {headerGroup.headers.map((header, headerIndex) => {
+                    let countValue = '';
+                    if (header.column.id === 'TAG INST' && data) {
+                      const uniqueTags = new Set(
+                        data.map(row => row['TAG INST']).filter(tag => tag && tag !== '')
+                      );
+                      countValue = `${uniqueTags.size} unique`;
+                    }
+                    
+                    return (
+                      <Box
+                        key={`count-${header.id}`}
+                        bg="gray.100"
+                        color="gray.700"
+                        p={2}
+                        textAlign="center"
+                        fontWeight="bold"
+                        fontSize="xs"
+                        borderRight="1px solid"
+                        borderColor="gray.800"
+                        borderBottom="1px solid"
+                        boxSizing="border-box"
+                        width="100%"
+                        height="100%"
+                        style={{
+                          position: 'sticky',
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + (frozenTagInstCount ? 30 : 0)}px` : `${45 + (frozenTagInstCount ? 30 : 0)}px`,
+                          zIndex: 1,
+                          minHeight: '30px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {countValue}
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          )}
 
           <Box
             style={{
@@ -203,7 +296,7 @@ const VirtualizedTableWasm = ({
                     left: 0,
                     width: '100%',
                     minHeight: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start}px)`,
+                    transform: `translateY(${virtualRow.start + (showTagInstCount ? (frozenTagInstCount ? 60 : 30) : 0)}px)`,
                     display: 'grid',
                     gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
                     alignItems: 'stretch',
