@@ -10,6 +10,7 @@ const VirtualizedTableWasm = ({
   expanded, 
   onExpandedChange, 
   getSubRows,
+  multiLevelHeaders,
   width = "100%",
   height = "500px"
 }) => {
@@ -92,24 +93,69 @@ const VirtualizedTableWasm = ({
             width: 'fit-content',
           }}
         >
-          <Box style={{ display: 'contents' }}>
+          {/* Multi-Level Headers */}
+          {multiLevelHeaders && (
+            <React.Fragment>
+              {multiLevelHeaders.map((levelGroup, levelIndex) => (
+                <React.Fragment key={`level-${levelGroup.level}`}>
+                  {levelGroup.headers.map(header => {
+                    const totalWidth = table.getAllColumns().slice(header.startCol, header.startCol + header.colspan)
+                      .reduce((sum, col) => sum + (col.getSize() || 150), 0);
+                    return (
+                      <Box
+                        key={header.id}
+                        bg={header.color}
+                        color="white"
+                        p={2}
+                        textAlign="center"
+                        fontWeight="bold"
+                        fontSize="xs"
+                        borderRight="1px solid"
+                        borderColor="gray.300"
+                        borderBottom="1px solid"
+                        style={{
+                          position: 'sticky',
+                          top: `${levelIndex * 40}px`,
+                          zIndex: 10 - levelIndex,
+                          gridColumn: `${header.startCol + 1} / span ${header.colspan}`,
+                          minHeight: '40px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {header.title}
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          )}
+
+          {/* Column Headers */}
+          <React.Fragment>
             {table.getHeaderGroups().map(headerGroup => (
               <React.Fragment key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
                   <Box
                     key={header.id}
-                    bg="purple.600"
+                    bg="gray.700"
                     color="white"
-                    p={1}
+                    p={2}
                     textAlign="center"
                     fontWeight="bold"
                     fontSize="xs"
                     borderRight="1px solid"
-                    borderColor="purple.400"
+                    borderColor="gray.300"
                     style={{
                       position: 'sticky',
-                      top: 0,
+                      top: multiLevelHeaders ? `${multiLevelHeaders.length * 40}px` : '0px',
                       zIndex: 1,
+                      minHeight: '45px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
@@ -117,7 +163,7 @@ const VirtualizedTableWasm = ({
                 ))}
               </React.Fragment>
             ))}
-          </Box>
+          </React.Fragment>
 
           <Box
             style={{

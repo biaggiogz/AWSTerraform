@@ -88,7 +88,7 @@ const DetailsInstrumentsTable = () => {
     columnHelper.accessor('SUBSYSTEM', {
       header: 'SUBSYSTEM',
       cell: info => (
-        <SubsystemCell 
+        <SubsystemCell
           subsystem={info.getValue()}
           onSubsystemSelect={handleSubsystemClick}
           selectedSubsystem={selectedSubsystem}
@@ -101,9 +101,9 @@ const DetailsInstrumentsTable = () => {
       cell: info => {
         const testPackValue = info.getValue();
         const testPacks = splitTestPack(testPackValue);
-        
+
         return (
-          <TestPackCell 
+          <TestPackCell
             testPacks={testPacks}
             onTestPackSelect={handleTestPackClick}
             selectedTestPack={selectedTestPack}
@@ -118,16 +118,16 @@ const DetailsInstrumentsTable = () => {
         const row = info.row.original;
         const testPackValue = row['TPs'];
         const testPacks = splitTestPack(testPackValue);
-        
+
         // Get progress values from the row
         const progressValues = {
           progress_ac_tp_1: row.progress_ac_tp_1,
           progress_ac_tp_2: row.progress_ac_tp_2,
           progress_ac_tp_3: row.progress_ac_tp_3
         };
-        
+
         return (
-          <TestPackProgressCell 
+          <TestPackProgressCell
             testPacks={testPacks}
             progressValues={progressValues}
           />
@@ -238,18 +238,18 @@ const DetailsInstrumentsTable = () => {
         const percentage = Math.min(Math.max(value, 0), 1) * 100;
         return (
           <Box w="100%" position="relative">
-            <Box 
-              h="16px" 
-              w={`${percentage}%`} 
+            <Box
+              h="16px"
+              w={`${percentage}%`}
               bg="green.500"
               borderRadius="sm"
             />
-            <Text 
-              fontSize="xs" 
-              position="absolute" 
-              top="0" 
-              left="0" 
-              right="0" 
+            <Text
+              fontSize="xs"
+              position="absolute"
+              top="0"
+              left="0"
+              right="0"
               textAlign="center"
               color="white"
               fontWeight="bold"
@@ -287,57 +287,157 @@ const DetailsInstrumentsTable = () => {
       cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
       size: 95,
     }),
-  ], [formatDate, handleSubsystemClick, handleTestPackClick, onIsometricSelect, selectedIsometric, selectedSubsystem, selectedTestPack]);
+  ], [formatDate, handleSubsystemClick, handleTestPackClick, selectedSubsystem, selectedTestPack, selectedIsometric, onIsometricSelect]);
 
-
-
-
+  // Define multi-level header structure
+  const multiLevelHeaders = useMemo(() => {
+    return [
+      // Level 1 - Main categories
+      {
+        level: 1,
+        headers: [
+          {
+            id: 'instrument_identification',
+            title: 'INSTRUMENT IDENTIFICATION',
+            colspan: 4,
+            startCol: 0,
+            color: '#2D3748'
+          },
+          {
+            id: 'project_organization',
+            title: 'PROJECT ORGANIZATION',
+            colspan: 3,
+            startCol: 4,
+            color: '#2B6CB0'
+          },
+          {
+            id: 'schedule_milestones',
+            title: 'SCHEDULE MILESTONES',
+            colspan: 5,
+            startCol: 7,
+            color: '#38A169'
+          },
+          {
+            id: 'installation_location',
+            title: 'INSTALLATION LOCATION',
+            colspan: 3,
+            startCol: 12,
+            color: '#D69E2E'
+          },
+          {
+            id: 'construction_status',
+            title: 'CONSTRUCTION STATUS',
+            colspan: 5,
+            startCol: 15,
+            color: '#9F7AEA'
+          },
+          {
+            id: 'testing_commissioning',
+            title: 'TESTING & COMMISSIONING',
+            colspan: 4,
+            startCol: 20,
+            color: '#ED8936'
+          },
+          {
+            id: 'procurement',
+            title: 'PROCUREMENT',
+            colspan: 4,
+            startCol: 24,
+            color: '#E53E3E'
+          }
+        ]
+      },
+      // Level 2 - Sub categories
+      {
+        level: 2,
+        headers: [
+          {
+            id: 'basic_info',
+            title: 'BASIC INFO',
+            colspan: 4,
+            startCol: 0,
+            color: '#4A5568'
+          },
+          {
+            id: 'assignment',
+            title: 'ASSIGNMENT',
+            colspan: 3,
+            startCol: 4,
+            color: '#3182CE'
+          },
+          {
+            id: 'timeline',
+            title: 'TIMELINE',
+            colspan: 5,
+            startCol: 7,
+            color: '#48BB78'
+          },
+          {
+            id: 'mounting',
+            title: 'MOUNTING',
+            colspan: 3,
+            startCol: 12,
+            color: '#D69E2E'
+          },
+          {
+            id: 'physical_status',
+            title: 'PHYSICAL STATUS',
+            colspan: 5,
+            startCol: 15,
+            color: '#805AD5'
+          },
+          {
+            id: 'verification',
+            title: 'VERIFICATION',
+            colspan: 4,
+            startCol: 20,
+            color: '#DD6B20'
+          },
+          {
+            id: 'supply_chain',
+            title: 'SUPPLY CHAIN',
+            colspan: 4,
+            startCol: 24,
+            color: '#E53E3E'
+          }
+        ]
+      }
+    ];
+  }, []);
 
   if (loading) {
     return (
-      <Box mt={6}>
-        <Heading size="xs" color="gray.700" mb={2}>
-          Details Instruments
-        </Heading>
-        <Center p={8}>
-          <Spinner size="xs" color="blue.500" />
-          <Text ml={2} color="gray.600">
-            Loading data with DuckDB...
-          </Text>
-        </Center>
-      </Box>
+      <Center h="400px">
+        <Spinner size="xl" color="blue.500" />
+      </Center>
     );
   }
 
   if (error) {
     return (
-      <Box mt={6} p={4} bg="red.50" borderRadius="md">
-        <Heading size="md" color="red.600" mb={2}>
-          Error
-        </Heading>
-        <Text color="red.700">{error}</Text>
-      </Box>
+      <Center h="400px">
+        <Text color="red.500">Error loading data: {error}</Text>
+      </Center>
     );
   }
 
   return (
-    <Box mt={6}>
-      <HStack justify="space-between" align="center" mb={4}>
-        <Heading size="md" color="gray.700">Details Instruments</Heading>
-        <HStack>
-          {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
-          {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
-          <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
-            {tableData.length} Records
-          </Badge>
-        </HStack>
-      </HStack>
+    <Box>
+      <PerformanceMetricWasm
+        loadTime={loadTime}
+        queryTime={queryTime}
+        processingTime={processingTime}
+        wasmEnabled={wasmEnabled}
+        recordCount={tableData?.length || 0}
+      />
 
       <VirtualizedTableWasm
-        data={tableData}
+        data={tableData || []}
         columns={columns}
-        width="100%"
-        height="500px"
+        multiLevelHeaders={multiLevelHeaders}
+        height={600}
+        enableSorting
+        enableFiltering
       />
     </Box>
   );

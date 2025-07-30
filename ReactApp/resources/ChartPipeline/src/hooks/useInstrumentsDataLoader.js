@@ -52,6 +52,7 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
         FROM master_subsystem
         WHERE item_isoinst IS NOT NULL
         ${whereClause ? 'AND ' + whereClause.substring(6) : ''}
+        ORDER BY item_isoinst ASC
         LIMIT 1000
       `,
       control: `
