@@ -185,97 +185,97 @@ const VirtualizedTableWasm = ({
           ))}
 
           {/* Frozen Count Row for TAG INST (not responsive to filters) */}
-          {showTagInstCount && frozenTagInstCount && (
-            <React.Fragment>
-              {table.getHeaderGroups().map(headerGroup => (
-                <React.Fragment key={`frozen-count-${headerGroup.id}`}>
-                  {headerGroup.headers.map((header, headerIndex) => {
-                    let countValue = '';
-                    if (header.column.id === 'TAG INST') {
-                      countValue = `TOTAL: ${frozenTagInstCount}`;
-                    }
-                    
-                    return (
-                      <Box
-                        key={`frozen-count-${header.id}`}
-                        bg="blue.100"
-                        color="blue.700"
-                        p={2}
-                        textAlign="center"
-                        fontWeight="bold"
-                        fontSize="xs"
-                        borderRight="1px solid"
-                        borderColor="gray.800"
-                        borderBottom="1px solid"
-                        boxSizing="border-box"
-                        width="100%"
-                        height="100%"
-                        style={{
-                          position: 'sticky',
-                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45}px` : '45px',
-                          zIndex: 1,
-                          minHeight: '30px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {countValue}
-                      </Box>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </React.Fragment>
-          )}
+          {/*{showTagInstCount && frozenTagInstCount && (*/}
+          {/*  <React.Fragment>*/}
+          {/*    {table.getHeaderGroups().map(headerGroup => (*/}
+          {/*      <React.Fragment key={`frozen-count-${headerGroup.id}`}>*/}
+          {/*        {headerGroup.headers.map((header, headerIndex) => {*/}
+          {/*          let countValue = '';*/}
+          {/*          if (header.column.id === 'TAG INST') {*/}
+          {/*            countValue = `TOTAL: ${frozenTagInstCount}`;*/}
+          {/*          }*/}
+          {/*          */}
+          {/*          return (*/}
+          {/*            <Box*/}
+          {/*              key={`frozen-count-${header.id}`}*/}
+          {/*              bg="blue.100"*/}
+          {/*              color="blue.700"*/}
+          {/*              p={2}*/}
+          {/*              textAlign="center"*/}
+          {/*              fontWeight="bold"*/}
+          {/*              fontSize="xs"*/}
+          {/*              borderRight="1px solid"*/}
+          {/*              borderColor="gray.800"*/}
+          {/*              borderBottom="1px solid"*/}
+          {/*              boxSizing="border-box"*/}
+          {/*              width="100%"*/}
+          {/*              height="100%"*/}
+          {/*              style={{*/}
+          {/*                position: 'sticky',*/}
+          {/*                top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45}px` : '45px',*/}
+          {/*                zIndex: 1,*/}
+          {/*                minHeight: '30px',*/}
+          {/*                display: 'flex',*/}
+          {/*                alignItems: 'center',*/}
+          {/*                justifyContent: 'center'*/}
+          {/*              }}*/}
+          {/*            >*/}
+          {/*              {countValue}*/}
+          {/*            </Box>*/}
+          {/*          );*/}
+          {/*        })}*/}
+          {/*      </React.Fragment>*/}
+          {/*    ))}*/}
+          {/*  </React.Fragment>*/}
+          {/*)}*/}
 
           {/* Responsive Count Row for TAG INST (responsive to filters) */}
-          {showTagInstCount && (
-            <React.Fragment>
-              {table.getHeaderGroups().map(headerGroup => (
-                <React.Fragment key={`count-${headerGroup.id}`}>
-                  {headerGroup.headers.map((header, headerIndex) => {
-                    let countValue = '';
-                    if (header.column.id === 'TAG INST' && data) {
-                      const uniqueTags = new Set(
-                        data.map(row => row['TAG INST']).filter(tag => tag && tag !== '')
-                      );
-                      countValue = `CURRENTLY: ${uniqueTags.size}`;
-                    }
-                    
-                    return (
-                      <Box
-                        key={`count-${header.id}`}
-                        bg="gray.100"
-                        color="gray.700"
-                        p={2}
-                        textAlign="center"
-                        fontWeight="bold"
-                        fontSize="xs"
-                        borderRight="1px solid"
-                        borderColor="gray.800"
-                        borderBottom="1px solid"
-                        boxSizing="border-box"
-                        width="100%"
-                        height="100%"
-                        style={{
-                          position: 'sticky',
-                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + (frozenTagInstCount ? 30 : 0)}px` : `${45 + (frozenTagInstCount ? 30 : 0)}px`,
-                          zIndex: 1,
-                          minHeight: '30px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {countValue}
-                      </Box>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </React.Fragment>
-          )}
+          {/*{showTagInstCount && (*/}
+          {/*  <React.Fragment>*/}
+          {/*    {table.getHeaderGroups().map(headerGroup => (*/}
+          {/*      <React.Fragment key={`count-${headerGroup.id}`}>*/}
+          {/*        {headerGroup.headers.map((header, headerIndex) => {*/}
+          {/*          let countValue = '';*/}
+          {/*          if (header.column.id === 'TAG INST' && data) {*/}
+          {/*            const uniqueTags = new Set(*/}
+          {/*              data.map(row => row['TAG INST']).filter(tag => tag && tag !== '')*/}
+          {/*            );*/}
+          {/*            countValue = `CURRENTLY: ${uniqueTags.size}`;*/}
+          {/*          }*/}
+          {/*          */}
+          {/*          return (*/}
+          {/*            <Box*/}
+          {/*              key={`count-${header.id}`}*/}
+          {/*              bg="gray.100"*/}
+          {/*              color="gray.700"*/}
+          {/*              p={2}*/}
+          {/*              textAlign="center"*/}
+          {/*              fontWeight="bold"*/}
+          {/*              fontSize="xs"*/}
+          {/*              borderRight="1px solid"*/}
+          {/*              borderColor="gray.800"*/}
+          {/*              borderBottom="1px solid"*/}
+          {/*              boxSizing="border-box"*/}
+          {/*              width="100%"*/}
+          {/*              height="100%"*/}
+          {/*              style={{*/}
+          {/*                position: 'sticky',*/}
+          {/*                top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + (frozenTagInstCount ? 30 : 0)}px` : `${45 + (frozenTagInstCount ? 30 : 0)}px`,*/}
+          {/*                zIndex: 1,*/}
+          {/*                minHeight: '30px',*/}
+          {/*                display: 'flex',*/}
+          {/*                alignItems: 'center',*/}
+          {/*                justifyContent: 'center'*/}
+          {/*              }}*/}
+          {/*            >*/}
+          {/*              {countValue}*/}
+          {/*            </Box>*/}
+          {/*          );*/}
+          {/*        })}*/}
+          {/*      </React.Fragment>*/}
+          {/*    ))}*/}
+          {/*  </React.Fragment>*/}
+          {/*)}*/}
 
           {/* Frozen Control Counts Row (not responsive to filters) */}
           {showControlCounts && frozenControlCounts && (
