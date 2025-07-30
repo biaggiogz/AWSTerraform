@@ -18,11 +18,11 @@ import {
 } from '@chakra-ui/react';
 import { DragHandleIcon } from '@chakra-ui/icons';
 import { createColumnHelper } from '@tanstack/react-table';
-import useInstrumentsTableData from '../../hooks/useInstrumentsTableData';
-import PerformanceMetric from '../shared/PerformanceMetric';
+import useInstrumentsTableDataWasm from '../../hooks/useInstrumentsTableDataWasm';
+import PerformanceMetricWasm from '../shared/PerformanceMetricWasm';
 import SubsystemCell from '../shared/SubsystemCell';
 import TestPackCell from '../shared/TestPackCell';
-import VirtualizedTable from '../shared/VirtualizedTable';
+import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
 
 
 
@@ -67,13 +67,15 @@ const ProgressCell = React.memo(({ progress }) => {
 
 
 const DynamicInstrumentsTable = () => {
-  // Get data and filter integration
+  // Get data and filter integration with WASM optimization
   const {
     data: rawData,
     loading,
     error,
     loadTime,
     queryTime,
+    processingTime,
+    wasmEnabled,
     selectedIsometric,
     selectedTestPack,
     selectedSubsystem,
@@ -81,7 +83,7 @@ const DynamicInstrumentsTable = () => {
     handleSubsystemClick,
     setContextTableData,
     setContextGroupBy
-  } = useInstrumentsTableData('dynamic');
+  } = useInstrumentsTableDataWasm('dynamic');
 
   // State declarations
   const [tableData, setTableData] = useState([]);
@@ -576,8 +578,8 @@ const DynamicInstrumentsTable = () => {
         <HStack justify="space-between" align="center" mb={4}>
           <Heading size="md" color="gray.700">Dynamic Instruments Table</Heading>
           <HStack>
-            {loadTime && <PerformanceMetric label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" />}
-            {queryTime && <PerformanceMetric label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
+            {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
+            {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
               {tableData.length} / {rawData.length} Records
             </Badge>
@@ -586,7 +588,7 @@ const DynamicInstrumentsTable = () => {
 
         {renderGroupingControls()}
 
-        <VirtualizedTable
+        <VirtualizedTableWasm
           data={tableData}
           columns={columns}
           expanded={expanded}

@@ -10,12 +10,12 @@ import {
   Button,
 } from '@chakra-ui/react';
 import { createColumnHelper } from '@tanstack/react-table';
-import useInstrumentsTableData from '../../hooks/useInstrumentsTableData';
-import PerformanceMetric from '../shared/PerformanceMetric';
+import useInstrumentsTableDataWasm from '../../hooks/useInstrumentsTableDataWasm';
+import PerformanceMetricWasm from '../shared/PerformanceMetricWasm';
 import SubsystemCell from '../shared/SubsystemCell';
 import TestPackCell from '../shared/TestPackCell';
 import TestPackProgressCell from '../shared/TestPackProgressCell';
-import VirtualizedTable from '../shared/VirtualizedTable';
+import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
 
 
 
@@ -26,20 +26,22 @@ import VirtualizedTable from '../shared/VirtualizedTable';
 
 
 const DetailsInstrumentsTable = () => {
-  // Get data and filter integration
+  // Get data and filter integration with WASM optimization
   const {
     data: tableData,
     loading,
     error,
     loadTime,
     queryTime,
+    processingTime,
+    wasmEnabled,
     selectedIsometric,
     selectedTestPack,
     selectedSubsystem,
     handleTestPackClick,
     handleSubsystemClick,
     onIsometricSelect
-  } = useInstrumentsTableData('details');
+  } = useInstrumentsTableDataWasm('details');
   
   // Helper function to format timestamp to date
   const formatDate = (timestamp) => {
@@ -323,15 +325,15 @@ const DetailsInstrumentsTable = () => {
       <HStack justify="space-between" align="center" mb={4}>
         <Heading size="md" color="gray.700">Details Instruments</Heading>
         <HStack>
-          {loadTime && <PerformanceMetric label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" />}
-          {queryTime && <PerformanceMetric label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
+          {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
+          {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
           <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
             {tableData.length} Records
           </Badge>
         </HStack>
       </HStack>
 
-      <VirtualizedTable
+      <VirtualizedTableWasm
         data={tableData}
         columns={columns}
         width="100%"
