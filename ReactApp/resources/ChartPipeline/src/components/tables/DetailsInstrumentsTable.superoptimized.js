@@ -10,8 +10,7 @@ import {
   Button,
 } from '@chakra-ui/react';
 import { createColumnHelper } from '@tanstack/react-table';
-import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
-import useInstrumentsDataLoader from '../../hooks/useInstrumentsDataLoader';
+import useInstrumentsTableData from '../../hooks/useInstrumentsTableData';
 import PerformanceMetric from '../shared/PerformanceMetric';
 import SubsystemCell from '../shared/SubsystemCell';
 import TestPackCell from '../shared/TestPackCell';
@@ -27,27 +26,20 @@ import VirtualizedTable from '../shared/VirtualizedTable';
 
 
 const DetailsInstrumentsTable = () => {
-  // Get filter context
-  const {
-    selectedIsometric,
-    selectedTestPack,
-    selectedSubsystem,
-    onIsometricSelect,
-    handleTestPackClick,
-    handleSubsystemClick,
-    getSqlWhereClause
-  } = useInstrumentsTableFilterContext();
-  
-  // Data loading
-  const whereClause = getSqlWhereClause('details');
-  const cacheKey = `details_${selectedIsometric || 'all'}_${selectedSubsystem || 'all'}_${selectedTestPack || 'all'}`;
+  // Get data and filter integration
   const {
     data: tableData,
     loading,
     error,
     loadTime,
-    queryTime
-  } = useInstrumentsDataLoader('details', whereClause, cacheKey);
+    queryTime,
+    selectedIsometric,
+    selectedTestPack,
+    selectedSubsystem,
+    handleTestPackClick,
+    handleSubsystemClick,
+    onIsometricSelect
+  } = useInstrumentsTableData('details');
   
   // Helper function to format timestamp to date
   const formatDate = (timestamp) => {

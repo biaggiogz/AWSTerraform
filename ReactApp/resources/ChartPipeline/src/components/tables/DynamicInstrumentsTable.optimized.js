@@ -18,8 +18,7 @@ import {
 } from '@chakra-ui/react';
 import { DragHandleIcon } from '@chakra-ui/icons';
 import { createColumnHelper } from '@tanstack/react-table';
-import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
-import useInstrumentsDataLoader from '../../hooks/useInstrumentsDataLoader';
+import useInstrumentsTableData from '../../hooks/useInstrumentsTableData';
 import PerformanceMetric from '../shared/PerformanceMetric';
 import SubsystemCell from '../shared/SubsystemCell';
 import TestPackCell from '../shared/TestPackCell';
@@ -68,28 +67,21 @@ const ProgressCell = React.memo(({ progress }) => {
 
 
 const DynamicInstrumentsTable = () => {
-  // Get filter context
-  const {
-    selectedIsometric,
-    selectedTestPack,
-    selectedSubsystem,
-    handleTestPackClick,
-    handleSubsystemClick,
-    getSqlWhereClause,
-    setTableData: setContextTableData,
-    setGroupBy: setContextGroupBy
-  } = useInstrumentsTableFilterContext();
-
-  // Data loading
-  const whereClause = getSqlWhereClause('dynamic');
-  const cacheKey = `dynamic_${selectedIsometric || 'all'}_${selectedSubsystem || 'all'}_${selectedTestPack || 'all'}`;
+  // Get data and filter integration
   const {
     data: rawData,
     loading,
     error,
     loadTime,
-    queryTime
-  } = useInstrumentsDataLoader('dynamic', whereClause, cacheKey);
+    queryTime,
+    selectedIsometric,
+    selectedTestPack,
+    selectedSubsystem,
+    handleTestPackClick,
+    handleSubsystemClick,
+    setContextTableData,
+    setContextGroupBy
+  } = useInstrumentsTableData('dynamic');
 
   // State declarations
   const [tableData, setTableData] = useState([]);
