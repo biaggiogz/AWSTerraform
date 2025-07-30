@@ -190,7 +190,7 @@ const VirtualizedTableWasm = ({
                   {headerGroup.headers.map((header, headerIndex) => {
                     let countValue = '';
                     if (header.column.id === 'TAG INST') {
-                      countValue = `${frozenTagInstCount} total`;
+                      countValue = `TOTAL: ${frozenTagInstCount}`;
                     }
                     
                     return (
@@ -238,7 +238,7 @@ const VirtualizedTableWasm = ({
                       const uniqueTags = new Set(
                         data.map(row => row['TAG INST']).filter(tag => tag && tag !== '')
                       );
-                      countValue = `${uniqueTags.size} unique`;
+                      countValue = `CURRENTLY: ${uniqueTags.size}`;
                     }
                     
                     return (
@@ -296,7 +296,7 @@ const VirtualizedTableWasm = ({
                     left: 0,
                     width: '100%',
                     minHeight: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start + (showTagInstCount ? (frozenTagInstCount ? 60 : 30) : 0)}px)`,
+                    transform: `translateY(${virtualRow.start}px)`,
                     display: 'grid',
                     gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
                     alignItems: 'stretch',
