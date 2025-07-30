@@ -421,16 +421,7 @@ const DynamicInstrumentsTable = () => {
     setGroupBy(prev => prev.filter(f => f !== field));
   }, []);
 
-  // Define chart colors for consistency with InstrumentsStatusChart
-  const chartColors = {
-    'TOTAL INST': '#FFE9D6',
-    'TOTAL SIEMSA': '#6C5F5B',
-    'INSTALLED SIEMSA': '#6C5F5B',
-    'TOTAL TEIGA': '#A55B4B',
-    'INSTALLED TEIGA': '#A55B4B',
-    'PENDING': '#ED7D31',
-    'DONE': '#4CAF50'
-  };
+
 
   // Column definitions
   const columnHelper = createColumnHelper();
@@ -439,41 +430,39 @@ const DynamicInstrumentsTable = () => {
     const common = [
       columnHelper.accessor('TOTAL INST', {
         header: 'TOTAL INST',
-        cell: info => <Text fontSize="xs" bg={chartColors['TOTAL INST']} px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('TOTAL SIEMSA', {
         header: 'TOTAL SIEMSA',
-        cell: info => <Text fontSize="xs" bg={chartColors['TOTAL SIEMSA']} px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('INSTALLED SIEMSA', {
         header: 'INSTALLED SIEMSA',
-        cell: info => <Text fontSize="xs" bg={chartColors['INSTALLED SIEMSA']} color="white" px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('TOTAL TEIGA', {
         header: 'TOTAL TEIGA',
-        cell: info => <Text fontSize="xs" bg={chartColors['TOTAL TEIGA']} px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('INSTALLED TEIGA', {
         header: 'INSTALLED TEIGA',
-        cell: info => <Text fontSize="xs" bg={chartColors['INSTALLED TEIGA']} color="white" px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('PENDING', {
         header: 'PENDING',
-        cell: info => <Text fontSize="xs" bg={chartColors['PENDING']} color="white" px={2} py={1} borderRadius="sm">{Number(info.getValue())}</Text>,
+        cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
         size: 90,
       }),
       columnHelper.accessor('DONE', {
         header: 'DONE',
         cell: info => {
           const value = Number(info.getValue());
-          return value > 0 ?
-              <Text fontSize="xs" bg={chartColors['DONE']} color="white" px={2} py={1} borderRadius="sm">{value}</Text> :
-              <Text fontSize="xs" color="gray.400">{0}</Text>
+          return <Text fontSize="xs">{value}</Text>
         },
         size: 90,
       }),
@@ -848,8 +837,8 @@ const DynamicInstrumentsTable = () => {
                       {headerGroup.headers.map(header => (
                           <Box
                               key={header.id}
-                              bg={chartColors[header.column.id] || "purple.600"}
-                              color={['TOTAL INST'].includes(header.column.id) ? "black" : "white"}
+                              bg="purple.600"
+                              color="white"
                               p={1}
                               textAlign="center"
                               fontWeight="bold"
