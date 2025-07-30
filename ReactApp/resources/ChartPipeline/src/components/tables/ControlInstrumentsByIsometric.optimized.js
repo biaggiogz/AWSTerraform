@@ -17,8 +17,8 @@ import {
   getSortedRowModel,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import useDuckDB from '../../hooks/useDuckDB3';
 import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
+import useInstrumentsDataLoader from '../../hooks/useInstrumentsDataLoader';
 import PerformanceMetric from '../shared/PerformanceMetric';
 import SubsystemCell from '../shared/SubsystemCell';
 import TestPackCell from '../shared/TestPackCell';
@@ -44,21 +44,16 @@ const ControlInstrumentsByIsometric = () => {
     getSqlWhereClause
   } = useInstrumentsTableFilterContext();
   
+  // Data loading
+  const whereClause = getSqlWhereClause('control');
+  const cacheKey = `control_${selectedIsometric || 'all'}_${selectedSubsystem || 'all'}_${selectedTestPack || 'all'}`;
   const {
-    createTableFromParquet,
-    executeQuery,
-    loading: dbLoading,
-    error: dbError,
-  } = useDuckDB();
-
-  // State declarations
-  const [tableData, setTableData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Performance metrics
-  const [loadTime, setLoadTime] = useState(null);
-  const [queryTime, setQueryTime] = useState(null);
+    data: tableData,
+    loading,
+    error,
+    loadTime,
+    queryTime
+  } = useInstrumentsDataLoader('control', whereClause, cacheKey);
   const tableContainerRef = useRef(null);
 
   // Helper function to format timestamp to date
@@ -263,118 +258,9 @@ const ControlInstrumentsByIsometric = () => {
       undefined,
   });
 
-  // Load data from DuckDB
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        
-        // Only proceed if not loading and no error
-        if (dbLoading || dbError) {
-          return;
-        }
 
-        // Start measuring load time
-        const startLoadTime = performance.now();
 
-        // Try to fetch Parquet file
-        try {
-          const res = await fetch('/data/master_subsystem.parquet');
-          
-          if (!res.ok) throw new Error(`Failed to fetch Parquet: ${res.status}`);
-          
-          const parquetBuffer = await res.arrayBuffer();
-          await createTableFromParquet('master_subsystem', parquetBuffer);
-        } catch (parquetError) {
-          console.error('Error loading Parquet:', parquetError);
-          throw new Error('Failed to load data source');
-        }
-
-        // Get SQL where clause from filter context
-        const whereClause = getSqlWhereClause('control');
-
-        // Execute optimized query with all needed columns
-        const startQueryTime = performance.now();
-        const results = await executeQuery(`
-          WITH inst_data AS (
-            SELECT
-              mounting_on_isoequipack_isoinst AS isometric,
-              MAX(subsystem) AS subsystem,
-              MAX(tp_include_isoinst) AS tps,
-              MAX(progress_ac_tp_1) AS progress_ac_tp_1,
-              MAX(progress_ac_tp_2) AS progress_ac_tp_2,
-              MAX(progress_ac_tp_3) AS progress_ac_tp_3,
-              COUNT(tag_inst_isoinst) AS qty_inst,
-              COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'TEIGA-TMI') AS scope_teiga_tmi,
-              COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'SIEMSA') AS scope_siemsa,
-              COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'TEIGA-TMI' AND ok100_isoinst = 1) AS installed_teiga_tmi,
-              COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'SIEMSA' AND ok100_isoinst = 1) AS installed_siemsa
-            FROM master_subsystem
-            WHERE on_isoinst = 'PIP'
-            ${whereClause ? 'AND ' + whereClause.substring(6) : ''}
-            GROUP BY mounting_on_isoequipack_isoinst
-          ),
-          progress_data AS (
-            SELECT
-              isometricos_ifc3_isos AS isometric,
-              isometric__progress__isos AS isometric_progress,
-              hito_isos AS hito,
-              teiga_reinstatement_isos AS teiga_reinstatement,
-              teiga_insulation_isos AS teiga_insulation,
-              siemsa_isos AS siemsa,
-              ten_isos AS ten
-            FROM master_subsystem
-            WHERE isometricos_ifc3_isos IS NOT NULL
-          )
-          SELECT
-            i.isometric AS "ISOMETRIC",
-            p.isometric_progress AS "PROGRESS FW+SW",
-            i.subsystem AS "SUBSYSTEM",
-            p.hito AS "HITO",
-            p.teiga_reinstatement AS "TEIGA REINSTATEMENT",
-            p.teiga_insulation AS "TEIGA INSULATION",
-            p.siemsa AS "SIEMSA",
-            p.ten AS "TECHNIP",
-            i.tps AS "TPs",
-            i.qty_inst AS "QTY INST",
-            i.scope_teiga_tmi AS "SCOPE BY TEIGA-TMI",
-            i.scope_siemsa AS "SCOPE BY SIEMSA",
-            i.installed_teiga_tmi AS "INSTALLED BY TEIGA-TMI",
-            i.installed_siemsa AS "INSTALLED BY SIEMSA",
-            i.qty_inst - i.installed_teiga_tmi - i.installed_siemsa AS "PENDING",
-            i.progress_ac_tp_1,
-            i.progress_ac_tp_2,
-            i.progress_ac_tp_3
-          FROM inst_data i
-          LEFT JOIN progress_data p ON i.isometric = p.isometric
-          LIMIT 1000
-        `, { 
-          useCache: true,
-          cacheKey: `control_${selectedIsometric || 'all'}_${selectedSubsystem || 'all'}_${selectedTestPack || 'all'}`
-        });
-        
-        const endQueryTime = performance.now();
-        setQueryTime((endQueryTime - startQueryTime).toFixed(2));
-
-        setTableData(results);
-        setError(null);
-        
-        // Calculate and set load time
-        const endLoadTime = performance.now();
-        setLoadTime((endLoadTime - startLoadTime).toFixed(2));
-      } catch (err) {
-        console.error('DuckDB error:', err);
-        setError(err.message || 'Unknown error');
-        setTableData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [createTableFromParquet, executeQuery, dbLoading, dbError, selectedIsometric, selectedSubsystem, selectedTestPack, getSqlWhereClause]);
-
-  if (loading || dbLoading) {
+  if (loading) {
     return (
       <Box mt={6}>
         <Heading size="xs" color="gray.700" mb={2}>
@@ -390,13 +276,13 @@ const ControlInstrumentsByIsometric = () => {
     );
   }
 
-  if (error || dbError) {
+  if (error) {
     return (
       <Box mt={6} p={4} bg="red.50" borderRadius="md">
         <Heading size="md" color="red.600" mb={2}>
           Error
         </Heading>
-        <Text color="red.700">{error || dbError}</Text>
+        <Text color="red.700">{error}</Text>
       </Box>
     );
   }
