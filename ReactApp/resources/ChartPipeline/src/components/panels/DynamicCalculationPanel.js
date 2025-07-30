@@ -352,10 +352,11 @@ FROM "Subsystem Overview";`);
       mt={2}
     >
       <VStack spacing={2} align="stretch">
-        <HStack justify="space-between" align="center">
-          <Text fontSize="sm" fontWeight="bold" color="blue.600">
-            SQL Query Interface
-          </Text>
+        {isSubsystemsTab && (
+          <HStack justify="space-between" align="center">
+            <Text fontSize="sm" fontWeight="bold" color="blue.600">
+              SQL Query Interface
+            </Text>
           <HStack spacing={2}>
 
             <IconButton
@@ -505,10 +506,11 @@ FROM "Subsystem Overview";`);
               onClick={() => setIsInterfaceVisible(!isInterfaceVisible)}
               aria-label={isInterfaceVisible ? "Hide interface" : "Show interface"}
             />
+            </HStack>
           </HStack>
-        </HStack>
+        )}
         
-        {isInterfaceVisible && (
+        {isSubsystemsTab && isInterfaceVisible && (
           <>
             {/* Schema Reference */}
             <VStack spacing={2} align="stretch" fontSize="xs" color="gray.600">
@@ -719,21 +721,21 @@ FROM "Subsystem Overview";`);
       </VStack>
       
       {/* Results as Metric Cards - Always Visible */}
-      {loading && (
+      {isSubsystemsTab && loading && (
         <HStack justify="center" py={4}>
           <Spinner size="sm" />
           <Text>Executing query...</Text>
         </HStack>
       )}
       
-      {metricCards.length === 0 && !loading && (
+      {isSubsystemsTab && metricCards.length === 0 && !loading && (
         <Text textAlign="center" color="gray.500" py={4}>
           Execute a query to see metric cards
         </Text>
       )}
       
       {/* Global and Local Metrics Side by Side */}
-      {(globalMetrics.length > 0 || localMetrics.length > 0) && !loading && (
+      {isSubsystemsTab && (globalMetrics.length > 0 || localMetrics.length > 0) && !loading && (
         <HStack spacing={4} align="flex-start" mt={1}>
           {/* Global Metrics - Left Side */}
           {globalMetrics.length > 0 && (
@@ -886,7 +888,7 @@ FROM "Subsystem Overview";`);
       )}
       
       {/* Other Metrics (without scope) */}
-      {otherMetrics.length > 0 && !loading && (
+      {isSubsystemsTab && otherMetrics.length > 0 && !loading && (
         <HStack spacing={2} wrap="wrap" justify="center" mt={2}>
           {otherMetrics.map((card) => {
             const isLocked = lockedCards.has(card.id);
