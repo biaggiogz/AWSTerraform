@@ -272,7 +272,7 @@ const DetailsInstrumentsTable = () => {
           selectedSubsystem={selectedSubsystem}
         />
       ),
-      size: 95,
+      size: 105,
     }),
     columnHelper.accessor('TPs', {
       header: 'TPs',

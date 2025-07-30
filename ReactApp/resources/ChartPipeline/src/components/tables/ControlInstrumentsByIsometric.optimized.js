@@ -309,7 +309,7 @@ const ControlInstrumentsByIsometric = () => {
           selectedSubsystem={selectedSubsystem}
         />
       ),
-      size: 95,
+      size: 105,
     }),
     columnHelper.accessor('HITO', {
       header: 'HITO',
