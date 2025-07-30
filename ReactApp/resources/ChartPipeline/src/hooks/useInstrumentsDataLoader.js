@@ -53,7 +53,6 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
         WHERE item_isoinst IS NOT NULL
         ${whereClause ? 'AND ' + whereClause.substring(6) : ''}
         ORDER BY item_isoinst ASC
-        LIMIT 1000
       `,
       control: `
         WITH inst_data AS (
@@ -107,7 +106,6 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
           i.progress_ac_tp_3
         FROM inst_data i
         LEFT JOIN progress_data p ON i.isometric = p.isometric
-        LIMIT 1000
       `,
       dynamic: `
         WITH inst_data AS (
@@ -179,7 +177,6 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
         FROM exploded_tps
         GROUP BY subsystem, hito, tp
         ORDER BY subsystem, hito, tp
-        LIMIT 5000
       `
     };
     return queries[tableType] || '';

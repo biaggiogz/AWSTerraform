@@ -180,6 +180,8 @@ const VirtualizedTableWasm = ({
             </React.Fragment>
           ))}
 
+
+
           <Box
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,

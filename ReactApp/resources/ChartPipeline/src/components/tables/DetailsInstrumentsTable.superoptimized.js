@@ -289,6 +289,17 @@ const DetailsInstrumentsTable = () => {
     }),
   ], [formatDate, handleSubsystemClick, handleTestPackClick, selectedSubsystem, selectedTestPack, selectedIsometric, onIsometricSelect]);
 
+  // Calculate unique TAG INST count
+  const uniqueTagInstCount = useMemo(() => {
+    if (!tableData || tableData.length === 0) return 0;
+    const uniqueTags = new Set(
+      tableData
+        .map(row => row['TAG INST'])
+        .filter(tag => tag && tag !== '')
+    );
+    return uniqueTags.size;
+  }, [tableData]);
+
   // Define multi-level header structure
   const multiLevelHeaders = useMemo(() => {
     return [
@@ -298,7 +309,7 @@ const DetailsInstrumentsTable = () => {
         headers: [
           {
             id: 'instrument_identification',
-            title: 'INSTRUMENT IDENTIFICATION',
+            title: `INSTRUMENT IDENTIFICATION (${uniqueTagInstCount} unique TAG INST)`,
             colspan: 4,
             startCol: 0,
             color: '#625D3B'
@@ -341,7 +352,7 @@ const DetailsInstrumentsTable = () => {
         ]
       }
     ];
-  }, []);
+  }, [uniqueTagInstCount]);
 
   if (loading) {
     return (

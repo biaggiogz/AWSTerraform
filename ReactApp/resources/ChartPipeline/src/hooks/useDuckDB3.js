@@ -144,7 +144,7 @@ const useDuckDB3 = () => {
     const {
       useCache = true,
       cacheKey = sql,
-      maxRows = 2000
+      maxRows = null
     } = options;
 
     const timer = startTimer(`DuckDB Query: ${cacheKey.substring(0, 30)}...`);
