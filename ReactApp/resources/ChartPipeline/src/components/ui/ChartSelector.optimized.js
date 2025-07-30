@@ -30,6 +30,7 @@ const DynamicInstrumentsTable = lazy(() => import('../tables/DynamicInstrumentsT
 const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable.superoptimized'));
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
+const FileUploadSection = lazy(() => import('./FileUploadSection'));
 
 /**
  * ChartSelector component to switch between different charts
@@ -150,9 +151,9 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
             </TabPanel>
 
             <TabPanel p={0}>
-              <Center height="300px">
-                <Box>UPDATE DATASET Content</Box>
-              </Center>
+              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
+                <FileUploadSection />
+              </Suspense>
             </TabPanel>
           </TabPanels>
         </Tabs>
