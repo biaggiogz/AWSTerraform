@@ -76,7 +76,7 @@ const VirtualizedTableWasm = ({
   return (
     <Box
       border="1px solid"
-      borderColor="gray.200"
+      borderColor="gray.800"
       borderRadius="lg"
       overflow="hidden"
       bg="white"
@@ -111,7 +111,7 @@ const VirtualizedTableWasm = ({
                         fontWeight="bold"
                         fontSize="xs"
                         borderRight="1px solid"
-                        borderColor="gray.300"
+                        borderColor="gray.800"
                         borderBottom="1px solid"
                         style={{
                           position: 'sticky',
@@ -137,30 +137,43 @@ const VirtualizedTableWasm = ({
           <React.Fragment>
             {table.getHeaderGroups().map(headerGroup => (
               <React.Fragment key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <Box
-                    key={header.id}
-                    bg="gray.700"
-                    color="white"
-                    p={2}
-                    textAlign="center"
-                    fontWeight="bold"
-                    fontSize="xs"
-                    borderRight="1px solid"
-                    borderColor="gray.300"
-                    style={{
-                      position: 'sticky',
-                      top: multiLevelHeaders ? `${multiLevelHeaders.length * 40}px` : '0px',
-                      zIndex: 1,
-                      minHeight: '45px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </Box>
-                ))}
+                {headerGroup.headers.map((header, headerIndex) => {
+                  // Find which header group this column belongs to
+                  let headerColor = 'gray.700';
+                  if (multiLevelHeaders && multiLevelHeaders[0]) {
+                    const groupHeader = multiLevelHeaders[0].headers.find(h => 
+                      headerIndex >= h.startCol && headerIndex < h.startCol + h.colspan
+                    );
+                    if (groupHeader) {
+                      headerColor = groupHeader.color;
+                    }
+                  }
+                  
+                  return (
+                    <Box
+                      key={header.id}
+                      bg={headerColor}
+                      color="white"
+                      p={2}
+                      textAlign="center"
+                      fontWeight="bold"
+                      fontSize="xs"
+                      borderRight="1px solid"
+                      borderColor="gray.800"
+                      style={{
+                        position: 'sticky',
+                        top: multiLevelHeaders ? `${multiLevelHeaders.length * 40}px` : '0px',
+                        zIndex: 1,
+                        minHeight: '45px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </Box>
+                  );
+                })}
               </React.Fragment>
             ))}
           </React.Fragment>
@@ -193,21 +206,36 @@ const VirtualizedTableWasm = ({
                     backgroundColor: isGroupRow ? 'rgba(237, 242, 247, 0.5)' : 'white'
                   }}
                 >
-                  {row.getVisibleCells().map(cell => (
-                    <Box
-                      key={cell.id}
-                      p={2}
-                      textAlign="center"
-                      borderBottom="1px solid"
-                      borderColor="gray.200"
-                      _hover={{ bg: 'gray.50' }}
-                      overflow="hidden"
-                      textOverflow="ellipsis"
-                      whiteSpace={cell.column.id.includes('INSTRUMENT TYPE') ? 'normal' : 'nowrap'}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </Box>
-                  ))}
+                  {row.getVisibleCells().map((cell, cellIndex) => {
+                    // Find which header group this column belongs to
+                    let headerColor = '#ffffff';
+                    if (multiLevelHeaders && multiLevelHeaders[0]) {
+                      const header = multiLevelHeaders[0].headers.find(h => 
+                        cellIndex >= h.startCol && cellIndex < h.startCol + h.colspan
+                      );
+                      if (header) {
+                        headerColor = header.color + '20'; // Add transparency
+                      }
+                    }
+                    
+                    return (
+                      <Box
+                        key={cell.id}
+                        p={2}
+                        textAlign="center"
+                        borderBottom="1px solid"
+                        borderRight="1px solid"
+                        borderColor="gray.800"
+                        bg={headerColor}
+                        _hover={{ bg: 'gray.50' }}
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        whiteSpace={cell.column.id.includes('INSTRUMENT TYPE') ? 'normal' : 'nowrap'}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </Box>
+                    );
+                  })}
                 </Box>
               );
             })}
