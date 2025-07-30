@@ -7,7 +7,6 @@ import {
   HStack,
   Spinner,
   Center,
-  Tooltip,
   Button,
 } from '@chakra-ui/react';
 import {
@@ -20,177 +19,18 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import useDuckDB from '../../hooks/useDuckDB3';
 import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
+import PerformanceMetric from '../shared/PerformanceMetric';
+import SubsystemCell from '../shared/SubsystemCell';
+import TestPackCell from '../shared/TestPackCell';
+import TestPackProgressCell from '../shared/TestPackProgressCell';
 
-// Performance measurement component
-const PerformanceMetric = React.memo(({ label, value, description }) => (
-  <Tooltip label={description} placement="top">
-    <Badge colorScheme="blue" fontSize="xs" px={2} py={1} mr={2} cursor="help">
-      {label}: {value}
-    </Badge>
-  </Tooltip>
-));
 
-// Test Pack Progress Cell Component
-const TestPackProgressCell = React.memo(({ testPacks, progressValues }) => {
-  if (!testPacks || testPacks.length === 0) {
-    return <Text fontSize="xs" color="gray.500">NOT APPLY</Text>;
-  }
-  
-  // Get progress values for each test pack
-  const progressData = testPacks.map((_, index) => {
-    const progressKey = `progress_ac_tp_${index + 1}`;
-    return progressValues && progressValues[progressKey] ? progressValues[progressKey] : 0;
-  });
-  
-  if (testPacks.length === 1) {
-    const progress = progressData[0];
-    const percentage = Math.round(progress * 100);
-    
-    return (
-      <Box position="relative" width="100%" height="18px">
-        <Box 
-          height="18px" 
-          width={`${percentage}%`} 
-          bg="green.500"
-          borderRadius="sm"
-        />
-        <Text 
-          fontSize="10px" 
-          position="absolute" 
-          top="0" 
-          left="0" 
-          right="0" 
-          height="18px"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          color="white"
-          fontWeight="bold"
-          textShadow="0px 0px 2px rgba(0,0,0,0.7)"
-        >
-          {percentage}%
-        </Text>
-      </Box>
-    );
-  }
-  
-  return (
-    <Box>
-      {testPacks.map((testPack, index) => {
-        const progress = progressData[index] || 0;
-        const percentage = Math.round(progress * 100);
-        
-        return (
-          <Box key={`${testPack}-progress-${index}`} position="relative" width="100%" height="18px" mb={1}>
-            <Box 
-              height="18px" 
-              width={`${percentage}%`} 
-              bg="green.500"
-              borderRadius="sm"
-            />
-            <Text 
-              fontSize="10px" 
-              position="absolute" 
-              top="0" 
-              left="0" 
-              right="0" 
-              height="18px"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              color="white"
-              fontWeight="bold"
-              textShadow="0px 0px 2px rgba(0,0,0,0.7)"
-            >
-              {percentage}%
-            </Text>
-          </Box>
-        );
-      })}
-    </Box>
-  );
-});
 
-// Test Pack Cell Component
-const TestPackCell = React.memo(({ testPacks, onTestPackSelect, selectedTestPack }) => {
-  if (!testPacks || testPacks.length === 0) {
-    return <Text fontSize="xs" color="gray.500">NOT APPLY</Text>;
-  }
-  
-  if (testPacks.length === 1) {
-    return (
-      <Button
-        size="xs"
-        variant={selectedTestPack === testPacks[0] ? "solid" : "outline"}
-        onClick={() => onTestPackSelect && onTestPackSelect(testPacks[0])}
-        _hover={{ bg: selectedTestPack === testPacks[0] ? "green.200" : "blue.200" }}
-        fontSize="10px"
-        fontWeight="medium"
-        color={selectedTestPack === testPacks[0] ? "white" : "blue.600"}
-        bg={selectedTestPack === testPacks[0] ? "green.500" : "white"}
-        borderColor={selectedTestPack === testPacks[0] ? "green.500" : "blue.500"}
-        minWidth="30px"
-        height="18px"
-        px={2}
-        borderRadius="sm"
-      >
-        {testPacks[0]}
-      </Button>
-    );
-  }
-  
-  return (
-    <HStack spacing={1} wrap="wrap" justify="center">
-      {testPacks.map((testPack, index) => (
-        <Button
-          key={`${testPack}-${index}`}
-          size="xs"
-          variant={selectedTestPack === testPack ? "solid" : "outline"}
-          onClick={() => onTestPackSelect && onTestPackSelect(testPack)}
-          _hover={{ bg: selectedTestPack === testPack ? "green.200" : "blue.200" }}
-          fontSize="10px"
-          fontWeight="medium"
-          color={selectedTestPack === testPack ? "white" : "blue.600"}
-          bg={selectedTestPack === testPack ? "green.500" : "white"}
-          borderColor={selectedTestPack === testPack ? "green.500" : "blue.500"}
-          minWidth="30px"
-          height="18px"
-          px={2}
-          borderRadius="sm"
-        >
-          {testPack}
-        </Button>
-      ))}
-    </HStack>
-  );
-});
 
-// Subsystem Cell Component
-const SubsystemCell = React.memo(({ subsystem, onSubsystemSelect, selectedSubsystem }) => {
-  if (!subsystem || subsystem === '') {
-    return <Text fontSize="xs" color="gray.500">-</Text>;
-  }
-  
-  return (
-    <Button
-      size="xs"
-      variant={selectedSubsystem === subsystem ? "solid" : "outline"}
-      onClick={() => onSubsystemSelect && onSubsystemSelect(subsystem)}
-      _hover={{ bg: selectedSubsystem === subsystem ? "green.200" : "blue.200" }}
-      fontSize="10px"
-      fontWeight="medium"
-      color={selectedSubsystem === subsystem ? "white" : "blue.600"}
-      bg={selectedSubsystem === subsystem ? "green.500" : "white"}
-      borderColor={selectedSubsystem === subsystem ? "green.500" : "blue.500"}
-      minWidth="30px"
-      height="18px"
-      px={2}
-      borderRadius="sm"
-    >
-      {subsystem}
-    </Button>
-  );
-});
+
+
+
+
 
 const DetailsInstrumentsTable = () => {
   // Get filter context

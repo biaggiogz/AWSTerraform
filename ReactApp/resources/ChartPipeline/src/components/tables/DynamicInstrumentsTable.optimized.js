@@ -8,7 +8,6 @@ import {
   VStack,
   Spinner,
   Center,
-  Tooltip,
   Button,
   Flex,
   IconButton,
@@ -29,15 +28,11 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import useDuckDB from '../../hooks/useDuckDB3';
 import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
+import PerformanceMetric from '../shared/PerformanceMetric';
+import SubsystemCell from '../shared/SubsystemCell';
+import TestPackCell from '../shared/TestPackCell';
 
-// Performance measurement component
-const PerformanceMetric = React.memo(({ label, value, description }) => (
-    <Tooltip label={description} placement="top">
-      <Badge colorScheme="blue" fontSize="xs" px={2} py={1} mr={2} cursor="help">
-        {label}: {value}
-      </Badge>
-    </Tooltip>
-));
+
 
 // Progress Cell Component
 const ProgressCell = React.memo(({ progress }) => {
@@ -75,59 +70,9 @@ const ProgressCell = React.memo(({ progress }) => {
   );
 });
 
-// Subsystem Cell Component
-const SubsystemCell = React.memo(({ subsystem, onSubsystemSelect, selectedSubsystem }) => {
-  if (!subsystem || subsystem === '') {
-    return <Text fontSize="xs" color="gray.500">-</Text>;
-  }
 
-  return (
-      <Button
-          size="xs"
-          variant={selectedSubsystem === subsystem ? "solid" : "outline"}
-          onClick={() => onSubsystemSelect && onSubsystemSelect(subsystem)}
-          _hover={{ bg: selectedSubsystem === subsystem ? "green.200" : "blue.200" }}
-          fontSize="10px"
-          fontWeight="medium"
-          color={selectedSubsystem === subsystem ? "white" : "blue.600"}
-          bg={selectedSubsystem === subsystem ? "green.500" : "white"}
-          borderColor={selectedSubsystem === subsystem ? "green.500" : "blue.500"}
-          minWidth="30px"
-          height="18px"
-          px={2}
-          borderRadius="sm"
-      >
-        {subsystem}
-      </Button>
-  );
-});
 
-// Test Pack Cell Component
-const TestPackCell = React.memo(({ tp, onTestPackSelect, selectedTestPack }) => {
-  if (!tp || tp === '') {
-    return <Text fontSize="xs" color="gray.500">-</Text>;
-  }
 
-  return (
-      <Button
-          size="xs"
-          variant={selectedTestPack === tp ? "solid" : "outline"}
-          onClick={() => onTestPackSelect && onTestPackSelect(tp)}
-          _hover={{ bg: selectedTestPack === tp ? "green.200" : "blue.200" }}
-          fontSize="10px"
-          fontWeight="medium"
-          color={selectedTestPack === tp ? "white" : "blue.600"}
-          bg={selectedTestPack === tp ? "green.500" : "white"}
-          borderColor={selectedTestPack === tp ? "green.500" : "blue.500"}
-          minWidth="30px"
-          height="18px"
-          px={2}
-          borderRadius="sm"
-      >
-        {tp}
-      </Button>
-  );
-});
 
 const DynamicInstrumentsTable = () => {
   // Get filter context
