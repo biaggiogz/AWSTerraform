@@ -94,7 +94,7 @@ const DetailsInstrumentsTable = () => {
           selectedSubsystem={selectedSubsystem}
         />
       ),
-      size: 105,
+      size: 110,
     }),
     columnHelper.accessor('TPs', {
       header: 'TPs',
@@ -143,7 +143,7 @@ const DetailsInstrumentsTable = () => {
     columnHelper.accessor('TEIGA REINSTATEMENT', {
       header: 'TEIGA REINSTATEMENT',
       cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
-      size: 95,
+      size: 105,
     }),
     columnHelper.accessor('TEIGA INSULATION', {
       header: 'TEIGA INSULATION',
@@ -360,14 +360,17 @@ const DetailsInstrumentsTable = () => {
   }
 
   return (
-    <Box>
-      <PerformanceMetricWasm
-        loadTime={loadTime}
-        queryTime={queryTime}
-        processingTime={processingTime}
-        wasmEnabled={wasmEnabled}
-        recordCount={tableData?.length || 0}
-      />
+    <Box mt={6}>
+      <HStack justify="space-between" align="center" mb={4}>
+        <Heading size="md" color="gray.700">Details Instruments Table</Heading>
+        <HStack>
+          {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
+          {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
+          <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
+            {tableData?.length || 0} Records
+          </Badge>
+        </HStack>
+      </HStack>
 
       <VirtualizedTableWasm
         data={tableData || []}
