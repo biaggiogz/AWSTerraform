@@ -301,28 +301,28 @@ const DetailsInstrumentsTable = () => {
             title: 'INSTRUMENT IDENTIFICATION',
             colspan: 4,
             startCol: 0,
-            color: '#2D3748'
+            color: '#0082A9'
           },
           {
-            id: 'project_organization',
-            title: 'PROJECT ORGANIZATION',
+            id: 'subsystem_tp',
+            title: 'SUBSYSTEM & TP',
             colspan: 3,
             startCol: 4,
-            color: '#2B6CB0'
+            color: '#B03052'
           },
           {
-            id: 'schedule_milestones',
-            title: 'SCHEDULE MILESTONES',
+            id: 'realistc_date',
+            title: 'MC REALISTIC DATE',
             colspan: 5,
             startCol: 7,
-            color: '#38A169'
+            color: '#8AB3DB'
           },
           {
             id: 'installation_location',
             title: 'INSTALLATION LOCATION',
             colspan: 3,
             startCol: 12,
-            color: '#D69E2E'
+            color: '#A888B5'
           },
           {
             id: 'construction_status',
@@ -353,17 +353,17 @@ const DetailsInstrumentsTable = () => {
         headers: [
           {
             id: 'basic_info',
-            title: 'BASIC INFO',
+            title: 'INFO INSTRUMENT',
             colspan: 4,
             startCol: 0,
-            color: '#4A5568'
+            color: '#0082A9'
           },
           {
             id: 'assignment',
             title: 'ASSIGNMENT',
             colspan: 3,
             startCol: 4,
-            color: '#3182CE'
+            color: '#B03052'
           },
           {
             id: 'timeline',
