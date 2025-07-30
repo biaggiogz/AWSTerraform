@@ -145,11 +145,6 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                 <TestPackProgressChart data={data} />
               </Suspense>
             </TabPanel>
-            <TabPanel p={0}>
-              <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <TestPackProgressChart data={data} />
-              </Suspense>
-            </TabPanel>
 
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
