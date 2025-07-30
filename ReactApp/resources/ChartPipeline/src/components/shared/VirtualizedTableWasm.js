@@ -91,6 +91,7 @@ const VirtualizedTableWasm = ({
             gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
             position: 'relative',
             width: 'fit-content',
+            borderCollapse: 'collapse'
           }}
         >
           {/* Multi-Level Headers */}
@@ -99,8 +100,6 @@ const VirtualizedTableWasm = ({
               {multiLevelHeaders.map((levelGroup, levelIndex) => (
                 <React.Fragment key={`level-${levelGroup.level}`}>
                   {levelGroup.headers.map(header => {
-                    const totalWidth = table.getAllColumns().slice(header.startCol, header.startCol + header.colspan)
-                      .reduce((sum, col) => sum + (col.getSize() || 150), 0);
                     return (
                       <Box
                         key={header.id}
@@ -113,6 +112,7 @@ const VirtualizedTableWasm = ({
                         borderRight="1px solid"
                         borderColor="gray.800"
                         borderBottom="1px solid"
+                        boxSizing="border-box"
                         style={{
                           position: 'sticky',
                           top: `${levelIndex * 40}px`,
@@ -134,49 +134,51 @@ const VirtualizedTableWasm = ({
           )}
 
           {/* Column Headers */}
-          <React.Fragment>
-            {table.getHeaderGroups().map(headerGroup => (
-              <React.Fragment key={headerGroup.id}>
-                {headerGroup.headers.map((header, headerIndex) => {
-                  // Find which header group this column belongs to
-                  let headerColor = 'gray.700';
-                  if (multiLevelHeaders && multiLevelHeaders[0]) {
-                    const groupHeader = multiLevelHeaders[0].headers.find(h => 
-                      headerIndex >= h.startCol && headerIndex < h.startCol + h.colspan
-                    );
-                    if (groupHeader) {
-                      headerColor = groupHeader.color;
-                    }
-                  }
-                  
-                  return (
-                    <Box
-                      key={header.id}
-                      bg={headerColor}
-                      color="white"
-                      p={2}
-                      textAlign="center"
-                      fontWeight="bold"
-                      fontSize="xs"
-                      borderRight="1px solid"
-                      borderColor="gray.800"
-                      style={{
-                        position: 'sticky',
-                        top: multiLevelHeaders ? `${multiLevelHeaders.length * 40}px` : '0px',
-                        zIndex: 1,
-                        minHeight: '45px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </Box>
+          {table.getHeaderGroups().map(headerGroup => (
+            <React.Fragment key={headerGroup.id}>
+              {headerGroup.headers.map((header, headerIndex) => {
+                // Find which header group this column belongs to
+                let headerColor = 'gray.700';
+                if (multiLevelHeaders && multiLevelHeaders[0]) {
+                  const groupHeader = multiLevelHeaders[0].headers.find(h => 
+                    headerIndex >= h.startCol && headerIndex < h.startCol + h.colspan
                   );
-                })}
-              </React.Fragment>
-            ))}
-          </React.Fragment>
+                  if (groupHeader) {
+                    headerColor = groupHeader.color;
+                  }
+                }
+                
+                return (
+                  <Box
+                    key={header.id}
+                    bg={headerColor}
+                    color="white"
+                    p={2}
+                    textAlign="center"
+                    fontWeight="bold"
+                    fontSize="xs"
+                    borderRight="1px solid"
+                    borderColor="gray.800"
+                    borderBottom="1px solid"
+                    boxSizing="border-box"
+                    width="100%"
+                    height="100%"
+                    style={{
+                      position: 'sticky',
+                      top: multiLevelHeaders ? `${multiLevelHeaders.length * 40}px` : '0px',
+                      zIndex: 1,
+                      minHeight: '45px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </Box>
+                );
+              })}
+            </React.Fragment>
+          ))}
 
           <Box
             style={{
@@ -203,7 +205,8 @@ const VirtualizedTableWasm = ({
                     display: 'grid',
                     gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
                     alignItems: 'stretch',
-                    backgroundColor: isGroupRow ? 'rgba(237, 242, 247, 0.5)' : 'white'
+                    backgroundColor: isGroupRow ? 'rgba(237, 242, 247, 0.5)' : 'white',
+                    boxSizing: 'border-box'
                   }}
                 >
                   {row.getVisibleCells().map((cell, cellIndex) => {
@@ -231,6 +234,9 @@ const VirtualizedTableWasm = ({
                         overflow="hidden"
                         textOverflow="ellipsis"
                         whiteSpace={cell.column.id.includes('INSTRUMENT TYPE') ? 'normal' : 'nowrap'}
+                        boxSizing="border-box"
+                        width="100%"
+                        height="100%"
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </Box>
