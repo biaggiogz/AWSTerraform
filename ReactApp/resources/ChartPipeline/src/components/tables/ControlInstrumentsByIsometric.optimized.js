@@ -9,20 +9,14 @@ import {
   Center,
   Button,
 } from '@chakra-ui/react';
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getSortedRowModel,
-} from '@tanstack/react-table';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { createColumnHelper } from '@tanstack/react-table';
 import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 import useInstrumentsDataLoader from '../../hooks/useInstrumentsDataLoader';
 import PerformanceMetric from '../shared/PerformanceMetric';
 import SubsystemCell from '../shared/SubsystemCell';
 import TestPackCell from '../shared/TestPackCell';
 import TestPackProgressCell from '../shared/TestPackProgressCell';
+import VirtualizedTable from '../shared/VirtualizedTable';
 
 
 
@@ -54,7 +48,6 @@ const ControlInstrumentsByIsometric = () => {
     loadTime,
     queryTime
   } = useInstrumentsDataLoader('control', whereClause, cacheKey);
-  const tableContainerRef = useRef(null);
 
   // Helper function to format timestamp to date
   const formatDate = (timestamp) => {
@@ -237,26 +230,7 @@ const ControlInstrumentsByIsometric = () => {
     }),
   ], [formatDate, handleSubsystemClick, handleTestPackClick, onIsometricSelect, selectedIsometric, selectedSubsystem, selectedTestPack]);
 
-  // Create table instance
-  const table = useReactTable({
-    data: tableData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
-  
-  // Set up virtualization
-  const { rows } = table.getRowModel();
-  
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 30,
-    overscan: 10,
-    measureElement: typeof window !== 'undefined' && document.getElementById ? 
-      (element) => element?.getBoundingClientRect().height || 30 : 
-      undefined,
-  });
+
 
 
 
@@ -295,107 +269,17 @@ const ControlInstrumentsByIsometric = () => {
           {loadTime && <PerformanceMetric label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" />}
           {queryTime && <PerformanceMetric label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
           <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
-            {table.getFilteredRowModel().rows.length} Records
+            {tableData.length} Records
           </Badge>
         </HStack>
       </HStack>
 
-      <Box
-        border="1px solid"
-        borderColor="gray.200"
-        borderRadius="lg"
-        overflow="hidden"
-        bg="white"
-        boxShadow="sm"
+      <VirtualizedTable
+        data={tableData}
+        columns={columns}
         width="100%"
         height="500px"
-      >
-        <Box ref={tableContainerRef} style={{ height: '100%', overflow: 'auto' }}>
-          <Box
-            style={{
-              display: 'grid',
-              gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
-              position: 'relative',
-              width: 'fit-content',
-            }}
-          >
-            {/* Header */}
-            <Box style={{ display: 'contents' }}>
-              {table.getHeaderGroups().map(headerGroup => (
-                <React.Fragment key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <Box
-                      key={header.id}
-                      bg="purple.600"
-                      color="white"
-                      p={1}
-                      textAlign="center"
-                      fontWeight="bold"
-                      fontSize="xs"
-                      borderRight="1px solid"
-                      borderColor="purple.400"
-                      style={{
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 1,
-                      }}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </Box>
-                  ))}
-                </React.Fragment>
-              ))}
-            </Box>
-
-            {/* Virtualized Rows */}
-            <Box
-              style={{
-                height: `${rowVirtualizer.getTotalSize()}px`,
-                width: '100%',
-                position: 'relative',
-              }}
-            >
-              {rowVirtualizer.getVirtualItems().map(virtualRow => {
-                const row = rows[virtualRow.index];
-                return (
-                  <Box
-                    key={row.id}
-                    data-index={virtualRow.index}
-                    ref={rowVirtualizer.measureElement}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      minHeight: `${virtualRow.size}px`,
-                      transform: `translateY(${virtualRow.start}px)`,
-                      display: 'grid',
-                      gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
-                      alignItems: 'stretch'
-                    }}
-                  >
-                    {row.getVisibleCells().map(cell => (
-                      <Box
-                        key={cell.id}
-                        p={2}
-                        textAlign="center"
-                        borderBottom="1px solid"
-                        borderColor="gray.200"
-                        _hover={{ bg: 'gray.50' }}
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                        whiteSpace="nowrap"
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </Box>
-                    ))}
-                  </Box>
-                );
-              })}
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+      />
     </Box>
   );
 };
