@@ -14,10 +14,8 @@ import {
 } from '@chakra-ui/react';
 import FilterPanel from './components/filters/FilterPanel.optimized';
 import useDataLoader from './hooks/useDataLoader.optimized';
-import useInstrumentsDataLoader from './hooks/useInstrumentsDataLoader.optimized';
 import useDashboardConfig from './hooks/useDashboardConfig.optimized';
 import useMultiValueFilter from './hooks/useMultiValueFilter';
-import useInstrumentsFilter from './hooks/useInstrumentsFilter';
 import WasmPerformanceMonitor, { usePerformanceMonitor } from './components/ui/WasmPerformanceMonitor';
 
 // Lazy load chart components
@@ -33,46 +31,17 @@ function App() {
   // Get dashboard configuration based on active dashboard
   const { datasetPath, filterMappings } = useDashboardConfig(activeDashboard);
   
-  // Use specialized data loader for INSTRUMENTS REPORT
-  const isInstrumentsReport = activeDashboard === 'INSTRUMENTS REPORT';
-  
-  // Load data using appropriate hook
-  const regularDataLoader = useDataLoader(isInstrumentsReport ? null : datasetPath, filterMappings);
-  const instrumentsDataLoader = useInstrumentsDataLoader(filterMappings);
-  
-  // Select the appropriate data loader results
+  // Load data using data loader
   const { 
     data, 
     loading, 
     error, 
     areas, 
     subsystems, 
-    testPacks,
-    controlData,
-    detailsData,
-    isometrics
-  } = isInstrumentsReport ? {
-    data: instrumentsDataLoader.controlData,
-    loading: instrumentsDataLoader.loading,
-    error: instrumentsDataLoader.error,
-    areas: instrumentsDataLoader.isometrics,
-    subsystems: instrumentsDataLoader.subsystems,
-    testPacks: [],
-    controlData: instrumentsDataLoader.controlData,
-    detailsData: instrumentsDataLoader.detailsData,
-    isometrics: instrumentsDataLoader.isometrics
-  } : {
-    ...regularDataLoader,
-    controlData: null,
-    detailsData: null,
-    isometrics: null
-  };
+    testPacks
+  } = useDataLoader(datasetPath, filterMappings);
   
-  // Use appropriate filter hook
-  const regularFilter = useMultiValueFilter(isInstrumentsReport ? null : data, filterMappings);
-  const instrumentsFilter = useInstrumentsFilter(controlData, detailsData, filterMappings);
-  
-  // Select the appropriate filter results
+  // Use filter hook
   const {
     filteredData,
     metadata,
@@ -82,26 +51,8 @@ function App() {
     progressFilter,
     handleFilterChange,
     handleProgressFilter,
-    resetAllFilters,
-    filteredControlData,
-    filteredDetailsData
-  } = isInstrumentsReport ? {
-    filteredData: instrumentsFilter.filteredControlData,
-    metadata: instrumentsFilter.controlMetadata,
-    filterOptions: instrumentsFilter.filterOptions,
-    relationshipMaps: instrumentsFilter.relationshipMaps,
-    multiFilters: instrumentsFilter.multiFilters,
-    progressFilter: instrumentsFilter.progressFilter,
-    handleFilterChange: instrumentsFilter.handleFilterChange,
-    handleProgressFilter: instrumentsFilter.handleProgressFilter,
-    resetAllFilters: instrumentsFilter.resetAllFilters,
-    filteredControlData: instrumentsFilter.filteredControlData,
-    filteredDetailsData: instrumentsFilter.filteredDetailsData
-  } : {
-    ...regularFilter,
-    filteredControlData: null,
-    filteredDetailsData: null
-  };
+    resetAllFilters
+  } = useMultiValueFilter(data, filterMappings);
   
   // Handle dashboard change
   const handleDashboardChange = (dashboard) => {
@@ -147,8 +98,6 @@ function App() {
               <ChartSelector 
                 data={filteredData} 
                 rawData={data}
-                controlData={filteredControlData || controlData}
-                detailsData={filteredDetailsData || detailsData}
                 activeDashboard={activeDashboard}
                 onDashboardChange={handleDashboardChange}
                 onProgressFilter={handleProgressFilter}
@@ -179,8 +128,6 @@ function App() {
                 <ChartSelector 
                   data={filteredData} 
                   rawData={data}
-                  controlData={filteredControlData || controlData}
-                  detailsData={filteredDetailsData || detailsData}
                   activeDashboard={activeDashboard}
                   onDashboardChange={handleDashboardChange}
                   onProgressFilter={handleProgressFilter}
