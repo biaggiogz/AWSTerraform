@@ -43,7 +43,7 @@ const LazosTableSqlSubsystemCell = React.memo(({ subsystem, onSubsystemSelect, s
             variant={selectedSubsystem === subsystem ? "solid" : "outline"}
             onClick={() => onSubsystemSelect && onSubsystemSelect(subsystem)}
             _hover={{ bg: selectedSubsystem === subsystem ? "green.200" : "blue.200" }}
-            fontSize="10px"
+            fontSize="12px"
             fontWeight="medium"
             color={selectedSubsystem === subsystem ? "white" : "blue.600"}
             bg={selectedSubsystem === subsystem ? "green.500" : "white"}
@@ -131,10 +131,12 @@ const LazosTableSqlLoopTestControl = () => {
     const lazosTableSqlColumns = useMemo(() => [
         lazosTableSqlColumnHelper.accessor('CODE', {
             header: 'CODE',
+            size: 60,
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('SUBSYSTEM', {
             header: 'SUBSYSTEM',
+            size: 105,
             cell: info => (
                 <LazosTableSqlSubsystemCell
                     subsystem={info.getValue()}
@@ -145,45 +147,48 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('TAG LOOP', {
             header: 'TAG LOOP',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 95,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('AREA', {
             header: 'AREA',
-            cell: info => (
-                <LazosTableSqlAreaCell
-                    area={info.getValue()}
-                    onAreaSelect={handleAreaClick}
-                    selectedArea={selectedArea}
-                />
-            )
+            size: 80,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('PRIORITY', {
             header: 'PRIORITY',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 80,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('HITO', {
             header: 'HITO',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 70,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('SIEMSA', {
             header: 'SIEMSA',
-            cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>,
+            size: 80,
+            cell: info => <Text fontSize="xs" textAlign="center">{formatDate(info.getValue())}</Text>,
         }),
         lazosTableSqlColumnHelper.accessor('LOOP', {
             header: 'LOOP',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 105,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('TAGS', {
-            header: 'TAGS',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            header: 'TAGs',
+            size: 70,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('SERVICE', {
             header: 'SERVICE',
+            size: 204,
             cell: info => (
                 <Text 
                     fontSize="xs" 
                     wordBreak="break-word" 
                     whiteSpace="normal"
+                    textAlign="left"
                 >
                     {info.getValue() || '-'}
                 </Text>
@@ -191,23 +196,28 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('INSTALLED', {
             header: 'INSTALLED',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 100,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('WIRED', {
             header: 'WIRED',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 80,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('CONNECTED', {
             header: 'CONNECTED',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 96,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('CABLE_TEST', {
             header: 'CABLE TEST',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 96,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('QCF', {
             header: 'QCF',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 80,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('OK100', {
             header: 'OK=100%',
@@ -242,25 +252,69 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('DOSSIER', {
             header: 'DOSSIER',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>,
+            size: 80,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>,
         }),
         lazosTableSqlColumnHelper.accessor('TEST_LOOP', {
             header: 'TEST LOOP',
-            cell: info => <Text fontSize="xs">{formatDate(info.getValue())}</Text>
+            size: 80,
+            cell: info => <Text fontSize="xs" textAlign="center">{formatDate(info.getValue()) || '-' }</Text>
         }),
         lazosTableSqlColumnHelper.accessor('ACTION', {
             header: 'ACTION',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 100,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('BY', {
             header: 'BY',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 80,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('STATUS_CO', {
             header: 'Status C/O',
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 80,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         })
     ], [selectedSubsystem, selectedArea, handleSubsystemClick, handleAreaClick]);
+
+    // Define multi-level header structure
+    const multiLevelHeaders = useMemo(() => {
+        return [
+            {
+                level: 1,
+                headers: [
+                    { 
+                        id: 'identification', 
+                        title: 'IDENTIFICATION', 
+                        colspan: 10,
+                        startCol: 0,
+                        color: '#0082A9'
+                    },
+                    { 
+                        id: 'construction', 
+                        title: 'CONSTRUCTION', 
+                        colspan: 6,
+                        startCol: 10,
+                        color: '#B03052'
+                    },
+                    { 
+                        id: 'precommissioning', 
+                        title: 'PRECOMMISSIONING', 
+                        colspan: 2, 
+                        startCol: 16,
+                        color: '#8AB3DB'
+                    },
+                    { 
+                        id: 'comments', 
+                        title: 'COMMENTS',
+                        colspan: 3, 
+                        startCol: 18,
+                        color: '#A888B5'
+                    }
+                ]
+            }
+        ];
+    }, []);
 
     // State to track if parquet is loaded
     const [parquetLoaded, setParquetLoaded] = useState(false);
@@ -397,39 +451,119 @@ const LazosTableSqlLoopTestControl = () => {
                 borderRadius="md"
             >
                 <Box height={`${lazosTableSqlVirtualizer.getTotalSize()}px`} position="relative">
-                    {/* Header */}
+                    {/* Multi-Level Table Header */}
                     <Box
-                        position="sticky"
-                        top={0}
-                        bg="gray.50"
-                        zIndex={1}
                         borderBottom="1px solid"
                         borderColor="gray.200"
+                        bg="gray.50"
+                        position="sticky"
+                        top={0}
+                        zIndex={1}
                     >
-                        {lazosTableSqlTable.getHeaderGroups().map(headerGroup => (
-                            <HStack key={headerGroup.id} spacing={0}>
-                                {headerGroup.headers.map(header => (
+                        {/* Level 1 Headers */}
+                        <Box display="flex" width={`${lazosTableSqlTable.getHeaderGroups()[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
+                            {multiLevelHeaders[0].headers.map(header => {
+                                const totalWidth = lazosTableSqlTable.getHeaderGroups()[0].headers.slice(header.startCol, header.startCol + header.colspan)
+                                    .reduce((sum, col) => sum + col.getSize(), 0);
+                                return (
                                     <Box
                                         key={header.id}
-                                        width="120px"
-                                        flexShrink={0}
-                                        px={2}
+                                        width={`${totalWidth}px`}
+                                        minWidth={`${totalWidth}px`}
+                                        textAlign="center"
+                                        fontSize="xs"
+                                        textTransform="uppercase"
+                                        letterSpacing="wide"
+                                        color="white"
                                         py={2}
+                                        px={1}
                                         borderRight="1px solid"
-                                        borderColor="gray.200"
-                                        cursor={header.column.getCanSort() ? 'pointer' : 'default'}
-                                        onClick={header.column.getToggleSortingHandler()}
-                                        _hover={{
-                                            bg: header.column.getCanSort() ? 'gray.100' : 'gray.50'
-                                        }}
+                                        borderColor="gray.300"
+                                        borderBottom="1px solid"
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        bg={header.color}
+                                        minHeight="35px"
                                     >
-                                        <Text fontSize="xs" fontWeight="bold" noOfLines={2}>
-                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                        <Text fontSize="xs" textAlign="center" noOfLines={2}>
+                                            {header.title}
                                         </Text>
                                     </Box>
-                                ))}
-                            </HStack>
-                        ))}
+                                );
+                            })}
+                        </Box>
+
+                        {/* Level 2 Headers - Column Headers */}
+                        <Box display="flex" width={`${lazosTableSqlTable.getHeaderGroups()[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
+                            {lazosTableSqlTable.getHeaderGroups()[0].headers.map((header, index) => {
+                                const columnColors = {
+                                    // Identification
+                                    'CODE': '#007598',
+                                    'SUBSYSTEM': '#007598',
+                                    'TAG LOOP': '#007598',
+                                    'AREA': '#007598',
+                                    'PRIORITY': '#007598',
+                                    'HITO': '#007598',
+                                    'SIEMSA': '#007598',
+                                    'LOOP': '#007598',
+                                    'TAGS': '#007598',
+                                    'SERVICE': '#007598',
+                                    // Construction
+                                    'INSTALLED': '#B03052',
+                                    'WIRED': '#B03052',
+                                    'CONNECTED': '#B03052',
+                                    'CABLE_TEST': '#B03052',
+                                    'QCF': '#B03052',
+                                    'OK100': '#B03052',
+                                    // Precommissioning
+                                    'DOSSIER': '#7CA2C5',
+                                    'TEST_LOOP': '#7CA2C5',
+                                    // Comments
+                                    'ACTION': '#977AA3',
+                                    'BY': '#977AA3',
+                                    'STATUS_CO': '#977AA3'
+                                };
+                                const columnId = header.column.id;
+                                const bgColor = columnColors[columnId] || '#F7FAFC';
+                                
+                                return (
+                                    <Box
+                                        key={header.id}
+                                        width={`${header.getSize()}px`}
+                                        minWidth={`${header.getSize()}px`}
+                                        maxWidth={`${header.getSize()}px`}
+                                        textAlign="center"
+                                        fontSize="xs"
+                                        textTransform="uppercase"
+                                        letterSpacing="wide"
+                                        color="white"
+                                        py={2}
+                                        px={1}
+                                        borderRight="1px solid"
+                                        borderColor="gray.100"
+                                        display="flex"
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        cursor={header.column.getCanSort() ? 'pointer' : 'default'}
+                                        onClick={header.column.getToggleSortingHandler()}
+                                        _hover={header.column.getCanSort() ? { opacity: 0.8 } : {}}
+                                        minHeight="45px"
+                                        position="relative"
+                                        bg={bgColor}
+                                    >
+                                        <HStack spacing={1}>
+                                            <Text fontSize="xs" noOfLines={3} textAlign="center">
+                                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                            </Text>
+                                            {header.column.getIsSorted() && (
+                                                <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
+                                            )}
+                                        </HStack>
+                                    </Box>
+                                );
+                            })}
+                        </Box>
                     </Box>
 
                     {/* Virtual rows */}
@@ -445,7 +579,7 @@ const LazosTableSqlLoopTestControl = () => {
                                 left={0}
                                 width="100%"
                                 minHeight={`${virtualRow.size}px`}
-                                transform={`translateY(${virtualRow.start}px)`}
+                                transform={`translateY(${virtualRow.start + 40}px)`}
                                 borderBottom="1px solid"
                                 borderColor="gray.100"
                                 _hover={{ bg: 'blue.50' }}
@@ -454,7 +588,7 @@ const LazosTableSqlLoopTestControl = () => {
                                     {row.getVisibleCells().map(cell => (
                                         <Box
                                             key={cell.id}
-                                            width="120px"
+                                            width={`${cell.column.columnDef.size || 80}px`}
                                             flexShrink={0}
                                             px={2}
                                             py={1}
@@ -462,6 +596,7 @@ const LazosTableSqlLoopTestControl = () => {
                                             borderColor="gray.100"
                                             display="flex"
                                             alignItems="center"
+                                            justifyContent={cell.column.id === 'TAG LOOP' || cell.column.id === 'AREA' || cell.column.id === 'PRIORITY' || cell.column.id === 'HITO' || cell.column.id === 'SIEMSA' || cell.column.id === 'LOOP' || cell.column.id === 'TAGS' || cell.column.id === 'INSTALLED' || cell.column.id === 'WIRED' || cell.column.id === 'CONNECTED' || cell.column.id === 'CABLE_TEST' || cell.column.id === 'QCF' || cell.column.id === 'OK100' || cell.column.id === 'DOSSIER' || cell.column.id === 'ACTION' || cell.column.id === 'TEST_LOOP' || cell.column.id === 'BY' || cell.column.id === 'STATUS_CO' ? 'center' : 'flex-start'}
                                             height="100%"
                                         >
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}

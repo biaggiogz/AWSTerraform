@@ -98,7 +98,7 @@ export const buildLoopTestProgressQuery = (whereClause) => {
     FROM master_subsystem 
     WHERE tag_loop_tlp IS NOT NULL
     ${whereClause ? ` AND ${whereClause}` : ''}
-    ORDER BY subsystem, area_tlp
+    ORDER BY code_tlp ASC
   `;
   
   queryTemplateCache.set(cacheKey, query);

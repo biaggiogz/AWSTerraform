@@ -81,7 +81,8 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
     'LOOP SIGNAL PROGRESS REPORT',
     'TEST PACK PROGRESS',
     'INSTRUMENTS REPORT',
-    'INSULATION PROGRESS REPORT'
+    'INSULATION PROGRESS REPORT',
+    'UPDATE DATASET'
   ];
 
   // Find the index of the active dashboard
@@ -108,6 +109,7 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
             <Tab>TEST PACK PROGRESS</Tab>
             <Tab>INSTRUMENTS REPORT</Tab>
             <Tab>INSULATION PROGRESS REPORT</Tab>
+            <Tab>UPDATE DATASET</Tab>
           </TabList>
           <TabPanels>
             <TabPanel p={0}>
@@ -203,6 +205,12 @@ const ChartSelector = ({ data, rawData, controlData, detailsData, activeDashboar
                   <InsulationProgressTable data={data} />
                 </VStack>
               </Suspense>
+            </TabPanel>
+
+            <TabPanel p={0}>
+              <Center height="300px">
+                <Box>UPDATE DATASET Content</Box>
+              </Center>
             </TabPanel>
           </TabPanels>
         </Tabs>
