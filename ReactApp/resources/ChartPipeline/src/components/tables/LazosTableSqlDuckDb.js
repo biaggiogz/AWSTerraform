@@ -9,7 +9,9 @@ import {
     Center,
     Tooltip,
     Button,
+    IconButton,
 } from '@chakra-ui/react';
+import { MdCategory } from 'react-icons/md';
 import {
     createColumnHelper,
     flexRender,
@@ -21,6 +23,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import useDuckDB from '../../hooks/useDuckDB3';
 import { useLazosTableSqlFilterContext } from '../filters/LazosTableFilter';
 import { buildLoopTestProgressQuery } from '../../utils/sqlOptimizer';
+import LazosSubsystemFilter from '../filters/LazosSubsystemFilter';
 
 // Performance measurement component
 const LazosTableSqlPerformanceMetric = React.memo(({ label, value, description }) => (
@@ -113,6 +116,15 @@ const LazosTableSqlLoopTestControl = () => {
     const [lazosTableSqlLoadTime, setLazosTableSqlLoadTime] = useState(null);
     const [lazosTableSqlQueryTime, setLazosTableSqlQueryTime] = useState(null);
     const lazosTableSqlContainerRef = useRef(null);
+
+    // Filter state
+    const [isLazosSubsystemFilterVisible, setIsLazosSubsystemFilterVisible] = useState(false);
+    const [lazosSubsystemFilteredData, setLazosSubsystemFilteredData] = useState([]);
+
+    // Use filtered data when available, otherwise use original data
+    const displayData = useMemo(() => {
+        return lazosSubsystemFilteredData.length > 0 ? lazosSubsystemFilteredData : lazosTableSqlData;
+    }, [lazosSubsystemFilteredData, lazosTableSqlData]);
 
     // Helper function to format timestamp to date
     const formatDate = (timestamp) => {
@@ -386,7 +398,7 @@ const LazosTableSqlLoopTestControl = () => {
 
     // Create table instance
     const lazosTableSqlTable = useReactTable({
-        data: lazosTableSqlData,
+        data: displayData,
         columns: lazosTableSqlColumns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
@@ -422,6 +434,14 @@ const LazosTableSqlLoopTestControl = () => {
             <HStack mb={4} justify="space-between" align="center">
                 <Heading size="md">Loop Test Control-Precommissioning</Heading>
                 <HStack>
+                    <IconButton
+                        icon={<MdCategory />}
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setIsLazosSubsystemFilterVisible(!isLazosSubsystemFilterVisible)}
+                        aria-label="Toggle subsystem filter"
+                        title="Subsystem Filter"
+                    />
                     {lazosTableSqlLoadTime && (
                         <LazosTableSqlPerformanceMetric
                             label="Load"
@@ -437,8 +457,13 @@ const LazosTableSqlLoopTestControl = () => {
                         />
                     )}
                     <Badge colorScheme="green" fontSize="xs" px={2} py={1}>
-                        Rows: {lazosTableSqlData.length}
+                        Rows: {displayData.length}
                     </Badge>
+                    {lazosSubsystemFilteredData.length > 0 && (
+                        <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
+                            Filtered from {lazosTableSqlData.length}
+                        </Badge>
+                    )}
                 </HStack>
             </HStack>
 
@@ -608,6 +633,14 @@ const LazosTableSqlLoopTestControl = () => {
                     })}
                 </Box>
             </Box>
+            
+            {/* Lazos Subsystem Filter */}
+            <LazosSubsystemFilter
+                data={lazosTableSqlData}
+                onFilterChange={setLazosSubsystemFilteredData}
+                isVisible={isLazosSubsystemFilterVisible}
+                onClose={() => setIsLazosSubsystemFilterVisible(false)}
+            />
         </Box>
     );
 };
