@@ -241,10 +241,18 @@ const ControlInstrumentsByIsometric = () => {
             rowBgColor: 'rgba(52, 74, 104, 0.2)' // 20% lighter
           },
           {
+            id: 'subsystem',
+            title: 'SUBSYSTEM',
+            colspan: 1,
+            startCol: 2,
+            color: '#1687a7',
+            rowBgColor: 'rgba(94, 135, 165, 0.2)' // 20% lighter
+          },
+          {
             id: 'mc',
             title: 'MECHANICAL COMPLETION (MC) REALISTIC DATE BY SUBSYSTEM',
-            colspan: 5,
-            startCol: 2,
+            colspan: 4,
+            startCol: 3,
             color: '#427d9d',
             rowBgColor: 'rgba(94, 135, 165, 0.2)' // 20% lighter
           },

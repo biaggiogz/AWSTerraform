@@ -320,7 +320,7 @@ const DetailsInstrumentsTable = () => {
             title: 'SUBSYSTEM - TP',
             colspan: 3,
             startCol: 4,
-            color: '#2b4865'
+            color: '#1687a7'
           },
           {
             id: 'realistc_date',
