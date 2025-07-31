@@ -124,26 +124,27 @@ const LazosTableSqlLoopTestControl = () => {
     const [isLazosTagLoopFilterVisible, setIsLazosTagLoopFilterVisible] = useState(false);
     const [lazosTagLoopFilteredData, setLazosTagLoopFilteredData] = useState([]);
 
-    // Use filtered data when available, otherwise use original data
+    // Optimized filter logic using Set for O(1) lookups
     const displayData = useMemo(() => {
-        let data = lazosTableSqlData;
+        const hasSubsystemFilter = lazosSubsystemFilteredData.length > 0;
+        const hasTagLoopFilter = lazosTagLoopFilteredData.length > 0;
         
-        // Apply subsystem filter first
-        if (lazosSubsystemFilteredData.length > 0) {
-            data = lazosSubsystemFilteredData;
+        if (!hasSubsystemFilter && !hasTagLoopFilter) {
+            return lazosTableSqlData;
         }
         
-        // Apply tag loop filter on top of subsystem filter
-        if (lazosTagLoopFilteredData.length > 0) {
-            const subsystemData = lazosSubsystemFilteredData.length > 0 ? lazosSubsystemFilteredData : lazosTableSqlData;
-            data = subsystemData.filter(row => 
-                lazosTagLoopFilteredData.some(filteredRow => 
-                    filteredRow['TAG LOOP'] === row['TAG LOOP']
-                )
-            );
-        }
+        // Create Sets for O(1) lookup performance
+        const subsystemSet = hasSubsystemFilter ? 
+            new Set(lazosSubsystemFilteredData.map(row => row.SUBSYSTEM)) : null;
+        const tagLoopSet = hasTagLoopFilter ? 
+            new Set(lazosTagLoopFilteredData.map(row => row['TAG LOOP'])) : null;
         
-        return data;
+        // Single pass filter with O(1) lookups
+        return lazosTableSqlData.filter(row => {
+            const matchesSubsystem = !subsystemSet || subsystemSet.has(row.SUBSYSTEM);
+            const matchesTagLoop = !tagLoopSet || tagLoopSet.has(row['TAG LOOP']);
+            return matchesSubsystem && matchesTagLoop;
+        });
     }, [lazosSubsystemFilteredData, lazosTagLoopFilteredData, lazosTableSqlData]);
 
     // Propagate filtered data to context for charts

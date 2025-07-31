@@ -77,7 +77,7 @@ const LazosTagLoopFilter = ({
         } else {
             onFilterChange(filteredData);
         }
-    }, [onFilterChange, sortedTagLoops, selectedTagLoops]));
+    }, [onFilterChange, sortedTagLoops, selectedTagLoops]), 50);
 
     React.useEffect(() => {
         debouncedFilterChange(filteredData);

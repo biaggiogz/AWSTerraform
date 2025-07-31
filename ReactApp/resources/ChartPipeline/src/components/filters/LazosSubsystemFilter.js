@@ -77,7 +77,7 @@ const LazosSubsystemFilter = ({
         } else {
             onFilterChange(filteredData);
         }
-    }, [onFilterChange, sortedSubsystems, selectedSubsystems]));
+    }, [onFilterChange, sortedSubsystems, selectedSubsystems]), 50);
 
     React.useEffect(() => {
         debouncedFilterChange(filteredData);
