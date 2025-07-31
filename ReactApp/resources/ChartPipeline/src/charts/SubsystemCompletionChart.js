@@ -12,16 +12,13 @@ import {
 } from '@chakra-ui/react';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import useDuckDB from '../hooks/useDuckDB3';
 import { useLazosTableSqlFilterContext } from '../components/filters/LazosTableFilter';
-import { buildSubsystemCompletionQueries } from '../utils/sqlOptimizer';
 
 // Register the plugin
 Chart.register(ChartDataLabels);
 
 const SubsystemCompletionChart = () => {
-  const { createTableFromParquet, executeQuery, loading: dbLoading, error: dbError } = useDuckDB();
-  const { subsystemCompletionFilter, handleSubsystemCompletionFilter } = useLazosTableSqlFilterContext();
+  const { subsystemCompletionFilter, handleSubsystemCompletionFilter, tableData } = useLazosTableSqlFilterContext();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,78 +28,77 @@ const SubsystemCompletionChart = () => {
     completedCount: 0,
     pendingCount: 0
   });
-  const [parquetLoaded, setParquetLoaded] = useState(false);
 
-  // Load parquet file once
-  const loadParquetFile = async () => {
-    if (parquetLoaded || dbLoading || dbError) return;
+  // Calculate completion data from filtered table data
+  const calculateCompletionData = useMemo(() => {
+    if (!tableData || tableData.length === 0) {
+      return {
+        fullyCompleted: [],
+        fullyPending: [],
+        completedCount: 0,
+        pendingCount: 0
+      };
+    }
+
+    const subsystemGroups = {};
     
-    try {
-      const res = await fetch('/data/master_subsystem.parquet');
-      if (!res.ok) throw new Error(`Failed to fetch Parquet: ${res.status}`);
+    // Group by subsystem and calculate completion status
+    tableData.forEach(row => {
+      const subsystem = row.SUBSYSTEM;
+      if (!subsystem) return;
       
-      const parquetBuffer = await res.arrayBuffer();
-      await createTableFromParquet('master_subsystem', parquetBuffer);
-      setParquetLoaded(true);
-    } catch (err) {
-      console.error('Error loading Parquet:', err);
-      setError('Failed to load data source');
-    }
-  };
-
-  // Execute all queries
-  const fetchCompletionData = async () => {
-    if (!parquetLoaded) return;
+      if (!subsystemGroups[subsystem]) {
+        subsystemGroups[subsystem] = {
+          totalLoops: 0,
+          completedLoops: 0
+        };
+      }
+      
+      subsystemGroups[subsystem].totalLoops++;
+      
+      // Check if loop is completed (OK100 = 1.0)
+      const okValue = parseFloat(row.OK100) || 0;
+      if (okValue === 1.0) {
+        subsystemGroups[subsystem].completedLoops++;
+      }
+    });
     
-    try {
-      setLoading(true);
-      
-      // Execute optimized queries
-      const queries = buildSubsystemCompletionQueries();
-      
-      const [fullyCompleted, fullyPending, completedCountResult, pendingCountResult] = await Promise.all([
-        executeQuery(queries.fullyCompleted, { useCache: true, cacheKey: 'subsystem_completed' }),
-        executeQuery(queries.fullyPending, { useCache: true, cacheKey: 'subsystem_pending' }),
-        executeQuery(queries.completedCount, { useCache: true, cacheKey: 'completed_count' }),
-        executeQuery(queries.pendingCount, { useCache: true, cacheKey: 'pending_count' })
-      ]);
+    // Determine completion status for each subsystem
+    const fullyCompleted = [];
+    const fullyPending = [];
+    
+    Object.entries(subsystemGroups).forEach(([subsystem, data]) => {
+      if (data.completedLoops === data.totalLoops && data.totalLoops > 0) {
+        fullyCompleted.push({ subsystem });
+      } else {
+        fullyPending.push({ subsystem });
+      }
+    });
+    
+    return {
+      fullyCompleted,
+      fullyPending,
+      completedCount: fullyCompleted.length,
+      pendingCount: fullyPending.length
+    };
+  }, [tableData]);
 
-      setCompletionData({
-        fullyCompleted: fullyCompleted || [],
-        fullyPending: fullyPending || [],
-        completedCount: Number(completedCountResult?.[0]?.done_subsystem_count || 0),
-        pendingCount: Number(pendingCountResult?.[0]?.pending_subsystem_count || 0)
-      });
-    } catch (err) {
-      console.error('Error fetching completion data:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load parquet on mount
+  // Update completion data when table data changes
   useEffect(() => {
-    loadParquetFile();
-  }, [createTableFromParquet, dbLoading, dbError]);
-
-  // Fetch data when parquet is loaded
-  useEffect(() => {
-    if (parquetLoaded) {
-      fetchCompletionData();
-    }
-  }, [parquetLoaded]);
+    setCompletionData(calculateCompletionData);
+    setLoading(false);
+  }, [calculateCompletionData]);
 
   // Prepare chart data
   const chartData = useMemo(() => ({
     labels: ['Fully Completed', 'Fully Pending'],
     datasets: [{
-      data: [completionData.completedCount, completionData.pendingCount],
+      data: [calculateCompletionData.completedCount, calculateCompletionData.pendingCount],
       backgroundColor: ['#1DE9B6', '#FF168B'],
       borderColor: ['#1DE9B6', '#FF168B'],
       borderWidth: 2
     }]
-  }), [completionData]);
+  }), [calculateCompletionData]);
 
   // Chart options
   const options = useMemo(() => ({
@@ -132,7 +128,7 @@ const SubsystemCompletionChart = () => {
   if (loading) return <Box><Box p={4} borderWidth="1px" borderRadius="lg" bg="white" mt={4}><Text>Loading...</Text></Box></Box>;
   if (error) return <Box><Box p={4} borderWidth="1px" borderRadius="lg" bg="white" mt={4}><Text color="red.500">Error: {error}</Text></Box></Box>;
 
-  const totalSubsystems = completionData.completedCount + completionData.pendingCount;
+  const totalSubsystems = calculateCompletionData.completedCount + calculateCompletionData.pendingCount;
 
   return (
     <Box>
@@ -146,7 +142,7 @@ const SubsystemCompletionChart = () => {
         <VStack mb={4} align="flex-start">
           <Text fontSize="sm">
             <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
-            <Badge ml={2} colorScheme="green">Completion Rate: {totalSubsystems > 0 ? ((completionData.completedCount / totalSubsystems) * 100).toFixed(1) : 0}%</Badge>
+            <Badge ml={2} colorScheme="green">Completion Rate: {totalSubsystems > 0 ? ((calculateCompletionData.completedCount / totalSubsystems) * 100).toFixed(1) : 0}%</Badge>
           </Text>
         </VStack>
         
@@ -158,7 +154,7 @@ const SubsystemCompletionChart = () => {
             variant={subsystemCompletionFilter === 'DONE' ? 'solid' : 'outline'}
             onClick={() => handleSubsystemCompletionFilter('DONE')}
           >
-            DONE ({completionData.completedCount})
+            DONE ({calculateCompletionData.completedCount})
           </Button>
           <Button
             size="sm"
@@ -166,7 +162,7 @@ const SubsystemCompletionChart = () => {
             variant={subsystemCompletionFilter === 'PENDING' ? 'solid' : 'outline'}
             onClick={() => handleSubsystemCompletionFilter('PENDING')}
           >
-            PENDING ({completionData.pendingCount})
+            PENDING ({calculateCompletionData.pendingCount})
           </Button>
           <Button
             size="sm"

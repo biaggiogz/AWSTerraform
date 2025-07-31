@@ -126,6 +126,13 @@ const LazosTableSqlLoopTestControl = () => {
         return lazosSubsystemFilteredData.length > 0 ? lazosSubsystemFilteredData : lazosTableSqlData;
     }, [lazosSubsystemFilteredData, lazosTableSqlData]);
 
+    // Propagate filtered data to context for charts
+    useEffect(() => {
+        if (setTableData) {
+            setTableData(displayData);
+        }
+    }, [displayData, setTableData]);
+
     // Helper function to format timestamp to date
     const formatDate = (timestamp) => {
         if (!timestamp) return '';
