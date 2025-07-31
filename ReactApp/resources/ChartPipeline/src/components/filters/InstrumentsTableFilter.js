@@ -43,31 +43,27 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
   }, []);
 
   // Filter functions for each table type
-  const filterDetailsTable = useCallback((data) => {
+  const filterDetailsTable = useCallback(async (data) => {
     if (!data || !data.length) return [];
     if (!selectedIsometric && !selectedTestPack && !selectedSubsystem) return data;
 
-    return data.filter(row => {
-      // Filter by isometric
-      if (selectedIsometric && row['MOUNTING ON ISO/EQUI/PACK'] !== selectedIsometric) {
-        return false;
-      }
-
-      // Filter by test pack
-      if (selectedTestPack) {
-        const testPacks = splitTestPack(row['TPs']);
-        if (!testPacks.includes(selectedTestPack)) {
-          return false;
-        }
-      }
-
-      // Filter by subsystem
-      if (selectedSubsystem && row['SUBSYSTEM'] !== selectedSubsystem) {
-        return false;
-      }
-
-      return true;
-    });
+    // Try Rust filter first
+    try {
+      const { filterTableDataRust } = await import('../../wasm/rustFilter');
+      return await filterTableDataRust(data, {
+        subsystem: selectedSubsystem,
+        testPack: selectedTestPack,
+        isometric: selectedIsometric
+      });
+    } catch (error) {
+      // JS fallback
+      return data.filter(row => {
+        if (selectedIsometric && row['MOUNTING ON ISO/EQUI/PACK'] !== selectedIsometric) return false;
+        if (selectedTestPack && !splitTestPack(row['TPs']).includes(selectedTestPack)) return false;
+        if (selectedSubsystem && row['SUBSYSTEM'] !== selectedSubsystem) return false;
+        return true;
+      });
+    }
   }, [selectedIsometric, selectedTestPack, selectedSubsystem]);
 
   const filterControlTable = useCallback((data) => {
