@@ -23,38 +23,15 @@ const VirtualizedTableWasm = ({
   const tableContainerRef = useRef(null);
   const [wasmInitialized, setWasmInitialized] = useState(false);
 
+  // Skip WASM initialization for better performance
   useEffect(() => {
-    const initWasm = async () => {
-      try {
-        await wasmUtils.initializeWasm();
-        setWasmInitialized(true);
-      } catch (error) {
-        // Silently fall back to JS implementation
-        setWasmInitialized(false);
-      }
-    };
-    initWasm();
+    setWasmInitialized(false);
   }, []);
 
   const optimizedRowHeights = useMemo(() => {
-    if (!wasmInitialized || !data || data.length === 0) {
-      return Array(data?.length || 0).fill(30);
-    }
-
-    try {
-      const textLengths = data.map(row => {
-        const textContents = Object.values(row).map(value => 
-          String(value || '').length
-        );
-        return Math.max(...textContents, 0);
-      });
-
-      return wasmUtils.calculateTableRowHeights(textLengths);
-    } catch (error) {
-      console.warn('WASM row height calculation failed:', error);
-      return Array(data.length).fill(30);
-    }
-  }, [wasmInitialized, data]);
+    // Skip expensive calculations, use fixed height for performance
+    return Array(data?.length || 0).fill(35);
+  }, [data?.length]);
 
   const table = useReactTable({
     data,
@@ -74,9 +51,8 @@ const VirtualizedTableWasm = ({
     getScrollElement: () => tableContainerRef.current,
     estimateSize: (index) => optimizedRowHeights[index] || 30,
     overscan: 10,
-    measureElement: typeof window !== 'undefined' && document.getElementById ? 
-      (element) => element?.getBoundingClientRect().height || 30 : 
-      undefined,
+    // Remove expensive DOM measurements
+    measureElement: undefined,
   });
 
   return (
