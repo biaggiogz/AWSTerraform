@@ -295,8 +295,8 @@ const VirtualizedTableWasm = ({
                     return (
                       <Box
                         key={`frozen-control-count-${header.id}`}
-                        bg="blue.100"
-                        color="blue.700"
+                        bg="#71BBB2"
+                        color="white"
                         p={2}
                         textAlign="center"
                         fontWeight="bold"
@@ -346,8 +346,8 @@ const VirtualizedTableWasm = ({
                     return (
                       <Box
                         key={`control-count-${header.id}`}
-                        bg="gray.100"
-                        color="gray.700"
+                        bg="#497D74"
+                        color="white"
                         p={2}
                         textAlign="center"
                         fontWeight="bold"

@@ -555,7 +555,7 @@ const DynamicInstrumentsTable = () => {
           <Center p={8}>
             <Spinner size="xs" color="blue.500" />
             <Text ml={2} color="gray.600">
-              Loading data with DuckDB...
+              Loading data ...
             </Text>
           </Center>
         </Box>
