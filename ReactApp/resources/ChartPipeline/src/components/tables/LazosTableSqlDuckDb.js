@@ -646,7 +646,10 @@ const LazosTableSqlLoopTestControl = () => {
                 data={lazosTableSqlData}
                 onFilterChange={setLazosSubsystemFilteredData}
                 isVisible={isLazosSubsystemFilterVisible}
-                onClose={() => setIsLazosSubsystemFilterVisible(false)}
+                onClose={() => {
+                    setIsLazosSubsystemFilterVisible(false);
+                    setLazosSubsystemFilteredData([]);
+                }}
             />
         </Box>
     );
