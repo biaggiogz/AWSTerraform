@@ -313,42 +313,42 @@ const DetailsInstrumentsTable = () => {
             title: 'INSTRUMENT IDENTIFICATION',
             colspan: 4,
             startCol: 0,
-            color: '#625D3B'
+            color: '#276678'
           },
           {
             id: 'subsystem_tp',
             title: 'SUBSYSTEM - TP',
             colspan: 3,
             startCol: 4,
-            color: '#B8AD55'
+            color: '#2b4865'
           },
           {
             id: 'realistc_date',
             title: 'MC REALISTIC DATE',
             colspan: 5,
             startCol: 7,
-            color: '#62403B'
+            color: '#427d9d'
           },
           {
             id: 'iso_scope_by',
             title: 'ISO - SCOPE BY',
             colspan: 5,
             startCol: 12,
-            color: '#B86255'
+            color: '#123458'
           },
           {
             id: 'construction_status',
             title: 'CONSTRUCTION STATUS',
             colspan: 7,
             startCol: 17,
-            color: '#6D5225'
+            color: '#1687A7'
           },
           {
             id: 'procurement',
             title: 'PROCUREMENT',
             colspan: 4,
             startCol: 24,
-            color: '#B89355'
+            color: '#537188'
           }
         ]
       }

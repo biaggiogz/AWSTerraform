@@ -226,6 +226,56 @@ const ControlInstrumentsByIsometric = () => {
   ], [formatDate, handleSubsystemClick, handleTestPackClick, onIsometricSelect, selectedIsometric, selectedSubsystem, selectedTestPack]);
 
 
+  // Define multi-level header structure with row colors
+  const multiLevelHeaders = useMemo(() => {
+    return [
+      {
+        level: 1,
+        headers: [
+          {
+            id: 'progress_weld_iso',
+            title: 'PROGRESS WELD ISO',
+            colspan: 2,
+            startCol: 0,
+            color: '#123458',
+            rowBgColor: 'rgba(52, 74, 104, 0.2)' // 20% lighter
+          },
+          {
+            id: 'mc',
+            title: 'MECHANICAL COMPLETION (MC) REALISTIC DATE BY SUBSYSTEM',
+            colspan: 5,
+            startCol: 2,
+            color: '#427d9d',
+            rowBgColor: 'rgba(94, 135, 165, 0.2)' // 20% lighter
+          },
+          {
+            id: 'tp',
+            title: 'PROGRESS ISO TEST PACK',
+            colspan: 2,
+            startCol: 7,
+            color: '#2b4865',
+            rowBgColor: 'rgba(69, 89, 113, 0.2)' // 20% lighter
+          },
+          {
+            id: 'inst_distribution',
+            title: 'INST DISTRIBUTION',
+            colspan: 3,
+            startCol: 9,
+            color: '#1572a1',
+            rowBgColor: 'rgba(64, 125, 164, 0.2)' // 20% lighter
+          },
+          {
+            id: 'inst_installed',
+            title: 'INST INSTALLED',
+            colspan: 3,
+            startCol: 12,
+            color: '#1c658c',
+            rowBgColor: 'rgba(68, 117, 148, 0.2)' // 20% lighter
+          }
+        ]
+      }
+    ];
+  }, []);
 
 
 
@@ -272,6 +322,7 @@ const ControlInstrumentsByIsometric = () => {
       <VirtualizedTableWasm
         data={tableData}
         columns={columns}
+        multiLevelHeaders={multiLevelHeaders}
         width="100%"
         height="500px"
         showControlCounts={true}
@@ -280,5 +331,8 @@ const ControlInstrumentsByIsometric = () => {
     </Box>
   );
 };
+
+
+
 
 export default ControlInstrumentsByIsometric;
