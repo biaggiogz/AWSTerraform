@@ -63,15 +63,6 @@ const useDuckDB3 = () => {
           // Configure DuckDB for better performance
           await conn.query("PRAGMA memory_limit='2GB'");
 
-          // Try to enable threading if supported
-          try {
-            const threads = navigator.hardwareConcurrency || 4;
-            await conn.query(`PRAGMA threads=${threads}`);
-            console.log(`DuckDB using ${threads} threads`);
-          } catch (e) {
-            console.log('Threading not fully supported in this browser');
-          }
-
           // Enable WASM SIMD if available
           try {
             await conn.query("PRAGMA enable_optimizer");

@@ -16,7 +16,9 @@ const VirtualizedTableWasm = ({
   showTagInstCount = false,
   frozenTagInstCount = null,
   showControlCounts = false,
-  frozenControlCounts = null
+  frozenControlCounts = null,
+  showDynamicCounts = false,
+  frozenDynamicCounts = null
 }) => {
   const tableContainerRef = useRef(null);
   const [wasmInitialized, setWasmInitialized] = useState(false);
@@ -360,7 +362,121 @@ const VirtualizedTableWasm = ({
                         height="100%"
                         style={{
                           position: 'sticky',
-                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + (frozenControlCounts ? 30 : 0)}px` : `${45 + (frozenControlCounts ? 30 : 0)}px`,
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + (frozenControlCounts ? 30 : 0) + (frozenDynamicCounts ? 30 : 0)}px` : `${45 + (frozenControlCounts ? 30 : 0) + (frozenDynamicCounts ? 30 : 0)}px`,
+                          zIndex: 1,
+                          minHeight: '30px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {countValue}
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          )}
+
+          {/* Frozen Dynamic Counts Row (not responsive to filters) */}
+          {showDynamicCounts && frozenDynamicCounts && (
+            <React.Fragment>
+              {table.getHeaderGroups().map(headerGroup => (
+                <React.Fragment key={`frozen-dynamic-count-${headerGroup.id}`}>
+                  {headerGroup.headers.map((header, headerIndex) => {
+                    let countValue = '';
+                    if (header.column.id === 'TOTAL INST') countValue = `TOTAL: ${frozenDynamicCounts.totalInst}`;
+                    else if (header.column.id === 'TOTAL SIEMSA') countValue = `TOTAL: ${frozenDynamicCounts.totalSiemsa}`;
+                    else if (header.column.id === 'INSTALLED SIEMSA') countValue = `TOTAL: ${frozenDynamicCounts.installedSiemsa}`;
+                    else if (header.column.id === 'TOTAL TEIGA') countValue = `TOTAL: ${frozenDynamicCounts.totalTeiga}`;
+                    else if (header.column.id === 'INSTALLED TEIGA') countValue = `TOTAL: ${frozenDynamicCounts.installedTeiga}`;
+                    else if (header.column.id === 'PENDING') countValue = `TOTAL: ${frozenDynamicCounts.pending}`;
+                    else if (header.column.id === 'DONE') countValue = `TOTAL: ${frozenDynamicCounts.done}`;
+                    
+                    return (
+                      <Box
+                        key={`frozen-dynamic-count-${header.id}`}
+                        bg="#A9D6E5"
+                        color="white"
+                        p={2}
+                        textAlign="center"
+                        fontWeight="bold"
+                        fontSize="xs"
+                        borderRight="1px solid"
+                        borderColor="gray.800"
+                        borderBottom="1px solid"
+                        boxSizing="border-box"
+                        width="100%"
+                        height="100%"
+                        style={{
+                          position: 'sticky',
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45}px` : '45px',
+                          zIndex: 1,
+                          minHeight: '30px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {countValue}
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          )}
+
+          {/* Responsive Dynamic Counts Row (responsive to filters) */}
+          {showDynamicCounts && (
+            <React.Fragment>
+              {table.getHeaderGroups().map(headerGroup => (
+                <React.Fragment key={`dynamic-count-${headerGroup.id}`}>
+                  {headerGroup.headers.map((header, headerIndex) => {
+                    let countValue = '';
+                    if (data && data.length > 0) {
+                      const flattenData = (items) => {
+                        let result = [];
+                        items.forEach(item => {
+                          if (item.children) {
+                            result = result.concat(flattenData(item.children));
+                          } else {
+                            result.push(item);
+                          }
+                        });
+                        return result;
+                      };
+                      
+                      const flatData = flattenData(data);
+                      
+                      if (header.column.id === 'TOTAL INST') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL TEIGA') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED TEIGA') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'PENDING') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
+                      else if (header.column.id === 'DONE') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
+                    }
+                    
+                    return (
+                      <Box
+                        key={`dynamic-count-${header.id}`}
+                        bg="#61A5C2"
+                        color="white"
+                        p={2}
+                        textAlign="center"
+                        fontWeight="bold"
+                        fontSize="xs"
+                        borderRight="1px solid"
+                        borderColor="gray.800"
+                        borderBottom="1px solid"
+                        boxSizing="border-box"
+                        width="100%"
+                        height="100%"
+                        style={{
+                          position: 'sticky',
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + (frozenDynamicCounts ? 30 : 0)}px` : `${45 + (frozenDynamicCounts ? 30 : 0)}px`,
                           zIndex: 1,
                           minHeight: '30px',
                           display: 'flex',

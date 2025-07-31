@@ -313,42 +313,42 @@ const DetailsInstrumentsTable = () => {
             title: 'INSTRUMENT IDENTIFICATION',
             colspan: 4,
             startCol: 0,
-            color: '#276678'
+            color: '#002b5b' // Match with 'PROGRESS WELD ISO' from child
           },
           {
             id: 'subsystem_tp',
             title: 'SUBSYSTEM - TP',
             colspan: 3,
             startCol: 4,
-            color: '#1687a7'
+            color: '#006494' // Match with 'SUBSYSTEM'
           },
           {
             id: 'realistc_date',
             title: 'MC REALISTIC DATE',
             colspan: 5,
             startCol: 7,
-            color: '#427d9d'
+            color: '#1b4965' // Match with 'MECHANICAL COMPLETION (MC) REALISTIC DATE BY SUBSYSTEM'
           },
           {
             id: 'iso_scope_by',
             title: 'ISO - SCOPE BY',
             colspan: 5,
             startCol: 12,
-            color: '#123458'
+            color: '#264653' // Match with 'PROGRESS ISO TEST PACK'
           },
           {
             id: 'construction_status',
             title: 'CONSTRUCTION STATUS',
             colspan: 7,
             startCol: 17,
-            color: '#1687A7'
+            color: '#2a9d8F' // Match with 'INST DISTRIBUTION' or adjust as needed
           },
           {
             id: 'procurement',
             title: 'PROCUREMENT',
             colspan: 4,
             startCol: 24,
-            color: '#537188'
+            color: '#287271' // Match with 'INST INSTALLED' or as appropriate
           }
         ]
       }

@@ -210,23 +210,9 @@ class SqlEngineWasm {
   async initialize() {
     if (this.initialized) return;
 
-    try {
-      this.module = await wasmLoader.loadModule(
-        'sql-engine',
-        '/wasm/sql-engine.wasm',
-        jsImplementations
-      );
-
-      if (this.module.type === 'wasm') {
-        this.memoryManager = new WasmMemoryManager(this.module.instance);
-      }
-
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize SqlEngineWasm:', error);
-      this.module = { type: 'js', impl: jsImplementations };
-      this.initialized = true;
-    }
+    // Use JavaScript implementation directly
+    this.module = { type: 'js', impl: jsImplementations };
+    this.initialized = true;
   }
 
   async executeQuery(data, query) {

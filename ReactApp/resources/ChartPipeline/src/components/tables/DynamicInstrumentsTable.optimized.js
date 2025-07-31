@@ -326,6 +326,21 @@ const DynamicInstrumentsTable = () => {
     return aggregateGroup(data);
   }, []);
 
+  // Calculate frozen sums from raw data (not affected by filters)
+  const frozenSums = useMemo(() => {
+    if (!rawData || rawData.length === 0) return null;
+    
+    return {
+      totalInst: rawData.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0),
+      totalSiemsa: rawData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0),
+      installedSiemsa: rawData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0),
+      totalTeiga: rawData.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0),
+      installedTeiga: rawData.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0),
+      pending: rawData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0),
+      done: rawData.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)
+    };
+  }, [rawData]);
+
   // Apply filters and grouping when data or filter state changes
   useEffect(() => {
     if (rawData.length > 0) {
@@ -596,6 +611,8 @@ const DynamicInstrumentsTable = () => {
           getSubRows={row => row.children}
           width="800px"
           height="500px"
+          showDynamicCounts={true}
+          frozenDynamicCounts={frozenSums}
         />
       </Box>
   );

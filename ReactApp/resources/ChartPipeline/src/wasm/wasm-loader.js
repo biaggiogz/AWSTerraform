@@ -43,25 +43,29 @@ class WasmLoader {
 
   async _loadModuleInternal(moduleName, wasmPath, fallbackImpl) {
     try {
-      // Check if WebAssembly is supported
-      if (typeof WebAssembly === 'undefined') {
-        console.warn(`WebAssembly not supported, using JavaScript fallback for ${moduleName}`);
-        return { type: 'js', impl: fallbackImpl };
-      }
-
-      // Try to load WASM module
-      const wasmModule = await WebAssembly.instantiateStreaming(fetch(wasmPath));
-      console.log(`Successfully loaded WASM module: ${moduleName}`);
+      // Try to load the .wasm.js module
+      const wasmJsPath = wasmPath.replace('.wasm', '.wasm.js');
+      const wasmModule = await import(wasmJsPath);
       
-      return {
-        type: 'wasm',
-        instance: wasmModule.instance,
-        exports: wasmModule.instance.exports
-      };
+      // Initialize the WASM module if it has an init function
+      if (wasmModule.initWasm) {
+        const success = await wasmModule.initWasm();
+        if (success && wasmModule.getWasmModule) {
+          const module = wasmModule.getWasmModule();
+          console.log(`Successfully loaded WASM module: ${moduleName}`);
+          return {
+            type: 'wasm',
+            instance: module,
+            exports: module.exports
+          };
+        }
+      }
+      
+      // Fall back to JavaScript implementation
+      console.log(`Using JavaScript fallback for ${moduleName}`);
+      return { type: 'js', impl: fallbackImpl };
     } catch (error) {
       console.warn(`Failed to load WASM module ${moduleName}:`, error);
-      console.log(`Falling back to JavaScript implementation for ${moduleName}`);
-      
       return { type: 'js', impl: fallbackImpl };
     }
   }

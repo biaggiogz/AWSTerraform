@@ -98,23 +98,9 @@ class MultiFilterWasm {
   async initialize() {
     if (this.initialized) return;
 
-    try {
-      this.module = await wasmLoader.loadModule(
-        'multi-filter',
-        '/wasm/multi-filter.wasm',
-        jsImplementations
-      );
-
-      if (this.module.type === 'wasm') {
-        this.memoryManager = new WasmMemoryManager(this.module.instance);
-      }
-
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize MultiFilterWasm:', error);
-      this.module = { type: 'js', impl: jsImplementations };
-      this.initialized = true;
-    }
+    // Use JavaScript implementation directly
+    this.module = { type: 'js', impl: jsImplementations };
+    this.initialized = true;
   }
 
   async applyMultiValueFilters(data, multiFilters) {
