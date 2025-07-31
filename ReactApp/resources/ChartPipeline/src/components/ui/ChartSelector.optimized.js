@@ -21,10 +21,10 @@ import FilterStatusBar from '../filters/FilterStatusBar';
 const LoopTestProgressChart = lazy(() => import('../../charts/LazosTestProgressChart.optimized'));
 const SubsystemCompletionChart = lazy(() => import('../../charts/SubsystemCompletionChart'));
 
-const IsolationProgressControlChart = lazy(() => import('../../charts/IsolationProgressControlChart.optimized'));
+
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
 const LazosTableSql = lazy(() => import('../tables/LazosTableSqlDuckDb'));
-const InsulationProgressTable = lazy(() => import('../tables/InsulationProgressTable.optimized'));
+const InsulationTableSqlDuckDb = lazy(() => import('../tables/InsulationTableSqlDuckDb'));
 const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric.optimized'));
 const DynamicInstrumentsTable = lazy(() => import('../tables/DynamicInstrumentsTable.optimized'));
 const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable.superoptimized'));
@@ -143,10 +143,7 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
 
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <VStack spacing={0} align="stretch">
-                  <IsolationProgressControlChart data={data} />
-                  <InsulationProgressTable data={data} />
-                </VStack>
+                <InsulationTableSqlDuckDb />
               </Suspense>
             </TabPanel>
 
