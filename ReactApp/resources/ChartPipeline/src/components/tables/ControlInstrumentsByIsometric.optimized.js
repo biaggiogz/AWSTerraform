@@ -237,7 +237,7 @@ const ControlInstrumentsByIsometric = () => {
             title: 'PROGRESS WELD ISO',
             colspan: 2,
             startCol: 0,
-            color: '#123458',
+            color: '#002b5b',
             rowBgColor: 'rgba(52, 74, 104, 0.2)' // 20% lighter
           },
           {
@@ -245,7 +245,7 @@ const ControlInstrumentsByIsometric = () => {
             title: 'SUBSYSTEM',
             colspan: 1,
             startCol: 2,
-            color: '#1687a7',
+            color: '#006494',
             rowBgColor: 'rgba(94, 135, 165, 0.2)' // 20% lighter
           },
           {
@@ -253,7 +253,7 @@ const ControlInstrumentsByIsometric = () => {
             title: 'MECHANICAL COMPLETION (MC) REALISTIC DATE BY SUBSYSTEM',
             colspan: 4,
             startCol: 3,
-            color: '#427d9d',
+            color: '#1b4965',
             rowBgColor: 'rgba(94, 135, 165, 0.2)' // 20% lighter
           },
           {
@@ -261,7 +261,7 @@ const ControlInstrumentsByIsometric = () => {
             title: 'PROGRESS ISO TEST PACK',
             colspan: 2,
             startCol: 7,
-            color: '#2b4865',
+            color: '#264653',
             rowBgColor: 'rgba(69, 89, 113, 0.2)' // 20% lighter
           },
           {
@@ -269,7 +269,7 @@ const ControlInstrumentsByIsometric = () => {
             title: 'INST DISTRIBUTION',
             colspan: 3,
             startCol: 9,
-            color: '#1572a1',
+            color: '#2a9d8F',
             rowBgColor: 'rgba(64, 125, 164, 0.2)' // 20% lighter
           },
           {
@@ -277,7 +277,7 @@ const ControlInstrumentsByIsometric = () => {
             title: 'INST INSTALLED',
             colspan: 3,
             startCol: 12,
-            color: '#1c658c',
+            color: '#287271',
             rowBgColor: 'rgba(68, 117, 148, 0.2)' // 20% lighter
           }
         ]

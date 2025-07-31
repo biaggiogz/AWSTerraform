@@ -9,15 +9,18 @@ import {
   ListItem,
   Badge,
   IconButton,
-  useToast
+  useToast,
+  Spinner
 } from '@chakra-ui/react';
 import { DeleteIcon, DownloadIcon } from '@chakra-ui/icons';
+import { uploadFileToS3, deleteFileFromS3 } from '../../utils/s3Utils';
 
 const FileUploadSection = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const toast = useToast();
 
-  const handleFileUpload = useCallback((event) => {
+  const handleFileUpload = useCallback(async (event) => {
     const files = Array.from(event.target.files);
     const validFiles = files.filter(file => {
       const ext = file.name.toLowerCase();
@@ -33,30 +36,69 @@ const FileUploadSection = () => {
       });
     }
 
-    const newFiles = validFiles.map(file => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      uploadDate: new Date().toLocaleString(),
-      file: file
-    }));
+    if (validFiles.length === 0) return;
 
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+    setUploading(true);
+    const successfulUploads = [];
+
+    for (const file of validFiles) {
+      try {
+        const result = await uploadFileToS3(file, file.name);
+        const fileData = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          uploadDate: new Date().toLocaleString(),
+          s3Key: result.key,
+          s3Url: result.url
+        };
+        successfulUploads.push(fileData);
+      } catch (error) {
+        toast({
+          title: "Upload failed",
+          description: `Failed to upload ${file.name}: ${error.message}`,
+          status: "error",
+          duration: 5000
+        });
+      }
+    }
+
+    setUploadedFiles(prev => [...prev, ...successfulUploads]);
+    setUploading(false);
     
-    if (newFiles.length > 0) {
+    if (successfulUploads.length > 0) {
       toast({
-        title: "Files uploaded",
-        description: `${newFiles.length} file(s) uploaded successfully`,
+        title: "Files uploaded to S3",
+        description: `${successfulUploads.length} file(s) uploaded successfully`,
         status: "success",
-        duration: 2000
+        duration: 3000
       });
     }
   }, [toast]);
 
-  const removeFile = useCallback((fileId) => {
-    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
-  }, []);
+  const removeFile = useCallback(async (fileId) => {
+    const file = uploadedFiles.find(f => f.id === fileId);
+    if (!file) return;
+
+    try {
+      await deleteFileFromS3(file.name);
+      setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+      toast({
+        title: "File deleted",
+        description: `${file.name} removed from S3`,
+        status: "success",
+        duration: 2000
+      });
+    } catch (error) {
+      toast({
+        title: "Delete failed",
+        description: `Failed to delete ${file.name}: ${error.message}`,
+        status: "error",
+        duration: 3000
+      });
+    }
+  }, [uploadedFiles, toast]);
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -100,7 +142,11 @@ const FileUploadSection = () => {
               colorScheme="blue"
               cursor="pointer"
               htmlFor="file-upload"
+              isLoading={uploading}
+              loadingText="Uploading..."
+              disabled={uploading}
             >
+              {uploading ? <Spinner size="sm" mr={2} /> : null}
               Select Files
             </Button>
             <input
@@ -144,6 +190,9 @@ const FileUploadSection = () => {
                         <Text fontSize="sm" color="gray.600">
                           {file.uploadDate}
                         </Text>
+                        <Text fontSize="xs" color="green.600">
+                          ✓ Uploaded to S3
+                        </Text>
                       </HStack>
                     </VStack>
                     <HStack>
@@ -154,12 +203,7 @@ const FileUploadSection = () => {
                         colorScheme="blue"
                         aria-label="Download file"
                         onClick={() => {
-                          const url = URL.createObjectURL(file.file);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = file.name;
-                          a.click();
-                          URL.revokeObjectURL(url);
+                          window.open(file.s3Url, '_blank');
                         }}
                       />
                       <IconButton
