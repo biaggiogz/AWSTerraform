@@ -29,9 +29,21 @@ const VirtualizedTableWasm = ({
   }, []);
 
   const optimizedRowHeights = useMemo(() => {
-    // Skip expensive calculations, use fixed height for performance
-    return Array(data?.length || 0).fill(35);
-  }, [data?.length]);
+    if (!data || data.length === 0) return [];
+    
+    // Try Rust calculation first
+    const calculateHeights = async () => {
+      try {
+        const { calculateRowHeightsRust } = await import('../../wasm/rustFilter');
+        return await calculateRowHeightsRust(data);
+      } catch (error) {
+        return Array(data.length).fill(35);
+      }
+    };
+    
+    // For now, use fixed height but prepare for async Rust calculation
+    return Array(data.length).fill(35);
+  }, [data]);
 
   const table = useReactTable({
     data,

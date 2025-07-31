@@ -28,3 +28,13 @@ export const filterTableDataRust = async (data, filters) => {
   
   return module.filter_table_data(data, filters.subsystem, filters.testPack, filters.isometric);
 };
+
+export const calculateRowHeightsRust = async (data) => {
+  const module = await initRustFilter();
+  if (!module) {
+    // JS fallback
+    return Array(data?.length || 0).fill(35);
+  }
+  
+  return module.calculate_row_heights(data);
+};

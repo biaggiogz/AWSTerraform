@@ -69,7 +69,7 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
             COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'TEIGA-TMI' AND ok100_isoinst = 1) AS installed_teiga_tmi,
             COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'SIEMSA' AND ok100_isoinst = 1) AS installed_siemsa
           FROM master_subsystem
-          WHERE on_isoinst = 'PIP'
+          WHERE on_isoinst != 'W_ISO'
           ${whereClause ? 'AND ' + whereClause.substring(6) : ''}
           GROUP BY mounting_on_isoequipack_isoinst
         ),
@@ -122,7 +122,7 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
             COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'TEIGA-TMI' AND ok100_isoinst = 1) AS installed_teiga_tmi,
             COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'SIEMSA' AND ok100_isoinst = 1) AS installed_siemsa
           FROM master_subsystem
-          WHERE on_isoinst = 'PIP'
+          WHERE on_isoinst != 'W_ISO'
           ${whereClause ? 'AND ' + whereClause.substring(6) : ''}
           GROUP BY mounting_on_isoequipack_isoinst
         ),

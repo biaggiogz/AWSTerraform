@@ -43,3 +43,20 @@ pub fn filter_table_data(data: &JsValue, subsystem: Option<String>, test_pack: O
     
     serde_wasm_bindgen::to_value(&filtered).unwrap()
 }
+
+#[wasm_bindgen]
+pub fn calculate_row_heights(data: &JsValue) -> Vec<u32> {
+    let rows: Vec<serde_json::Value> = serde_wasm_bindgen::from_value(data.clone()).unwrap_or_default();
+    
+    rows.iter().map(|row| {
+        let max_length = row.as_object()
+            .map(|obj| obj.values()
+                .map(|v| v.as_str().unwrap_or("").len())
+                .max()
+                .unwrap_or(0))
+            .unwrap_or(0);
+        
+        // Base height + extra for long content
+        30 + (max_length / 50) as u32 * 10
+    }).collect()
+}
