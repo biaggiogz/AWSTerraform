@@ -11,7 +11,7 @@ import {
     Button,
     IconButton,
 } from '@chakra-ui/react';
-import { MdCategory } from 'react-icons/md';
+import { MdCategory, MdLoop } from 'react-icons/md';
 import {
     createColumnHelper,
     flexRender,
@@ -24,6 +24,7 @@ import useDuckDB from '../../hooks/useDuckDB3';
 import { useLazosTableSqlFilterContext } from '../filters/LazosTableFilter';
 import { buildLoopTestProgressQuery } from '../../utils/sqlOptimizer';
 import LazosSubsystemFilter from '../filters/LazosSubsystemFilter';
+import LazosTagLoopFilter from '../filters/LazosTagLoopFilter';
 
 // Performance measurement component
 const LazosTableSqlPerformanceMetric = React.memo(({ label, value, description }) => (
@@ -120,11 +121,30 @@ const LazosTableSqlLoopTestControl = () => {
     // Filter state
     const [isLazosSubsystemFilterVisible, setIsLazosSubsystemFilterVisible] = useState(false);
     const [lazosSubsystemFilteredData, setLazosSubsystemFilteredData] = useState([]);
+    const [isLazosTagLoopFilterVisible, setIsLazosTagLoopFilterVisible] = useState(false);
+    const [lazosTagLoopFilteredData, setLazosTagLoopFilteredData] = useState([]);
 
     // Use filtered data when available, otherwise use original data
     const displayData = useMemo(() => {
-        return lazosSubsystemFilteredData.length > 0 ? lazosSubsystemFilteredData : lazosTableSqlData;
-    }, [lazosSubsystemFilteredData, lazosTableSqlData]);
+        let data = lazosTableSqlData;
+        
+        // Apply subsystem filter first
+        if (lazosSubsystemFilteredData.length > 0) {
+            data = lazosSubsystemFilteredData;
+        }
+        
+        // Apply tag loop filter on top of subsystem filter
+        if (lazosTagLoopFilteredData.length > 0) {
+            const subsystemData = lazosSubsystemFilteredData.length > 0 ? lazosSubsystemFilteredData : lazosTableSqlData;
+            data = subsystemData.filter(row => 
+                lazosTagLoopFilteredData.some(filteredRow => 
+                    filteredRow['TAG LOOP'] === row['TAG LOOP']
+                )
+            );
+        }
+        
+        return data;
+    }, [lazosSubsystemFilteredData, lazosTagLoopFilteredData, lazosTableSqlData]);
 
     // Propagate filtered data to context for charts
     useEffect(() => {
@@ -449,6 +469,14 @@ const LazosTableSqlLoopTestControl = () => {
                         aria-label="Toggle subsystem filter"
                         title="Subsystem Filter"
                     />
+                    <IconButton
+                        icon={<MdLoop />}
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setIsLazosTagLoopFilterVisible(!isLazosTagLoopFilterVisible)}
+                        aria-label="Toggle tag loop filter"
+                        title="TAG LOOP Filter"
+                    />
                     {lazosTableSqlLoadTime && (
                         <LazosTableSqlPerformanceMetric
                             label="Load"
@@ -466,7 +494,7 @@ const LazosTableSqlLoopTestControl = () => {
                     <Badge colorScheme="green" fontSize="xs" px={2} py={1}>
                         Rows: {displayData.length}
                     </Badge>
-                    {lazosSubsystemFilteredData.length > 0 && (
+                    {(lazosSubsystemFilteredData.length > 0 || lazosTagLoopFilteredData.length > 0) && (
                         <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
                             Filtered from {lazosTableSqlData.length}
                         </Badge>
@@ -649,6 +677,17 @@ const LazosTableSqlLoopTestControl = () => {
                 onClose={() => {
                     setIsLazosSubsystemFilterVisible(false);
                     setLazosSubsystemFilteredData([]);
+                }}
+            />
+            
+            {/* Lazos TAG LOOP Filter */}
+            <LazosTagLoopFilter
+                data={lazosTableSqlData}
+                onFilterChange={setLazosTagLoopFilteredData}
+                isVisible={isLazosTagLoopFilterVisible}
+                onClose={() => {
+                    setIsLazosTagLoopFilterVisible(false);
+                    setLazosTagLoopFilteredData([]);
                 }}
             />
         </Box>
