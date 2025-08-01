@@ -424,27 +424,28 @@ const VirtualizedTableWasm = ({
                   {headerGroup.headers.map((header, headerIndex) => {
                     let countValue = '';
                     if (data && data.length > 0) {
-                      const flattenData = (items) => {
-                        let result = [];
+                      // Only sum leaf nodes (nodes without children) to avoid double counting
+                      const getLeafNodes = (items) => {
+                        let leafNodes = [];
                         items.forEach(item => {
-                          if (item.children) {
-                            result = result.concat(flattenData(item.children));
+                          if (item.children && item.children.length > 0) {
+                            leafNodes = leafNodes.concat(getLeafNodes(item.children));
                           } else {
-                            result.push(item);
+                            leafNodes.push(item);
                           }
                         });
-                        return result;
+                        return leafNodes;
                       };
                       
-                      const flatData = flattenData(data);
+                      const leafData = getLeafNodes(data);
                       
-                      if (header.column.id === 'TOTAL INST') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
-                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'TOTAL TEIGA') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED TEIGA') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
-                      else if (header.column.id === 'PENDING') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
-                      else if (header.column.id === 'DONE') countValue = `CURRENTLY: ${flatData.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
+                      if (header.column.id === 'TOTAL INST') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL TEIGA') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED TEIGA') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'PENDING') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
+                      else if (header.column.id === 'DONE') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
                     }
                     
                     return (
