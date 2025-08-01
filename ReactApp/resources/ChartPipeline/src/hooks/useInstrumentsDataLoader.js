@@ -122,7 +122,7 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
             COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'TEIGA-TMI' AND ok100_isoinst = 1) AS installed_teiga_tmi,
             COUNT(scope__by_isoinst) FILTER(WHERE scope__by_isoinst = 'SIEMSA' AND ok100_isoinst = 1) AS installed_siemsa
           FROM master_subsystem
-          WHERE on_isoinst != 'W_ISO'
+          WHERE on_isoinst = 'PIP'
           ${whereClause ? 'AND ' + whereClause.substring(6) : ''}
           GROUP BY mounting_on_isoequipack_isoinst
         ),
@@ -221,14 +221,14 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
       
       const endLoadTime = performance.now();
       setLoadTime((endLoadTime - startLoadTime).toFixed(2));
+
     } catch (err) {
-      console.error('DuckDB error:', err);
-      setError(err.message || 'Unknown error');
-      setData([]);
+      console.error('Error loading data:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [createTableFromParquet, executeQuery, dbLoading, dbError, tableType, whereClause, cacheKey, getQuery]);
+  }, [tableType, whereClause, cacheKey, dbLoading, dbError, createTableFromParquet, executeQuery, getQuery]);
 
   useEffect(() => {
     loadData();

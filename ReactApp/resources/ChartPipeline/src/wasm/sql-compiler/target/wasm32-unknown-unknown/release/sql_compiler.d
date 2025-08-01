@@ -1,0 +1,1 @@
+/home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/wasm/sql-compiler/target/wasm32-unknown-unknown/release/sql_compiler.wasm: /home/ubuntu/Documents/ECS/ReactApp/resources/ChartPipeline/src/wasm/sql-compiler/src/lib.rs

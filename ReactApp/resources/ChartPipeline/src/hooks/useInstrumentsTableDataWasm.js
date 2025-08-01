@@ -84,6 +84,8 @@ const useInstrumentsTableDataWasm = (tableType) => {
 
   // Calculate frozen control counts from original data
   const frozenControlCounts = useMemo(() => {
+
+
     if (!originalData || originalData.length === 0 || tableType !== 'control') return null;
     return {
       isometricCount: originalData.length,

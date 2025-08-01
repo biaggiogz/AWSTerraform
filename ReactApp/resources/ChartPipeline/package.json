@@ -49,6 +49,8 @@
     "transform": "node src/etl/transform_polars.js",
     "copy-wasm": "mkdir -p build/wasm && cp -r public/wasm/* build/wasm/ 2>/dev/null || true",
     "wasm:build": "echo 'WASM compilation would happen here - currently using JS fallbacks'",
+    "sql-compiler:build": "./scripts/build-sql-compiler.sh",
+    "sql-compiler:dev": "./scripts/build-sql-compiler.sh && npm start",
     "wasm:test": "node scripts/test-wasm-performance.js",
     "convert-csv": "node scripts/convert-csv-to-parquet.js",
     "generate-ssm": "node scripts/generate-ssm-csv.js",
