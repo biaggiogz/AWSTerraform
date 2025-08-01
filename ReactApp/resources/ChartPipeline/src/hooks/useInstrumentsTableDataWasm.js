@@ -27,20 +27,16 @@ const useInstrumentsTableDataWasm = (tableType) => {
 
   // Get filter context
   const {
-    selectedIsometric,
-    selectedTestPack,
     selectedSubsystem,
-    handleTestPackClick,
     handleSubsystemClick,
     getSqlWhereClause,
     setTableData: setContextTableData,
-    setGroupBy: setContextGroupBy,
-    onIsometricSelect
+    setGroupBy: setContextGroupBy
   } = useInstrumentsTableFilterContext();
 
   // Data loading with WASM optimization
   const whereClause = getSqlWhereClause(tableType);
-  const cacheKey = `${tableType}_${selectedIsometric || 'all'}_${selectedSubsystem || 'all'}_${selectedTestPack || 'all'}`;
+  const cacheKey = `${tableType}_${selectedSubsystem || 'all'}`;
   const {
     data: rawData,
     loading,
@@ -49,10 +45,7 @@ const useInstrumentsTableDataWasm = (tableType) => {
     queryTime
   } = useInstrumentsDataLoader(tableType, whereClause, cacheKey);
 
-  // Load original unfiltered data for frozen count
-  const {
-    data: originalData
-  } = useInstrumentsDataLoader(tableType, '', `${tableType}_original`);
+
 
   // WASM-optimized data processing (currently disabled to prevent filtering issues)
   const [processedData, setProcessedData] = useState([]);
@@ -71,32 +64,7 @@ const useInstrumentsTableDataWasm = (tableType) => {
     }
   }, [wasmInitialized, rawData]);
 
-  // Calculate frozen unique TAG INST count from original data
-  const frozenTagInstCount = useMemo(() => {
-    if (!originalData || originalData.length === 0) return 0;
-    const uniqueTags = new Set(
-      originalData
-        .map(row => row['TAG INST'])
-        .filter(tag => tag && tag !== '')
-    );
-    return uniqueTags.size;
-  }, [originalData]);
 
-  // Calculate frozen control counts from original data
-  const frozenControlCounts = useMemo(() => {
-
-
-    if (!originalData || originalData.length === 0 || tableType !== 'control') return null;
-    return {
-      isometricCount: originalData.length,
-      qtyInstSum: originalData.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0),
-      scopeTeigaSum: originalData.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0),
-      scopeSiemsaSum: originalData.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0),
-      installedTeigaSum: originalData.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0),
-      installedSiemsaSum: originalData.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0),
-      pendingSum: originalData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)
-    };
-  }, [originalData, tableType]);
 
   return {
     // Data
@@ -108,19 +76,13 @@ const useInstrumentsTableDataWasm = (tableType) => {
     processingTime,
     wasmEnabled: wasmInitialized && (multiFilterWasm.isUsingWasm() || sqlEngineWasm.isUsingWasm()),
     
-    // Counts
-    frozenTagInstCount,
-    frozenControlCounts,
+
     
     // Filter state
-    selectedIsometric,
-    selectedTestPack,
     selectedSubsystem,
     
     // Filter handlers
-    handleTestPackClick,
     handleSubsystemClick,
-    onIsometricSelect,
     
     // Context setters (for DynamicInstrumentsTable)
     setContextTableData,

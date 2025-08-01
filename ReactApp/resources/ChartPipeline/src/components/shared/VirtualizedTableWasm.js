@@ -267,105 +267,7 @@ const VirtualizedTableWasm = ({
           {/*  </React.Fragment>*/}
           {/*)}*/}
 
-          {/* Frozen Control Counts Row (not responsive to filters) */}
-          {showControlCounts && frozenControlCounts && (
-            <React.Fragment>
-              {table.getHeaderGroups().map(headerGroup => (
-                <React.Fragment key={`frozen-control-count-${headerGroup.id}`}>
-                  {headerGroup.headers.map((header, headerIndex) => {
-                    let countValue = '';
-                    if (header.column.id === 'ISOMETRIC') countValue = `TOTAL: ${frozenControlCounts.isometricCount}`;
-                    else if (header.column.id === 'QTY INST') countValue = `TOTAL: ${frozenControlCounts.qtyInstSum}`;
-                    else if (header.column.id === 'SCOPE BY TEIGA-TMI') countValue = `TOTAL: ${frozenControlCounts.scopeTeigaSum}`;
-                    else if (header.column.id === 'SCOPE BY SIEMSA') countValue = `TOTAL: ${frozenControlCounts.scopeSiemsaSum}`;
-                    else if (header.column.id === 'INSTALLED BY TEIGA-TMI') countValue = `TOTAL: ${frozenControlCounts.installedTeigaSum}`;
-                    else if (header.column.id === 'INSTALLED BY SIEMSA') countValue = `TOTAL: ${frozenControlCounts.installedSiemsaSum}`;
-                    else if (header.column.id === 'PENDING') countValue = `TOTAL: ${frozenControlCounts.pendingSum}`;
-                    
-                    return (
-                      <Box
-                        key={`frozen-control-count-${header.id}`}
-                        bg="#A9D6E5"
-                        color="white"
-                        p={2}
-                        textAlign="center"
-                        fontWeight="bold"
-                        fontSize="xs"
-                        borderRight="1px solid"
-                        borderColor="gray.800"
-                        borderBottom="1px solid"
-                        boxSizing="border-box"
-                        width="100%"
-                        height="100%"
-                        style={{
-                          position: 'sticky',
-                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45}px` : '45px',
-                          zIndex: 1,
-                          minHeight: '30px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {countValue}
-                      </Box>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </React.Fragment>
-          )}
 
-          {/* Responsive Control Counts Row (responsive to filters) */}
-          {showControlCounts && (
-            <React.Fragment>
-              {table.getHeaderGroups().map(headerGroup => (
-                <React.Fragment key={`control-count-${headerGroup.id}`}>
-                  {headerGroup.headers.map((header, headerIndex) => {
-                    let countValue = '';
-                    if (data && data.length > 0) {
-                      if (header.column.id === 'ISOMETRIC') countValue = `CURRENTLY: ${data.length}`;
-                      else if (header.column.id === 'QTY INST') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0)}`;
-                      else if (header.column.id === 'SCOPE BY TEIGA-TMI') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0)}`;
-                      else if (header.column.id === 'SCOPE BY SIEMSA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED BY TEIGA-TMI') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED BY SIEMSA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'PENDING') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
-                    }
-                    
-                    return (
-                      <Box
-                        key={`control-count-${header.id}`}
-                        bg="#61A5C2"
-                        color="white"
-                        p={2}
-                        textAlign="center"
-                        fontWeight="bold"
-                        fontSize="xs"
-                        borderRight="1px solid"
-                        borderColor="gray.800"
-                        borderBottom="1px solid"
-                        boxSizing="border-box"
-                        width="100%"
-                        height="100%"
-                        style={{
-                          position: 'sticky',
-                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + (frozenControlCounts ? 30 : 0) + (frozenDynamicCounts ? 30 : 0)}px` : `${45 + (frozenControlCounts ? 30 : 0) + (frozenDynamicCounts ? 30 : 0)}px`,
-                          zIndex: 1,
-                          minHeight: '30px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {countValue}
-                      </Box>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </React.Fragment>
-          )}
 
           {/* Frozen Dynamic Counts Row (not responsive to filters) */}
           {showDynamicCounts && frozenDynamicCounts && (
@@ -424,28 +326,13 @@ const VirtualizedTableWasm = ({
                   {headerGroup.headers.map((header, headerIndex) => {
                     let countValue = '';
                     if (data && data.length > 0) {
-                      // Only sum leaf nodes (nodes without children) to avoid double counting
-                      const getLeafNodes = (items) => {
-                        let leafNodes = [];
-                        items.forEach(item => {
-                          if (item.children && item.children.length > 0) {
-                            leafNodes = leafNodes.concat(getLeafNodes(item.children));
-                          } else {
-                            leafNodes.push(item);
-                          }
-                        });
-                        return leafNodes;
-                      };
-                      
-                      const leafData = getLeafNodes(data);
-                      
-                      if (header.column.id === 'TOTAL INST') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
-                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'TOTAL TEIGA') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED TEIGA') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
-                      else if (header.column.id === 'PENDING') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
-                      else if (header.column.id === 'DONE') countValue = `CURRENTLY: ${leafData.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
+                      if (header.column.id === 'TOTAL INST') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL TEIGA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED TEIGA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'PENDING') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
+                      else if (header.column.id === 'DONE') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
                     }
                     
                     return (
