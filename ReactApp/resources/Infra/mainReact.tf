@@ -322,3 +322,129 @@ output "identity_pool_id" {
   value       = aws_cognito_identity_pool.file_upload_pool.id
   description = "Cognito Identity Pool ID for file uploads"
 }
+
+# Output the Lambda function ARN
+output "excel_processor_lambda_arn" {
+  value       = aws_lambda_function.excel_processor.arn
+  description = "ARN of the Excel processor Lambda function"
+}
+
+# EventBridge rule to trigger on S3 object creation in rawDataset/ folder
+resource "aws_cloudwatch_event_rule" "s3_file_upload_rule" {
+  name        = "${var.app_name_react}-s3-file-upload-rule"
+  description = "Trigger when file is uploaded to rawDataset/ folder"
+
+  event_pattern = jsonencode({
+    source      = ["aws.s3"]
+    detail-type = ["Object Created"]
+    detail = {
+      bucket = {
+        name = [aws_s3_bucket.react_app_bucket.bucket]
+      }
+      object = {
+        key = [{
+          prefix = "rawDataset/"
+        }]
+      }
+    }
+  })
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.app_name_react}-s3-upload-rule"
+    }
+  )
+}
+
+# S3 bucket notification to send events to EventBridge
+resource "aws_s3_bucket_notification" "react_app_bucket_notification" {
+  bucket      = aws_s3_bucket.react_app_bucket.id
+  eventbridge = true
+}
+
+# IAM role for Excel processor Lambda
+resource "aws_iam_role" "excel_processor_lambda_role" {
+  name = "${var.app_name_react}-excel-processor-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# IAM policy for Excel processor Lambda
+resource "aws_iam_role_policy" "excel_processor_lambda_policy" {
+  name = "${var.app_name_react}-excel-processor-lambda-policy"
+  role = aws_iam_role.excel_processor_lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Resource = "${aws_s3_bucket.react_app_bucket.arn}/*"
+      }
+    ]
+  })
+}
+
+# Excel processor Lambda function
+resource "aws_lambda_function" "excel_processor" {
+  function_name = "${var.app_name_react}-excel-processor"
+  role         = aws_iam_role.excel_processor_lambda_role.arn
+  
+  # Using container image
+  package_type = "Image"
+  image_uri    = "881490115226.dkr.ecr.us-east-1.amazonaws.com/react-app-excel-processor:latest"
+
+  timeout     = 300
+  memory_size = 1024
+  
+  architectures = ["arm64"]
+  
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.app_name_react}-excel-processor"
+    }
+  )
+}
+
+# EventBridge target to trigger Lambda
+resource "aws_cloudwatch_event_target" "excel_processor_target" {
+  rule      = aws_cloudwatch_event_rule.s3_file_upload_rule.name
+  target_id = "ExcelProcessorTarget"
+  arn       = aws_lambda_function.excel_processor.arn
+}
+
+# Lambda permission for EventBridge
+resource "aws_lambda_permission" "allow_eventbridge" {
+  statement_id  = "AllowExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.excel_processor.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.s3_file_upload_rule.arn
+}
+

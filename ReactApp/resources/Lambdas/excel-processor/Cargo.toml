@@ -1,0 +1,7 @@
+[workspace]
+members = ["lambda/excel-processor"]
+resolver = "2"
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
