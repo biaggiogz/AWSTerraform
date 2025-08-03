@@ -43,7 +43,7 @@ terraform.rc
 # Terratest / GoLang
 go.mod
 go.sum
-
+node_modules
 # Terraform tests
 tests/*.auto.tfvars
 .terraform

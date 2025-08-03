@@ -427,7 +427,7 @@ resource "aws_lambda_function" "excel_processor" {
   image_uri    = "881490115226.dkr.ecr.us-east-1.amazonaws.com/react-app-excel-processor:latest"
 
   timeout     = 300
-  memory_size = 1024
+  memory_size = 3008
   
   architectures = ["arm64"]
   
@@ -493,7 +493,7 @@ resource "aws_lambda_function" "approval_processor" {
   image_uri    = "881490115226.dkr.ecr.us-east-1.amazonaws.com/react-app-excel-processor:latest"
 
   timeout     = 300
-  memory_size = 1024
+  memory_size = 3008
   
   architectures = ["arm64"]
   
