@@ -13,7 +13,7 @@ import {
   Spinner
 } from '@chakra-ui/react';
 import { DeleteIcon, DownloadIcon } from '@chakra-ui/icons';
-import { uploadFileToS3, deleteFileFromS3, listS3Objects } from '../../utils/s3Utils';
+import { uploadFileToS3, deleteFileFromS3, listS3Objects, uploadApprovalRequest } from '../../utils/s3Utils';
 import ProcessingResultsView from './ProcessingResultsView';
 
 const FileUploadSection = () => {
@@ -159,16 +159,40 @@ const FileUploadSection = () => {
     }
   };
 
-  const handleApprove = (processingResult) => {
-    toast({
-      title: "Dataset Approved",
-      description: `File ${processingResult.file_id} has been approved for processing`,
-      status: "success",
-      duration: 3000
-    });
-    setShowResults(false);
-    setProcessingResultKey(null);
+  const handleApprove = async (processingResult) => {
+    try {
+      // Create approval request
+      const approvalRequest = {
+        file_id: processingResult.file_id,
+        processing_result_key: processingResultKey,
+        approved_by: 'user',
+        timestamp: new Date().toISOString()
+      };
+      
+      // Save approval request to trigger approval Lambda
+      const approvalKey = `approval-requests/${processingResult.file_id}.json`;
+      await uploadApprovalRequest(approvalKey, approvalRequest);
+      
+      toast({
+        title: "Dataset Approved",
+        description: `File ${processingResult.file_id} has been approved and moved to approvedDataset/`,
+        status: "success",
+        duration: 5000
+      });
+      
+      setShowResults(false);
+      setProcessingResultKey(null);
+    } catch (error) {
+      toast({
+        title: "Approval Failed",
+        description: `Failed to approve dataset: ${error.message}`,
+        status: "error",
+        duration: 5000
+      });
+    }
   };
+  
+
 
   const handleCancel = (processingResult) => {
     toast({

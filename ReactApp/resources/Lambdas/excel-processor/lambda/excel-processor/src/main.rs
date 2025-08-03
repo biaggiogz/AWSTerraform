@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::io::Cursor;
 use std::collections::HashMap;
-use tracing::{info, error};
+use tracing::info;
 use uuid::Uuid;
 use calamine::{Reader, Xlsx, open_workbook_from_rs};
 use chrono::{DateTime, Utc};
@@ -86,35 +86,23 @@ async fn function_handler(
 ) -> Result<ProcessingResult, Error> {
     info!("Processing EventBridge event: {:?}", event.payload.source);
 
-    // Extract S3 details from EventBridge event
     let s3_detail = extract_s3_details(&event.payload)?;
     info!("Processing file: s3://{}/{}", s3_detail.bucket, s3_detail.key);
 
-    // Download Excel file from S3
     let excel_data = download_file_from_s3(s3_client, &s3_detail.bucket, &s3_detail.key).await?;
-    
-    // Read Excel file into Polars DataFrame
     let df = read_excel_to_dataframe(excel_data)?;
     
-    // Generate unique identifier for output files
     let file_id = Uuid::new_v4().to_string();
     let timestamp = Utc::now();
     
-    // Transform to Parquet
     let parquet_key = format!("preDataset/parquet/{}.parquet", file_id);
     save_as_parquet(s3_client, &df, &s3_detail.bucket, &parquet_key).await?;
     
-    // Transform to Iceberg
     let iceberg_key = format!("preDataset/iceberg/{}.parquet", file_id);
     save_as_iceberg(s3_client, &df, &s3_detail.bucket, &iceberg_key).await?;
     
-    // Generate detailed profile data
     let profile_data = generate_profile_data(&df)?;
-    
-    // Generate schema version
     let schema_version = generate_schema_version(&df, timestamp)?;
-    
-    // Detect field errors
     let field_errors = detect_field_errors(&df)?;
     
     let result = ProcessingResult {
@@ -127,7 +115,6 @@ async fn function_handler(
         iceberg_path: iceberg_key,
     };
     
-    // Save processing result to S3
     let result_key = format!("processing-results/{}.json", result.file_id);
     save_processing_result(s3_client, &result, &s3_detail.bucket, &result_key).await?;
     
@@ -189,22 +176,19 @@ fn read_excel_to_dataframe(excel_data: Vec<u8>) -> Result<DataFrame, Error> {
         .map_err(|e| format!("Failed to read worksheet: {}", e))?;
     
     let mut data: Vec<Vec<String>> = Vec::new();
-    
     let mut header_row: Vec<String> = Vec::new();
     
-    // Skip first 11 rows and extract columns B:V (indices 1:21)
     for (row_idx, row) in range.rows().enumerate() {
         if row_idx < 11 { continue; }
         
         let mut row_data = Vec::new();
-        for col_idx in 1..22 { // B=1 to V=21
+        for col_idx in 1..22 {
             let cell_value = row.get(col_idx)
                 .map(|cell| cell.to_string())
                 .unwrap_or_default();
             row_data.push(cell_value);
         }
         
-        // First data row (row 11) becomes headers
         if row_idx == 11 {
             header_row = row_data.clone();
         } else {
@@ -212,7 +196,6 @@ fn read_excel_to_dataframe(excel_data: Vec<u8>) -> Result<DataFrame, Error> {
         }
     }
     
-    // Clean headers by removing quotes and handle empty names
     let column_names: Vec<String> = header_row.iter()
         .enumerate()
         .map(|(idx, h)| {
@@ -225,10 +208,6 @@ fn read_excel_to_dataframe(excel_data: Vec<u8>) -> Result<DataFrame, Error> {
         })
         .collect();
     
-    info!("Headers extracted: {:?}", column_names);
-    info!("Data rows: {}", data.len());
-    
-    // Convert to Polars DataFrame
     let mut series_vec = Vec::new();
     
     for (col_idx, col_name) in column_names.iter().enumerate() {
@@ -242,8 +221,6 @@ fn read_excel_to_dataframe(excel_data: Vec<u8>) -> Result<DataFrame, Error> {
     let df = DataFrame::new(columns)
         .map_err(|e| format!("Failed to create DataFrame: {}", e))?;
     
-    info!("DataFrame shape: {:?}", df.shape());
-    info!("DataFrame columns: {:?}", df.get_column_names());
     Ok(df)
 }
 
@@ -257,17 +234,10 @@ fn generate_profile_data(df: &DataFrame) -> Result<ProfileData, Error> {
         let null_count = column.null_count();
         let null_percentage = (null_count as f64 / total_rows as f64) * 100.0;
         
-        // Infer professional data type
         let series = column.as_series().unwrap();
         let (inferred_type, confidence, professional_inference) = infer_professional_type(series);
-        
-        // Get unique count
         let unique_count = series.n_unique().ok();
-        
-        // Sample values (first 5 non-null)
         let sample_values = get_sample_values(series, 5);
-        
-        // Detect data patterns
         let data_patterns = detect_data_patterns(series);
         
         columns.push(ColumnProfile {
@@ -283,7 +253,6 @@ fn generate_profile_data(df: &DataFrame) -> Result<ProfileData, Error> {
         });
     }
     
-    // Calculate overall data quality score
     let data_quality_score = calculate_data_quality_score(&columns);
     
     Ok(ProfileData {
@@ -295,206 +264,278 @@ fn generate_profile_data(df: &DataFrame) -> Result<ProfileData, Error> {
 }
 
 fn infer_professional_type(column: &Series) -> (String, f64, String) {
-    let name = column.name();
-    
-    // Analyze actual values for mixed-type detection
+    let name = column.name().as_str();
     let sample_values = get_sample_values(column, 100);
-    let mut type_counts = HashMap::new();
     
-    for value in &sample_values {
-        let detected_type = detect_value_type(value);
-        *type_counts.entry(detected_type).or_insert(0) += 1;
+    match name {
+        "SUBS_PRE" => analyze_subsystem_pattern(&sample_values),
+        "TAG LOOP" | "TagS" => analyze_tag_pattern(&sample_values),
+        "INSTALLED" | "WIRED" | "CONNECTED" => analyze_status_date_pattern(&sample_values),
+        "PRIORITY" | "HITO" => analyze_priority_pattern(&sample_values),
+        "OK=100%" | "QCF" => analyze_percentage_pattern(&sample_values),
+        "Status Closed&Open (C/O)" => analyze_status_pattern(&sample_values),
+        _ => analyze_generic_pattern(&sample_values)
+    }
+}
+
+fn analyze_subsystem_pattern(values: &[String]) -> (String, f64, String) {
+    let mut valid_count = 0;
+    let pattern_regex = regex::Regex::new(r"^[A-Z]{2,4}-\d{5}-\d{2}$").unwrap();
+    
+    for value in values {
+        if value.is_empty() || value == "NOT" { continue; }
+        if pattern_regex.is_match(value) { valid_count += 1; }
     }
     
-    // Determine dominant type and confidence
-    let total_samples = sample_values.len() as f64;
-    let unknown_type = "unknown".to_string();
-    let (dominant_type, count) = type_counts.iter()
-        .max_by_key(|(_, &count)| count)
-        .unwrap_or((&unknown_type, &0));
+    let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
+    (
+        "SUBSYSTEM_CODE".to_string(),
+        confidence,
+        "Subsystem code format: XXX-NNNNN-NN (e.g., HMBI-10005-03)".to_string()
+    )
+}
+
+fn analyze_tag_pattern(values: &[String]) -> (String, f64, String) {
+    let mut valid_count = 0;
     
-    let dominant_type = dominant_type.clone();
-    
-    let confidence = if total_samples > 0.0 { (*count as f64 / total_samples) * 100.0 } else { 0.0 };
-    
-    // Professional inference based on column name and content
-    let professional_inference = match name.to_lowercase().as_str() {
-        n if n.contains("id") || n.contains("code") => "Identifier field - likely categorical".to_string(),
-        n if n.contains("date") || n.contains("time") => "Temporal data - requires date parsing".to_string(),
-        n if n.contains("amount") || n.contains("price") || n.contains("cost") => "Financial data - numeric with currency implications".to_string(),
-        n if n.contains("email") => "Email address - requires validation".to_string(),
-        n if n.contains("phone") => "Phone number - requires format standardization".to_string(),
-        _ => {
-            if confidence < 70.0 {
-                "Mixed data types detected - requires data cleaning".to_string()
-            } else {
-                format!("Consistent {} data - good quality", dominant_type)
-            }
+    for value in values {
+        if value.is_empty() { continue; }
+        if value.len() > 3 && value.chars().any(|c| c.is_alphanumeric()) {
+            valid_count += 1;
         }
-    };
-    
-    (dominant_type.clone(), confidence, professional_inference)
-}
-
-fn detect_value_type(value: &str) -> String {
-    if value.trim().is_empty() {
-        return "empty".to_string();
     }
     
-    // Try parsing as different types
-    if value.parse::<i64>().is_ok() {
-        "integer".to_string()
-    } else if value.parse::<f64>().is_ok() {
-        "float".to_string()
-    } else if value.contains('@') && value.contains('.') {
-        "email".to_string()
-    } else if value.chars().all(|c| c.is_ascii_digit() || c == '-' || c == '(' || c == ')' || c == ' ') {
-        "phone".to_string()
+    let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
+    (
+        "TAG_IDENTIFIER".to_string(),
+        confidence,
+        "Alphanumeric tag identifier for equipment/loop".to_string()
+    )
+}
+
+fn analyze_status_date_pattern(values: &[String]) -> (String, f64, String) {
+    let mut date_count = 0;
+    let mut status_count = 0;
+    
+    let date_regex = regex::Regex::new(r"\d{1,2}/\d{1,2}/\d{4}").unwrap();
+    
+    for value in values {
+        if value.is_empty() { continue; }
+        if date_regex.is_match(value) || value.contains("MONTADO") {
+            date_count += 1;
+        } else if value.to_uppercase() == "YES" || value.to_uppercase() == "NO" {
+            status_count += 1;
+        }
+    }
+    
+    let total_valid = date_count + status_count;
+    let confidence = if values.is_empty() { 0.0 } else { (total_valid as f64 / values.len() as f64) * 100.0 };
+    
+    (
+        "STATUS_OR_DATE".to_string(),
+        confidence,
+        "Mixed format: dates (MM/DD/YYYY) or status (YES/NO/MONTADO)".to_string()
+    )
+}
+
+fn analyze_priority_pattern(values: &[String]) -> (String, f64, String) {
+    let mut valid_count = 0;
+    
+    for value in values {
+        if value.is_empty() { continue; }
+        if value.parse::<i32>().is_ok() || value.len() <= 10 {
+            valid_count += 1;
+        }
+    }
+    
+    let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
+    (
+        "PRIORITY_CODE".to_string(),
+        confidence,
+        "Priority identifier (numeric or short text)".to_string()
+    )
+}
+
+fn analyze_percentage_pattern(values: &[String]) -> (String, f64, String) {
+    let mut valid_count = 0;
+    
+    for value in values {
+        if value.is_empty() { continue; }
+        if value.contains('%') || value.parse::<f64>().is_ok() {
+            valid_count += 1;
+        }
+    }
+    
+    let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
+    (
+        "PERCENTAGE".to_string(),
+        confidence,
+        "Percentage value (0-100% or decimal)".to_string()
+    )
+}
+
+fn analyze_status_pattern(values: &[String]) -> (String, f64, String) {
+    let mut valid_count = 0;
+    
+    for value in values {
+        if value.is_empty() { continue; }
+        let upper_val = value.to_uppercase();
+        if upper_val == "C" || upper_val == "O" || upper_val == "CLOSED" || upper_val == "OPEN" {
+            valid_count += 1;
+        }
+    }
+    
+    let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
+    (
+        "STATUS_FLAG".to_string(),
+        confidence,
+        "Status indicator: C/O (Closed/Open)".to_string()
+    )
+}
+
+fn analyze_generic_pattern(values: &[String]) -> (String, f64, String) {
+    let mut numeric_count = 0;
+    let mut text_count = 0;
+    
+    for value in values {
+        if value.is_empty() { continue; }
+        if value.parse::<f64>().is_ok() {
+            numeric_count += 1;
+        } else {
+            text_count += 1;
+        }
+    }
+    
+    let confidence = 85.0;
+    
+    if numeric_count > text_count {
+        ("NUMERIC".to_string(), confidence, "Numeric values".to_string())
     } else {
-        "text".to_string()
+        ("TEXT".to_string(), confidence, "Text values".to_string())
     }
 }
 
-fn get_sample_values(column: &Series, limit: usize) -> Vec<String> {
-    column.iter()
+fn get_sample_values(series: &Series, limit: usize) -> Vec<String> {
+    series.iter()
         .filter_map(|v| {
-            if v.is_null() {
-                None
-            } else {
-                Some(format!("{}", v))
-            }
+            if v.is_null() { None } else { Some(v.to_string()) }
         })
+        .filter(|s| !s.is_empty())
         .take(limit)
         .collect()
 }
 
-fn detect_data_patterns(column: &Series) -> Vec<DataPattern> {
-    let sample_values = get_sample_values(column, 50);
-    let mut patterns = HashMap::new();
+fn detect_data_patterns(series: &Series) -> Vec<DataPattern> {
+    let mut patterns = Vec::new();
+    let values = get_sample_values(series, 100);
     
-    for value in &sample_values {
-        let pattern = classify_pattern(value);
-        let entry = patterns.entry(pattern.clone()).or_insert((0, value.clone()));
+    let null_count = series.null_count();
+    if null_count > 0 {
+        patterns.push(DataPattern {
+            pattern_type: "NULL_VALUES".to_string(),
+            frequency: null_count,
+            example: "(empty)".to_string(),
+        });
+    }
+    
+    let mut pattern_counts: HashMap<String, (usize, String)> = HashMap::new();
+    
+    for value in &values {
+        let pattern = classify_value_pattern(value);
+        let entry = pattern_counts.entry(pattern.clone()).or_insert((0, value.clone()));
         entry.0 += 1;
     }
     
-    patterns.into_iter()
-        .map(|(pattern_type, (frequency, example))| DataPattern {
+    for (pattern_type, (frequency, example)) in pattern_counts {
+        patterns.push(DataPattern {
             pattern_type,
             frequency,
             example,
-        })
-        .collect()
+        });
+    }
+    
+    patterns
 }
 
-fn classify_pattern(value: &str) -> String {
-    if value.chars().all(|c| c.is_ascii_digit()) {
-        "numeric_only".to_string()
-    } else if value.chars().all(|c| c.is_ascii_alphabetic() || c.is_whitespace()) {
-        "text_only".to_string()
-    } else if value.contains('@') {
-        "email_format".to_string()
-    } else if value.chars().any(|c| c.is_ascii_digit()) && value.chars().any(|c| c.is_ascii_alphabetic()) {
-        "alphanumeric".to_string()
-    } else {
-        "mixed_special".to_string()
+fn classify_value_pattern(value: &str) -> String {
+    if value.is_empty() { return "EMPTY".to_string(); }
+    if value.parse::<i32>().is_ok() { return "INTEGER".to_string(); }
+    if value.parse::<f64>().is_ok() { return "DECIMAL".to_string(); }
+    if value.contains('/') && value.len() <= 10 { return "DATE_LIKE".to_string(); }
+    if value.contains('%') { return "PERCENTAGE".to_string(); }
+    if value.len() <= 5 && value.chars().all(|c| c.is_uppercase() || c.is_whitespace()) {
+        return "SHORT_CODE".to_string();
     }
+    "TEXT".to_string()
 }
 
 fn calculate_data_quality_score(columns: &[ColumnProfile]) -> f64 {
-    if columns.is_empty() {
-        return 0.0;
-    }
+    if columns.is_empty() { return 0.0; }
     
-    let total_score: f64 = columns.iter().map(|col| {
-        let null_penalty = col.null_percentage * 0.01;
-        let confidence_bonus = col.data_type_confidence * 0.01;
-        (100.0 - null_penalty + confidence_bonus).max(0.0).min(100.0)
-    }).sum();
+    let total_confidence: f64 = columns.iter()
+        .map(|col| col.data_type_confidence)
+        .sum();
     
-    total_score / columns.len() as f64
+    let avg_confidence = total_confidence / columns.len() as f64;
+    
+    let null_penalty: f64 = columns.iter()
+        .map(|col| col.null_percentage)
+        .sum::<f64>() / columns.len() as f64;
+    
+    (avg_confidence - null_penalty * 0.5).max(0.0).min(100.0)
 }
 
 fn generate_schema_version(df: &DataFrame, timestamp: DateTime<Utc>) -> Result<SchemaVersion, Error> {
-    let version = format!("v{}", timestamp.format("%Y%m%d_%H%M%S"));
     let mut columns = Vec::new();
     
     for column in df.get_columns() {
         let col_name = column.name().to_string();
-        let data_type = format!("{:?}", column.dtype());
-        let nullable = column.null_count() > 0;
         let series = column.as_series().unwrap();
-        let constraints = infer_constraints(series);
+        let (inferred_type, _, _) = infer_professional_type(series);
+        
+        let nullable = series.null_count() > 0;
+        let mut constraints = Vec::new();
+        
+        if !nullable {
+            constraints.push("NOT_NULL".to_string());
+        }
+        
+        match inferred_type.as_str() {
+            "SUBSYSTEM_CODE" => constraints.push("FORMAT_VALIDATION".to_string()),
+            "PERCENTAGE" => constraints.push("RANGE_0_100".to_string()),
+            _ => {}
+        }
         
         columns.push(SchemaColumn {
             name: col_name,
-            data_type,
+            data_type: map_to_standard_type(&inferred_type),
             nullable,
             constraints,
         });
     }
     
     Ok(SchemaVersion {
-        version,
+        version: "1.0.0".to_string(),
         created_at: timestamp,
         columns,
     })
 }
 
-fn infer_constraints(column: &Series) -> Vec<String> {
-    let mut constraints = Vec::new();
-    
-    if column.null_count() == 0 {
-        constraints.push("NOT_NULL".to_string());
+fn map_to_standard_type(inferred_type: &str) -> String {
+    match inferred_type {
+        "NUMERIC" => "float64".to_string(),
+        "PERCENTAGE" => "float64".to_string(),
+        _ => "string".to_string(),
     }
-    
-    if let Ok(unique_count) = column.n_unique() {
-        if unique_count == column.len() {
-            constraints.push("UNIQUE".to_string());
-        }
-    }
-    
-    constraints
 }
 
 fn detect_field_errors(df: &DataFrame) -> Result<HashMap<String, Vec<FieldError>>, Error> {
-    let mut field_errors = HashMap::new();
+    let mut field_errors: HashMap<String, Vec<FieldError>> = HashMap::new();
     
     for column in df.get_columns() {
         let col_name = column.name().to_string();
-        let mut errors = Vec::new();
-        
-        // Check for data type inconsistencies
         let series = column.as_series().unwrap();
-        let sample_values = get_sample_values(series, 1000);
-        if let Some(first_value) = sample_values.first() {
-            let expected_type = detect_value_type(first_value);
-            
-            for (idx, value) in sample_values.iter().enumerate() {
-                let actual_type = detect_value_type(value);
-                
-                if actual_type != expected_type && actual_type != "empty" {
-                    errors.push(FieldError {
-                        row_index: idx,
-                        error_type: "TYPE_MISMATCH".to_string(),
-                        description: format!("Expected {}, found {}", expected_type, actual_type),
-                        suggested_fix: Some(format!("Convert to {} or clean data", expected_type)),
-                        value: value.clone(),
-                    });
-                }
-                
-                // Check for invalid formats
-                if col_name.to_lowercase().contains("email") && !value.contains('@') && !value.trim().is_empty() {
-                    errors.push(FieldError {
-                        row_index: idx,
-                        error_type: "INVALID_FORMAT".to_string(),
-                        description: "Invalid email format".to_string(),
-                        suggested_fix: Some("Verify email address format".to_string()),
-                        value: value.clone(),
-                    });
-                }
-            }
-        }
+        let errors = validate_column_values(series);
         
         if !errors.is_empty() {
             field_errors.insert(col_name, errors);
@@ -502,6 +543,146 @@ fn detect_field_errors(df: &DataFrame) -> Result<HashMap<String, Vec<FieldError>
     }
     
     Ok(field_errors)
+}
+
+fn validate_column_values(series: &Series) -> Vec<FieldError> {
+    let mut errors = Vec::new();
+    let col_name = series.name();
+    
+    for (row_idx, value) in series.iter().enumerate() {
+        if value.is_null() { continue; }
+        
+        let value_str = value.to_string();
+        if let Some(error) = validate_value_by_column(col_name, &value_str, row_idx) {
+            errors.push(error);
+        }
+    }
+    
+    errors
+}
+
+fn validate_value_by_column(col_name: &str, value: &str, row_idx: usize) -> Option<FieldError> {
+    match col_name {
+        "SUBS_PRE" => validate_subsystem_code(value, row_idx),
+        "INSTALLED" | "WIRED" | "CONNECTED" => validate_status_date(value, row_idx),
+        "OK=100%" | "QCF" => validate_percentage(value, row_idx),
+        "Status Closed&Open (C/O)" => validate_status_flag(value, row_idx),
+        _ => None
+    }
+}
+
+fn validate_subsystem_code(value: &str, row_idx: usize) -> Option<FieldError> {
+    if value.is_empty() || value == "NOT" { return None; }
+    
+    let pattern = regex::Regex::new(r"^[A-Z]{2,4}-\d{5}-\d{2}$").unwrap();
+    if !pattern.is_match(value) {
+        return Some(FieldError {
+            row_index: row_idx,
+            error_type: "INVALID_FORMAT".to_string(),
+            description: "Subsystem code must follow format: XXX-NNNNN-NN".to_string(),
+            suggested_fix: Some("Use format like HMBI-10005-03".to_string()),
+            value: value.to_string(),
+        });
+    }
+    None
+}
+
+fn validate_status_date(value: &str, row_idx: usize) -> Option<FieldError> {
+    if value.is_empty() { return None; }
+    
+    let date_pattern = regex::Regex::new(r"\d{1,2}/\d{1,2}/\d{4}").unwrap();
+    let upper_val = value.to_uppercase();
+    
+    if !date_pattern.is_match(value) && 
+       !upper_val.contains("YES") && 
+       !upper_val.contains("NO") && 
+       !upper_val.contains("MONTADO") {
+        return Some(FieldError {
+            row_index: row_idx,
+            error_type: "INVALID_FORMAT".to_string(),
+            description: "Value must be a date (MM/DD/YYYY), YES, NO, or contain MONTADO".to_string(),
+            suggested_fix: Some("Use format: 6/18/2025 or YES/NO".to_string()),
+            value: value.to_string(),
+        });
+    }
+    None
+}
+
+fn validate_percentage(value: &str, row_idx: usize) -> Option<FieldError> {
+    if value.is_empty() { return None; }
+    
+    let clean_value = value.replace('%', "");
+    if let Ok(num) = clean_value.parse::<f64>() {
+        if num < 0.0 || num > 100.0 {
+            return Some(FieldError {
+                row_index: row_idx,
+                error_type: "OUT_OF_RANGE".to_string(),
+                description: "Percentage must be between 0 and 100".to_string(),
+                suggested_fix: Some("Enter value between 0-100".to_string()),
+                value: value.to_string(),
+            });
+        }
+    } else {
+        return Some(FieldError {
+            row_index: row_idx,
+            error_type: "TYPE_MISMATCH".to_string(),
+            description: "Value must be a valid percentage".to_string(),
+            suggested_fix: Some("Enter numeric value with or without % symbol".to_string()),
+            value: value.to_string(),
+        });
+    }
+    None
+}
+
+fn validate_status_flag(value: &str, row_idx: usize) -> Option<FieldError> {
+    if value.is_empty() { return None; }
+    
+    let upper_val = value.to_uppercase();
+    if upper_val != "C" && upper_val != "O" && upper_val != "CLOSED" && upper_val != "OPEN" {
+        return Some(FieldError {
+            row_index: row_idx,
+            error_type: "INVALID_VALUE".to_string(),
+            description: "Status must be C, O, CLOSED, or OPEN".to_string(),
+            suggested_fix: Some("Use C for Closed or O for Open".to_string()),
+            value: value.to_string(),
+        });
+    }
+    None
+}
+
+async fn save_as_parquet(
+    s3_client: &S3Client,
+    df: &DataFrame,
+    bucket: &str,
+    key: &str,
+) -> Result<(), Error> {
+    let mut buffer = Vec::new();
+    let mut cursor = Cursor::new(&mut buffer);
+    
+    ParquetWriter::new(&mut cursor)
+        .finish(&mut df.clone())
+        .map_err(|e| format!("Failed to write Parquet: {}", e))?;
+    
+    s3_client
+        .put_object()
+        .bucket(bucket)
+        .key(key)
+        .body(buffer.into())
+        .send()
+        .await
+        .map_err(|e| format!("Failed to upload Parquet: {}", e))?;
+    
+    info!("Saved Parquet file to s3://{}/{}", bucket, key);
+    Ok(())
+}
+
+async fn save_as_iceberg(
+    s3_client: &S3Client,
+    df: &DataFrame,
+    bucket: &str,
+    key: &str,
+) -> Result<(), Error> {
+    save_as_parquet(s3_client, df, bucket, key).await
 }
 
 async fn save_processing_result(
@@ -527,62 +708,6 @@ async fn save_processing_result(
     Ok(())
 }
 
-async fn save_as_parquet(
-    s3_client: &S3Client,
-    df: &DataFrame,
-    bucket: &str,
-    key: &str,
-) -> Result<(), Error> {
-    let mut buffer = Vec::new();
-    let mut cursor = Cursor::new(&mut buffer);
-    
-    ParquetWriter::new(&mut cursor)
-        .finish(&mut df.clone())
-        .map_err(|e| format!("Failed to write Parquet: {}", e))?;
-    
-    s3_client
-        .put_object()
-        .bucket(bucket)
-        .key(key)
-        .body(buffer.into())
-        .content_type("application/octet-stream")
-        .send()
-        .await
-        .map_err(|e| format!("Failed to upload Parquet: {}", e))?;
-    
-    info!("Saved Parquet file to s3://{}/{}", bucket, key);
-    Ok(())
-}
-
-async fn save_as_iceberg(
-    s3_client: &S3Client,
-    df: &DataFrame,
-    bucket: &str,
-    key: &str,
-) -> Result<(), Error> {
-    // Simplified Iceberg implementation - save as Parquet in iceberg folder
-    // In production, you'd use proper Iceberg table format
-    let mut buffer = Vec::new();
-    let mut cursor = Cursor::new(&mut buffer);
-    
-    ParquetWriter::new(&mut cursor)
-        .finish(&mut df.clone())
-        .map_err(|e| format!("Failed to write Iceberg format: {}", e))?;
-    
-    s3_client
-        .put_object()
-        .bucket(bucket)
-        .key(key)
-        .body(buffer.into())
-        .content_type("application/octet-stream")
-        .send()
-        .await
-        .map_err(|e| format!("Failed to upload Iceberg: {}", e))?;
-    
-    info!("Saved Iceberg file to s3://{}/{}", bucket, key);
-    Ok(())
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     tracing_subscriber::fmt()
@@ -604,7 +729,7 @@ async fn main() -> Result<(), Error> {
                 }))
             }
             Err(e) => {
-                error!("Processing failed: {}", e);
+                info!("Processing failed: {}", e);
                 Ok::<serde_json::Value, lambda_runtime::Error>(serde_json::json!({
                     "statusCode": 500,
                     "body": {

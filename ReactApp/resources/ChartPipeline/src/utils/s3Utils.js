@@ -114,3 +114,38 @@ export const listS3Objects = async (prefix) => {
     throw new Error(`Failed to list files: ${error.message}`);
   }
 };
+
+export const listApprovedDatasets = async () => {
+  try {
+    const approvedFiles = await listS3Objects('approvedDataset/');
+    return approvedFiles.filter(file => file.Key.endsWith('.parquet'));
+  } catch (error) {
+    console.error('Error listing approved datasets:', error);
+    throw new Error(`Failed to list approved datasets: ${error.message}`);
+  }
+};
+
+export const uploadApprovalRequest = async (key, approvalRequest) => {
+  try {
+    configureAWS();
+    const s3 = new AWS.S3();
+    const bucketName = process.env.REACT_APP_S3_BUCKET;
+    
+    if (!bucketName) {
+      throw new Error('S3 bucket not configured');
+    }
+
+    const uploadParams = {
+      Bucket: bucketName,
+      Key: key,
+      Body: JSON.stringify(approvalRequest),
+      ContentType: 'application/json'
+    };
+
+    const result = await s3.upload(uploadParams).promise();
+    return result;
+  } catch (error) {
+    console.error('S3 approval upload error:', error);
+    throw new Error(`Failed to upload approval request: ${error.message}`);
+  }
+};

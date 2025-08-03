@@ -455,3 +455,75 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   source_arn    = aws_cloudwatch_event_rule.s3_file_upload_rule.arn
 }
 
+# EventBridge rule for approval requests
+resource "aws_cloudwatch_event_rule" "approval_request_rule" {
+  name        = "${var.app_name_react}-approval-request-rule"
+  description = "Trigger when approval request is uploaded"
+
+  event_pattern = jsonencode({
+    source      = ["aws.s3"]
+    detail-type = ["Object Created"]
+    detail = {
+      bucket = {
+        name = [aws_s3_bucket.react_app_bucket.bucket]
+      }
+      object = {
+        key = [{
+          prefix = "approval-requests/"
+        }]
+      }
+    }
+  })
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.app_name_react}-approval-rule"
+    }
+  )
+}
+
+# Approval processor Lambda function
+resource "aws_lambda_function" "approval_processor" {
+  function_name = "${var.app_name_react}-approval-processor"
+  role         = aws_iam_role.excel_processor_lambda_role.arn
+  
+  # Using same container image as excel processor
+  package_type = "Image"
+  image_uri    = "881490115226.dkr.ecr.us-east-1.amazonaws.com/react-app-excel-processor:latest"
+
+  timeout     = 300
+  memory_size = 1024
+  
+  architectures = ["arm64"]
+  
+  environment {
+    variables = {
+      HANDLER_TYPE = "approval"
+    }
+  }
+  
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.app_name_react}-approval-processor"
+    }
+  )
+}
+
+# EventBridge target for approval processor
+resource "aws_cloudwatch_event_target" "approval_processor_target" {
+  rule      = aws_cloudwatch_event_rule.approval_request_rule.name
+  target_id = "ApprovalProcessorTarget"
+  arn       = aws_lambda_function.approval_processor.arn
+}
+
+# Lambda permission for approval EventBridge
+resource "aws_lambda_permission" "allow_approval_eventbridge" {
+  statement_id  = "AllowApprovalExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.approval_processor.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.approval_request_rule.arn
+}
+
