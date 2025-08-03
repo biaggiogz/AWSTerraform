@@ -31,6 +31,7 @@ const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsT
 const DynamicCalculationPanel = lazy(() => import('../panels/DynamicCalculationPanel'));
 const SummarySubsystems = lazy(() => import('../panels/SummarySubsystems'));
 const FileUploadSection = lazy(() => import('./FileUploadSection'));
+const ProcessingResultsView = lazy(() => import('./ProcessingResultsView'));
 
 /**
  * ChartSelector component to switch between different charts

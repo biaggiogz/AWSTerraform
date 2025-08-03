@@ -67,3 +67,50 @@ export const deleteFileFromS3 = async (fileName) => {
     throw new Error(`Failed to delete file: ${error.message}`);
   }
 };
+
+export const downloadFileFromS3 = async (key) => {
+  try {
+    configureAWS();
+    const s3 = new AWS.S3();
+    const bucketName = process.env.REACT_APP_S3_BUCKET;
+    
+    if (!bucketName) {
+      throw new Error('S3 bucket not configured');
+    }
+
+    const params = {
+      Bucket: bucketName,
+      Key: key
+    };
+
+    const result = await s3.getObject(params).promise();
+    return result.Body.toString('utf-8');
+  } catch (error) {
+    console.error('S3 download error:', error);
+    throw new Error(`Failed to download file: ${error.message}`);
+  }
+};
+
+export const listS3Objects = async (prefix) => {
+  try {
+    configureAWS();
+    const s3 = new AWS.S3();
+    const bucketName = process.env.REACT_APP_S3_BUCKET;
+    
+    if (!bucketName) {
+      throw new Error('S3 bucket not configured');
+    }
+
+    const params = {
+      Bucket: bucketName,
+      Prefix: prefix,
+      MaxKeys: 100
+    };
+
+    const result = await s3.listObjectsV2(params).promise();
+    return result.Contents || [];
+  } catch (error) {
+    console.error('S3 list error:', error);
+    throw new Error(`Failed to list files: ${error.message}`);
+  }
+};

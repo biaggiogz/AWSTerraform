@@ -83,6 +83,13 @@ resource "aws_s3_bucket_policy" "react_app_bucket_policy" {
         Principal = "*"
         Action    = "s3:GetObject"
         Resource  = "${aws_s3_bucket.react_app_bucket.arn}/*"
+      },
+      {
+        Sid       = "PublicListBucket"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:ListBucket", "s3:GetBucketLocation"]
+        Resource  = aws_s3_bucket.react_app_bucket.arn
       }
     ]
   })

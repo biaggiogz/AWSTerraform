@@ -13,11 +13,14 @@ import {
   Spinner
 } from '@chakra-ui/react';
 import { DeleteIcon, DownloadIcon } from '@chakra-ui/icons';
-import { uploadFileToS3, deleteFileFromS3 } from '../../utils/s3Utils';
+import { uploadFileToS3, deleteFileFromS3, listS3Objects } from '../../utils/s3Utils';
+import ProcessingResultsView from './ProcessingResultsView';
 
 const FileUploadSection = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [processingResultKey, setProcessingResultKey] = useState(null);
+  const [showResults, setShowResults] = useState(false);
   const toast = useToast();
 
   const handleFileUpload = useCallback(async (event) => {
@@ -70,10 +73,15 @@ const FileUploadSection = () => {
     if (successfulUploads.length > 0) {
       toast({
         title: "Files uploaded to S3",
-        description: `${successfulUploads.length} file(s) uploaded successfully`,
+        description: `${successfulUploads.length} file(s) uploaded successfully. Processing will begin shortly.`,
         status: "success",
-        duration: 3000
+        duration: 5000
       });
+      
+      // Check for processing results after a delay
+      setTimeout(() => {
+        checkForProcessingResults(successfulUploads[0].name);
+      }, 10000); // Wait 10 seconds for Lambda processing
     }
   }, [toast]);
 
@@ -108,6 +116,71 @@ const FileUploadSection = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const checkForProcessingResults = async (fileName) => {
+    try {
+      // Poll for processing results in the processing-results/ folder
+      let attempts = 0;
+      const maxAttempts = 12; // 2 minutes total (10s intervals)
+      
+      const pollForResults = async () => {
+        try {
+          const objects = await listS3Objects('processing-results/');
+          
+          if (objects.length > 0) {
+            // Get the most recent processing result
+            const latestResult = objects.sort((a, b) => 
+              new Date(b.LastModified) - new Date(a.LastModified)
+            )[0];
+            
+            setProcessingResultKey(latestResult.Key);
+            setShowResults(true);
+            return;
+          }
+          
+          attempts++;
+          if (attempts < maxAttempts) {
+            setTimeout(pollForResults, 10000); // Check every 10 seconds
+          } else {
+            toast({
+              title: "Processing timeout",
+              description: "File processing is taking longer than expected",
+              status: "warning",
+              duration: 5000
+            });
+          }
+        } catch (error) {
+          console.error('Error polling for results:', error);
+        }
+      };
+      
+      pollForResults();
+    } catch (error) {
+      console.error('Error checking for processing results:', error);
+    }
+  };
+
+  const handleApprove = (processingResult) => {
+    toast({
+      title: "Dataset Approved",
+      description: `File ${processingResult.file_id} has been approved for processing`,
+      status: "success",
+      duration: 3000
+    });
+    setShowResults(false);
+    setProcessingResultKey(null);
+  };
+
+  const handleCancel = (processingResult) => {
+    toast({
+      title: "Dataset Cancelled",
+      description: `File ${processingResult.file_id} processing has been cancelled`,
+      status: "warning",
+      duration: 3000
+    });
+    setShowResults(false);
+    setProcessingResultKey(null);
+  };
+
   const getFileTypeColor = (fileName) => {
     const ext = fileName.toLowerCase();
     if (ext.endsWith('.csv')) return 'green';
@@ -115,6 +188,16 @@ const FileUploadSection = () => {
     if (ext.endsWith('.xlsm')) return 'purple';
     return 'gray';
   };
+
+  if (showResults && processingResultKey) {
+    return (
+      <ProcessingResultsView
+        processingResultKey={processingResultKey}
+        onApprove={handleApprove}
+        onCancel={handleCancel}
+      />
+    );
+  }
 
   return (
     <Box p={6} bg="white" borderRadius="lg" borderWidth="1px">
