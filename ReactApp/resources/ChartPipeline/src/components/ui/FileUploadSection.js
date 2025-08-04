@@ -73,7 +73,7 @@ const FileUploadSection = () => {
     if (successfulUploads.length > 0) {
       toast({
         title: "Files uploaded to S3",
-        description: `${successfulUploads.length} file(s) uploaded successfully. Processing will begin shortly.`,
+        description: `${successfulUploads.length} file(s) uploaded successfully. AI-enhanced processing will begin shortly.`,
         status: "success",
         duration: 5000
       });
@@ -142,8 +142,8 @@ const FileUploadSection = () => {
             setTimeout(pollForResults, 10000); // Check every 10 seconds
           } else {
             toast({
-              title: "Processing timeout",
-              description: "File processing is taking longer than expected",
+              title: "AI Processing timeout",
+              description: "ML-enhanced processing is taking longer than expected",
               status: "warning",
               duration: 5000
             });

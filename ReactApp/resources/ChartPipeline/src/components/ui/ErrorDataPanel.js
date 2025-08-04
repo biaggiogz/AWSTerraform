@@ -17,7 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { WarningIcon, CheckCircleIcon, InfoIcon } from '@chakra-ui/icons';
 
-const ErrorDataPanel = ({ fieldErrors }) => {
+const ErrorDataPanel = ({ fieldErrors, mlEnhanced = false }) => {
   const totalErrors = Object.values(fieldErrors).reduce((sum, errors) => sum + errors.length, 0);
   const fieldsWithErrors = Object.keys(fieldErrors).length;
 
@@ -32,8 +32,12 @@ const ErrorDataPanel = ({ fieldErrors }) => {
           <Alert status="success" borderRadius="md">
             <AlertIcon />
             <VStack align="start" spacing={1}>
-              <Text fontSize="sm" fontWeight="semibold">No Data Errors Found</Text>
-              <Text fontSize="xs">All fields passed validation checks</Text>
+              <Text fontSize="sm" fontWeight="semibold">
+                No Data Errors Found {mlEnhanced && '🤖'}
+              </Text>
+              <Text fontSize="xs">
+                All fields passed {mlEnhanced ? 'AI-enhanced' : 'standard'} validation checks
+              </Text>
             </VStack>
           </Alert>
 
@@ -80,10 +84,10 @@ const ErrorDataPanel = ({ fieldErrors }) => {
           <AlertIcon />
           <VStack align="start" spacing={1}>
             <Text fontSize="sm" fontWeight="semibold">
-              {totalErrors} Error{totalErrors !== 1 ? 's' : ''} Found
+              {totalErrors} Error{totalErrors !== 1 ? 's' : ''} Found {mlEnhanced && '🤖'}
             </Text>
             <Text fontSize="xs">
-              {fieldsWithErrors} field{fieldsWithErrors !== 1 ? 's' : ''} affected
+              {fieldsWithErrors} field{fieldsWithErrors !== 1 ? 's' : ''} affected by {mlEnhanced ? 'AI-enhanced' : 'standard'} validation
             </Text>
           </VStack>
         </Alert>
@@ -179,7 +183,7 @@ const ErrorDataPanel = ({ fieldErrors }) => {
                           {error.suggested_fix && (
                             <Box>
                               <Text fontSize="xs" color="blue.600" fontWeight="semibold" mb={1}>
-                                Suggested Fix:
+                                {mlEnhanced ? '🤖 AI Suggested Fix:' : 'Suggested Fix:'}
                               </Text>
                               <Text fontSize="xs" color="blue.700">
                                 {error.suggested_fix}
