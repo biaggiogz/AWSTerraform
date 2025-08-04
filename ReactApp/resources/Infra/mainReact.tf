@@ -412,12 +412,44 @@ resource "aws_iam_role_policy" "excel_processor_lambda_policy" {
           "s3:PutObject"
         ]
         Resource = "${aws_s3_bucket.react_app_bucket.arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = [
+          aws_lambda_function.excel_processor.arn,
+          aws_lambda_function.python_preprocessor.arn
+        ]
       }
     ]
   })
 }
 
-# Excel processor Lambda function
+# Python preprocessor Lambda function
+resource "aws_lambda_function" "python_preprocessor" {
+  function_name = "${var.app_name_react}-python-preprocessor"
+  role         = aws_iam_role.excel_processor_lambda_role.arn
+  
+  # Using container image
+  package_type = "Image"
+  image_uri    = "881490115226.dkr.ecr.us-east-1.amazonaws.com/python-preprocessor:latest"
+
+  timeout     = 300
+  memory_size = 3008
+
+  architectures = ["arm64"]
+  
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.app_name_react}-python-preprocessor"
+    }
+  )
+}
+
+# Excel processor Lambda function (Rust ML)
 resource "aws_lambda_function" "excel_processor" {
   function_name = "${var.app_name_react}-excel-processor"
   role         = aws_iam_role.excel_processor_lambda_role.arn
@@ -439,20 +471,45 @@ resource "aws_lambda_function" "excel_processor" {
   )
 }
 
-# EventBridge target to trigger Lambda
+# EventBridge target to trigger Python preprocessor
+resource "aws_cloudwatch_event_target" "python_preprocessor_target" {
+  rule      = aws_cloudwatch_event_rule.s3_file_upload_rule.name
+  target_id = "PythonPreprocessorTarget"
+  arn       = aws_lambda_function.python_preprocessor.arn
+}
+
+# EventBridge target to trigger Rust ML processor (triggered by Python)
 resource "aws_cloudwatch_event_target" "excel_processor_target" {
   rule      = aws_cloudwatch_event_rule.s3_file_upload_rule.name
   target_id = "ExcelProcessorTarget"
   arn       = aws_lambda_function.excel_processor.arn
 }
 
-# Lambda permission for EventBridge
+# Lambda permission for Python preprocessor
+resource "aws_lambda_permission" "allow_python_eventbridge" {
+  statement_id  = "AllowPythonExecutionFromEventBridge"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.python_preprocessor.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.s3_file_upload_rule.arn
+}
+
+# Lambda permission for Rust ML processor
 resource "aws_lambda_permission" "allow_eventbridge" {
   statement_id  = "AllowExecutionFromEventBridge"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.excel_processor.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.s3_file_upload_rule.arn
+}
+
+# Lambda permission for Python to invoke Rust
+resource "aws_lambda_permission" "allow_python_invoke_rust" {
+  statement_id  = "AllowPythonInvokeRust"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.excel_processor.function_name
+  principal     = "lambda.amazonaws.com"
+  source_arn    = aws_lambda_function.python_preprocessor.arn
 }
 
 # EventBridge rule for approval requests

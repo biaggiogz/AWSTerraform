@@ -13,14 +13,11 @@ import {
   useToast,
   Spinner,
   Alert,
-  AlertIcon,
-  Badge,
-  Progress
+  AlertIcon
 } from '@chakra-ui/react';
 import ProfileDataPanel from './ProfileDataPanel';
 import SchemaDataPanel from './SchemaDataPanel';
 import ErrorDataPanel from './ErrorDataPanel';
-import MLEnhancementPanel from './MLEnhancementPanel';
 import { downloadFileFromS3 } from '../../utils/s3Utils';
 
 const ProcessingResultsView = ({ processingResultKey, onApprove, onCancel }) => {
@@ -38,8 +35,18 @@ const ProcessingResultsView = ({ processingResultKey, onApprove, onCancel }) => 
   const loadProcessingResult = async () => {
     try {
       setLoading(true);
+      // Load processing result JSON created by Rust Lambda
       const resultData = await downloadFileFromS3(processingResultKey);
       const result = JSON.parse(resultData);
+      
+      console.log('📊 Processing Result Loaded:', {
+        fileId: result.file_id,
+        profileData: result.profile_data,
+        schemaVersion: result.schema_version,
+        fieldErrors: Object.keys(result.field_errors).length,
+        mlConfidence: result.ml_confidence_score
+      });
+      
       setProcessingResult(result);
       setError(null);
     } catch (err) {
@@ -110,93 +117,50 @@ const ProcessingResultsView = ({ processingResultKey, onApprove, onCancel }) => 
           <TabPanels>
             <TabPanel p={0}>
               {/* Main Content Area */}
-              <VStack spacing={4} align="stretch">
-                {/* ML Confidence Score */}
-                <Box p={3} bg="blue.50" borderRadius="md" borderLeft="4px solid" borderColor="blue.400">
-                  <HStack justify="space-between" align="center">
-                    <VStack align="start" spacing={1}>
-                      <Text fontSize="sm" fontWeight="semibold" color="blue.700">
-                        ML Enhancement Confidence
-                      </Text>
-                      <Text fontSize="xs" color="blue.600">
-                        AI-powered validation and anomaly detection
-                      </Text>
-                    </VStack>
-                    <VStack align="end" spacing={1}>
-                      <Badge 
-                        colorScheme={processingResult.ml_confidence_score > 0.8 ? 'green' : processingResult.ml_confidence_score > 0.5 ? 'yellow' : 'red'}
-                        variant="solid"
-                      >
-                        {(processingResult.ml_confidence_score * 100).toFixed(1)}%
-                      </Badge>
-                      <Progress 
-                        value={processingResult.ml_confidence_score * 100} 
-                        size="sm" 
-                        width="100px"
-                        colorScheme={processingResult.ml_confidence_score > 0.8 ? 'green' : processingResult.ml_confidence_score > 0.5 ? 'yellow' : 'red'}
-                      />
-                    </VStack>
-                  </HStack>
+              <HStack spacing={4} align="stretch" minH="500px">
+                {/* Profile Data Panel - Shows Python preprocessing results */}
+                <Box flex={1}>
+                  <ProfileDataPanel profileData={processingResult.profile_data} />
                 </Box>
 
-                <HStack spacing={4} align="stretch" minH="500px">
-                  {/* Profile Data Panel */}
-                  <Box flex={1}>
-                    <ProfileDataPanel profileData={processingResult.profile_data} />
-                  </Box>
+                {/* Schema Data Panel - Shows inferred column types */}
+                <Box flex={1}>
+                  <SchemaDataPanel schemaVersion={processingResult.schema_version} />
+                </Box>
 
-                  {/* Schema Data Panel */}
-                  <Box flex={1}>
-                    <SchemaDataPanel schemaVersion={processingResult.schema_version} />
-                  </Box>
+                {/* Error Data Panel - Shows ML-detected business logic errors */}
+                <Box flex={1}>
+                  <ErrorDataPanel fieldErrors={processingResult.field_errors} />
+                </Box>
 
-                  {/* Error Data Panel */}
-                  <Box flex={1}>
-                    <ErrorDataPanel 
-                      fieldErrors={processingResult.field_errors} 
-                      mlEnhanced={processingResult.ml_confidence_score > 0}
-                    />
-                  </Box>
-
-                  {/* ML Enhancement Panel */}
-                  <Box flex={1}>
-                    <MLEnhancementPanel 
-                      anomalyResults={processingResult.anomaly_results || []}
-                      validationResults={processingResult.validation_results || []}
-                      nullPredictions={processingResult.null_predictions || []}
-                      mlConfidence={processingResult.ml_confidence_score || 0}
-                    />
-                  </Box>
-
-                  {/* Action Buttons */}
-                  <VStack spacing={3} minW="120px">
-                    <Button
-                      colorScheme="green"
-                      size="lg"
-                      width="full"
-                      onClick={handleApprove}
-                      isDisabled={hasErrors}
-                    >
-                      APPROVE
-                    </Button>
-                    <Button
-                      colorScheme="red"
-                      variant="outline"
-                      size="lg"
-                      width="full"
-                      onClick={handleCancel}
-                    >
-                      CANCEL
-                    </Button>
-                    
-                    {hasErrors && (
-                      <Text fontSize="xs" color="red.500" textAlign="center">
-                        Fix errors before approving
-                      </Text>
-                    )}
-                  </VStack>
-                </HStack>
-              </VStack>
+                {/* Action Buttons */}
+                <VStack spacing={3} minW="120px">
+                  <Button
+                    colorScheme="green"
+                    size="lg"
+                    width="full"
+                    onClick={handleApprove}
+                    isDisabled={hasErrors}
+                  >
+                    APPROVE
+                  </Button>
+                  <Button
+                    colorScheme="red"
+                    variant="outline"
+                    size="lg"
+                    width="full"
+                    onClick={handleCancel}
+                  >
+                    CANCEL
+                  </Button>
+                  
+                  {hasErrors && (
+                    <Text fontSize="xs" color="red.500" textAlign="center">
+                      Fix errors before approving
+                    </Text>
+                  )}
+                </VStack>
+              </HStack>
             </TabPanel>
             
             <TabPanel p={0}>

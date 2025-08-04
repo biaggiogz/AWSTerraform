@@ -136,19 +136,12 @@ async fn save_approval_record(
 }
 
 async fn collect_approval_training_data(
-    s3_client: &S3Client,
-    bucket: &str,
+    _s3_client: &S3Client,
+    _bucket: &str,
     approval_request: &ApprovalRequest,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    use crate::ml::TrainingDataCollector;
-
-    // Load the approved parquet file to get DataFrame
-    let _parquet_key = format!("preDataset/parquet/{}.parquet", approval_request.file_id);
-
-    // For now, we'll create a placeholder - in production, you'd load the actual DataFrame
-    let _training_collector = TrainingDataCollector::new(s3_client.clone(), bucket.to_string());
-
-    info!("Collected training data from approval: {}", approval_request.file_id);
+    // Skip training data collection - using clean Parquet data
+    info!("Training data collection disabled for approval: {}", approval_request.file_id);
     Ok(())
 }
 

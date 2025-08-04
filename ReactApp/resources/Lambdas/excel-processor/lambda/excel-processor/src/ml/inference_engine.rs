@@ -47,21 +47,37 @@ impl InferenceEngine {
     pub async fn detect_anomalies(&self, df: &DataFrame, _model_manager: &ModelManager) -> Result<Vec<AnomalyResult>, Box<dyn std::error::Error>> {
         let mut results = Vec::new();
         
+        // Focus on business logic anomalies using proper Parquet null handling
         for row_idx in 0..df.height() {
-            let features = self.feature_extractor.extract_row_features(df, row_idx)?;
-            let cross_features = self.feature_extractor.extract_cross_column_features(df, row_idx)?;
+            let mut anomaly_score = 0.0;
+            let mut explanations = Vec::new();
             
-            // Simple anomaly detection using feature statistics
-            let anomaly_score = self.calculate_anomaly_score(&features, &cross_features)?;
-            let is_anomaly = anomaly_score > self.anomaly_threshold;
+            // Check SUBSYSTEM format anomalies - only for non-null values
+            if let Ok(subsystem_col) = df.column("subsystem") {
+                let value = subsystem_col.get(row_idx).unwrap_or(polars::prelude::AnyValue::Null);
+                if !value.is_null() {
+                    if let Some(subsystem_val) = value.get_str() {
+                        if !subsystem_val.contains('-') {
+                            anomaly_score += 0.8;
+                            explanations.push("Invalid SUBSYSTEM format (missing '-')".to_string());
+                        }
+                    }
+                }
+            }
             
-            if is_anomaly {
-                let explanation = self.generate_anomaly_explanation(df, row_idx, anomaly_score)?;
+            // Check workflow progression anomalies
+            let workflow_anomaly = self.check_workflow_anomalies(df, row_idx)?;
+            if !workflow_anomaly.is_empty() {
+                anomaly_score += 0.6;
+                explanations.push(workflow_anomaly);
+            }
+            
+            if anomaly_score > self.anomaly_threshold {
                 results.push(AnomalyResult {
                     row_index: row_idx,
                     anomaly_score,
-                    is_anomaly,
-                    explanation,
+                    is_anomaly: true,
+                    explanation: explanations.join("; "),
                 });
             }
         }
@@ -317,21 +333,34 @@ impl InferenceEngine {
     fn check_workflow_anomalies(&self, df: &DataFrame, row_idx: usize) -> Result<String, Box<dyn std::error::Error>> {
         let mut issues = Vec::new();
         
-        let installed = df.column("INSTALLED").ok().and_then(|c| Some(c.get(row_idx).unwrap_or(AnyValue::Null).to_string()));
-        let wired = df.column("WIRED").ok().and_then(|c| Some(c.get(row_idx).unwrap_or(AnyValue::Null).to_string()));
-        let connected = df.column("CONNECTED").ok().and_then(|c| Some(c.get(row_idx).unwrap_or(AnyValue::Null).to_string()));
+        // Get workflow columns with proper null handling
+        let installed = df.column("installed_tlp").ok()
+            .and_then(|c| {
+                let val = c.get(row_idx).unwrap_or(AnyValue::Null);
+                if val.is_null() { None } else { val.get_str().map(|s| s.to_string()) }
+            });
         
-        // Check for workflow gaps
-        if let (Some(inst), Some(wire)) = (&installed, &wired) {
-            if !inst.is_empty() && wire.is_empty() {
-                issues.push("INSTALLED but not WIRED");
-            }
-        }
+        let wired = df.column("wired_tlp").ok()
+            .and_then(|c| {
+                let val = c.get(row_idx).unwrap_or(AnyValue::Null);
+                if val.is_null() { None } else { val.get_str().map(|s| s.to_string()) }
+            });
         
-        if let (Some(wire), Some(conn)) = (&wired, &connected) {
-            if !wire.is_empty() && conn.is_empty() {
-                issues.push("WIRED but not CONNECTED");
-            }
+        let connected = df.column("connected_tlp").ok()
+            .and_then(|c| {
+                let val = c.get(row_idx).unwrap_or(AnyValue::Null);
+                if val.is_null() { None } else { val.get_str().map(|s| s.to_string()) }
+            });
+        
+        // Check for workflow progression issues - only flag actual business logic problems
+        match (&installed, &wired, &connected) {
+            (Some(inst), None, _) if !inst.is_empty() => {
+                issues.push("INSTALLED but WIRED status missing");
+            },
+            (Some(inst), Some(wire), None) if !inst.is_empty() && !wire.is_empty() => {
+                issues.push("INSTALLED and WIRED but CONNECTED status missing");
+            },
+            _ => {} // Normal cases or proper nulls
         }
         
         Ok(issues.join(", "))

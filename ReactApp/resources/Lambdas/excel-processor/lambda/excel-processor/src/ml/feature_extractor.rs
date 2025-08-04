@@ -25,16 +25,25 @@ impl FeatureExtractor {
             let col_name = column.name();
             let value = column.get(row_idx).unwrap_or(AnyValue::Null);
             
-            // Text embedding features
-            let text_features = self.extract_text_features(&value.to_string())?;
-            features.extend(text_features);
-            
-            // Pattern features
-            let pattern_features = self.extract_pattern_features(col_name, &value.to_string())?;
-            features.extend(pattern_features);
-            
-            // Null indicator
-            features.push(if value.is_null() { 1.0 } else { 0.0 });
+            // Business logic features for preprocessed data
+            match col_name.as_str() {
+                "subsystem" => {
+                    let val_str = value.to_string();
+                    features.push(if val_str.contains('-') { 1.0 } else { 0.0 });
+                    features.push(val_str.len() as f32);
+                },
+                col if col.ends_with("_tlp") => {
+                    // Test loop specific features
+                    let val_str = value.to_string();
+                    features.push(if val_str.is_empty() { 0.0 } else { 1.0 });
+                    features.push(val_str.len() as f32);
+                },
+                _ => {
+                    // Generic features
+                    features.push(if value.is_null() { 0.0 } else { 1.0 });
+                    features.push(value.to_string().len() as f32);
+                }
+            }
         }
         
         let len = features.len();
@@ -77,9 +86,10 @@ impl FeatureExtractor {
         
         // Pattern indicators
         features[5] = if text.contains("MONTADO") { 1.0 } else { 0.0 };
-        features[6] = if text.contains("CABLEADO") { 1.0 } else { 0.0 };
-        features[7] = if text.contains("CONEXIONADO") { 1.0 } else { 0.0 };
-        features[8] = if text.matches('/').count() == 2 { 1.0 } else { 0.0 }; // Date pattern
+        features[6] = if text.contains("INSTALADO") { 1.0 } else { 0.0 };
+        features[7] = if text.contains("CABLEADO") { 1.0 } else { 0.0 };
+        features[8] = if text.contains("CONEXIONADO") { 1.0 } else { 0.0 };
+        features[9] = if text.matches('/').count() == 2 { 1.0 } else { 0.0 }; // Date pattern
         
         Ok(features)
     }

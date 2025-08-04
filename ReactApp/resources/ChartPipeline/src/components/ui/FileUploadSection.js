@@ -73,15 +73,20 @@ const FileUploadSection = () => {
     if (successfulUploads.length > 0) {
       toast({
         title: "Files uploaded to S3",
-        description: `${successfulUploads.length} file(s) uploaded successfully. AI-enhanced processing will begin shortly.`,
+        description: `${successfulUploads.length} file(s) uploaded. Python preprocessing + Rust ML analysis starting...`,
         status: "success",
         duration: 5000
       });
       
-      // Check for processing results after a delay
+      console.log('🚀 Starting processing pipeline:', {
+        files: successfulUploads.map(f => f.name),
+        pipeline: 'Python preprocessing → Rust ML analysis'
+      });
+      
+      // Check for processing results after a delay (Python+Rust takes longer)
       setTimeout(() => {
         checkForProcessingResults(successfulUploads[0].name);
-      }, 10000); // Wait 10 seconds for Lambda processing
+      }, 20000); // Wait 20 seconds for full pipeline
     }
   }, [toast]);
 
@@ -118,44 +123,68 @@ const FileUploadSection = () => {
 
   const checkForProcessingResults = async (fileName) => {
     try {
-      // Poll for processing results in the processing-results/ folder
+      const fileId = fileName.split('.')[0];
+      const expectedResultKey = `processing-results/${fileId}.json`;
+      
+      console.log('🔍 Checking for processing results:', {
+        fileName,
+        fileId,
+        expectedKey: expectedResultKey
+      });
+      
       let attempts = 0;
-      const maxAttempts = 12; // 2 minutes total (10s intervals)
+      const maxAttempts = 60; // 10 minutes total for Python+Rust pipeline
       
       const pollForResults = async () => {
         try {
           const objects = await listS3Objects('processing-results/');
           
+          // Look for specific file result first
+          const specificResult = objects.find(obj => obj.Key === expectedResultKey);
+          if (specificResult) {
+            console.log('✅ Found specific processing result:', specificResult.Key);
+            setProcessingResultKey(specificResult.Key);
+            setShowResults(true);
+            return;
+          }
+          
+          // Fallback to most recent result
           if (objects.length > 0) {
-            // Get the most recent processing result
             const latestResult = objects.sort((a, b) => 
               new Date(b.LastModified) - new Date(a.LastModified)
             )[0];
             
+            console.log('📊 Using latest processing result:', latestResult.Key);
             setProcessingResultKey(latestResult.Key);
             setShowResults(true);
             return;
           }
           
           attempts++;
+          
+          // Log progress every minute
+          if (attempts % 6 === 0) {
+            console.log(`⏳ Still waiting for Python+Rust pipeline... (${Math.floor(attempts / 6)} minutes)`);
+          }
+          
           if (attempts < maxAttempts) {
             setTimeout(pollForResults, 10000); // Check every 10 seconds
           } else {
             toast({
-              title: "AI Processing timeout",
-              description: "ML-enhanced processing is taking longer than expected",
+              title: "Processing timeout",
+              description: "Python preprocessing + Rust ML analysis exceeded 10 minutes",
               status: "warning",
               duration: 5000
             });
           }
         } catch (error) {
-          console.error('Error polling for results:', error);
+          console.error('❌ Error polling for results:', error);
         }
       };
       
       pollForResults();
     } catch (error) {
-      console.error('Error checking for processing results:', error);
+      console.error('❌ Error checking for processing results:', error);
     }
   };
 

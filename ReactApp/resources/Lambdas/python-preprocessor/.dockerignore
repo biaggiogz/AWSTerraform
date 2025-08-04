@@ -1,0 +1,6 @@
+*.sh
+*.md
+.git
+__pycache__
+*.pyc
+.DS_Store
