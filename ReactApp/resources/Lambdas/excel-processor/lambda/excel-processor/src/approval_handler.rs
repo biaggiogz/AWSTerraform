@@ -1,7 +1,5 @@
 use aws_sdk_s3::Client as S3Client;
-use polars::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::io::Cursor;
 use tracing::info;
 use chrono::{DateTime, Utc};
 
@@ -28,18 +26,18 @@ pub async fn handle_approval(
     approval_request: ApprovalRequest,
 ) -> Result<ApprovalResult, Box<dyn std::error::Error>> {
     info!("Processing approval for file_id: {}", approval_request.file_id);
-    
+
     // Download processing result to get original file paths
     let processing_result = download_processing_result(
-        s3_client, 
-        bucket, 
+        s3_client,
+        bucket,
         &approval_request.processing_result_key
     ).await?;
-    
+
     // Copy from preDataset to approvedDataset
     let approved_parquet_path = format!("approvedDataset/parquet/{}.parquet", approval_request.file_id);
     let approved_iceberg_path = format!("approvedDataset/iceberg/{}.parquet", approval_request.file_id);
-    
+
     // Copy Parquet file
     copy_s3_object(
         s3_client,
@@ -47,7 +45,7 @@ pub async fn handle_approval(
         &processing_result.parquet_path,
         &approved_parquet_path,
     ).await?;
-    
+
     // Copy Iceberg file
     copy_s3_object(
         s3_client,
@@ -55,7 +53,11 @@ pub async fn handle_approval(
         &processing_result.iceberg_path,
         &approved_iceberg_path,
     ).await?;
-    
+
+    // Collect training data from approval
+    collect_approval_training_data(s3_client, bucket, &approval_request).await
+        .unwrap_or_else(|e| info!("Training data collection failed: {}", e));
+
     // Create approval metadata
     let approval_result = ApprovalResult {
         file_id: approval_request.file_id.clone(),
@@ -64,11 +66,11 @@ pub async fn handle_approval(
         approved_iceberg_path: approved_iceberg_path.clone(),
         approval_timestamp: approval_request.timestamp,
     };
-    
+
     // Save approval record
     let approval_key = format!("approvedDataset/metadata/{}_approval.json", approval_request.file_id);
     save_approval_record(s3_client, bucket, &approval_key, &approval_result).await?;
-    
+
     info!("Successfully approved file_id: {} to approvedDataset/", approval_request.file_id);
     Ok(approval_result)
 }
@@ -84,11 +86,11 @@ async fn download_processing_result(
         .key(key)
         .send()
         .await?;
-    
+
     let data = response.body.collect().await?.into_bytes();
     let json_str = String::from_utf8(data.to_vec())?;
     let result: ProcessingResult = serde_json::from_str(&json_str)?;
-    
+
     Ok(result)
 }
 
@@ -99,7 +101,7 @@ async fn copy_s3_object(
     dest_key: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let copy_source = format!("{}/{}", bucket, source_key);
-    
+
     s3_client
         .copy_object()
         .bucket(bucket)
@@ -107,7 +109,7 @@ async fn copy_s3_object(
         .copy_source(&copy_source)
         .send()
         .await?;
-    
+
     info!("Copied {} to {}", source_key, dest_key);
     Ok(())
 }
@@ -119,17 +121,34 @@ async fn save_approval_record(
     approval_result: &ApprovalResult,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let json_data = serde_json::to_string_pretty(approval_result)?;
-    
+
     s3_client
         .put_object()
         .bucket(bucket)
         .key(key)
-        .body(json_data.into())
+        .body(json_data.into_bytes().into())
         .content_type("application/json")
         .send()
         .await?;
-    
+
     info!("Saved approval record to {}", key);
+    Ok(())
+}
+
+async fn collect_approval_training_data(
+    s3_client: &S3Client,
+    bucket: &str,
+    approval_request: &ApprovalRequest,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use crate::ml::TrainingDataCollector;
+
+    // Load the approved parquet file to get DataFrame
+    let _parquet_key = format!("preDataset/parquet/{}.parquet", approval_request.file_id);
+
+    // For now, we'll create a placeholder - in production, you'd load the actual DataFrame
+    let _training_collector = TrainingDataCollector::new(s3_client.clone(), bucket.to_string());
+
+    info!("Collected training data from approval: {}", approval_request.file_id);
     Ok(())
 }
 

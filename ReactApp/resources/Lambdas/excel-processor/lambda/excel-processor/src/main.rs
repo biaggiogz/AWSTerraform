@@ -11,6 +11,11 @@ use uuid::Uuid;
 use calamine::{Reader, Xlsx, open_workbook_from_rs};
 use chrono::{DateTime, Utc};
 
+mod ml;
+mod approval_handler;
+use ml::{ModelManager, InferenceEngine, TrainingDataCollector};
+use candle_core::Device;
+
 #[derive(Debug)]
 struct S3EventDetail {
     bucket: String,
@@ -26,6 +31,11 @@ struct ProcessingResult {
     field_errors: HashMap<String, Vec<FieldError>>,
     parquet_path: String,
     iceberg_path: String,
+    // ML Enhancement Results
+    anomaly_results: Vec<ml::inference_engine::AnomalyResult>,
+    validation_results: Vec<ml::inference_engine::ValidationResult>,
+    null_predictions: Vec<ml::inference_engine::NullPrediction>,
+    ml_confidence_score: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -91,20 +101,29 @@ async fn function_handler(
 
     let excel_data = download_file_from_s3(s3_client, &s3_detail.bucket, &s3_detail.key).await?;
     let df = read_excel_to_dataframe(excel_data)?;
-    
+
     let file_id = Uuid::new_v4().to_string();
     let timestamp = Utc::now();
-    
+
+    // Traditional processing
     let parquet_key = format!("preDataset/parquet/{}.parquet", file_id);
     save_as_parquet(s3_client, &df, &s3_detail.bucket, &parquet_key).await?;
-    
+
     let iceberg_key = format!("preDataset/iceberg/{}.parquet", file_id);
     save_as_iceberg(s3_client, &df, &s3_detail.bucket, &iceberg_key).await?;
-    
+
     let profile_data = generate_profile_data(&df)?;
     let schema_version = generate_schema_version(&df, timestamp)?;
     let field_errors = detect_field_errors(&df)?;
-    
+
+    // ML Enhancement
+    let (anomaly_results, validation_results, null_predictions, ml_confidence) =
+        run_ml_enhancement(s3_client, &df, &s3_detail.bucket).await
+            .unwrap_or_else(|e| {
+                info!("ML enhancement failed, using fallback: {}", e);
+                (Vec::new(), Vec::new(), Vec::new(), 0.0)
+            });
+
     let result = ProcessingResult {
         file_id,
         timestamp,
@@ -113,29 +132,37 @@ async fn function_handler(
         field_errors,
         parquet_path: parquet_key,
         iceberg_path: iceberg_key,
+        anomaly_results,
+        validation_results,
+        null_predictions,
+        ml_confidence_score: ml_confidence,
     };
-    
+
     let result_key = format!("processing-results/{}.json", result.file_id);
     save_processing_result(s3_client, &result, &s3_detail.bucket, &result_key).await?;
-    
-    info!("Successfully processed file and saved outputs");
+
+    // Collect training data
+    collect_training_data(s3_client, &df, &result, &s3_detail.bucket).await
+        .unwrap_or_else(|e| info!("Training data collection failed: {}", e));
+
+    info!("Successfully processed file with ML enhancement");
     Ok(result)
 }
 
 fn extract_s3_details(event: &EventBridgeEvent<Value>) -> Result<S3EventDetail, Error> {
     let detail = event.detail.as_object()
         .ok_or("Missing detail in EventBridge event")?;
-    
+
     let bucket_name = detail.get("bucket")
         .and_then(|b| b.get("name"))
         .and_then(|n| n.as_str())
         .ok_or("Missing bucket name")?;
-    
+
     let object_key = detail.get("object")
         .and_then(|o| o.get("key"))
         .and_then(|k| k.as_str())
         .ok_or("Missing object key")?;
-    
+
     Ok(S3EventDetail {
         bucket: bucket_name.to_string(),
         key: object_key.to_string(),
@@ -154,7 +181,7 @@ async fn download_file_from_s3(
         .send()
         .await
         .map_err(|e| format!("Failed to download file: {}", e))?;
-    
+
     let data = response
         .body
         .collect()
@@ -162,7 +189,7 @@ async fn download_file_from_s3(
         .map_err(|e| format!("Failed to read file data: {}", e))?
         .into_bytes()
         .to_vec();
-    
+
     info!("Downloaded {} bytes from S3", data.len());
     Ok(data)
 }
@@ -171,16 +198,16 @@ fn read_excel_to_dataframe(excel_data: Vec<u8>) -> Result<DataFrame, Error> {
     let cursor = Cursor::new(excel_data);
     let mut workbook: Xlsx<_> = open_workbook_from_rs(cursor)
         .map_err(|e| format!("Failed to open Excel file: {}", e))?;
-    
+
     let range = workbook.worksheet_range("TEST_LOOP")
         .map_err(|e| format!("Failed to read worksheet: {}", e))?;
-    
+
     let mut data: Vec<Vec<String>> = Vec::new();
     let mut header_row: Vec<String> = Vec::new();
-    
+
     for (row_idx, row) in range.rows().enumerate() {
         if row_idx < 11 { continue; }
-        
+
         let mut row_data = Vec::new();
         for col_idx in 1..22 {
             let cell_value = row.get(col_idx)
@@ -188,14 +215,14 @@ fn read_excel_to_dataframe(excel_data: Vec<u8>) -> Result<DataFrame, Error> {
                 .unwrap_or_default();
             row_data.push(cell_value);
         }
-        
+
         if row_idx == 11 {
             header_row = row_data.clone();
         } else {
             data.push(row_data);
         }
     }
-    
+
     let column_names: Vec<String> = header_row.iter()
         .enumerate()
         .map(|(idx, h)| {
@@ -207,20 +234,20 @@ fn read_excel_to_dataframe(excel_data: Vec<u8>) -> Result<DataFrame, Error> {
             }
         })
         .collect();
-    
+
     let mut series_vec = Vec::new();
-    
+
     for (col_idx, col_name) in column_names.iter().enumerate() {
         let col_data: Vec<String> = data.iter()
             .map(|row| row.get(col_idx).cloned().unwrap_or_default())
             .collect();
         series_vec.push(Series::new(col_name.into(), col_data));
     }
-    
+
     let columns: Vec<Column> = series_vec.into_iter().map(Column::from).collect();
     let df = DataFrame::new(columns)
         .map_err(|e| format!("Failed to create DataFrame: {}", e))?;
-    
+
     Ok(df)
 }
 
@@ -228,18 +255,18 @@ fn generate_profile_data(df: &DataFrame) -> Result<ProfileData, Error> {
     let total_rows = df.height();
     let total_columns = df.width();
     let mut columns = Vec::new();
-    
+
     for column in df.get_columns() {
         let col_name = column.name().to_string();
         let null_count = column.null_count();
         let null_percentage = (null_count as f64 / total_rows as f64) * 100.0;
-        
+
         let series = column.as_series().unwrap();
         let (inferred_type, confidence, professional_inference) = infer_professional_type(series);
         let unique_count = series.n_unique().ok();
         let sample_values = get_sample_values(series, 5);
         let data_patterns = detect_data_patterns(series);
-        
+
         columns.push(ColumnProfile {
             name: col_name,
             inferred_type,
@@ -252,9 +279,9 @@ fn generate_profile_data(df: &DataFrame) -> Result<ProfileData, Error> {
             professional_inference,
         });
     }
-    
+
     let data_quality_score = calculate_data_quality_score(&columns);
-    
+
     Ok(ProfileData {
         total_rows,
         total_columns,
@@ -266,7 +293,7 @@ fn generate_profile_data(df: &DataFrame) -> Result<ProfileData, Error> {
 fn infer_professional_type(column: &Series) -> (String, f64, String) {
     let name = column.name().as_str();
     let sample_values = get_sample_values(column, 100);
-    
+
     match name {
         "SUBS_PRE" => analyze_subsystem_pattern(&sample_values),
         "TAG LOOP" | "TagS" => analyze_tag_pattern(&sample_values),
@@ -281,12 +308,12 @@ fn infer_professional_type(column: &Series) -> (String, f64, String) {
 fn analyze_subsystem_pattern(values: &[String]) -> (String, f64, String) {
     let mut valid_count = 0;
     let pattern_regex = regex::Regex::new(r"^[A-Z]{2,4}-\d{5}-\d{2}$").unwrap();
-    
+
     for value in values {
         if value.is_empty() || value == "NOT" { continue; }
         if pattern_regex.is_match(value) { valid_count += 1; }
     }
-    
+
     let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
     (
         "SUBSYSTEM_CODE".to_string(),
@@ -297,14 +324,14 @@ fn analyze_subsystem_pattern(values: &[String]) -> (String, f64, String) {
 
 fn analyze_tag_pattern(values: &[String]) -> (String, f64, String) {
     let mut valid_count = 0;
-    
+
     for value in values {
         if value.is_empty() { continue; }
         if value.len() > 3 && value.chars().any(|c| c.is_alphanumeric()) {
             valid_count += 1;
         }
     }
-    
+
     let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
     (
         "TAG_IDENTIFIER".to_string(),
@@ -316,9 +343,9 @@ fn analyze_tag_pattern(values: &[String]) -> (String, f64, String) {
 fn analyze_status_date_pattern(values: &[String]) -> (String, f64, String) {
     let mut date_count = 0;
     let mut status_count = 0;
-    
+
     let date_regex = regex::Regex::new(r"\d{1,2}/\d{1,2}/\d{4}").unwrap();
-    
+
     for value in values {
         if value.is_empty() { continue; }
         if date_regex.is_match(value) || value.contains("MONTADO") {
@@ -327,10 +354,10 @@ fn analyze_status_date_pattern(values: &[String]) -> (String, f64, String) {
             status_count += 1;
         }
     }
-    
+
     let total_valid = date_count + status_count;
     let confidence = if values.is_empty() { 0.0 } else { (total_valid as f64 / values.len() as f64) * 100.0 };
-    
+
     (
         "STATUS_OR_DATE".to_string(),
         confidence,
@@ -340,14 +367,14 @@ fn analyze_status_date_pattern(values: &[String]) -> (String, f64, String) {
 
 fn analyze_priority_pattern(values: &[String]) -> (String, f64, String) {
     let mut valid_count = 0;
-    
+
     for value in values {
         if value.is_empty() { continue; }
         if value.parse::<i32>().is_ok() || value.len() <= 10 {
             valid_count += 1;
         }
     }
-    
+
     let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
     (
         "PRIORITY_CODE".to_string(),
@@ -358,14 +385,14 @@ fn analyze_priority_pattern(values: &[String]) -> (String, f64, String) {
 
 fn analyze_percentage_pattern(values: &[String]) -> (String, f64, String) {
     let mut valid_count = 0;
-    
+
     for value in values {
         if value.is_empty() { continue; }
         if value.contains('%') || value.parse::<f64>().is_ok() {
             valid_count += 1;
         }
     }
-    
+
     let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
     (
         "PERCENTAGE".to_string(),
@@ -376,7 +403,7 @@ fn analyze_percentage_pattern(values: &[String]) -> (String, f64, String) {
 
 fn analyze_status_pattern(values: &[String]) -> (String, f64, String) {
     let mut valid_count = 0;
-    
+
     for value in values {
         if value.is_empty() { continue; }
         let upper_val = value.to_uppercase();
@@ -384,7 +411,7 @@ fn analyze_status_pattern(values: &[String]) -> (String, f64, String) {
             valid_count += 1;
         }
     }
-    
+
     let confidence = if values.is_empty() { 0.0 } else { (valid_count as f64 / values.len() as f64) * 100.0 };
     (
         "STATUS_FLAG".to_string(),
@@ -396,7 +423,7 @@ fn analyze_status_pattern(values: &[String]) -> (String, f64, String) {
 fn analyze_generic_pattern(values: &[String]) -> (String, f64, String) {
     let mut numeric_count = 0;
     let mut text_count = 0;
-    
+
     for value in values {
         if value.is_empty() { continue; }
         if value.parse::<f64>().is_ok() {
@@ -405,9 +432,9 @@ fn analyze_generic_pattern(values: &[String]) -> (String, f64, String) {
             text_count += 1;
         }
     }
-    
+
     let confidence = 85.0;
-    
+
     if numeric_count > text_count {
         ("NUMERIC".to_string(), confidence, "Numeric values".to_string())
     } else {
@@ -428,7 +455,7 @@ fn get_sample_values(series: &Series, limit: usize) -> Vec<String> {
 fn detect_data_patterns(series: &Series) -> Vec<DataPattern> {
     let mut patterns = Vec::new();
     let values = get_sample_values(series, 100);
-    
+
     let null_count = series.null_count();
     if null_count > 0 {
         patterns.push(DataPattern {
@@ -437,15 +464,15 @@ fn detect_data_patterns(series: &Series) -> Vec<DataPattern> {
             example: "(empty)".to_string(),
         });
     }
-    
+
     let mut pattern_counts: HashMap<String, (usize, String)> = HashMap::new();
-    
+
     for value in &values {
         let pattern = classify_value_pattern(value);
         let entry = pattern_counts.entry(pattern.clone()).or_insert((0, value.clone()));
         entry.0 += 1;
     }
-    
+
     for (pattern_type, (frequency, example)) in pattern_counts {
         patterns.push(DataPattern {
             pattern_type,
@@ -453,7 +480,7 @@ fn detect_data_patterns(series: &Series) -> Vec<DataPattern> {
             example,
         });
     }
-    
+
     patterns
 }
 
@@ -471,41 +498,41 @@ fn classify_value_pattern(value: &str) -> String {
 
 fn calculate_data_quality_score(columns: &[ColumnProfile]) -> f64 {
     if columns.is_empty() { return 0.0; }
-    
+
     let total_confidence: f64 = columns.iter()
         .map(|col| col.data_type_confidence)
         .sum();
-    
+
     let avg_confidence = total_confidence / columns.len() as f64;
-    
+
     let null_penalty: f64 = columns.iter()
         .map(|col| col.null_percentage)
         .sum::<f64>() / columns.len() as f64;
-    
+
     (avg_confidence - null_penalty * 0.5).max(0.0).min(100.0)
 }
 
 fn generate_schema_version(df: &DataFrame, timestamp: DateTime<Utc>) -> Result<SchemaVersion, Error> {
     let mut columns = Vec::new();
-    
+
     for column in df.get_columns() {
         let col_name = column.name().to_string();
         let series = column.as_series().unwrap();
         let (inferred_type, _, _) = infer_professional_type(series);
-        
+
         let nullable = series.null_count() > 0;
         let mut constraints = Vec::new();
-        
+
         if !nullable {
             constraints.push("NOT_NULL".to_string());
         }
-        
+
         match inferred_type.as_str() {
             "SUBSYSTEM_CODE" => constraints.push("FORMAT_VALIDATION".to_string()),
             "PERCENTAGE" => constraints.push("RANGE_0_100".to_string()),
             _ => {}
         }
-        
+
         columns.push(SchemaColumn {
             name: col_name,
             data_type: map_to_standard_type(&inferred_type),
@@ -513,7 +540,7 @@ fn generate_schema_version(df: &DataFrame, timestamp: DateTime<Utc>) -> Result<S
             constraints,
         });
     }
-    
+
     Ok(SchemaVersion {
         version: "1.0.0".to_string(),
         created_at: timestamp,
@@ -531,33 +558,33 @@ fn map_to_standard_type(inferred_type: &str) -> String {
 
 fn detect_field_errors(df: &DataFrame) -> Result<HashMap<String, Vec<FieldError>>, Error> {
     let mut field_errors: HashMap<String, Vec<FieldError>> = HashMap::new();
-    
+
     for column in df.get_columns() {
         let col_name = column.name().to_string();
         let series = column.as_series().unwrap();
         let errors = validate_column_values(series);
-        
+
         if !errors.is_empty() {
             field_errors.insert(col_name, errors);
         }
     }
-    
+
     Ok(field_errors)
 }
 
 fn validate_column_values(series: &Series) -> Vec<FieldError> {
     let mut errors = Vec::new();
     let col_name = series.name();
-    
+
     for (row_idx, value) in series.iter().enumerate() {
         if value.is_null() { continue; }
-        
+
         let value_str = value.to_string();
         if let Some(error) = validate_value_by_column(col_name, &value_str, row_idx) {
             errors.push(error);
         }
     }
-    
+
     errors
 }
 
@@ -573,7 +600,7 @@ fn validate_value_by_column(col_name: &str, value: &str, row_idx: usize) -> Opti
 
 fn validate_subsystem_code(value: &str, row_idx: usize) -> Option<FieldError> {
     if value.is_empty() || value == "NOT" { return None; }
-    
+
     let pattern = regex::Regex::new(r"^[A-Z]{2,4}-\d{5}-\d{2}$").unwrap();
     if !pattern.is_match(value) {
         return Some(FieldError {
@@ -589,14 +616,14 @@ fn validate_subsystem_code(value: &str, row_idx: usize) -> Option<FieldError> {
 
 fn validate_status_date(value: &str, row_idx: usize) -> Option<FieldError> {
     if value.is_empty() { return None; }
-    
+
     let date_pattern = regex::Regex::new(r"\d{1,2}/\d{1,2}/\d{4}").unwrap();
     let upper_val = value.to_uppercase();
-    
-    if !date_pattern.is_match(value) && 
-       !upper_val.contains("YES") && 
-       !upper_val.contains("NO") && 
-       !upper_val.contains("MONTADO") {
+
+    if !date_pattern.is_match(value) &&
+        !upper_val.contains("YES") &&
+        !upper_val.contains("NO") &&
+        !upper_val.contains("MONTADO") {
         return Some(FieldError {
             row_index: row_idx,
             error_type: "INVALID_FORMAT".to_string(),
@@ -610,7 +637,7 @@ fn validate_status_date(value: &str, row_idx: usize) -> Option<FieldError> {
 
 fn validate_percentage(value: &str, row_idx: usize) -> Option<FieldError> {
     if value.is_empty() { return None; }
-    
+
     let clean_value = value.replace('%', "");
     if let Ok(num) = clean_value.parse::<f64>() {
         if num < 0.0 || num > 100.0 {
@@ -636,7 +663,7 @@ fn validate_percentage(value: &str, row_idx: usize) -> Option<FieldError> {
 
 fn validate_status_flag(value: &str, row_idx: usize) -> Option<FieldError> {
     if value.is_empty() { return None; }
-    
+
     let upper_val = value.to_uppercase();
     if upper_val != "C" && upper_val != "O" && upper_val != "CLOSED" && upper_val != "OPEN" {
         return Some(FieldError {
@@ -658,11 +685,11 @@ async fn save_as_parquet(
 ) -> Result<(), Error> {
     let mut buffer = Vec::new();
     let mut cursor = Cursor::new(&mut buffer);
-    
+
     ParquetWriter::new(&mut cursor)
         .finish(&mut df.clone())
         .map_err(|e| format!("Failed to write Parquet: {}", e))?;
-    
+
     s3_client
         .put_object()
         .bucket(bucket)
@@ -671,7 +698,7 @@ async fn save_as_parquet(
         .send()
         .await
         .map_err(|e| format!("Failed to upload Parquet: {}", e))?;
-    
+
     info!("Saved Parquet file to s3://{}/{}", bucket, key);
     Ok(())
 }
@@ -693,7 +720,7 @@ async fn save_processing_result(
 ) -> Result<(), Error> {
     let json_data = serde_json::to_string_pretty(result)
         .map_err(|e| format!("Failed to serialize result: {}", e))?;
-    
+
     s3_client
         .put_object()
         .bucket(bucket)
@@ -703,9 +730,64 @@ async fn save_processing_result(
         .send()
         .await
         .map_err(|e| format!("Failed to upload result: {}", e))?;
-    
+
     info!("Saved processing result to s3://{}/{}", bucket, key);
     Ok(())
+}
+
+async fn run_ml_enhancement(
+    s3_client: &S3Client,
+    df: &DataFrame,
+    bucket: &str,
+) -> Result<(Vec<ml::inference_engine::AnomalyResult>, Vec<ml::inference_engine::ValidationResult>, Vec<ml::inference_engine::NullPrediction>, f64), Box<dyn std::error::Error>> {
+    let device = Device::Cpu;
+    let model_manager = ModelManager::new(s3_client.clone(), bucket.to_string());
+    let inference_engine = InferenceEngine::new(device);
+
+    // Run ML inference
+    let anomaly_results = inference_engine.detect_anomalies(df, &model_manager).await?;
+    let validation_results = inference_engine.validate_context(df).await?;
+    let null_predictions = inference_engine.predict_nulls(df).await?;
+
+    // Calculate overall ML confidence
+    let ml_confidence = calculate_ml_confidence(&anomaly_results, &validation_results, &null_predictions);
+
+    info!("ML Enhancement completed: {} anomalies, {} validations, {} predictions",
+          anomaly_results.len(), validation_results.len(), null_predictions.len());
+
+    Ok((anomaly_results, validation_results, null_predictions, ml_confidence))
+}
+
+async fn collect_training_data(
+    s3_client: &S3Client,
+    df: &DataFrame,
+    result: &ProcessingResult,
+    bucket: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let training_collector = TrainingDataCollector::new(s3_client.clone(), bucket.to_string());
+
+    // Collect validation feedback as training data
+    if !result.validation_results.is_empty() {
+        training_collector.collect_validation_feedback(&result.validation_results, df).await?;
+    }
+
+    info!("Training data collection completed");
+    Ok(())
+}
+
+fn calculate_ml_confidence(
+    anomaly_results: &[ml::inference_engine::AnomalyResult],
+    validation_results: &[ml::inference_engine::ValidationResult],
+    null_predictions: &[ml::inference_engine::NullPrediction],
+) -> f64 {
+    let total_checks = anomaly_results.len() + validation_results.len() + null_predictions.len();
+    if total_checks == 0 { return 1.0; }
+
+    let anomaly_confidence = anomaly_results.iter().map(|a| 1.0 - a.anomaly_score).sum::<f64>();
+    let validation_confidence = validation_results.iter().map(|v| v.confidence).sum::<f64>();
+    let prediction_confidence = null_predictions.iter().map(|p| p.confidence).sum::<f64>();
+
+    (anomaly_confidence + validation_confidence + prediction_confidence) / total_checks as f64
 }
 
 #[tokio::main]
@@ -722,7 +804,8 @@ async fn main() -> Result<(), Error> {
     run(service_fn(|event| async {
         match function_handler(event, &s3_client).await {
             Ok(result) => {
-                info!("Processing completed successfully: {}", result.file_id);
+                info!("Processing completed successfully: {} (ML confidence: {:.2})",
+                      result.file_id, result.ml_confidence_score);
                 Ok::<serde_json::Value, lambda_runtime::Error>(serde_json::json!({
                     "statusCode": 200,
                     "body": result
