@@ -1,3 +1,4 @@
+
 # Archive the React application for deployment
 data "archive_file" "react_assets" {
   type        = "zip"
@@ -113,7 +114,7 @@ resource "null_resource" "build_and_deploy_react_app" {
       ./sync-data.sh && \
       /usr/bin/npm install && \
       chmod +x node_modules/.bin/* && \
-      REACT_APP_CACHE_VERSION=$(date +%s) REACT_APP_IDENTITY_POOL_ID=${aws_cognito_identity_pool.file_upload_pool.id} REACT_APP_S3_BUCKET=${aws_s3_bucket.react_app_bucket.bucket} REACT_APP_PROGRESS_TABLE=${aws_dynamodb_table.file_processing_progress.name} REACT_APP_WEBSOCKET_ENDPOINT=wss://${aws_apigatewayv2_api.websocket_api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_apigatewayv2_stage.websocket_stage.name} REACT_APP_AWS_REGION=${data.aws_region.current.name} /usr/bin/npm run build && \
+      REACT_APP_CACHE_VERSION=$(date +%s) REACT_APP_IDENTITY_POOL_ID=${aws_cognito_identity_pool.file_upload_pool.id} REACT_APP_S3_BUCKET=${aws_s3_bucket.react_app_bucket.bucket} REACT_APP_AWS_REGION=${data.aws_region.current.name} /usr/bin/npm run build && \
       aws s3 sync build/ s3://${aws_s3_bucket.react_app_bucket.bucket} --delete --cache-control "no-cache, no-store, must-revalidate" --metadata-directive REPLACE && \
       aws s3 sync build/data/ s3://${aws_s3_bucket.react_app_bucket.bucket}/data/ --cache-control "no-cache, no-store, must-revalidate, max-age=0" --metadata-directive REPLACE
     EOT
@@ -314,9 +315,9 @@ resource "aws_iam_role_policy" "cognito_s3_policy" {
       {
         Effect = "Allow"
         Action = [
-          "dynamodb:GetItem"
+          "s3:GetObject"
         ]
-        Resource = aws_dynamodb_table.file_processing_progress.arn
+        Resource = "${aws_s3_bucket.react_app_bucket.arn}/progress/*"
       }
     ]
   })
@@ -606,7 +607,9 @@ resource "aws_iam_role_policy" "excel_processor_lambda_policy" {
         Action = [
           "dynamodb:PutItem",
           "dynamodb:GetItem",
-          "dynamodb:UpdateItem"
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
         ]
         Resource = aws_dynamodb_table.file_processing_progress.arn
       },
@@ -635,19 +638,9 @@ resource "aws_lambda_function" "python_preprocessor" {
 
   architectures = ["arm64"]
   
-  environment {
-    variables = {
-      PROGRESS_TABLE = aws_dynamodb_table.file_processing_progress.name
-      WEBSOCKET_ENDPOINT = "https://${aws_apigatewayv2_api.websocket_api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_apigatewayv2_stage.websocket_stage.name}"
-    }
-  }
+
   
-  lifecycle {
-    replace_triggered_by = [
-      aws_dynamodb_table.file_processing_progress,
-      aws_apigatewayv2_api.websocket_api
-    ]
-  }
+
   
   tags = merge(
     var.tags,

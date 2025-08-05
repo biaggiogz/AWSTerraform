@@ -1,136 +1,53 @@
 import AWS from 'aws-sdk';
 
-// Configure AWS SDK
-const dynamodb = new AWS.DynamoDB.DocumentClient({
-  region: process.env.REACT_APP_AWS_REGION || 'us-east-1'
+// Configure AWS SDK with Cognito credentials
+AWS.config.update({
+  region: process.env.REACT_APP_AWS_REGION || 'us-east-1',
+  credentials: new AWS.CognitoIdentityCredentials({
+    IdentityPoolId: process.env.REACT_APP_IDENTITY_POOL_ID
+  })
 });
 
+const s3 = new AWS.S3();
+
 /**
- * Get processing progress from DynamoDB
+ * Get processing progress from S3
  * @param {string} fileId - The file ID to check progress for
  * @returns {Promise<Object>} Progress data
  */
 export const getProcessingProgress = async (fileId) => {
   try {
+    const bucket = process.env.REACT_APP_S3_BUCKET;
+    console.log('🔍 Checking progress for fileId:', fileId, 'in bucket:', bucket);
+    
     const params = {
-      TableName: process.env.REACT_APP_PROGRESS_TABLE || 'file-processing-progress',
-      Key: {
-        file_id: fileId
-      }
+      Bucket: bucket,
+      Key: `progress/${fileId}.json`
     };
 
-    const result = await dynamodb.get(params).promise();
-    
-    if (result.Item) {
-      return {
-        progress: result.Item.progress || 0,
-        message: result.Item.message || 'Processing...',
-        timestamp: result.Item.timestamp
-      };
-    }
+    const result = await s3.getObject(params).promise();
+    const progressData = JSON.parse(result.Body.toString());
+    console.log('📊 S3 progress result:', progressData);
     
     return {
-      progress: 0,
-      message: 'Waiting for processing to start...',
-      timestamp: new Date().toISOString()
+      progress: progressData.progress || 0,
+      message: progressData.message || 'Processing...',
+      timestamp: progressData.timestamp
     };
   } catch (error) {
+    if (error.code === 'NoSuchKey') {
+      return {
+        progress: 0,
+        message: 'Waiting for processing to start...',
+        timestamp: new Date().toISOString()
+      };
+    }
     console.error('Error fetching progress:', error);
     throw error;
   }
 };
 
-/**
- * WebSocket connection for real-time progress updates
- */
-export class ProgressWebSocket {
-  constructor(fileId, onProgress, onError) {
-    this.fileId = fileId;
-    this.onProgress = onProgress;
-    this.onError = onError;
-    this.ws = null;
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
-  }
 
-  connect() {
-    try {
-      const wsEndpoint = process.env.REACT_APP_WEBSOCKET_ENDPOINT;
-      if (!wsEndpoint) {
-        console.warn('WebSocket endpoint not configured, falling back to polling');
-        return false;
-      }
-
-      this.ws = new WebSocket(wsEndpoint);
-      
-      this.ws.onopen = () => {
-        console.log('WebSocket connected for file:', this.fileId);
-        this.reconnectAttempts = 0;
-        
-        // Send subscription message
-        this.ws.send(JSON.stringify({
-          action: 'subscribe',
-          file_id: this.fileId
-        }));
-      };
-
-      this.ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'progress' && data.file_id === this.fileId) {
-            this.onProgress({
-              progress: data.progress,
-              message: data.message,
-              timestamp: new Date().toISOString()
-            });
-          }
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
-      };
-
-      this.ws.onclose = () => {
-        console.log('WebSocket disconnected');
-        this.attemptReconnect();
-      };
-
-      this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        if (this.onError) {
-          this.onError(error);
-        }
-      };
-
-      return true;
-    } catch (error) {
-      console.error('Failed to connect WebSocket:', error);
-      return false;
-    }
-  }
-
-  attemptReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      console.log(`Attempting WebSocket reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
-      
-      setTimeout(() => {
-        this.connect();
-      }, 2000 * this.reconnectAttempts); // Exponential backoff
-    } else {
-      console.log('Max WebSocket reconnect attempts reached');
-      if (this.onError) {
-        this.onError(new Error('WebSocket connection failed'));
-      }
-    }
-  }
-
-  disconnect() {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
-  }
-}
 
 /**
  * Progress monitoring hook-like function
@@ -140,37 +57,31 @@ export class ProgressWebSocket {
  * @returns {Object} Control functions
  */
 export const createProgressMonitor = (fileId, onProgress, onError) => {
-  let wsConnection = null;
   let pollingInterval = null;
   let isMonitoring = false;
 
   const startMonitoring = () => {
     if (isMonitoring) return;
     isMonitoring = true;
-
-    // Try WebSocket first
-    wsConnection = new ProgressWebSocket(fileId, onProgress, onError);
-    const wsConnected = wsConnection.connect();
-
-    // Fallback to polling if WebSocket fails
-    if (!wsConnected) {
-      console.log('Falling back to polling for progress updates');
-      startPolling();
-    }
+    startPolling();
   };
 
   const startPolling = () => {
+    console.log('📊 Starting polling for fileId:', fileId);
+    
     const poll = async () => {
       try {
         const progressData = await getProcessingProgress(fileId);
+        console.log('📈 Polling result:', progressData);
         onProgress(progressData);
 
         // Stop polling if complete or error
         if (progressData.progress >= 100 || progressData.progress < 0) {
+          console.log('✅ Stopping polling - progress complete or error');
           stopMonitoring();
         }
       } catch (error) {
-        console.error('Polling error:', error);
+        console.error('❌ Polling error:', error);
         if (onError) {
           onError(error);
         }
@@ -181,17 +92,12 @@ export const createProgressMonitor = (fileId, onProgress, onError) => {
     poll();
     
     // Set up interval polling
-    pollingInterval = setInterval(poll, 1000); // Poll every 1 second for granular updates
+    pollingInterval = setInterval(poll, 2000); // Poll every 2 seconds
+    console.log('⏰ Polling interval started');
   };
 
   const stopMonitoring = () => {
     isMonitoring = false;
-    
-    if (wsConnection) {
-      wsConnection.disconnect();
-      wsConnection = null;
-    }
-    
     if (pollingInterval) {
       clearInterval(pollingInterval);
       pollingInterval = null;

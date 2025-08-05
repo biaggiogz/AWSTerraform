@@ -89,7 +89,7 @@ const FileUploadSection = () => {
         duration: 5000
       });
       
-      // Start progress tracking
+      // Start progress tracking - use filename without extension to match Lambda
       const fileId = successfulUploads[0].name.split('.')[0];
       setCurrentFileId(fileId);
       setIsProcessing(true);
@@ -139,9 +139,16 @@ const FileUploadSection = () => {
 
   // Progress monitoring using utility functions
   const startProgressMonitoring = useCallback((fileId) => {
+    console.log('🚀 Starting progress monitoring for fileId:', fileId);
+    console.log('🔧 Environment variables:', {
+      S3_BUCKET: process.env.REACT_APP_S3_BUCKET,
+      AWS_REGION: process.env.REACT_APP_AWS_REGION
+    });
+    
     const progressMonitor = createProgressMonitor(
       fileId,
       (progressData) => {
+        console.log('📊 Progress update:', progressData);
         setProcessingProgress(progressData.progress);
         setProcessingMessage(progressData.message);
         
@@ -171,12 +178,17 @@ const FileUploadSection = () => {
         }
       },
       (error) => {
-        console.error('Progress monitoring error:', error);
+        console.error('❌ Progress monitoring error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          fileId: fileId
+        });
         toast({
           title: "Progress Error",
-          description: "Failed to track progress",
+          description: `Failed to track progress: ${error.message}`,
           status: "warning",
-          duration: 3000
+          duration: 5000
         });
       }
     );
