@@ -15,9 +15,12 @@ echo "Logging into ECR..."
 aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
 
 
-# Build Docker image
+# Clear Docker cache and build image
+echo "Clearing Docker cache..."
+docker builder prune -f
+
 echo "Building Docker image..."
-docker build -t ${REPO_NAME}:${IMAGE_TAG} .
+docker build --no-cache -t ${REPO_NAME}:${IMAGE_TAG} .
 
 # Tag image for ECR
 docker tag ${REPO_NAME}:${IMAGE_TAG} ${IMAGE_URI}

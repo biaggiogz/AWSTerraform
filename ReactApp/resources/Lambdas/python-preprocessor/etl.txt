@@ -1,0 +1,1017 @@
+# Standard Library
+import datetime
+import functools
+import hashlib
+import html
+import io
+import json
+import logging
+import os
+import socket
+import sys
+import time
+import unicodedata
+import uuid
+from datetime import datetime
+from functools import lru_cache, reduce
+from io import BytesIO
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from urllib.parse import unquote_plus
+from tabulate import tabulate
+import re
+# Third-Party Libraries
+import boto3
+import numpy as np
+import pandas as pd
+import polars as pl
+import polars.io as pio
+import psycopg2
+import awswrangler as wr
+from botocore.exceptions import ClientError
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter, quote_sheetname
+from openpyxl.worksheet.datavalidation import DataValidation
+from psycopg2 import sql
+from openpyxl.styles.numbers import FORMAT_PERCENTAGE_00, FORMAT_NUMBER_00
+from openpyxl import Workbook
+import openpyxl
+from openpyxl.worksheet.datavalidation import DataValidation
+
+
+
+def infer_column_type(col: pd.Series, threshold: float = 0.95) -> str:
+    clean_col = col.dropna()
+    if len(clean_col) == 0:
+        return 'string'
+
+    total_rows = len(clean_col)
+
+    def check_numeric():
+        # More aggressive numeric checking
+        try:
+            # First, try direct numeric conversion
+            numeric_converted = pd.to_numeric(clean_col, errors='coerce')
+            numeric_success_rate = numeric_converted.notna().sum() / total_rows
+            
+            if numeric_success_rate >= threshold:
+                # Check if they're integers or floats
+                valid_numeric = numeric_converted.dropna()
+                if len(valid_numeric) > 0:
+                    # Check if all valid numbers are integers
+                    is_integer = (valid_numeric % 1 == 0).all()
+                    if is_integer:
+                        return 'integer'
+                    else:
+                        return 'float'
+            
+            # If direct conversion didn't work well, try string-based checks
+            str_col = clean_col.astype(str).str.strip()
+            
+            # More comprehensive regex patterns
+            integer_patterns = [
+                r'^-?\d+$',                    # Basic integers: -123, 456
+                r'^-?\d{1,3}(,\d{3})*$',      # Comma-separated: 1,234 or -1,234
+                r'^-?\d+\.0+$',               # Integers with .0: 123.0, 456.00
+            ]
+            
+            float_patterns = [
+                r'^-?\d*\.\d+$',              # Basic floats: 123.45, .5
+                r'^-?\d+\.\d+$',              # Standard floats: 123.45
+                r'^-?\d{1,3}(,\d{3})*\.\d+$', # Comma-separated floats: 1,234.56
+                r'^-?\d+\.?\d*[eE][+-]?\d+$', # Scientific notation: 1.23e-4
+                r'^-?\d+\.?\d*%$',            # Percentages: 12.5%
+            ]
+            
+            # Check integer patterns
+            for pattern in integer_patterns:
+                matches = str_col.str.match(pattern, na=False).sum()
+                if matches / total_rows >= threshold:
+                    return 'integer'
+            
+            # Check float patterns
+            for pattern in float_patterns:
+                matches = str_col.str.match(pattern, na=False).sum()
+                if matches / total_rows >= threshold:
+                    return 'float'
+            
+            # Try cleaning common numeric artifacts and re-checking
+            cleaned_col = str_col.str.replace(',', '')  # Remove commas
+            cleaned_col = cleaned_col.str.replace('$', '')  # Remove dollar signs
+            cleaned_col = cleaned_col.str.replace('%', '')  # Remove percentages
+            cleaned_col = cleaned_col.str.replace(' ', '')  # Remove spaces
+            
+            # Try numeric conversion on cleaned data
+            cleaned_numeric = pd.to_numeric(cleaned_col, errors='coerce')
+            cleaned_success_rate = cleaned_numeric.notna().sum() / total_rows
+            
+            if cleaned_success_rate >= threshold:
+                valid_cleaned = cleaned_numeric.dropna()
+                if len(valid_cleaned) > 0:
+                    is_integer = (valid_cleaned % 1 == 0).all()
+                    if is_integer:
+                        return 'integer'
+                    else:
+                        return 'float'
+                        
+        except Exception as e:
+            print(f"Error in numeric checking: {e}")
+            return None
+        
+        return None
+
+    def check_datetime():
+        try:
+            # First check if the column contains only numeric values
+            str_col = clean_col.astype(str)
+            numeric_pattern = r'^-?\d+\.?\d*$'
+            numeric_matches = str_col.str.match(numeric_pattern).sum()
+            if numeric_matches / total_rows >= 0.8:  # If 80%+ are purely numeric, skip datetime
+                return None
+            
+            # Common date patterns to check first
+            date_patterns = [
+                r'\d{4}-\d{2}-\d{2}',         # YYYY-MM-DD
+                r'\d{2}/\d{2}/\d{4}',         # MM/DD/YYYY
+                r'\d{2}-\d{2}-\d{4}',         # MM-DD-YYYY
+                r'\d{4}/\d{2}/\d{2}',         # YYYY/MM/DD
+            ]
+            
+            # Check if values look like dates before trying conversion
+            looks_like_date = False
+            for pattern in date_patterns:
+                matches = str_col.str.contains(pattern, na=False).sum()
+                if matches / total_rows >= 0.3:  # At least 30% look like dates
+                    looks_like_date = True
+                    break
+            
+            if not looks_like_date:
+                return None
+            
+            # Only proceed with datetime conversion if values look like dates
+            datetime_converted = pd.to_datetime(clean_col, errors='coerce')
+            datetime_success = datetime_converted.notna().sum() / total_rows
+            
+            if datetime_success >= threshold:
+                valid_dates = datetime_converted.dropna()
+                if len(valid_dates) > 0:
+                    min_year = valid_dates.dt.year.min()
+                    max_year = valid_dates.dt.year.max()
+                    # Reject if all dates are around 1970 (likely Unix timestamp conversion)
+                    if min_year >= 1900 and max_year <= 2100 and not (min_year == 1970 and max_year == 1970):
+                        return 'datetime'
+                    
+        except Exception as e:
+            print(f"Error in datetime checking: {e}")
+            return None
+
+    def check_boolean():
+        try:
+            str_col = clean_col.astype(str).str.lower().str.strip()
+            bool_values = {'true', 'false', '1', '0', 'yes', 'no', 't', 'f', 'y', 'n'}
+            bool_success = str_col.isin(bool_values).sum() / total_rows
+            if bool_success >= threshold:
+                return 'boolean'
+        except Exception as e:
+            print(f"Error in boolean checking: {e}")
+            return None
+        return None
+
+    # Check in order of priority
+    for type_check in [check_numeric, check_boolean, check_datetime]:
+        result = type_check()
+        if result:
+            return result
+
+    # Default to string if no other type matches
+    return 'string'
+
+def get_pandas_dtype(type_str: str) -> Union[str, np.dtype]:
+    dtype_mapping = {
+        'integer': 'Int64',
+        'float': 'float64',
+        'datetime': 'datetime64[ns]',
+        'boolean': 'boolean',
+        'string': 'string'
+    }
+    return dtype_mapping.get(type_str, 'string')
+
+def format_dataframe_columns(df: pd.DataFrame, threshold: float = 0.95) -> pd.DataFrame:
+    formatted_df = df.copy()
+    conversion_errors = {}
+
+    for column in formatted_df.columns:
+        try:
+            inferred_type = infer_column_type(formatted_df[column], threshold)
+            pandas_dtype = get_pandas_dtype(inferred_type)
+
+            print(f"Column '{column}': Inferred type = {inferred_type}")
+
+            if inferred_type == 'datetime':
+                formatted_df[column] = pd.to_datetime(formatted_df[column], errors='coerce')
+            elif inferred_type == 'boolean':
+                formatted_df[column] = formatted_df[column].astype(str).str.lower().str.strip()
+                formatted_df[column] = formatted_df[column].map({
+                    'true': True, 'false': False, 't': True, 'f': False,
+                    '1': True, '0': False, 'yes': True, 'no': False,
+                    'y': True, 'n': False
+                })
+            elif inferred_type in ['integer', 'float']:
+                # Clean numeric data before conversion
+                temp_col = formatted_df[column].astype(str)
+                temp_col = temp_col.str.replace(',', '')  # Remove commas
+                temp_col = temp_col.str.replace('$', '')  # Remove dollar signs
+                temp_col = temp_col.str.replace('%', '')  # Remove percentages
+                temp_col = temp_col.str.replace(' ', '')  # Remove spaces
+                temp_col = temp_col.replace(['', 'N/A', 'na', 'null'], pd.NA)
+                
+                formatted_df[column] = pd.to_numeric(temp_col, errors='coerce')
+                formatted_df[column] = formatted_df[column].astype(pandas_dtype)
+            else:
+                formatted_df[column] = formatted_df[column].replace(['', 'N/A', 'na', 'null'], pd.NA)
+                formatted_df[column] = formatted_df[column].astype(pandas_dtype)
+
+        except Exception as e:
+            conversion_errors[column] = str(e)
+            print(f"Warning: Could not convert column '{column}'. Error: {str(e)}")
+
+    if conversion_errors:
+        print("\nConversion errors summary:")
+        for col, error in conversion_errors.items():
+            print(f"Column '{col}': {error}")
+
+    return formatted_df
+
+test_loop=pd.read_excel('D_02_REPORTE_AVANCE_PRUEBA_DE_LAZOS.xlsx',sheet_name='TEST_LOOP',skiprows=11,usecols='B:V', dtype=str)
+
+test_loop_infer=format_dataframe_columns(test_loop, threshold=0.95)
+
+test_loop_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_TLP" for col in test_loop_infer.columns]
+
+test_loop_infer['record'] = (test_loop_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+
+test_loop_infer.columns = (
+    test_loop_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+
+##########################################
+
+isos=pd.read_excel('D_01_WB_TP_PRECOM.xlsx',sheet_name='ISOS',skiprows=1,usecols='A:AL', dtype=str)
+
+isos_infer=format_dataframe_columns(isos, threshold=0.95)
+
+isos_infer = isos_infer.rename(columns={
+    # 'SUBSYSTEM': 'SUBSYTEM_OLD',
+    'SUBSYSTEM_2':'SUBSYSTEMv2'
+})
+
+isos_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_ISOS" for col in isos_infer.columns]
+
+isos_infer['record'] = (isos_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+
+isos_infer.columns = (
+    isos_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+
+##########################################
+
+insulation=pd.read_excel('D_04_TEIGA _TMI_ADISSEO_CONTROL_DE_AVANCE_AISLAMIENTO.xlsx',sheet_name='Tuberia',skiprows=8,usecols='A:BC',dtype=str)
+
+insulation_infer=format_dataframe_columns(insulation, threshold=0.95)
+
+insulation_infer = insulation_infer.rename(columns={
+    # 'SUBSYSTEM': 'SUBSYTEM_OLD',
+    'SUBSYSTEM_2':'SUBSYSTEMv2',
+    'SUBSYTEM': 'SUBSYSTEM'
+})
+
+insulation_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_INSULATION" for col in insulation_infer.columns]
+
+insulation_infer['record'] = (insulation_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+
+insulation_infer.columns = (
+    insulation_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+
+##########################################
+
+siemsa_trac=pd.read_excel('D_03_CONTROL_AVANCE_SIEMSA_TRAC.xlsx',sheet_name='TRAC_SIEMSA',skiprows=7,usecols='B:AG',dtype=str)
+
+siemsa_trac_infer=format_dataframe_columns(siemsa_trac, threshold=0.95)
+
+siemsa_trac_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_TRACING" for col in siemsa_trac_infer.columns]
+
+siemsa_trac_infer = siemsa_trac_infer.dropna(subset=['SUBSYSTEM'])
+siemsa_trac_infer['record'] = (siemsa_trac_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+
+siemsa_trac_infer.columns = (
+    siemsa_trac_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+##########################################
+
+fc=pd.read_excel('D_01_WB_TP_PRECOM.xlsx',sheet_name='FIELD CONTROL',skiprows=4,usecols='A:BJ',dtype=str)
+
+cols_to_drop = [
+    'Design Area',
+    'Design Area.1',
+    'Unnamed: 7',
+    'Unnamed: 8',
+    'Unnamed: 9',
+    'SPS.1',
+    'Isometric'
+]
+
+fc = fc.drop(columns=cols_to_drop, errors='ignore')
+
+fc_infer=format_dataframe_columns(fc, threshold=0.95)
+
+fc_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_FC" for col in fc_infer.columns]
+
+fc_infer = fc_infer.dropna(subset=['SUBSYSTEM'])
+fc_infer['record'] = (fc_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+
+fc_infer.columns = (
+    fc_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+
+# Convert once to string
+fc_infer['includes_fc'] = fc_infer['includes_fc'].astype(str)
+
+# Apply replacements in sequence
+fc_infer['includes_fc'] = (
+    fc_infer['includes_fc']
+    .str.replace(', ', '|')
+    .str.replace(r'\|X', '', regex=True)  # use regex=True so |X is interpreted literally
+    .str.replace('ANULADA', '')
+    .str.replace(r'\|ANULADA', '', regex=True)
+    .str.replace(r'ANULADA\|', '', regex=True)
+)
+
+
+expanded = fc_infer.copy()
+
+# Ensure string format and split test_pack_fc
+expanded['includes_fc'] = expanded['includes_fc'].astype(str)
+expanded = expanded.assign(
+    test_pack_split=expanded['includes_fc'].str.split('|')
+).explode('test_pack_split')
+
+# Clean: remove empty strings and strip whitespace
+expanded['test_pack_split'] = expanded['test_pack_split'].str.strip()
+expanded = expanded[expanded['test_pack_split'] != '']  # Drop empty values
+expanded['test_pack_split'] = expanded['test_pack_split'].astype(int)
+
+# Compute average progress per test pack
+avg_progress = (
+    expanded.groupby('test_pack_split')['construc_coord_progress_fc']
+    .mean()
+    .to_dict()
+)
+
+# Extract and map average values back into new columns
+def extract_avg_values(row):
+    packs = [p.strip() for p in str(row['includes_fc']).split('|') if p.strip() != '']
+    avgs = [round(avg_progress.get(int(p), 0), 2) for p in packs]
+    return pd.Series(avgs + [''] * (3 - len(avgs)))  # Pad to 3 columns
+
+fc_infer[['avg_fc_1', 'avg_fc_2', 'avg_fc_3']] = fc_infer.apply(extract_avg_values, axis=1)
+
+##########################################
+
+isos_inst = pd.read_excel(
+    'D_05_INST_CONTROL_MASTER.xlsx',
+    sheet_name='ISO_INST',
+    skiprows=4,
+    usecols='A:AJ',
+    dtype=str
+)
+
+isos_inst_infer=format_dataframe_columns(isos_inst, threshold=0.95)
+
+cols_to_drop = [
+    'TAG INST AUX',
+    'Unnamed: 0'
+]
+
+isos_inst_infer = isos_inst_infer.drop(columns=cols_to_drop, errors='ignore')
+
+isos_inst_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_ISOINST" for col in isos_inst_infer.columns]
+
+isos_inst_infer['record'] = (isos_inst_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+
+isos_inst_infer.columns = (
+    isos_inst_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+
+qfc_siemsa = pd.read_excel('D_06_Estado_de_QCF_SIEMSA_2025.xlsx', sheet_name='QCF Montaje Intr.', skiprows=1, usecols='B:G')
+
+def get_after_penultimate_hyphen(s):
+    parts = str(s).split('-')
+    if len(parts) >= 2:
+        return '-'.join(parts[-2:])
+    else:
+        return s 
+
+qfc_siemsa['codigoqcf'] = qfc_siemsa['Código QCF'].apply(get_after_penultimate_hyphen)
+qfc_siemsa = qfc_siemsa.rename(columns={'codigoqcf':'tag_inst_isoinst'})
+
+columnsqfc=['Firma Cliente','tag_inst_isoinst']
+qfc_siemsa=qfc_siemsa[columnsqfc]
+
+# First, make sure 'Firma Cliente' in qfc_siemsa is converted to datetime if possible:
+qfc_siemsa['Firma Cliente'] = pd.to_datetime(qfc_siemsa['Firma Cliente'], errors='coerce')
+
+# Create a mapping from tag_inst_isoinst to 'Firma Cliente' date
+date_map = qfc_siemsa.set_index('tag_inst_isoinst')['Firma Cliente']
+
+# Function to update installed_isoinst
+def update_installed_isoinst(row):
+    if row['scope__by_isoinst'] == 'SIEMSA' and pd.isnull(row['installed_isoinst']):
+        # get matching date from qfc_siemsa by tag_inst_isoinst
+        date_value = date_map.get(row['tag_inst_isoinst'], np.nan)
+        return date_value if pd.notnull(date_value) else row['installed_isoinst']
+    else:
+        return row['installed_isoinst']
+
+# Apply the function row-wise
+isos_inst_infer['installed_isoinst'] = isos_inst_infer.apply(update_installed_isoinst, axis=1)
+
+isos_inst_infer['pid_isoinst'] = isos_inst_infer['pid_isoinst'].str.strip()
+isos_inst_infer['pid_isoinst'].replace('', pd.NA, inplace=True)
+isos_inst_infer['installed_isoinst'] = isos_inst_infer['installed_isoinst'].astype(str)
+
+# Replace the string 'NaT' with empty string ''
+isos_inst_infer['installed_isoinst'] = isos_inst_infer['installed_isoinst'].replace('NaT', '')
+
+isos_inst_infer = isos_inst_infer.replace(["<NA>", "NaT", "NaN"], pd.NA)
+
+##########################################
+punch_list=pd.read_excel('D_08_Master_Punch_List.xlsx',sheet_name='Punch List',skiprows=5,usecols='B:W',dtype=str)
+
+punch_l_infer=format_dataframe_columns(punch_list, threshold=0.95)
+
+punch_l_infer = punch_l_infer.rename(columns={'SUBSISTEMA': 'SUBSYSTEM'})
+punch_l_infer['SUBSYSTEM'] = punch_l_infer['SUBSYSTEM'].str.replace('¿?', '')
+
+punch_l_infer['SUBSYSTEM'] = punch_l_infer['SUBSYSTEM'].replace('', pd.NA).str.strip()
+punch_l_infer = punch_l_infer.dropna(subset=['SUBSYSTEM'])
+punch_l_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_PUNCH_L" for col in punch_l_infer.columns]
+
+punch_l_infer.columns = (
+    punch_l_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+punch_l_infer['record'] = (punch_l_infer.groupby(['subsystem']).cumcount() + 1).astype(int)
+##########################################
+
+tp=pd.read_excel('D_01_WB_TP_PRECOM.xlsx',sheet_name='TP',skiprows=4,usecols='B:AS',dtype=str)
+
+tp_infer=format_dataframe_columns(tp, threshold=0.95)
+
+tp_infer.columns = [f"{col}_TP" for col in tp_infer.columns]
+tp_infer.columns = (
+    tp_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+
+tp_infer = tp_infer[tp_infer["dossier_id_tp"].notna()]
+tp_infer.to_csv('tp.csv', sep=',', index=False)
+tp_infer.to_parquet('tp.parquet', index=False)
+
+##########################################
+
+psv=pd.read_excel('D_07_Completion Report_Spear Adisseo_rev04.xlsx',sheet_name='general',skiprows=3, dtype=str)
+
+columns=['SUB-SYSTEM', 'PSV Total',	'PSV Calibrated',	'PSV TO calibrate', 'Motor Tot',	'Motor Solo Run DONE',	'Solo Run PENDING']
+psv_motor = psv[columns]
+
+psv_motor_infer=format_dataframe_columns(psv_motor, threshold=0.95)
+
+psv_motor_infer = psv_motor_infer.rename(columns={
+    # 'SUBSYSTEM': 'SUBSYTEM_OLD',
+    'SUB-SYSTEM':'SUBSYSTEM'
+})
+
+psv_motor_infer.columns = (
+    psv_motor_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+
+##########################################
+subsystem_info=pd.read_excel('D_10_Subsystems_list.xlsx',sheet_name='Subsystems', dtype=str)
+
+subsystem_info_infer=format_dataframe_columns(subsystem_info, threshold=0.95)
+
+subsystem_info_infer['SUBSYSTEM'] = subsystem_info_infer['SUBSYSTEM'].replace({
+    'NI-PR12-02': 'NI-PR12-01',
+    'NI-PR12-03': 'NI-PR12-01',
+    'NI-PR12-04': 'NI-PR12-01'
+})
+
+subsystem_info_infer = subsystem_info_infer[subsystem_info_infer['SUBSYSTEM'] != 'RIPA-10003-07']
+
+subsystem_info_infer.columns = (
+    subsystem_info_infer.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(' ', '_')
+    .str.replace(r'[^\w_]', '', regex=True)
+)
+
+subsystem_info_infer = subsystem_info_infer.drop_duplicates(subset=['subsystem'], keep='first')
+
+subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('ó', 'o', regex=False)
+subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('ú', 'u', regex=False)
+subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('Á', 'A', regex=False)
+subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace(',', ';', regex=False)
+subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('é', 'e', regex=False)
+subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('í', 'i', regex=False)
+
+########################MASTER################
+
+from functools import reduce
+import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
+
+def create_table_master(df_a: pd.DataFrame, df_b: pd.DataFrame, df_c: pd.DataFrame, df_d: pd.DataFrame, df_e: pd.DataFrame, df_f: pd.DataFrame, df_g) -> pd.DataFrame:
+    """
+    Create a master table by merging multiple DataFrames based on subsystem and record columns.
+    
+    Args:
+        df_a, df_b, df_c, df_d: Input DataFrames with subsystem and record columns
+        
+    Returns:
+        Combined DataFrame with all columns from input DataFrames
+    """
+    logger.info("Creating master table from DataFrames")
+    tables = [df_a, df_b, df_c, df_d,df_e,df_f,df_g]
+    
+    try:
+        # Count records per subsystem in each DataFrame
+        counts = [df.groupby('subsystem')['record'].count().reset_index(name=f'count_{i}')
+                  for i, df in enumerate(tables)]
+        
+        # Merge count DataFrames and find maximum count per subsystem
+        max_counts = reduce(lambda left, right: pd.merge(left, right, on='subsystem', how='outer'), counts).fillna(0)
+        max_counts['max_count'] = max_counts[[col for col in max_counts.columns if col.startswith('count_')]].max(axis=1)
+        
+        # Create expanded DataFrame with all subsystem-record combinations
+        expanded = []
+        for _, row in max_counts.iterrows():
+            expanded.extend([(row['subsystem'], i+1) for i in range(int(row['max_count']))])
+        expanded_df = pd.DataFrame(expanded, columns=['subsystem', 'record'])
+        
+        # Merge all input DataFrames with the expanded DataFrame
+        result = expanded_df
+        for df in tables:
+            result = result.merge(df, on=['subsystem', 'record'], how='left')
+        
+        # Sort and clean up the result
+        result = result.sort_values(['subsystem', 'record']).reset_index(drop=True)
+        
+        # Check for duplicates
+        if result.duplicated(subset=['subsystem', 'record']).any():
+            logger.warning("Duplicates detected in the master table!")
+            # Consider handling duplicates here if needed
+        
+        # Remove columns that are all NaN
+        result = result.dropna(axis=1, how='all')
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error creating master table: {str(e)}")
+        raise
+
+master_subsystem= create_table_master(test_loop_infer,isos_infer,insulation_infer,siemsa_trac_infer,fc_infer,isos_inst_infer,punch_l_infer)
+
+def remove_accents(input_str):
+    if isinstance(input_str, str):
+        nfkd_form = unicodedata.normalize('NFKD', input_str)
+        return ''.join([c for c in nfkd_form if not unicodedata.combining(c)])
+    return input_str
+
+master_subsystem = master_subsystem.applymap(remove_accents)
+
+anomalies = ["", "", ",,", "NA", "N/A", "#NA", "na", "n/a", "#na","--","_?"]
+master_subsystem.replace(anomalies, np.nan, inplace=True)
+
+# 2. Strip whitespace from strings (if any)
+master_subsystem = master_subsystem.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
+# 3. Drop rows where all elements are NaN (optional)
+master_subsystem.dropna(how='all', inplace=True)
+
+master_subsystem['subsystem_description_isos'] = master_subsystem['subsystem_description_isos'].str.replace(',', ';')
+master_subsystem['tp_include_isoinst'] = master_subsystem['tp_include_isoinst'].str.replace(', ', '|')
+master_subsystem['tp_include_isoinst'] = master_subsystem['tp_include_isoinst'].str.replace('|X', '')
+
+progress_map = dict(zip(tp_infer['dossier_id_tp'].astype(str), tp_infer['tp_construct_progress__tp']))
+
+# Safe function to extract progress list
+def extract_progress(isoinst):
+    if pd.isna(isoinst) or isoinst == "NOT_APPLY":
+        return []
+    dossier_ids = isoinst.split("|")
+    return [round(progress_map.get(did), 2) if progress_map.get(did) is not None else None for did in dossier_ids]
+
+# Apply the function
+master_subsystem["progress_list"] = master_subsystem["tp_include_isoinst"].apply(extract_progress)
+
+# Find max number of progress values per row
+max_progresses = master_subsystem["progress_list"].apply(len).max()
+
+# Expand into progress_ac_tp_1, progress_ac_tp_2, ...
+for i in range(max_progresses):
+    master_subsystem[f"progress_ac_tp_{i+1}"] = master_subsystem["progress_list"].apply(
+        lambda x: x[i] if i < len(x) else None
+    )
+
+# Drop helper column
+master_subsystem.drop(columns="progress_list", inplace=True)
+
+duplicates = master_subsystem.columns[master_subsystem.columns.duplicated()].tolist()
+
+print("Duplicate column names:")
+print(duplicates)
+
+# Step 1: Extract rows where 'isometric_fc' and 'includes_fc' are not null
+filtered_df = master_subsystem[['includes_fc', 'isometric_fc']].dropna(subset=['includes_fc', 'isometric_fc'])
+# Step 2: Create a mapping from isometric_fc to includes_fc
+replace_map = dict(zip(filtered_df['isometric_fc'], filtered_df['includes_fc']))
+
+# Replace tpvt_isos values based on match with isometricos_ifc3_isos
+master_subsystem['tpvt_isos'] = master_subsystem['isometricos_ifc3_isos'].map(replace_map).combine_first(master_subsystem['tpvt_isos'])
+
+df_tp = master_subsystem[['subsystem', 'tpvt_isos']].dropna(subset=['tpvt_isos']).copy()
+
+# Step 2: Ensure values are strings, then split by '|' and explode
+df_tp['tpvt_isos'] = df_tp['tpvt_isos'].astype(str).str.split('|')
+df_tp = df_tp.explode('tpvt_isos')
+
+# Step 3: Clean each value (e.g. strip whitespace, leading zeros if needed)
+df_tp['tpvt_isos'] = df_tp['tpvt_isos'].str.strip()
+
+# OPTIONAL: Remove leading zeros (if '03' should be treated as '3')
+# df['tpvt_isos'] = df['tpvt_isos'].astype(int).astype(str)
+df_tp = df_tp[df_tp['subsystem'] != 'ANULADA']
+# Step 4: Drop duplicates
+df_tp_full = df_tp.merge(tp_infer, left_on='tpvt_isos', right_on='dossier_id_tp', how='left')
+
+
+df_tp_full.to_csv('data_output/df_tp_full.csv',sep=',',index=False)
+
+master_subsystem.to_csv('data_output/master_subsystem.csv',sep=',',index=False)
+master_subsystem.to_parquet('data_output/master_subsystem.parquet',index=False)
+
+#######SSM######
+
+import pandas as pd
+import numpy as np
+
+def get_all_subsystems(df):
+    """Extract all unique subsystems that appear in any of the queries"""
+    
+    # Query 1: Insulation subsystems
+    q1_subsystems = df[df['iso_insulation'].notna()]['subsystem']
+    
+    # Query 2: Loop subsystems  
+    q2_subsystems = df[df['code_tlp'].notna()]['subsystem']
+    
+    # Query 3: TP subsystems
+    q3_subsystems = df[(df['tp_include_isoinst'].notna()) & 
+                       (df['tp_include_isoinst'] != 'NOT_APPLY')]['subsystem']
+    
+    # Query 4: Installation subsystems
+    q4_subsystems = df[df['on_isoinst'] == 'PIP']['subsystem']
+    
+    # Query 5: Tracing subsystems
+    q5_subsystems = df[df['isometricos_tracing'].notna()]['subsystem']
+    
+    # Query 6: Punch subsystems
+    q6_subsystems = df[df['punch_item_num_punch_l'].notna()]['subsystem']
+    
+    # Combine all subsystems and get unique values
+    all_subsystems = pd.concat([q1_subsystems, q2_subsystems, q3_subsystems, 
+                               q4_subsystems, q5_subsystems, q6_subsystems])
+    
+    return pd.DataFrame({'subsystem': all_subsystems.unique()})
+
+def query_1_insulation(df):
+    """Query 1: Insulation data - Computes insulation status per subsystem based on float comparison"""
+    
+    # Filter for valid insulation entries
+    filtered_df = df[df['iso_insulation'].notna()].copy()
+
+    # Round both float columns to 2 decimal places before comparison
+    filtered_df['mleq_insulation_rounded'] = filtered_df['mleq_insulation'].astype(float).round(2)
+    filtered_df['total_m_avance_insulation_rounded'] = filtered_df['total_m_avance_insulation'].astype(float).round(2)
+
+    # Determine if they are equal (after rounding)
+    filtered_df['match'] = (
+        filtered_df['mleq_insulation_rounded'] == filtered_df['total_m_avance_insulation_rounded']
+    ).astype(int)
+
+    # Group by subsystem and iso_insulation (similar to CTE s1)
+    s1 = filtered_df.groupby(['subsystem', 'iso_insulation']).agg(
+        n_insulation=('iso_insulation', 'count'),
+        v_insulation=('match', 'sum')
+    ).reset_index()
+
+    # Determine done vs pending
+    s1['is_done'] = (s1['n_insulation'] == s1['v_insulation']).astype(int)
+    s1['is_pending'] = (s1['n_insulation'] != s1['v_insulation']).astype(int)
+
+    # Final aggregation by subsystem
+    result = s1.groupby('subsystem').agg(
+        total_insulation=('iso_insulation', 'count'),
+        done_insulation=('is_done', 'sum'),
+        pending_insulation=('is_pending', 'sum')
+    ).reset_index()
+
+    return result
+    
+def query_2_loop(df):
+    """Query 2: Loop data"""
+    filtered_df = df[df['code_tlp'].notna()].copy()
+    
+    result = filtered_df.groupby('subsystem').agg(
+        total_loop=('tag_loop_tlp', 'count'),
+        done_loop=('ok100_tlp', lambda x: (x == 1).sum()),
+        pending_loop=('ok100_tlp', lambda x: (x < 1).sum())
+    ).reset_index()
+    
+    return result
+
+
+def query_3_tp(df):
+    filtered = df[df['construc_coord_progress_fc'].notna()].copy()
+
+    filtered['includes_fc'] = filtered['includes_fc'].fillna('').astype(str)
+    filtered['includes_fc_value'] = filtered['includes_fc'].str.split('|')
+    exploded = filtered.explode('includes_fc_value')
+
+    exploded['includes_fc_value'] = exploded['includes_fc_value'].str.strip()
+
+    exploded = exploded[
+        exploded['includes_fc_value'].notna() &
+        (exploded['includes_fc_value'] != '') &
+        (exploded['includes_fc_value'].str.upper() != 'ANULADA')
+    ].copy()
+
+    exploded['includes_fc_value'] = exploded['includes_fc_value'].astype(float).astype(int)
+    exploded['construc_coord_progress_fc'] = exploded['construc_coord_progress_fc'].astype(float)
+
+    # Use average instead of sum
+    agg = (
+        exploded.groupby(['subsystem', 'includes_fc_value'], as_index=False)
+        .agg(total_progress=('construc_coord_progress_fc', 'mean'))
+    )
+
+    def make_lists(g):
+        g = g.sort_values('includes_fc_value')
+        return pd.Series({
+            'n_distinct_tps_x': g['includes_fc_value'].nunique(),
+            'list_includes_tp_id_x': '|'.join(map(str, g['includes_fc_value'])),
+            'list_id_tp_total_progress_x': '|'.join(f"{v:.2f}" for v in g['total_progress'])
+        })
+
+    result = agg.groupby('subsystem').apply(make_lists).reset_index()
+    result2 = result.rename(columns={
+        # 'SUBSYSTEM': 'SUBSYTEM_OLD',
+        'n_distinct_tps_x':'n_distinct_tps',
+        'list_includes_tp_id_x':'list_includes_tp_id',
+        'list_id_tp_total_progress_x':'list_id_tp_total_progress'
+    })
+
+    return result2
+
+def is_valid_value(x):
+    if pd.isnull(x):
+        return False
+    if isinstance(x, str):
+        if x.strip().lower() in {'nan', 'nat', 'none', 'na', 'null', ''}:
+            return False
+    return True
+    
+def query_4_installation(df):
+    """Query 4: INST data"""
+
+    # # Filter for rows where 'tag_inst_isoinst' is not null
+    filtered_df = df[df['tag_inst_isoinst'].notnull()].copy()
+
+    # # Standardize 'installed_isoinst' column
+    # filtered_df['installed_isoinst'] = filtered_df['installed_isoinst'].replace(['NaT', pd.NaT], np.nan)
+
+    # # Create done/pending conditions
+
+    # # SIEMSA logic
+    # siemsa_done = (
+    #     (filtered_df['scope__by_isoinst'] == 'SIEMSA') &
+    #     (filtered_df['installed_isoinst'].notnull())
+    # )
+    # siemsa_pending = (
+    #     (filtered_df['scope__by_isoinst'] == 'SIEMSA') &
+    #     (filtered_df['installed_isoinst'].isnull())
+    # )
+
+    # # TEIGA-TMI logic
+    # teiga_done = (
+    #     (filtered_df['scope__by_isoinst'] == 'TEIGA-TMI') &
+    #     (filtered_df['installed_teigatmi_isoinst'] == 1) &
+    #     (filtered_df['date_installed_teigatmi_isoinst'].notnull())
+    # )
+    # teiga_pending = (
+    #     (filtered_df['scope__by_isoinst'] == 'TEIGA-TMI') &
+    #     (
+    #         filtered_df['installed_teigatmi_isoinst'].isnull() |
+    #         filtered_df['date_installed_teigatmi_isoinst'].isnull()
+    #     )
+    # )
+
+    # QCF logic — treat as "done" if present, else "pending"
+    qcf_done = filtered_df['qcf_released_instrument_isoinst'].notnull()
+    qcf_pending = filtered_df['qcf_released_instrument_isoinst'].isnull()
+
+    # Combine all done and pending logic (bitwise OR across sources)
+    filtered_df['done_inst'] = (
+        qcf_done
+        # |  siemsa_done | teiga_done |
+    ).astype(int)
+
+    filtered_df['pending_inst'] = (
+         qcf_pending
+    # | siemsa_done | teiga_done |
+    ).astype(int)
+
+    # Group and aggregate
+    result = filtered_df.groupby('subsystem').agg(
+        total_inst=('tag_inst_isoinst', 'count'),
+        done_inst=('done_inst', 'sum'),
+        pending_inst=('pending_inst', 'sum')
+    ).reset_index()
+
+    return result
+
+
+def query_5_tracing(df):
+    """Query 5: Tracing data - Fixed version"""
+    filtered_df = df[df['isometricos_tracing'].notna()].copy()
+    
+    # First groupby (equivalent to CTE x2)
+    x2 = filtered_df.groupby(['subsystem', 'isometricos_tracing']).agg(
+        n_tracing=('isometricos_tracing', 'count'),
+        v_tracing=('progress_100_liberadoa__teigatmi_kaefer_tracing', lambda x: (x == 1).sum())
+    ).reset_index()
+    
+    # Create comparison columns
+    x2['is_done'] = (x2['n_tracing'] == x2['v_tracing']).astype(int)
+    x2['is_pending'] = (x2['n_tracing'] != x2['v_tracing']).astype(int)
+    
+    # Second groupby
+    result = x2.groupby('subsystem').agg(
+        total_tracing=('isometricos_tracing', 'count'),
+        done_tracing=('is_done', 'sum'),
+        pending_tracing=('is_pending', 'sum')
+    ).reset_index()
+    
+    return result
+
+def query_6_punch(df):
+    """Query 6: Punch data"""
+    filtered_df = df[df['punch_item_num_punch_l'].notna()].copy()
+    
+    result = filtered_df.groupby('subsystem').agg(
+        total_punch=('punch_item_num_punch_l', 'count'),
+        pending_punch=('status_punch_l', lambda x: (x == 'OUTSTANDING').sum()),
+        close_punch=('status_punch_l', lambda x: (x == 'CLOSED').sum()),
+        open_punch=('status_punch_l', lambda x: x.isna().sum())
+    ).reset_index()
+    
+    return result
+
+def execute_full_analysis(df):
+    """Execute all queries and perform LEFT JOINs"""
+    
+    # Get unique subsystems as base
+    base_df = get_all_subsystems(df)
+    
+    # Execute all queries
+    q1_result = query_1_insulation(df)
+    q2_result = query_2_loop(df) 
+    q3_result = query_3_tp(df)
+    q4_result = query_4_installation(df)
+    q5_result = query_5_tracing(df)
+    q6_result = query_6_punch(df)
+    
+    # Perform LEFT JOINs
+    final_result = base_df
+    final_result = final_result.merge(q1_result, on='subsystem', how='left')
+    final_result = final_result.merge(q2_result, on='subsystem', how='left') 
+    final_result = final_result.merge(q3_result, on='subsystem', how='left')
+    final_result = final_result.merge(q4_result, on='subsystem', how='left')
+    final_result = final_result.merge(q5_result, on='subsystem', how='left')
+    final_result = final_result.merge(q6_result, on='subsystem', how='left')
+    
+    return final_result
+
+# Execute the full analysis
+result2 = execute_full_analysis(df)
+
+
+pipelinedata = pd.read_csv('pipelinedata.csv',sep=',')
+
+chosen_columns = ['SUBSYSTEM','FLUID_SUBSYSTEM']
+pipelinedata = pipelinedata[chosen_columns].drop_duplicates()
+pipelinedata.columns= pipelinedata.columns.str.lower()
+
+columns= ['subsystem','hito_isos']
+hito_for_subsystem= isos_infer[columns].drop_duplicates()
+hito_counts = isos_infer.groupby('subsystem')['hito_isos'].nunique().reset_index()
+
+result3 = result2.merge(pipelinedata, on='subsystem', how='left')
+result3 = result3.merge(hito_for_subsystem, on='subsystem', how='left')
+ssm = result3.copy() 
+
+ssm = ssm[ssm['subsystem'] != 'NOT']
+ssm = ssm[ssm['subsystem'] != 'NI-10003-03']
+
+ssm = ssm.rename(columns={
+    's/n':'s_n'
+})
+
+# TOTAL ITEMS
+ssm["total_items"] = ssm[[
+    "total_insulation",
+    "total_loop",
+    "total_inst",
+    "total_tracing",
+    "total_punch"
+]].sum(axis=1)
+
+# DONE ITEMS
+ssm["done_items"] = ssm[[
+    "done_insulation",
+    "done_loop",
+    "done_inst",
+    "done_tracing",
+    "close_punch"  # Note: this maps to total_punch
+]].sum(axis=1)
+
+# PENDING ITEMS
+ssm["pending_items"] = ssm[[
+    "pending_insulation",
+    "pending_loop",
+    "pending_inst",
+    "pending_tracing",
+    "pending_punch"
+]].sum(axis=1)
+
+done_sum = ssm[["done_insulation", "done_loop", "done_inst", "done_tracing", "close_punch"]].sum(axis=1)
+pending_sum = ssm[["pending_insulation", "pending_loop", "pending_inst", "pending_tracing", "pending_punch"]].sum(axis=1)
+
+ssm["avg_progress_subsystem"] = np.where(
+    ssm["total_items"] > 0,
+    (ssm["done_items"] / ssm["total_items"]) * 100,
+    0
+)
+
+ssm = ssm.merge(psv_motor_infer, on='subsystem', how='left') 
+ssm = ssm.merge(subsystem_info_infer, on='subsystem', how='left') 
+
+ssm.to_csv('data_output/ssm.csv', sep=',', index=False)
+ssm.to_parquet('data_output/ssm.parquet', index=False)
