@@ -46,6 +46,14 @@ def lambda_handler(event, context):
         if master_tables:
             processed_sheets.update(master_tables)
             logger.info(f"✅ Master tables created: {list(master_tables.keys())}")
+            
+            # Create SSM table if master_subsystem exists
+            if 'master_subsystem' in master_tables:
+                logger.info(f"📊 Creating SSM table...")
+                ssm_table = create_ssm_table(master_tables['master_subsystem'], processed_sheets, bucket)
+                if ssm_table is not None:
+                    processed_sheets['ssm'] = ssm_table
+                    logger.info(f"✅ SSM table created with {len(ssm_table)} rows")
         
         # Generate file ID
         file_id = key.split('/')[-1].split('.')[0]
@@ -764,6 +772,272 @@ def save_parquet_to_s3(df, bucket, key):
     )
     
     logger.info(f"✅ Parquet saved: s3://{bucket}/{key} ({len(buffer.getvalue())} bytes)")
+
+def create_ssm_table(master_subsystem, processed_sheets, bucket):
+    """Create SSM table from master_subsystem and additional data"""
+    try:
+        # Download pipelinedata.csv from temporarySource/
+        logger.info(f"📎 Downloading pipelinedata.csv...")
+        pipeline_response = s3_client.get_object(Bucket=bucket, Key='temporarySource/pipelinedata.csv')
+        pipelinedata = pd.read_csv(BytesIO(pipeline_response['Body'].read()))
+        
+        # Process pipelinedata
+        chosen_columns = ['SUBSYSTEM', 'FLUID_SUBSYSTEM']
+        pipelinedata = pipelinedata[chosen_columns].drop_duplicates()
+        pipelinedata.columns = pipelinedata.columns.str.lower()
+        
+        # Get hito data from ISOS sheet if available
+        hito_for_subsystem = pd.DataFrame()
+        if 'ISOS' in processed_sheets:
+            isos_df = processed_sheets['ISOS']
+            if 'hito_isos' in isos_df.columns:
+                columns = ['subsystem', 'hito_isos']
+                hito_for_subsystem = isos_df[columns].drop_duplicates()
+        
+        # Execute full analysis on master_subsystem
+        logger.info(f"🔍 Executing SSM analysis...")
+        result2 = execute_full_analysis(master_subsystem)
+        
+        # Merge with additional data
+        result3 = result2.merge(pipelinedata, on='subsystem', how='left')
+        if not hito_for_subsystem.empty:
+            result3 = result3.merge(hito_for_subsystem, on='subsystem', how='left')
+        
+        ssm = result3.copy()
+        
+        # Filter out specific subsystems
+        ssm = ssm[ssm['subsystem'] != 'NOT']
+        ssm = ssm[ssm['subsystem'] != 'NI-10003-03']
+        
+        # Rename columns
+        if 's/n' in ssm.columns:
+            ssm = ssm.rename(columns={'s/n': 's_n'})
+        
+        # Calculate totals
+        ssm["total_items"] = ssm[[
+            "total_insulation", "total_loop", "total_inst", "total_tracing", "total_punch"
+        ]].sum(axis=1)
+        
+        ssm["done_items"] = ssm[[
+            "done_insulation", "done_loop", "done_inst", "done_tracing", "close_punch"
+        ]].sum(axis=1)
+        
+        ssm["pending_items"] = ssm[[
+            "pending_insulation", "pending_loop", "pending_inst", "pending_tracing", "pending_punch"
+        ]].sum(axis=1)
+        
+        # Calculate average progress
+        ssm["avg_progress_subsystem"] = np.where(
+            ssm["total_items"] > 0,
+            (ssm["done_items"] / ssm["total_items"]) * 100,
+            0
+        )
+        
+        # Merge with general and subsystems data if available
+        if 'general' in processed_sheets:
+            ssm = ssm.merge(processed_sheets['general'], on='subsystem', how='left')
+        if 'Subsystems' in processed_sheets:
+            ssm = ssm.merge(processed_sheets['Subsystems'], on='subsystem', how='left')
+        
+        return ssm
+        
+    except Exception as e:
+        logger.error(f"Error creating SSM table: {str(e)}")
+        return None
+
+def get_all_subsystems(df):
+    """Extract all unique subsystems that appear in any of the queries"""
+    queries = []
+    
+    if 'iso_insulation' in df.columns:
+        queries.append(df[df['iso_insulation'].notna()]['subsystem'])
+    if 'code_tlp' in df.columns:
+        queries.append(df[df['code_tlp'].notna()]['subsystem'])
+    if 'tp_include_isoinst' in df.columns:
+        queries.append(df[(df['tp_include_isoinst'].notna()) & (df['tp_include_isoinst'] != 'NOT_APPLY')]['subsystem'])
+    if 'on_isoinst' in df.columns:
+        queries.append(df[df['on_isoinst'] == 'PIP']['subsystem'])
+    if 'isometricos_tracing' in df.columns:
+        queries.append(df[df['isometricos_tracing'].notna()]['subsystem'])
+    if 'punch_item_num_punch_l' in df.columns:
+        queries.append(df[df['punch_item_num_punch_l'].notna()]['subsystem'])
+    
+    if queries:
+        all_subsystems = pd.concat(queries)
+        return pd.DataFrame({'subsystem': all_subsystems.unique()})
+    else:
+        return pd.DataFrame({'subsystem': df['subsystem'].unique()})
+
+def query_1_insulation(df):
+    """Query 1: Insulation data"""
+    if 'iso_insulation' not in df.columns:
+        return pd.DataFrame(columns=['subsystem', 'total_insulation', 'done_insulation', 'pending_insulation'])
+    
+    filtered_df = df[df['iso_insulation'].notna()].copy()
+    if filtered_df.empty:
+        return pd.DataFrame(columns=['subsystem', 'total_insulation', 'done_insulation', 'pending_insulation'])
+    
+    # Round and compare
+    filtered_df['mleq_insulation_rounded'] = pd.to_numeric(filtered_df.get('mleq_insulation', 0), errors='coerce').fillna(0).round(2)
+    filtered_df['total_m_avance_insulation_rounded'] = pd.to_numeric(filtered_df.get('total_m_avance_insulation', 0), errors='coerce').fillna(0).round(2)
+    filtered_df['match'] = (filtered_df['mleq_insulation_rounded'] == filtered_df['total_m_avance_insulation_rounded']).astype(int)
+    
+    s1 = filtered_df.groupby(['subsystem', 'iso_insulation']).agg(
+        n_insulation=('iso_insulation', 'count'),
+        v_insulation=('match', 'sum')
+    ).reset_index()
+    
+    s1['is_done'] = (s1['n_insulation'] == s1['v_insulation']).astype(int)
+    s1['is_pending'] = (s1['n_insulation'] != s1['v_insulation']).astype(int)
+    
+    result = s1.groupby('subsystem').agg(
+        total_insulation=('iso_insulation', 'count'),
+        done_insulation=('is_done', 'sum'),
+        pending_insulation=('is_pending', 'sum')
+    ).reset_index()
+    
+    return result
+
+def query_2_loop(df):
+    """Query 2: Loop data"""
+    if 'code_tlp' not in df.columns:
+        return pd.DataFrame(columns=['subsystem', 'total_loop', 'done_loop', 'pending_loop'])
+    
+    filtered_df = df[df['code_tlp'].notna()].copy()
+    if filtered_df.empty:
+        return pd.DataFrame(columns=['subsystem', 'total_loop', 'done_loop', 'pending_loop'])
+    
+    result = filtered_df.groupby('subsystem').agg(
+        total_loop=('tag_loop_tlp', 'count') if 'tag_loop_tlp' in filtered_df.columns else ('code_tlp', 'count'),
+        done_loop=('ok100_tlp', lambda x: (pd.to_numeric(x, errors='coerce') == 1).sum()) if 'ok100_tlp' in filtered_df.columns else ('code_tlp', lambda x: 0),
+        pending_loop=('ok100_tlp', lambda x: (pd.to_numeric(x, errors='coerce') < 1).sum()) if 'ok100_tlp' in filtered_df.columns else ('code_tlp', 'count')
+    ).reset_index()
+    
+    return result
+
+def query_3_tp(df):
+    """Query 3: TP data"""
+    if 'construc_coord_progress_fc' not in df.columns or 'includes_fc' not in df.columns:
+        return pd.DataFrame(columns=['subsystem', 'n_distinct_tps', 'list_includes_tp_id', 'list_id_tp_total_progress'])
+    
+    filtered = df[df['construc_coord_progress_fc'].notna()].copy()
+    if filtered.empty:
+        return pd.DataFrame(columns=['subsystem', 'n_distinct_tps', 'list_includes_tp_id', 'list_id_tp_total_progress'])
+    
+    filtered['includes_fc'] = filtered['includes_fc'].fillna('').astype(str)
+    filtered['includes_fc_value'] = filtered['includes_fc'].str.split('|')
+    exploded = filtered.explode('includes_fc_value')
+    
+    exploded['includes_fc_value'] = exploded['includes_fc_value'].str.strip()
+    exploded = exploded[
+        exploded['includes_fc_value'].notna() &
+        (exploded['includes_fc_value'] != '') &
+        (exploded['includes_fc_value'].str.upper() != 'ANULADA')
+    ].copy()
+    
+    if exploded.empty:
+        return pd.DataFrame(columns=['subsystem', 'n_distinct_tps', 'list_includes_tp_id', 'list_id_tp_total_progress'])
+    
+    exploded['includes_fc_value'] = pd.to_numeric(exploded['includes_fc_value'], errors='coerce').fillna(0).astype(int)
+    exploded['construc_coord_progress_fc'] = pd.to_numeric(exploded['construc_coord_progress_fc'], errors='coerce').fillna(0)
+    
+    agg = exploded.groupby(['subsystem', 'includes_fc_value'], as_index=False).agg(
+        total_progress=('construc_coord_progress_fc', 'mean')
+    )
+    
+    def make_lists(g):
+        g = g.sort_values('includes_fc_value')
+        return pd.Series({
+            'n_distinct_tps': g['includes_fc_value'].nunique(),
+            'list_includes_tp_id': '|'.join(map(str, g['includes_fc_value'])),
+            'list_id_tp_total_progress': '|'.join(f"{v:.2f}" for v in g['total_progress'])
+        })
+    
+    result = agg.groupby('subsystem').apply(make_lists).reset_index()
+    return result
+
+def query_4_installation(df):
+    """Query 4: Installation data"""
+    if 'on_isoinst' not in df.columns:
+        return pd.DataFrame(columns=['subsystem', 'total_inst', 'done_inst', 'pending_inst'])
+    
+    filtered_df = df[df['on_isoinst'] == 'PIP'].copy()
+    if filtered_df.empty:
+        return pd.DataFrame(columns=['subsystem', 'total_inst', 'done_inst', 'pending_inst'])
+    
+    filtered_df['done_inst'] = filtered_df.get('qcf_released_instrument_isoinst', pd.Series()).notna().astype(int)
+    filtered_df['pending_inst'] = filtered_df.get('qcf_released_instrument_isoinst', pd.Series()).isna().astype(int)
+    
+    result = filtered_df.groupby('subsystem').agg(
+        total_inst=('tag_inst_isoinst', 'count') if 'tag_inst_isoinst' in filtered_df.columns else ('on_isoinst', 'count'),
+        done_inst=('done_inst', 'sum'),
+        pending_inst=('pending_inst', 'sum')
+    ).reset_index()
+    
+    return result
+
+def query_5_tracing(df):
+    """Query 5: Tracing data"""
+    if 'isometricos_tracing' not in df.columns:
+        return pd.DataFrame(columns=['subsystem', 'total_tracing', 'done_tracing', 'pending_tracing'])
+    
+    filtered_df = df[df['isometricos_tracing'].notna()].copy()
+    if filtered_df.empty:
+        return pd.DataFrame(columns=['subsystem', 'total_tracing', 'done_tracing', 'pending_tracing'])
+    
+    progress_col = 'progress_100_liberadoa__teigatmi_kaefer_tracing'
+    x2 = filtered_df.groupby(['subsystem', 'isometricos_tracing']).agg(
+        n_tracing=('isometricos_tracing', 'count'),
+        v_tracing=(progress_col, lambda x: (pd.to_numeric(x, errors='coerce') == 1).sum()) if progress_col in filtered_df.columns else ('isometricos_tracing', lambda x: 0)
+    ).reset_index()
+    
+    x2['is_done'] = (x2['n_tracing'] == x2['v_tracing']).astype(int)
+    x2['is_pending'] = (x2['n_tracing'] != x2['v_tracing']).astype(int)
+    
+    result = x2.groupby('subsystem').agg(
+        total_tracing=('isometricos_tracing', 'count'),
+        done_tracing=('is_done', 'sum'),
+        pending_tracing=('is_pending', 'sum')
+    ).reset_index()
+    
+    return result
+
+def query_6_punch(df):
+    """Query 6: Punch data"""
+    if 'punch_item_num_punch_l' not in df.columns:
+        return pd.DataFrame(columns=['subsystem', 'total_punch', 'pending_punch', 'close_punch', 'open_punch'])
+    
+    filtered_df = df[df['punch_item_num_punch_l'].notna()].copy()
+    if filtered_df.empty:
+        return pd.DataFrame(columns=['subsystem', 'total_punch', 'pending_punch', 'close_punch', 'open_punch'])
+    
+    status_col = 'status_punch_l'
+    result = filtered_df.groupby('subsystem').agg(
+        total_punch=('punch_item_num_punch_l', 'count'),
+        pending_punch=(status_col, lambda x: (x == 'OUTSTANDING').sum()) if status_col in filtered_df.columns else ('punch_item_num_punch_l', lambda x: 0),
+        close_punch=(status_col, lambda x: (x == 'CLOSED').sum()) if status_col in filtered_df.columns else ('punch_item_num_punch_l', lambda x: 0),
+        open_punch=(status_col, lambda x: x.isna().sum()) if status_col in filtered_df.columns else ('punch_item_num_punch_l', 'count')
+    ).reset_index()
+    
+    return result
+
+def execute_full_analysis(df):
+    """Execute all queries and perform LEFT JOINs"""
+    base_df = get_all_subsystems(df)
+    
+    q1_result = query_1_insulation(df)
+    q2_result = query_2_loop(df)
+    q3_result = query_3_tp(df)
+    q4_result = query_4_installation(df)
+    q5_result = query_5_tracing(df)
+    q6_result = query_6_punch(df)
+    
+    final_result = base_df
+    for query_result in [q1_result, q2_result, q3_result, q4_result, q5_result, q6_result]:
+        if not query_result.empty:
+            final_result = final_result.merge(query_result, on='subsystem', how='left')
+    
+    return final_result
 
 def create_master_tables(processed_sheets):
     """Create master tables from processed sheets"""
