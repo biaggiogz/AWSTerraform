@@ -1,0 +1,168 @@
+2025-08-05T21:26:11.251+02:00
+START RequestId: 4d0815e7-aa90-4106-926a-2f47321725d7 Version: $LATEST
+
+START RequestId: 4d0815e7-aa90-4106-926a-2f47321725d7 Version: $LATEST
+2025-08-05T21:26:12.233+02:00
+[WARNING]	2025-08-05T19:26:12.232Z	4d0815e7-aa90-4106-926a-2f47321725d7	⚠️ Unknown sheet 'QCF Montaje Intr.', using default processing
+
+[WARNING] 2025-08-05T19:26:12.232Z 4d0815e7-aa90-4106-926a-2f47321725d7 ⚠️ Unknown sheet 'QCF Montaje Intr.', using default processing
+2025-08-05T21:26:12.731+02:00
+[WARNING]	2025-08-05T19:26:12.731Z	4d0815e7-aa90-4106-926a-2f47321725d7	⚠️ Could not process sheet 'QCF Montaje Intr.': Defining usecols without of bounds indices is not allowed. [12, 13, 14, 15, 16, 17, 18, 19, 20, 21] are out of bounds. (sheet: QCF Montaje Intr.)
+
+[WARNING] 2025-08-05T19:26:12.731Z 4d0815e7-aa90-4106-926a-2f47321725d7 ⚠️ Could not process sheet 'QCF Montaje Intr.': Defining usecols without of bounds indices is not allowed. [12, 13, 14, 15, 16, 17, 18, 19, 20, 21] are out of bounds. (sheet: QCF Montaje Intr.)
+2025-08-05T21:26:13.720+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+2025-08-05T21:26:13.720+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:13.721+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+2025-08-05T21:26:13.721+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:15.177+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+2025-08-05T21:26:15.177+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:15.177+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+2025-08-05T21:26:15.177+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:15.326+02:00
+/var/task/lambda_function.py:765: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+
+/var/task/lambda_function.py:765: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+2025-08-05T21:26:15.326+02:00
+datetime_converted = pd.to_datetime(clean_col, errors='coerce')
+
+datetime_converted = pd.to_datetime(clean_col, errors='coerce')
+2025-08-05T21:26:15.330+02:00
+/var/task/lambda_function.py:825: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+
+/var/task/lambda_function.py:825: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+2025-08-05T21:26:15.330+02:00
+formatted_df[column] = pd.to_datetime(formatted_df[column], errors='coerce')
+
+formatted_df[column] = pd.to_datetime(formatted_df[column], errors='coerce')
+2025-08-05T21:26:18.809+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+2025-08-05T21:26:18.809+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:18.810+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+2025-08-05T21:26:18.810+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:18.942+02:00
+/var/task/lambda_function.py:765: UserWarning: Parsing dates in %d/%m/%Y format when dayfirst=False (the default) was specified. Pass `dayfirst=True` or specify a format to silence this warning.
+
+/var/task/lambda_function.py:765: UserWarning: Parsing dates in %d/%m/%Y format when dayfirst=False (the default) was specified. Pass `dayfirst=True` or specify a format to silence this warning.
+2025-08-05T21:26:18.942+02:00
+datetime_converted = pd.to_datetime(clean_col, errors='coerce')
+
+datetime_converted = pd.to_datetime(clean_col, errors='coerce')
+2025-08-05T21:26:20.114+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+2025-08-05T21:26:20.114+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:20.115+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+2025-08-05T21:26:20.115+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:22.025+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+2025-08-05T21:26:22.025+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:22.025+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+2025-08-05T21:26:22.025+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:22.532+02:00
+/var/task/lambda_function.py:765: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+
+/var/task/lambda_function.py:765: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+2025-08-05T21:26:22.532+02:00
+datetime_converted = pd.to_datetime(clean_col, errors='coerce')
+
+datetime_converted = pd.to_datetime(clean_col, errors='coerce')
+2025-08-05T21:26:24.720+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Unknown extension is not supported and will be removed
+2025-08-05T21:26:24.720+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:24.720+02:00
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+
+/var/lang/lib/python3.11/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Conditional Formatting extension is not supported and will be removed
+2025-08-05T21:26:24.720+02:00
+warn(msg)
+
+warn(msg)
+2025-08-05T21:26:26.608+02:00
+/var/task/lambda_function.py:1261: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+
+/var/task/lambda_function.py:1261: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+2025-08-05T21:26:26.608+02:00
+master_subsystem = master_subsystem.applymap(remove_accents)
+
+master_subsystem = master_subsystem.applymap(remove_accents)
+2025-08-05T21:26:27.979+02:00
+/var/task/lambda_function.py:1268: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+
+/var/task/lambda_function.py:1268: FutureWarning: DataFrame.applymap has been deprecated. Use DataFrame.map instead.
+2025-08-05T21:26:27.979+02:00
+master_subsystem = master_subsystem.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
+master_subsystem = master_subsystem.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+2025-08-05T21:26:28.559+02:00
+[ERROR]	2025-08-05T19:26:28.559Z	4d0815e7-aa90-4106-926a-2f47321725d7	Error creating SSM table: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+
+[ERROR] 2025-08-05T19:26:28.559Z 4d0815e7-aa90-4106-926a-2f47321725d7 Error creating SSM table: An error occurred (NoSuchKey) when calling the GetObject operation: The specified key does not exist.
+2025-08-05T21:26:30.672+02:00
+END RequestId: 4d0815e7-aa90-4106-926a-2f47321725d7
+
+END RequestId: 4d0815e7-aa90-4106-926a-2f47321725d7
+2025-08-05T21:26:30.672+02:00
+REPORT RequestId: 4d0815e7-aa90-4106-926a-2f47321725d7	Duration: 19421.08 ms	Billed Duration: 27214 ms	Memory Size: 3008 MB	Max Memory Used: 291 MB	Init Duration: 7792.47 ms
+
+REPORT RequestId: 4d0815e7-aa90-4106-926a-2f47321725d7 Duration: 19421.08 ms Billed Duration: 27214 ms Memory Size: 3008 MB Max Memory Used: 291 MB Init Duration: 7792.47 m

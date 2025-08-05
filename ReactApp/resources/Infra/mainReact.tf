@@ -113,7 +113,7 @@ resource "null_resource" "build_and_deploy_react_app" {
       ./sync-data.sh && \
       /usr/bin/npm install && \
       chmod +x node_modules/.bin/* && \
-      REACT_APP_CACHE_VERSION=$(date +%s) REACT_APP_IDENTITY_POOL_ID=${aws_cognito_identity_pool.file_upload_pool.id} REACT_APP_S3_BUCKET=${aws_s3_bucket.react_app_bucket.bucket} /usr/bin/npm run build && \
+      REACT_APP_CACHE_VERSION=$(date +%s) REACT_APP_IDENTITY_POOL_ID=${aws_cognito_identity_pool.file_upload_pool.id} REACT_APP_S3_BUCKET=${aws_s3_bucket.react_app_bucket.bucket} REACT_APP_PROGRESS_TABLE=${aws_dynamodb_table.file_processing_progress.name} REACT_APP_WEBSOCKET_ENDPOINT=wss://${aws_apigatewayv2_api.websocket_api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_apigatewayv2_stage.websocket_stage.name} REACT_APP_AWS_REGION=${data.aws_region.current.name} /usr/bin/npm run build && \
       aws s3 sync build/ s3://${aws_s3_bucket.react_app_bucket.bucket} --delete --cache-control "no-cache, no-store, must-revalidate" --metadata-directive REPLACE && \
       aws s3 sync build/data/ s3://${aws_s3_bucket.react_app_bucket.bucket}/data/ --cache-control "no-cache, no-store, must-revalidate, max-age=0" --metadata-directive REPLACE
     EOT
@@ -294,7 +294,7 @@ resource "aws_iam_role" "cognito_unauthenticated_role" {
   })
 }
 
-# IAM policy for S3 access
+# IAM policy for S3 and DynamoDB access
 resource "aws_iam_role_policy" "cognito_s3_policy" {
   name = "${var.app_name_react}-cognito-s3-policy"
   role = aws_iam_role.cognito_unauthenticated_role.id
@@ -310,6 +310,13 @@ resource "aws_iam_role_policy" "cognito_s3_policy" {
           "s3:GetObject"
         ]
         Resource = "${aws_s3_bucket.react_app_bucket.arn}/rawDataset/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem"
+        ]
+        Resource = aws_dynamodb_table.file_processing_progress.arn
       }
     ]
   })
@@ -328,6 +335,18 @@ resource "aws_cognito_identity_pool_roles_attachment" "file_upload_roles" {
 output "identity_pool_id" {
   value       = aws_cognito_identity_pool.file_upload_pool.id
   description = "Cognito Identity Pool ID for file uploads"
+}
+
+# Output WebSocket API endpoint
+output "websocket_endpoint" {
+  value       = "wss://${aws_apigatewayv2_api.websocket_api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_apigatewayv2_stage.websocket_stage.name}"
+  description = "WebSocket API endpoint for real-time progress updates"
+}
+
+# Output DynamoDB table name
+output "progress_table_name" {
+  value       = aws_dynamodb_table.file_processing_progress.name
+  description = "DynamoDB table name for progress tracking"
 }
 
 # # Output the Lambda function ARN
@@ -388,6 +407,175 @@ resource "aws_iam_role" "excel_processor_lambda_role" {
   })
 }
 
+# DynamoDB table for progress tracking
+resource "aws_dynamodb_table" "file_processing_progress" {
+  name           = "${var.app_name_react}-file-processing-progress"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "file_id"
+
+  attribute {
+    name = "file_id"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.app_name_react}-progress-table"
+    }
+  )
+}
+
+# WebSocket API Gateway for real-time progress updates
+resource "aws_apigatewayv2_api" "websocket_api" {
+  name                       = "${var.app_name_react}-websocket-api"
+  protocol_type              = "WEBSOCKET"
+  route_selection_expression = "$request.body.action"
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.app_name_react}-websocket-api"
+    }
+  )
+}
+
+# WebSocket API deployment
+resource "aws_apigatewayv2_deployment" "websocket_deployment" {
+  api_id      = aws_apigatewayv2_api.websocket_api.id
+  description = "WebSocket API deployment"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  depends_on = [
+    aws_apigatewayv2_route.connect_route,
+    aws_apigatewayv2_route.disconnect_route
+  ]
+}
+
+# WebSocket API stage
+resource "aws_apigatewayv2_stage" "websocket_stage" {
+  api_id        = aws_apigatewayv2_api.websocket_api.id
+  deployment_id = aws_apigatewayv2_deployment.websocket_deployment.id
+  name          = "prod"
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.app_name_react}-websocket-stage"
+    }
+  )
+}
+
+# Lambda function for WebSocket connections
+resource "aws_lambda_function" "websocket_handler" {
+  function_name = "${var.app_name_react}-websocket-handler"
+  role         = aws_iam_role.websocket_lambda_role.arn
+  handler      = "index.handler"
+  runtime      = "nodejs18.x"
+  timeout      = 30
+
+  filename = "websocket_handler.zip"
+  source_code_hash = data.archive_file.websocket_handler.output_base64sha256
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.app_name_react}-websocket-handler"
+    }
+  )
+}
+
+# Archive WebSocket handler code
+data "archive_file" "websocket_handler" {
+  type        = "zip"
+  output_path = "websocket_handler.zip"
+  source {
+    content = <<EOF
+exports.handler = async (event) => {
+    console.log('WebSocket event:', JSON.stringify(event, null, 2));
+    return { statusCode: 200 };
+};
+EOF
+    filename = "index.js"
+  }
+}
+
+# IAM role for WebSocket Lambda
+resource "aws_iam_role" "websocket_lambda_role" {
+  name = "${var.app_name_react}-websocket-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# IAM policy for WebSocket Lambda
+resource "aws_iam_role_policy" "websocket_lambda_policy" {
+  name = "${var.app_name_react}-websocket-lambda-policy"
+  role = aws_iam_role.websocket_lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+# WebSocket routes
+resource "aws_apigatewayv2_route" "connect_route" {
+  api_id    = aws_apigatewayv2_api.websocket_api.id
+  route_key = "$connect"
+  target    = "integrations/${aws_apigatewayv2_integration.websocket_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "disconnect_route" {
+  api_id    = aws_apigatewayv2_api.websocket_api.id
+  route_key = "$disconnect"
+  target    = "integrations/${aws_apigatewayv2_integration.websocket_integration.id}"
+}
+
+# WebSocket integration
+resource "aws_apigatewayv2_integration" "websocket_integration" {
+  api_id           = aws_apigatewayv2_api.websocket_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.websocket_handler.invoke_arn
+}
+
+# Lambda permission for WebSocket API
+resource "aws_lambda_permission" "websocket_lambda_permission" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.websocket_handler.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.websocket_api.execution_arn}/*/*"
+}
+
 # IAM policy for Excel processor Lambda
 resource "aws_iam_role_policy" "excel_processor_lambda_policy" {
   name = "${var.app_name_react}-excel-processor-lambda-policy"
@@ -413,16 +601,22 @@ resource "aws_iam_role_policy" "excel_processor_lambda_policy" {
         ]
         Resource = "${aws_s3_bucket.react_app_bucket.arn}/*"
       },
-      # {
-      #   Effect = "Allow"
-      #   Action = [
-      #     "lambda:InvokeFunction"
-      #   ]
-      #   Resource = [
-      #     aws_lambda_function.excel_processor.arn,
-      #     aws_lambda_function.python_preprocessor.arn
-      #   ]
-      # }
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem"
+        ]
+        Resource = aws_dynamodb_table.file_processing_progress.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "execute-api:ManageConnections"
+        ]
+        Resource = "${aws_apigatewayv2_api.websocket_api.execution_arn}/*/*"
+      }
     ]
   })
 }
@@ -441,6 +635,20 @@ resource "aws_lambda_function" "python_preprocessor" {
 
   architectures = ["arm64"]
   
+  environment {
+    variables = {
+      PROGRESS_TABLE = aws_dynamodb_table.file_processing_progress.name
+      WEBSOCKET_ENDPOINT = "https://${aws_apigatewayv2_api.websocket_api.id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${aws_apigatewayv2_stage.websocket_stage.name}"
+    }
+  }
+  
+  lifecycle {
+    replace_triggered_by = [
+      aws_dynamodb_table.file_processing_progress,
+      aws_apigatewayv2_api.websocket_api
+    ]
+  }
+  
   tags = merge(
     var.tags,
     {
@@ -448,6 +656,7 @@ resource "aws_lambda_function" "python_preprocessor" {
     }
   )
 }
+
 
 # Excel processor Lambda function (Rust ML)
 # resource "aws_lambda_function" "excel_processor" {

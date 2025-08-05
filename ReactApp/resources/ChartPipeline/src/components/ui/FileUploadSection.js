@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   VStack,
@@ -10,10 +10,16 @@ import {
   Badge,
   IconButton,
   useToast,
-  Spinner
+  Spinner,
+  Progress,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription
 } from '@chakra-ui/react';
 import { DeleteIcon, DownloadIcon } from '@chakra-ui/icons';
 import { uploadFileToS3, deleteFileFromS3, listS3Objects, uploadApprovalRequest } from '../../utils/s3Utils';
+import { createProgressMonitor } from '../../utils/progressUtils';
 import ProcessingResultsView from './ProcessingResultsView';
 
 const FileUploadSection = () => {
@@ -21,6 +27,11 @@ const FileUploadSection = () => {
   const [uploading, setUploading] = useState(false);
   const [processingResultKey, setProcessingResultKey] = useState(null);
   const [showResults, setShowResults] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingMessage, setProcessingMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentFileId, setCurrentFileId] = useState(null);
+  const progressMonitorRef = useRef(null);
   const toast = useToast();
 
   const handleFileUpload = useCallback(async (event) => {
@@ -73,20 +84,25 @@ const FileUploadSection = () => {
     if (successfulUploads.length > 0) {
       toast({
         title: "Files uploaded to S3",
-        description: `${successfulUploads.length} file(s) uploaded. Python preprocessing + Rust ML analysis starting...`,
+        description: `${successfulUploads.length} file(s) uploaded. Processing started...`,
         status: "success",
         duration: 5000
       });
       
+      // Start progress tracking
+      const fileId = successfulUploads[0].name.split('.')[0];
+      setCurrentFileId(fileId);
+      setIsProcessing(true);
+      setProcessingProgress(0);
+      setProcessingMessage('Processing started...');
+      
       console.log('🚀 Starting processing pipeline:', {
         files: successfulUploads.map(f => f.name),
-        pipeline: 'Python preprocessing → Rust ML analysis'
+        fileId: fileId
       });
       
-      // Check for processing results after a delay (Python+Rust takes longer)
-      setTimeout(() => {
-        checkForProcessingResults(successfulUploads[0].name);
-      }, 20000); // Wait 20 seconds for full pipeline
+      // Start progress monitoring
+      startProgressMonitoring(fileId);
     }
   }, [toast]);
 
@@ -120,6 +136,83 @@ const FileUploadSection = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  // Progress monitoring using DynamoDB polling
+  const startProgressMonitoring = useCallback((fileId) => {
+    const pollProgress = async () => {
+      try {
+        // Use AWS SDK to get progress from DynamoDB
+        const AWS = require('aws-sdk');
+        AWS.config.region = process.env.REACT_APP_AWS_REGION || 'us-east-1';
+        
+        const dynamodb = new AWS.DynamoDB.DocumentClient();
+        const params = {
+          TableName: process.env.REACT_APP_PROGRESS_TABLE || 'file-processing-progress',
+          Key: {
+            file_id: fileId
+          }
+        };
+        
+        const result = await dynamodb.get(params).promise();
+        
+        if (result.Item) {
+          const progress = result.Item.progress || 0;
+          const message = result.Item.message || 'Processing...';
+          
+          setProcessingProgress(progress);
+          setProcessingMessage(message);
+          
+          if (progress >= 100) {
+            setIsProcessing(false);
+            toast({
+              title: "Processing Complete",
+              description: "File processing completed successfully!",
+              status: "success",
+              duration: 3000
+            });
+            
+            // Check for results after completion
+            setTimeout(() => {
+              checkForProcessingResults(`${fileId}.xlsx`);
+            }, 1000);
+            return;
+          }
+          
+          if (progress < 0) {
+            setIsProcessing(false);
+            toast({
+              title: "Processing Error",
+              description: message,
+              status: "error",
+              duration: 5000
+            });
+            return;
+          }
+        }
+        
+        // Continue polling if still processing
+        if (isProcessing) {
+          setTimeout(pollProgress, 2000); // Poll every 2 seconds
+        }
+      } catch (error) {
+        console.error('Progress polling error:', error);
+        // Continue polling even on error
+        if (isProcessing) {
+          setTimeout(pollProgress, 5000); // Poll every 5 seconds on error
+        }
+      }
+    };
+    
+    // Start polling
+    pollProgress();
+  }, [isProcessing, toast]);
+  
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      setIsProcessing(false);
+    };
+  }, []);
 
   const checkForProcessingResults = async (fileName) => {
     try {
@@ -257,14 +350,39 @@ const FileUploadSection = () => {
       <VStack spacing={4} align="stretch">
         <Text fontSize="lg" fontWeight="bold">Upload Dataset Files</Text>
         
+        {/* Processing Progress */}
+        {isProcessing && (
+          <Alert status="info" borderRadius="md">
+            <AlertIcon />
+            <Box flex="1">
+              <AlertTitle>Processing File...</AlertTitle>
+              <AlertDescription>
+                <VStack align="stretch" spacing={2} mt={2}>
+                  <Text fontSize="sm">{processingMessage}</Text>
+                  <Progress 
+                    value={processingProgress} 
+                    colorScheme="blue" 
+                    size="lg" 
+                    borderRadius="md"
+                  />
+                  <Text fontSize="xs" color="gray.600">
+                    {processingProgress}% complete
+                  </Text>
+                </VStack>
+              </AlertDescription>
+            </Box>
+          </Alert>
+        )}
+
         {/* Upload Area */}
         <Box
           border="2px dashed"
-          borderColor="gray.300"
+          borderColor={isProcessing ? "gray.200" : "gray.300"}
           borderRadius="md"
           p={8}
           textAlign="center"
-          _hover={{ borderColor: "blue.400" }}
+          _hover={{ borderColor: isProcessing ? "gray.200" : "blue.400" }}
+          opacity={isProcessing ? 0.6 : 1}
         >
           <VStack spacing={3}>
             <Text color="gray.600">
@@ -280,7 +398,7 @@ const FileUploadSection = () => {
               htmlFor="file-upload"
               isLoading={uploading}
               loadingText="Uploading..."
-              disabled={uploading}
+              disabled={uploading || isProcessing}
             >
               {uploading ? <Spinner size="sm" mr={2} /> : null}
               Select Files
@@ -292,6 +410,7 @@ const FileUploadSection = () => {
               accept=".csv,.xlsx,.xlsm"
               onChange={handleFileUpload}
               style={{ display: 'none' }}
+              disabled={isProcessing}
             />
           </VStack>
         </Box>
@@ -349,6 +468,7 @@ const FileUploadSection = () => {
                         colorScheme="red"
                         aria-label="Remove file"
                         onClick={() => removeFile(file.id)}
+                        disabled={isProcessing}
                       />
                     </HStack>
                   </HStack>

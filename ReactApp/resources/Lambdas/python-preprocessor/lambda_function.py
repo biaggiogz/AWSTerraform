@@ -11,6 +11,7 @@ import logging
 from datetime import datetime
 from functools import reduce
 import unicodedata
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -18,29 +19,55 @@ logger = logging.getLogger(__name__)
 
 s3_client = boto3.client('s3')
 
+# Initialize progress tracking resources if environment variables are available
+try:
+    if os.environ.get('PROGRESS_TABLE'):
+        dynamodb = boto3.resource('dynamodb')
+        progress_table = dynamodb.Table(os.environ.get('PROGRESS_TABLE'))
+    else:
+        dynamodb = None
+        progress_table = None
+        
+    if os.environ.get('WEBSOCKET_ENDPOINT'):
+        apigateway_client = boto3.client('apigatewaymanagementapi', endpoint_url=os.environ.get('WEBSOCKET_ENDPOINT'))
+    else:
+        apigateway_client = None
+except Exception as e:
+    logger.warning(f"Progress tracking not available: {str(e)}")
+    dynamodb = None
+    progress_table = None
+    apigateway_client = None
+
 def lambda_handler(event, context):
     """Python Lambda for intelligent Excel preprocessing"""
     
     # Extract S3 details from EventBridge event
     bucket = event['detail']['bucket']['name']
     key = event['detail']['object']['key']
+    file_id = key.split('/')[-1].split('.')[0]
     
     logger.info(f"🚀 Starting Excel processing: s3://{bucket}/{key}")
     logger.info(f"📋 Event details: {json.dumps(event, indent=2)}")
     
+    # Initialize progress tracking
+    update_progress(file_id, 0, "Starting Excel processing...")
+    
     try:
         # Download Excel file
+        update_progress(file_id, 10, "Downloading Excel file...")
         logger.info(f"📥 Downloading Excel file from S3...")
         response = s3_client.get_object(Bucket=bucket, Key=key)
         excel_data = response['Body'].read()
         logger.info(f"✅ Downloaded {len(excel_data)} bytes")
         
         # Process all sheets from Excel
+        update_progress(file_id, 20, "Processing Excel sheets...")
         logger.info(f"🔄 Starting Excel sheet processing...")
-        processed_sheets = process_excel_with_inference(excel_data)
+        processed_sheets = process_excel_with_inference(excel_data, file_id)
         logger.info(f"✅ Processed {len(processed_sheets)} sheets")
         
         # Create master table if we have the required sheets
+        update_progress(file_id, 60, "Creating master tables...")
         logger.info(f"🔗 Creating master table...")
         master_tables = create_master_tables(processed_sheets)
         if master_tables:
@@ -49,27 +76,37 @@ def lambda_handler(event, context):
             
             # Create SSM table if master_subsystem exists
             if 'master_subsystem' in master_tables:
+                update_progress(file_id, 70, "Creating SSM analysis...")
                 logger.info(f"📊 Creating SSM table...")
                 ssm_table = create_ssm_table(master_tables['master_subsystem'], processed_sheets, bucket)
                 if ssm_table is not None:
                     processed_sheets['ssm'] = ssm_table
                     logger.info(f"✅ SSM table created with {len(ssm_table)} rows")
         
-        # Generate file ID
-        file_id = key.split('/')[-1].split('.')[0]
+        # Save each sheet as separate Parquet file
+        update_progress(file_id, 80, "Saving processed files...")
         logger.info(f"📝 Generated file ID: {file_id}")
         
-        # Save each sheet as separate Parquet file
         parquet_keys = []
         metadata_keys = []
         
-        for sheet_name, df in processed_sheets.items():
+        total_files = len(processed_sheets)
+        for i, (sheet_name, df) in enumerate(processed_sheets.items()):
+            save_progress = 80 + (i / total_files) * 15  # Progress from 80% to 95%
+            update_progress(file_id, int(save_progress), f"Saving {sheet_name}...")
             logger.info(f"💾 Saving sheet '{sheet_name}' as Parquet...")
             # Save as Parquet
             parquet_key = f"processedPython/{file_id}_{sheet_name}.parquet"
             save_parquet_to_s3(df, bucket, parquet_key)
             parquet_keys.append(parquet_key)
             logger.info(f"✅ Saved: {parquet_key}")
+            
+            # Save SSM as CSV as well for easier access
+            if sheet_name == 'ssm':
+                csv_key = f"processedPython/{file_id}_{sheet_name}.csv"
+                save_csv_to_s3(df, bucket, csv_key)
+                parquet_keys.append(csv_key)  # Add CSV to keys list
+                logger.info(f"✅ SSM CSV saved: {csv_key}")
             
             # Create sheet metadata
             sheet_metadata = {
@@ -106,6 +143,26 @@ def lambda_handler(event, context):
             'timestamp': datetime.utcnow().isoformat()
         }
 
+        update_progress(file_id, 95, "Finalizing...")
+        
+        # Save final processing summary
+        final_summary = {
+            'file_id': file_id,
+            'processing_completed': datetime.utcnow().isoformat(),
+            'total_sheets': len(processed_sheets),
+            'parquet_files': parquet_keys,
+            'metadata_files': metadata_keys
+        }
+        
+        summary_key = f"processedPython/{file_id}_processing_summary.json"
+        s3_client.put_object(
+            Bucket=bucket,
+            Key=summary_key,
+            Body=json.dumps(final_summary, indent=2),
+            ContentType='application/json'
+        )
+        
+        update_progress(file_id, 100, "Processing completed successfully!")
         logger.info(f"🎉 Processing complete! Summary:")
         logger.info(f"   📊 Sheets processed: {len(processed_sheets)}")
         logger.info(f"   📁 Parquet files: {len(parquet_keys)}")
@@ -115,13 +172,16 @@ def lambda_handler(event, context):
             'statusCode': 200,
             'body': json.dumps({
                 'message': f'Excel processed successfully - {len(processed_sheets)} sheets',
+                'file_id': file_id,
                 'sheets_processed': list(processed_sheets.keys()),
                 'parquet_keys': parquet_keys,
-                'metadata': combined_metadata
+                'metadata': combined_metadata,
+                'processing_summary': summary_key
             })
         }
         
     except Exception as e:
+        update_progress(file_id, -1, f"Error: {str(e)}")
         logger.error(f"❌ Error processing Excel: {str(e)}")
         logger.error(f"📍 Error details: {type(e).__name__}")
         return {
@@ -129,7 +189,43 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': str(e)})
         }
 
-def process_excel_with_inference(excel_data):
+def update_progress(file_id, progress, message):
+    """Update processing progress in DynamoDB and notify via WebSocket"""
+    if not progress_table:
+        logger.info(f"Progress: {progress}% - {message}")  # Log to CloudWatch instead
+        return
+        
+    try:
+        # Update DynamoDB
+        progress_table.put_item(
+            Item={
+                'file_id': file_id,
+                'progress': progress,
+                'message': message,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        )
+        
+        # WebSocket notifications disabled - requires proper connection management
+        # if apigateway_client:
+        #     try:
+        #         apigateway_client.post_to_connection(
+        #             ConnectionId=valid_connection_id,
+        #             Data=json.dumps({
+        #                 'type': 'progress',
+        #                 'file_id': file_id,
+        #                 'progress': progress,
+        #                 'message': message
+        #             })
+        #         )
+        #     except Exception as ws_error:
+        #         logger.warning(f"WebSocket notification failed: {str(ws_error)}")
+                
+    except Exception as e:
+        logger.warning(f"Progress update failed: {str(e)}")
+        logger.info(f"Progress: {progress}% - {message}")  # Fallback to CloudWatch logs
+
+def process_excel_with_inference(excel_data, file_id=None):
     """Process all sheets with sheet-specific logic"""
     
     # Read all sheets from Excel file
@@ -144,9 +240,13 @@ def process_excel_with_inference(excel_data):
         logger.warning(f"⚠️ Missing expected sheets: {missing_sheets}")
     
     processed_sheets = {}
+    total_sheets = len(excel_file.sheet_names)
     
-    for sheet_name in excel_file.sheet_names:
+    for i, sheet_name in enumerate(excel_file.sheet_names):
         try:
+            if file_id:
+                sheet_progress = 20 + (i / total_sheets) * 40  # Progress from 20% to 60%
+                update_progress(file_id, int(sheet_progress), f"Processing sheet: {sheet_name}")
             logger.info(f"🔄 Processing sheet: '{sheet_name}'")
             
             # Apply sheet-specific processing
@@ -773,72 +873,119 @@ def save_parquet_to_s3(df, bucket, key):
     
     logger.info(f"✅ Parquet saved: s3://{bucket}/{key} ({len(buffer.getvalue())} bytes)")
 
+def save_csv_to_s3(df, bucket, key):
+    """Save DataFrame as CSV to S3"""
+    logger.info(f"💾 Converting DataFrame to CSV format...")
+    buffer = BytesIO()
+    df.to_csv(buffer, index=False)
+    buffer.seek(0)
+    
+    logger.info(f"☁️ Uploading CSV to S3: {key}")
+    s3_client.put_object(
+        Bucket=bucket,
+        Key=key,
+        Body=buffer.getvalue(),
+        ContentType='text/csv'
+    )
+    
+    logger.info(f"✅ CSV saved: s3://{bucket}/{key} ({len(buffer.getvalue())} bytes)")
+
+
+
 def create_ssm_table(master_subsystem, processed_sheets, bucket):
     """Create SSM table from master_subsystem and additional data"""
     try:
-        # Download pipelinedata.csv from temporarySource/
-        logger.info(f"📎 Downloading pipelinedata.csv...")
-        pipeline_response = s3_client.get_object(Bucket=bucket, Key='temporarySource/pipelinedata.csv')
-        pipelinedata = pd.read_csv(BytesIO(pipeline_response['Body'].read()))
-        
-        # Process pipelinedata
-        chosen_columns = ['SUBSYSTEM', 'FLUID_SUBSYSTEM']
-        pipelinedata = pipelinedata[chosen_columns].drop_duplicates()
-        pipelinedata.columns = pipelinedata.columns.str.lower()
-        
+        # Try to download pipelinedata.csv from temporarySource/
+        logger.info(f"📎 Attempting to download pipelinedata.csv...")
+        try:
+            pipeline_response = s3_client.get_object(Bucket=bucket, Key='temporarySource/pipelinedata.csv')
+            pipelinedata = pd.read_csv(BytesIO(pipeline_response['Body'].read()))
+            logger.info(f"✅ Found pipelinedata.csv")
+        except Exception as e:
+            logger.warning(f"⚠️ pipelinedata.csv not found: {str(e)}")
+            # Create empty dataframe with required columns
+            pipelinedata = pd.DataFrame(columns=['SUBSYSTEM', 'FLUID_SUBSYSTEM'])
+
+        # Process pipelinedata if available
+        if not pipelinedata.empty and 'SUBSYSTEM' in pipelinedata.columns:
+            chosen_columns = ['SUBSYSTEM', 'FLUID_SUBSYSTEM']
+            available_columns = [col for col in chosen_columns if col in pipelinedata.columns]
+            if available_columns:
+                pipelinedata = pipelinedata[available_columns].drop_duplicates()
+                pipelinedata.columns = pipelinedata.columns.str.lower()
+            else:
+                pipelinedata = pd.DataFrame(columns=['subsystem', 'fluid_subsystem'])
+        else:
+            pipelinedata = pd.DataFrame(columns=['subsystem', 'fluid_subsystem'])
+
         # Get hito data from ISOS sheet if available
-        hito_for_subsystem = pd.DataFrame()
         if 'ISOS' in processed_sheets:
             isos_df = processed_sheets['ISOS']
             if 'hito_isos' in isos_df.columns:
                 columns = ['subsystem', 'hito_isos']
                 hito_for_subsystem = isos_df[columns].drop_duplicates()
-        
+            else:
+                hito_for_subsystem = pd.DataFrame(columns=['subsystem', 'hito_isos'])
+        else:
+            hito_for_subsystem = pd.DataFrame(columns=['subsystem', 'hito_isos'])
+
         # Execute full analysis on master_subsystem
         logger.info(f"🔍 Executing SSM analysis...")
         result2 = execute_full_analysis(master_subsystem)
-        
+
         # Merge with additional data
         result3 = result2.merge(pipelinedata, on='subsystem', how='left')
-        if not hito_for_subsystem.empty:
-            result3 = result3.merge(hito_for_subsystem, on='subsystem', how='left')
-        
-        ssm = result3.copy()
-        
-        # Filter out specific subsystems
+        result3 = result3.merge(hito_for_subsystem, on='subsystem', how='left')
+        ssm = result3.copy() 
+
         ssm = ssm[ssm['subsystem'] != 'NOT']
-        ssm = ssm[ssm['subsystem'] != 'HOLD']
         ssm = ssm[ssm['subsystem'] != 'NI-10003-03']
-        
-        # Rename columns
-        if 's/n' in ssm.columns:
-            ssm = ssm.rename(columns={'s/n': 's_n'})
-        
-        # Calculate totals
+
+        ssm = ssm.rename(columns={
+            's/n':'s_n'
+        })
+
+        # TOTAL ITEMS
         ssm["total_items"] = ssm[[
-            "total_insulation", "total_loop", "total_inst", "total_tracing", "total_punch"
+            "total_insulation",
+            "total_loop",
+            "total_inst",
+            "total_tracing",
+            "total_punch"
         ]].sum(axis=1)
-        
+
+        # DONE ITEMS
         ssm["done_items"] = ssm[[
-            "done_insulation", "done_loop", "done_inst", "done_tracing", "close_punch"
+            "done_insulation",
+            "done_loop",
+            "done_inst",
+            "done_tracing",
+            "close_punch"  # Note: this maps to total_punch
         ]].sum(axis=1)
-        
+
+        # PENDING ITEMS
         ssm["pending_items"] = ssm[[
-            "pending_insulation", "pending_loop", "pending_inst", "pending_tracing", "pending_punch"
+            "pending_insulation",
+            "pending_loop",
+            "pending_inst",
+            "pending_tracing",
+            "pending_punch"
         ]].sum(axis=1)
-        
-        # Calculate average progress
+
+        done_sum = ssm[["done_insulation", "done_loop", "done_inst", "done_tracing", "close_punch"]].sum(axis=1)
+        pending_sum = ssm[["pending_insulation", "pending_loop", "pending_inst", "pending_tracing", "pending_punch"]].sum(axis=1)
+
         ssm["avg_progress_subsystem"] = np.where(
             ssm["total_items"] > 0,
             (ssm["done_items"] / ssm["total_items"]) * 100,
             0
         )
-        
+
         # Merge with general and subsystems data if available
         if 'general' in processed_sheets:
-            ssm = ssm.merge(processed_sheets['general'], on='subsystem', how='left')
+            ssm = ssm.merge(processed_sheets['general'], on='subsystem', how='left') 
         if 'Subsystems' in processed_sheets:
-            ssm = ssm.merge(processed_sheets['Subsystems'], on='subsystem', how='left')
+            ssm = ssm.merge(processed_sheets['Subsystems'], on='subsystem', how='left') 
         
         return ssm
         
@@ -1135,7 +1282,11 @@ def post_process_master_table(master_subsystem, processed_sheets):
     
     # Drop empty rows
     master_subsystem.dropna(how='all', inplace=True)
-    
+
+    master_subsystem = master_subsystem[master_subsystem['subsystem'] != 'NOT']
+    master_subsystem = master_subsystem[master_subsystem['subsystem'] != 'HOLD']
+
+
     # Clean specific columns
     if 'subsystem_description_isos' in master_subsystem.columns:
         master_subsystem['subsystem_description_isos'] = master_subsystem['subsystem_description_isos'].str.replace(',', ';')
