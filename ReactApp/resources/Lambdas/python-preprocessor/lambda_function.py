@@ -121,7 +121,7 @@ def process_excel_with_inference(excel_data):
     logger.info(f"📋 Found sheets: {excel_file.sheet_names}")
     
     # Log which sheets we can process
-    known_sheets = ['TEST_LOOP', 'ISOS', 'Tuberia', 'TRAC_SIEMSA', 'FIELD CONTROL', 'ISO_INST', 'Punch List']
+    known_sheets = ['TEST_LOOP', 'TP', 'general', 'Subsystems', 'ISOS', 'Tuberia', 'TRAC_SIEMSA', 'FIELD CONTROL', 'ISO_INST', 'Punch List']
     missing_sheets = [s for s in known_sheets if s not in excel_file.sheet_names]
     if missing_sheets:
         logger.warning(f"⚠️ Missing expected sheets: {missing_sheets}")
@@ -136,6 +136,15 @@ def process_excel_with_inference(excel_data):
             if sheet_name == 'TEST_LOOP':
                 logger.info(f"🔍 Using TEST_LOOP logic")
                 df = process_test_loop_sheet(excel_data, sheet_name)
+            elif sheet_name == 'TP':
+                logger.info(f"🔍 Using TP logic")
+                df = process_tp_sheet(excel_data, sheet_name)
+            elif sheet_name == 'general':
+                logger.info(f"🔍 Using GENERAL logic")
+                df = process_general_sheet(excel_data, sheet_name)
+            elif sheet_name == 'Subsystems':
+                logger.info(f"🔍 Using SUBSYSTEMS logic")
+                df = process_subsystems_sheet(excel_data, sheet_name)
             elif sheet_name == 'ISOS':
                 logger.info(f"🔍 Using ISOS logic")
                 df = process_isos_sheet(excel_data, sheet_name)
@@ -185,6 +194,64 @@ def process_test_loop_sheet(excel_data, sheet_name):
         df['record'] = (df.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
     
     return clean_column_names(df)
+
+def process_tp_sheet(excel_data, sheet_name):
+    """Process TP sheet with specific logic"""
+    df = read_excel_sheet(excel_data, sheet_name, skiprows=4, usecols='B:AS')
+    df = apply_type_inference(df)
+    
+    # TP specific transformations
+    df.columns = [f"{col}_TP" for col in df.columns]
+    df = clean_column_names(df)
+    
+    # Filter out rows where dossier_id_tp is null
+    if 'dossier_id_tp' in df.columns:
+        df = df[df["dossier_id_tp"].notna()]
+    
+    return df
+
+def process_general_sheet(excel_data, sheet_name):
+    """Process general sheet with specific logic"""
+    df = read_excel_sheet(excel_data, sheet_name, skiprows=3)
+    
+    # Select specific columns
+    columns = ['SUB-SYSTEM', 'PSV Total', 'PSV Calibrated', 'PSV TO calibrate', 'Motor Tot', 'Motor Solo Run DONE', 'Solo Run PENDING']
+    df = df[columns]
+    
+    df = apply_type_inference(df)
+    
+    # Rename SUB-SYSTEM to SUBSYSTEM
+    df = df.rename(columns={'SUB-SYSTEM': 'SUBSYSTEM'})
+    
+    return clean_column_names(df)
+
+def process_subsystems_sheet(excel_data, sheet_name):
+    """Process Subsystems sheet with specific logic"""
+    df = read_excel_sheet(excel_data, sheet_name)
+    df = apply_type_inference(df)
+    
+    # SUBSYSTEM replacements
+    df['SUBSYSTEM'] = df['SUBSYSTEM'].replace({
+        'NI-PR12-02': 'NI-PR12-01',
+        'NI-PR12-03': 'NI-PR12-01',
+        'NI-PR12-04': 'NI-PR12-01'
+    })
+    
+    # Filter out specific SUBSYSTEM
+    df = df[df['SUBSYSTEM'] != 'RIPA-10003-07']
+    
+    df = clean_column_names(df)
+    
+    # Remove duplicates
+    df = df.drop_duplicates(subset=['subsystem'], keep='first')
+    
+    # Clean description column if it exists
+    if 'description' in df.columns:
+        replacements = {'ó': 'o', 'ú': 'u', 'Á': 'A', ',': ';', 'é': 'e', 'í': 'i'}
+        for old, new in replacements.items():
+            df['description'] = df['description'].str.replace(old, new, regex=False)
+    
+    return df
 
 def process_isos_sheet(excel_data, sheet_name):
     """Process ISOS sheet with specific logic"""
