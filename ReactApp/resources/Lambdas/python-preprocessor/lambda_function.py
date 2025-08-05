@@ -807,6 +807,7 @@ def create_ssm_table(master_subsystem, processed_sheets, bucket):
         
         # Filter out specific subsystems
         ssm = ssm[ssm['subsystem'] != 'NOT']
+        ssm = ssm[ssm['subsystem'] != 'HOLD']
         ssm = ssm[ssm['subsystem'] != 'NI-10003-03']
         
         # Rename columns
