@@ -19,6 +19,208 @@ logger = logging.getLogger(__name__)
 
 s3_client = boto3.client('s3')
 
+def infer_column_type(col: pd.Series, threshold: float = 0.95) -> str:
+    clean_col = col.dropna()
+    if len(clean_col) == 0:
+        return 'string'
+
+    total_rows = len(clean_col)
+
+    def check_numeric():
+        # More aggressive numeric checking
+        try:
+            # First, try direct numeric conversion
+            numeric_converted = pd.to_numeric(clean_col, errors='coerce')
+            numeric_success_rate = numeric_converted.notna().sum() / total_rows
+            
+            if numeric_success_rate >= threshold:
+                # Check if they're integers or floats
+                valid_numeric = numeric_converted.dropna()
+                if len(valid_numeric) > 0:
+                    # Check if all valid numbers are integers
+                    is_integer = (valid_numeric % 1 == 0).all()
+                    if is_integer:
+                        return 'integer'
+                    else:
+                        return 'float'
+            
+            # If direct conversion didn't work well, try string-based checks
+            str_col = clean_col.astype(str).str.strip()
+            
+            # More comprehensive regex patterns
+            integer_patterns = [
+                r'^-?\d+$',                    # Basic integers: -123, 456
+                r'^-?\d{1,3}(,\d{3})*$',      # Comma-separated: 1,234 or -1,234
+                r'^-?\d+\.0+$',               # Integers with .0: 123.0, 456.00
+            ]
+            
+            float_patterns = [
+                r'^-?\d*\.\d+$',              # Basic floats: 123.45, .5
+                r'^-?\d+\.\d+$',              # Standard floats: 123.45
+                r'^-?\d{1,3}(,\d{3})*\.\d+$', # Comma-separated floats: 1,234.56
+                r'^-?\d+\.?\d*[eE][+-]?\d+$', # Scientific notation: 1.23e-4
+                r'^-?\d+\.?\d*%$',            # Percentages: 12.5%
+            ]
+            
+            # Check integer patterns
+            for pattern in integer_patterns:
+                matches = str_col.str.match(pattern, na=False).sum()
+                if matches / total_rows >= threshold:
+                    return 'integer'
+            
+            # Check float patterns
+            for pattern in float_patterns:
+                matches = str_col.str.match(pattern, na=False).sum()
+                if matches / total_rows >= threshold:
+                    return 'float'
+            
+            # Try cleaning common numeric artifacts and re-checking
+            cleaned_col = str_col.str.replace(',', '')  # Remove commas
+            cleaned_col = cleaned_col.str.replace('$', '')  # Remove dollar signs
+            cleaned_col = cleaned_col.str.replace('%', '')  # Remove percentages
+            cleaned_col = cleaned_col.str.replace(' ', '')  # Remove spaces
+            
+            # Try numeric conversion on cleaned data
+            cleaned_numeric = pd.to_numeric(cleaned_col, errors='coerce')
+            cleaned_success_rate = cleaned_numeric.notna().sum() / total_rows
+            
+            if cleaned_success_rate >= threshold:
+                valid_cleaned = cleaned_numeric.dropna()
+                if len(valid_cleaned) > 0:
+                    is_integer = (valid_cleaned % 1 == 0).all()
+                    if is_integer:
+                        return 'integer'
+                    else:
+                        return 'float'
+                        
+        except Exception as e:
+            print(f"Error in numeric checking: {e}")
+            return None
+        
+        return None
+
+    def check_datetime():
+        try:
+            # First check if the column contains only numeric values
+            str_col = clean_col.astype(str)
+            numeric_pattern = r'^-?\d+\.?\d*$'
+            numeric_matches = str_col.str.match(numeric_pattern).sum()
+            if numeric_matches / total_rows >= 0.8:  # If 80%+ are purely numeric, skip datetime
+                return None
+            
+            # Common date patterns to check first
+            date_patterns = [
+                r'\d{4}-\d{2}-\d{2}',         # YYYY-MM-DD
+                r'\d{2}/\d{2}/\d{4}',         # MM/DD/YYYY
+                r'\d{2}-\d{2}-\d{4}',         # MM-DD-YYYY
+                r'\d{4}/\d{2}/\d{2}',         # YYYY/MM/DD
+            ]
+            
+            # Check if values look like dates before trying conversion
+            looks_like_date = False
+            for pattern in date_patterns:
+                matches = str_col.str.contains(pattern, na=False).sum()
+                if matches / total_rows >= 0.3:  # At least 30% look like dates
+                    looks_like_date = True
+                    break
+            
+            if not looks_like_date:
+                return None
+            
+            # Only proceed with datetime conversion if values look like dates
+            datetime_converted = pd.to_datetime(clean_col, errors='coerce')
+            datetime_success = datetime_converted.notna().sum() / total_rows
+            
+            if datetime_success >= threshold:
+                valid_dates = datetime_converted.dropna()
+                if len(valid_dates) > 0:
+                    min_year = valid_dates.dt.year.min()
+                    max_year = valid_dates.dt.year.max()
+                    # Reject if all dates are around 1970 (likely Unix timestamp conversion)
+                    if min_year >= 1900 and max_year <= 2100 and not (min_year == 1970 and max_year == 1970):
+                        return 'datetime'
+                    
+        except Exception as e:
+            print(f"Error in datetime checking: {e}")
+            return None
+
+    def check_boolean():
+        try:
+            str_col = clean_col.astype(str).str.lower().str.strip()
+            bool_values = {'true', 'false', '1', '0', 'yes', 'no', 't', 'f', 'y', 'n'}
+            bool_success = str_col.isin(bool_values).sum() / total_rows
+            if bool_success >= threshold:
+                return 'boolean'
+        except Exception as e:
+            print(f"Error in boolean checking: {e}")
+            return None
+        return None
+
+    # Check in order of priority
+    for type_check in [check_numeric, check_boolean, check_datetime]:
+        result = type_check()
+        if result:
+            return result
+
+    # Default to string if no other type matches
+    return 'string'
+
+def get_pandas_dtype(type_str: str) -> Union[str, np.dtype]:
+    dtype_mapping = {
+        'integer': 'Int64',
+        'float': 'float64',
+        'datetime': 'datetime64[ns]',
+        'boolean': 'boolean',
+        'string': 'string'
+    }
+    return dtype_mapping.get(type_str, 'string')
+
+def format_dataframe_columns(df: pd.DataFrame, threshold: float = 0.95) -> pd.DataFrame:
+    formatted_df = df.copy()
+    conversion_errors = {}
+
+    for column in formatted_df.columns:
+        try:
+            inferred_type = infer_column_type(formatted_df[column], threshold)
+            pandas_dtype = get_pandas_dtype(inferred_type)
+
+            print(f"Column '{column}': Inferred type = {inferred_type}")
+
+            if inferred_type == 'datetime':
+                formatted_df[column] = pd.to_datetime(formatted_df[column], errors='coerce')
+            elif inferred_type == 'boolean':
+                formatted_df[column] = formatted_df[column].astype(str).str.lower().str.strip()
+                formatted_df[column] = formatted_df[column].map({
+                    'true': True, 'false': False, 't': True, 'f': False,
+                    '1': True, '0': False, 'yes': True, 'no': False,
+                    'y': True, 'n': False
+                })
+            elif inferred_type in ['integer', 'float']:
+                # Clean numeric data before conversion
+                temp_col = formatted_df[column].astype(str)
+                temp_col = temp_col.str.replace(',', '')  # Remove commas
+                temp_col = temp_col.str.replace('$', '')  # Remove dollar signs
+                temp_col = temp_col.str.replace('%', '')  # Remove percentages
+                temp_col = temp_col.str.replace(' ', '')  # Remove spaces
+                temp_col = temp_col.replace(['', 'N/A', 'na', 'null'], pd.NA)
+                
+                formatted_df[column] = pd.to_numeric(temp_col, errors='coerce')
+                formatted_df[column] = formatted_df[column].astype(pandas_dtype)
+            else:
+                formatted_df[column] = formatted_df[column].replace(['', 'N/A', 'na', 'null'], pd.NA)
+                formatted_df[column] = formatted_df[column].astype(pandas_dtype)
+
+        except Exception as e:
+            conversion_errors[column] = str(e)
+            print(f"Warning: Could not convert column '{column}'. Error: {str(e)}")
+
+    if conversion_errors:
+        print("\nConversion errors summary:")
+        for col, error in conversion_errors.items():
+            print(f"Column '{col}': {error}")
+
+    return formatted_df
+
 def lambda_handler(event, context):
     """Python Lambda for intelligent Excel preprocessing"""
     
@@ -213,51 +415,485 @@ def process_excel_with_inference(excel_data, file_id=None, bucket=None):
 
 # Add minimal implementations of required functions
 def process_test_loop_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=11, usecols='B:V', dtype=str)
-    return df
+    test_loop = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=11, usecols='B:V', dtype=str)
+    test_loop_infer = format_dataframe_columns(test_loop, threshold=0.95)
+    
+    test_loop_infer = test_loop_infer.rename(columns={
+        'SUBS_PRE': 'SUBSYSTEM'
+    })
+    
+    test_loop_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_TLP" for col in test_loop_infer.columns]
+    
+    test_loop_infer['record'] = (test_loop_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+    
+    test_loop_infer.columns = (
+        test_loop_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    
+    return test_loop_infer
 
 def process_tp_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=4, usecols='B:AS', dtype=str)
-    return df
+    tp = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=4, usecols='B:AS', dtype=str)
+    tp_infer = format_dataframe_columns(tp, threshold=0.95)
+    
+    tp_infer.columns = [f"{col}_TP" for col in tp_infer.columns]
+    tp_infer.columns = (
+        tp_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    
+    tp_infer = tp_infer[tp_infer["dossier_id_tp"].notna()]
+    
+    return tp_infer
 
 def process_general_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=3, dtype=str)
-    return df
+    psv = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=3, dtype=str)
+    
+    columns = ['SUB-SYSTEM', 'PSV Total', 'PSV Calibrated', 'PSV TO calibrate', 'Motor Tot', 'Motor Solo Run DONE', 'Solo Run PENDING']
+    psv_motor = psv[columns]
+    
+    psv_motor_infer = format_dataframe_columns(psv_motor, threshold=0.95)
+    
+    psv_motor_infer = psv_motor_infer.rename(columns={
+        'SUB-SYSTEM': 'SUBSYSTEM'
+    })
+    
+    psv_motor_infer.columns = (
+        psv_motor_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    
+    return psv_motor_infer
 
 def process_subsystems_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, dtype=str)
-    return df
+    subsystem_info = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, dtype=str)
+    subsystem_info_infer = format_dataframe_columns(subsystem_info, threshold=0.95)
+    
+    subsystem_info_infer['SUBSYSTEM'] = subsystem_info_infer['SUBSYSTEM'].replace({
+        'NI-PR12-02': 'NI-PR12-01',
+        'NI-PR12-03': 'NI-PR12-01',
+        'NI-PR12-04': 'NI-PR12-01'
+    })
+    
+    subsystem_info_infer = subsystem_info_infer[subsystem_info_infer['SUBSYSTEM'] != 'RIPA-10003-07']
+    
+    subsystem_info_infer.columns = (
+        subsystem_info_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    
+    subsystem_info_infer = subsystem_info_infer.drop_duplicates(subset=['subsystem'], keep='first')
+    
+    if 'description' in subsystem_info_infer.columns:
+        subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('ó', 'o', regex=False)
+        subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('ú', 'u', regex=False)
+        subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('Á', 'A', regex=False)
+        subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace(',', ';', regex=False)
+        subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('é', 'e', regex=False)
+        subsystem_info_infer['description'] = subsystem_info_infer['description'].str.replace('í', 'i', regex=False)
+    
+    return subsystem_info_infer
 
 def process_isos_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=1, usecols='A:AL', dtype=str)
-    return df
+    isos = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=1, usecols='A:AL', dtype=str)
+    isos_infer = format_dataframe_columns(isos, threshold=0.95)
+    
+    isos_infer = isos_infer.rename(columns={
+        'SUBSYSTEM_2': 'SUBSYSTEMv2'
+    })
+    
+    isos_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_ISOS" for col in isos_infer.columns]
+    
+    isos_infer['record'] = (isos_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+    
+    isos_infer.columns = (
+        isos_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    
+    return isos_infer
 
 def process_insulation_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=8, usecols='A:BC', dtype=str)
-    return df
+    insulation = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=8, usecols='A:BC', dtype=str)
+    insulation_infer = format_dataframe_columns(insulation, threshold=0.95)
+    
+    insulation_infer = insulation_infer.rename(columns={
+        'SUBSYSTEM_2': 'SUBSYSTEMv2',
+        'SUBSYTEM': 'SUBSYSTEM'
+    })
+    
+    insulation_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_INSULATION" for col in insulation_infer.columns]
+    
+    insulation_infer['record'] = (insulation_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+    
+    insulation_infer.columns = (
+        insulation_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    
+    return insulation_infer
 
 def process_tracing_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=7, usecols='B:AG', dtype=str)
-    return df
+    siemsa_trac = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=7, usecols='B:AG', dtype=str)
+    siemsa_trac_infer = format_dataframe_columns(siemsa_trac, threshold=0.95)
+    
+    siemsa_trac_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_TRACING" for col in siemsa_trac_infer.columns]
+    
+    siemsa_trac_infer = siemsa_trac_infer.dropna(subset=['SUBSYSTEM'])
+    siemsa_trac_infer['record'] = (siemsa_trac_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+    
+    siemsa_trac_infer.columns = (
+        siemsa_trac_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    
+    return siemsa_trac_infer
 
 def process_field_control_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=4, usecols='A:BJ', dtype=str)
-    return df
+    fc = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=4, usecols='A:BJ', dtype=str)
+    
+    cols_to_drop = [
+        'Design Area',
+        'Design Area.1',
+        'Unnamed: 7',
+        'Unnamed: 8',
+        'Unnamed: 9',
+        'SPS.1',
+        'Isometric'
+    ]
+    
+    fc = fc.drop(columns=cols_to_drop, errors='ignore')
+    fc_infer = format_dataframe_columns(fc, threshold=0.95)
+    
+    fc_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_FC" for col in fc_infer.columns]
+    
+    fc_infer = fc_infer.dropna(subset=['SUBSYSTEM'])
+    fc_infer['record'] = (fc_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+    
+    fc_infer.columns = (
+        fc_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    
+    # Process includes_fc column if it exists
+    if 'includes_fc' in fc_infer.columns:
+        fc_infer['includes_fc'] = fc_infer['includes_fc'].astype(str)
+        
+        fc_infer['includes_fc'] = (
+            fc_infer['includes_fc']
+            .str.replace(', ', '|')
+            .str.replace(r'\|X', '', regex=True)
+            .str.replace('ANULADA', '')
+            .str.replace(r'\|ANULADA', '', regex=True)
+            .str.replace(r'ANULADA\|', '', regex=True)
+        )
+        
+        expanded = fc_infer.copy()
+        expanded['includes_fc'] = expanded['includes_fc'].astype(str)
+        expanded = expanded.assign(
+            test_pack_split=expanded['includes_fc'].str.split('|')
+        ).explode('test_pack_split')
+        
+        expanded['test_pack_split'] = expanded['test_pack_split'].str.strip()
+        expanded = expanded[expanded['test_pack_split'] != '']
+        
+        try:
+            expanded['test_pack_split'] = expanded['test_pack_split'].astype(int)
+            
+            if 'construc_coord_progress_fc' in expanded.columns:
+                avg_progress = (
+                    expanded.groupby('test_pack_split')['construc_coord_progress_fc']
+                    .mean()
+                    .to_dict()
+                )
+                
+                def extract_avg_values(row):
+                    packs = [p.strip() for p in str(row['includes_fc']).split('|') if p.strip() != '']
+                    avgs = [round(avg_progress.get(int(p), 0), 2) for p in packs if p.isdigit()]
+                    return pd.Series(avgs + [''] * (3 - len(avgs)))
+                
+                fc_infer[['avg_fc_1', 'avg_fc_2', 'avg_fc_3']] = fc_infer.apply(extract_avg_values, axis=1)
+        except:
+            pass
+    
+    return fc_infer
 
 def process_iso_inst_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=4, usecols='A:AJ', dtype=str)
-    return df
+    isos_inst = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=4, usecols='A:AJ', dtype=str)
+    isos_inst_infer = format_dataframe_columns(isos_inst, threshold=0.95)
+    
+    cols_to_drop = [
+        'TAG INST AUX',
+        'Unnamed: 0'
+    ]
+    
+    isos_inst_infer = isos_inst_infer.drop(columns=cols_to_drop, errors='ignore')
+    
+    isos_inst_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_ISOINST" for col in isos_inst_infer.columns]
+    
+    isos_inst_infer['record'] = (isos_inst_infer.groupby(['SUBSYSTEM']).cumcount() + 1).astype(int)
+    
+    isos_inst_infer.columns = (
+        isos_inst_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    
+    # Process QCF data if available
+    try:
+        # Try to read QCF sheet from the same Excel data
+        excel_file = pd.ExcelFile(BytesIO(excel_data))
+        if 'QCF Montaje Intr.' in excel_file.sheet_names:
+            qfc_siemsa = pd.read_excel(BytesIO(excel_data), sheet_name='QCF Montaje Intr.', skiprows=1, usecols='B:G')
+            
+            def get_after_penultimate_hyphen(s):
+                parts = str(s).split('-')
+                if len(parts) >= 2:
+                    return '-'.join(parts[-2:])
+                else:
+                    return s
+            
+            qfc_siemsa['codigoqcf'] = qfc_siemsa['Código QCF'].apply(get_after_penultimate_hyphen)
+            qfc_siemsa = qfc_siemsa.rename(columns={'codigoqcf': 'tag_inst_isoinst'})
+            
+            columnsqfc = ['Firma Cliente', 'tag_inst_isoinst']
+            qfc_siemsa = qfc_siemsa[columnsqfc]
+            
+            qfc_siemsa['Firma Cliente'] = pd.to_datetime(qfc_siemsa['Firma Cliente'], errors='coerce')
+            
+            date_map = qfc_siemsa.set_index('tag_inst_isoinst')['Firma Cliente']
+            
+            def update_installed_isoinst(row):
+                if (row.get('scope__by_isoinst') == 'SIEMSA' and 
+                    pd.isnull(row.get('installed_isoinst')) and
+                    'tag_inst_isoinst' in row):
+                    date_value = date_map.get(row['tag_inst_isoinst'], np.nan)
+                    return date_value if pd.notnull(date_value) else row.get('installed_isoinst')
+                else:
+                    return row.get('installed_isoinst')
+            
+            if 'installed_isoinst' in isos_inst_infer.columns:
+                isos_inst_infer['installed_isoinst'] = isos_inst_infer.apply(update_installed_isoinst, axis=1)
+    except Exception as e:
+        logger.warning(f"Could not process QCF data: {str(e)}")
+    
+    # Clean up data
+    if 'pid_isoinst' in isos_inst_infer.columns:
+        isos_inst_infer['pid_isoinst'] = isos_inst_infer['pid_isoinst'].str.strip()
+        isos_inst_infer['pid_isoinst'].replace('', pd.NA, inplace=True)
+    
+    if 'installed_isoinst' in isos_inst_infer.columns:
+        isos_inst_infer['installed_isoinst'] = isos_inst_infer['installed_isoinst'].astype(str)
+        isos_inst_infer['installed_isoinst'] = isos_inst_infer['installed_isoinst'].replace('NaT', '')
+    
+    isos_inst_infer = isos_inst_infer.replace(["<NA>", "NaT", "NaN"], pd.NA)
+    
+    return isos_inst_infer
 
 def process_punch_list_sheet(excel_data, sheet_name):
-    df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=5, usecols='B:W', dtype=str)
-    return df
+    punch_list = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, skiprows=5, usecols='B:W', dtype=str)
+    punch_l_infer = format_dataframe_columns(punch_list, threshold=0.95)
+    
+    punch_l_infer = punch_l_infer.rename(columns={'SUBSISTEMA': 'SUBSYSTEM'})
+    punch_l_infer['SUBSYSTEM'] = punch_l_infer['SUBSYSTEM'].str.replace('¿?', '')
+    
+    punch_l_infer['SUBSYSTEM'] = punch_l_infer['SUBSYSTEM'].replace('', pd.NA).str.strip()
+    punch_l_infer = punch_l_infer.dropna(subset=['SUBSYSTEM'])
+    punch_l_infer.columns = [col if col == "SUBSYSTEM" else f"{col}_PUNCH_L" for col in punch_l_infer.columns]
+    
+    punch_l_infer.columns = (
+        punch_l_infer.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(' ', '_')
+        .str.replace(r'[^\w_]', '', regex=True)
+    )
+    punch_l_infer['record'] = (punch_l_infer.groupby(['subsystem']).cumcount() + 1).astype(int)
+    
+    return punch_l_infer
 
 def process_default_sheet(excel_data, sheet_name):
     df = pd.read_excel(BytesIO(excel_data), sheet_name=sheet_name, dtype=str)
     return df
 
+def remove_accents(input_str):
+    if isinstance(input_str, str):
+        nfkd_form = unicodedata.normalize('NFKD', input_str)
+        return ''.join([c for c in nfkd_form if not unicodedata.combining(c)])
+    return input_str
+
+def create_table_master(df_a: pd.DataFrame, df_b: pd.DataFrame, df_c: pd.DataFrame, df_d: pd.DataFrame, df_e: pd.DataFrame, df_f: pd.DataFrame, df_g) -> pd.DataFrame:
+    """
+    Create a master table by merging multiple DataFrames based on subsystem and record columns.
+    
+    Args:
+        df_a, df_b, df_c, df_d, df_e, df_f, df_g: Input DataFrames with subsystem and record columns
+        
+    Returns:
+        Combined DataFrame with all columns from input DataFrames
+    """
+    logger.info("Creating master table from DataFrames")
+    tables = [df_a, df_b, df_c, df_d, df_e, df_f, df_g]
+    
+    try:
+        # Count records per subsystem in each DataFrame
+        counts = [df.groupby('subsystem')['record'].count().reset_index(name=f'count_{i}')
+                  for i, df in enumerate(tables)]
+        
+        # Merge count DataFrames and find maximum count per subsystem
+        max_counts = reduce(lambda left, right: pd.merge(left, right, on='subsystem', how='outer'), counts).fillna(0)
+        max_counts['max_count'] = max_counts[[col for col in max_counts.columns if col.startswith('count_')]].max(axis=1)
+        
+        # Create expanded DataFrame with all subsystem-record combinations
+        expanded = []
+        for _, row in max_counts.iterrows():
+            expanded.extend([(row['subsystem'], i+1) for i in range(int(row['max_count']))])
+        expanded_df = pd.DataFrame(expanded, columns=['subsystem', 'record'])
+        
+        # Merge all input DataFrames with the expanded DataFrame
+        result = expanded_df
+        for df in tables:
+            result = result.merge(df, on=['subsystem', 'record'], how='left')
+        
+        # Sort and clean up the result
+        result = result.sort_values(['subsystem', 'record']).reset_index(drop=True)
+        
+        # Check for duplicates
+        if result.duplicated(subset=['subsystem', 'record']).any():
+            logger.warning("Duplicates detected in the master table!")
+        
+        # Remove columns that are all NaN
+        result = result.dropna(axis=1, how='all')
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error creating master table: {str(e)}")
+        raise
+
 def create_master_tables(processed_sheets):
-    return {}
+    master_tables = {}
+    
+    # Check if we have the required sheets for master table creation
+    required_sheets = ['TEST_LOOP', 'ISOS', 'Tuberia', 'TRAC_SIEMSA', 'FIELD_CONTROL', 'ISO_INST', 'Punch_List']
+    available_sheets = [sheet for sheet in required_sheets if sheet in processed_sheets]
+    
+    if len(available_sheets) >= 7:
+        try:
+            # Create master subsystem table
+            master_subsystem = create_table_master(
+                processed_sheets['TEST_LOOP'],
+                processed_sheets['ISOS'],
+                processed_sheets['Tuberia'],
+                processed_sheets['TRAC_SIEMSA'],
+                processed_sheets['FIELD_CONTROL'],
+                processed_sheets['ISO_INST'],
+                processed_sheets['Punch_List']
+            )
+            
+            # Apply accent removal
+            master_subsystem = master_subsystem.applymap(remove_accents)
+            
+            # Clean anomalies
+            anomalies = ["", "", ",,", "NA", "N/A", "#NA", "na", "n/a", "#na", "--", "_?"]
+            master_subsystem.replace(anomalies, np.nan, inplace=True)
+            
+            # Strip whitespace
+            master_subsystem = master_subsystem.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+            
+            # Drop empty rows
+            master_subsystem.dropna(how='all', inplace=True)
+            
+            # Filter out NOT and HOLD subsystems
+            if 'subsystem' in master_subsystem.columns:
+                master_subsystem = master_subsystem[master_subsystem['subsystem'] != 'NOT']
+                master_subsystem = master_subsystem[master_subsystem['subsystem'] != 'HOLD']
+            
+            # Clean specific columns
+            if 'subsystem_description_isos' in master_subsystem.columns:
+                master_subsystem['subsystem_description_isos'] = master_subsystem['subsystem_description_isos'].str.replace(',', ';')
+            
+            if 'tp_include_isoinst' in master_subsystem.columns:
+                master_subsystem['tp_include_isoinst'] = master_subsystem['tp_include_isoinst'].str.replace(', ', '|')
+                master_subsystem['tp_include_isoinst'] = master_subsystem['tp_include_isoinst'].str.replace('|X', '')
+            
+            # Process TP progress if TP sheet is available
+            if 'TP' in processed_sheets and 'tp_include_isoinst' in master_subsystem.columns:
+                tp_data = processed_sheets['TP']
+                if 'dossier_id_tp' in tp_data.columns and 'tp_construct_progress__tp' in tp_data.columns:
+                    progress_map = dict(zip(tp_data['dossier_id_tp'].astype(str), tp_data['tp_construct_progress__tp']))
+                    
+                    def extract_progress(isoinst):
+                        if pd.isna(isoinst) or isoinst == "NOT_APPLY":
+                            return []
+                        dossier_ids = str(isoinst).split("|")
+                        return [round(progress_map.get(did), 2) if progress_map.get(did) is not None else None for did in dossier_ids]
+                    
+                    master_subsystem["progress_list"] = master_subsystem["tp_include_isoinst"].apply(extract_progress)
+                    
+                    max_progresses = master_subsystem["progress_list"].apply(len).max()
+                    
+                    for i in range(max_progresses):
+                        master_subsystem[f"progress_ac_tp_{i+1}"] = master_subsystem["progress_list"].apply(
+                            lambda x: x[i] if i < len(x) else None
+                        )
+                    
+                    master_subsystem.drop(columns="progress_list", inplace=True)
+            
+            # Process isometric mapping
+            if 'includes_fc' in master_subsystem.columns and 'isometric_fc' in master_subsystem.columns:
+                filtered_df = master_subsystem[['includes_fc', 'isometric_fc']].dropna(subset=['includes_fc', 'isometric_fc'])
+                replace_map = dict(zip(filtered_df['isometric_fc'], filtered_df['includes_fc']))
+                
+                if 'isometricos_ifc3_isos' in master_subsystem.columns and 'tpvt_isos' in master_subsystem.columns:
+                    master_subsystem['tpvt_isos'] = master_subsystem['isometricos_ifc3_isos'].map(replace_map).combine_first(master_subsystem['tpvt_isos'])
+            
+            master_tables['master_subsystem'] = master_subsystem
+            
+            # Create TP full table if possible
+            if 'TP' in processed_sheets and 'tpvt_isos' in master_subsystem.columns:
+                df_tp = master_subsystem[['subsystem', 'tpvt_isos']].dropna(subset=['tpvt_isos']).copy()
+                df_tp['tpvt_isos'] = df_tp['tpvt_isos'].astype(str).str.split('|')
+                df_tp = df_tp.explode('tpvt_isos')
+                df_tp['tpvt_isos'] = df_tp['tpvt_isos'].str.strip()
+                df_tp = df_tp[df_tp['subsystem'] != 'ANULADA']
+                
+                tp_data = processed_sheets['TP']
+                if 'dossier_id_tp' in tp_data.columns:
+                    df_tp_full = df_tp.merge(tp_data, left_on='tpvt_isos', right_on='dossier_id_tp', how='left')
+                    master_tables['df_tp_full'] = df_tp_full
+            
+        except Exception as e:
+            logger.warning(f"Could not create master tables: {str(e)}")
+    
+    return master_tables
 
 def create_ssm_table(master_subsystem, processed_sheets, bucket, file_id=None):
     return None
