@@ -181,7 +181,7 @@ export const createProgressMonitor = (fileId, onProgress, onError) => {
     poll();
     
     // Set up interval polling
-    pollingInterval = setInterval(poll, 2000); // Poll every 2 seconds
+    pollingInterval = setInterval(poll, 1000); // Poll every 1 second for granular updates
   };
 
   const stopMonitoring = () => {

@@ -137,80 +137,61 @@ const FileUploadSection = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // Progress monitoring using DynamoDB polling
+  // Progress monitoring using utility functions
   const startProgressMonitoring = useCallback((fileId) => {
-    const pollProgress = async () => {
-      try {
-        // Use AWS SDK to get progress from DynamoDB
-        const AWS = require('aws-sdk');
-        AWS.config.region = process.env.REACT_APP_AWS_REGION || 'us-east-1';
+    const progressMonitor = createProgressMonitor(
+      fileId,
+      (progressData) => {
+        setProcessingProgress(progressData.progress);
+        setProcessingMessage(progressData.message);
         
-        const dynamodb = new AWS.DynamoDB.DocumentClient();
-        const params = {
-          TableName: process.env.REACT_APP_PROGRESS_TABLE || 'file-processing-progress',
-          Key: {
-            file_id: fileId
-          }
-        };
-        
-        const result = await dynamodb.get(params).promise();
-        
-        if (result.Item) {
-          const progress = result.Item.progress || 0;
-          const message = result.Item.message || 'Processing...';
+        if (progressData.progress >= 100) {
+          setIsProcessing(false);
+          toast({
+            title: "Processing Complete",
+            description: "File processing completed successfully!",
+            status: "success",
+            duration: 3000
+          });
           
-          setProcessingProgress(progress);
-          setProcessingMessage(message);
-          
-          if (progress >= 100) {
-            setIsProcessing(false);
-            toast({
-              title: "Processing Complete",
-              description: "File processing completed successfully!",
-              status: "success",
-              duration: 3000
-            });
-            
-            // Check for results after completion
-            setTimeout(() => {
-              checkForProcessingResults(`${fileId}.xlsx`);
-            }, 1000);
-            return;
-          }
-          
-          if (progress < 0) {
-            setIsProcessing(false);
-            toast({
-              title: "Processing Error",
-              description: message,
-              status: "error",
-              duration: 5000
-            });
-            return;
-          }
+          // Check for results after completion
+          setTimeout(() => {
+            checkForProcessingResults(`${fileId}.xlsx`);
+          }, 1000);
         }
         
-        // Continue polling if still processing
-        if (isProcessing) {
-          setTimeout(pollProgress, 2000); // Poll every 2 seconds
+        if (progressData.progress < 0) {
+          setIsProcessing(false);
+          toast({
+            title: "Processing Error",
+            description: progressData.message,
+            status: "error",
+            duration: 5000
+          });
         }
-      } catch (error) {
-        console.error('Progress polling error:', error);
-        // Continue polling even on error
-        if (isProcessing) {
-          setTimeout(pollProgress, 5000); // Poll every 5 seconds on error
-        }
+      },
+      (error) => {
+        console.error('Progress monitoring error:', error);
+        toast({
+          title: "Progress Error",
+          description: "Failed to track progress",
+          status: "warning",
+          duration: 3000
+        });
       }
-    };
+    );
     
-    // Start polling
-    pollProgress();
-  }, [isProcessing, toast]);
+    progressMonitorRef.current = progressMonitor;
+    progressMonitor.start();
+  }, [toast]);
   
   // Cleanup effect
   useEffect(() => {
     return () => {
       setIsProcessing(false);
+      if (progressMonitorRef.current) {
+        progressMonitorRef.current.stop();
+      }
     };
   }, []);
 

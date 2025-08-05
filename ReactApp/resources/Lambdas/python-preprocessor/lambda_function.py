@@ -60,7 +60,7 @@ def lambda_handler(event, context):
         excel_data = response['Body'].read()
         logger.info(f"✅ Downloaded {len(excel_data)} bytes")
         
-        # Process all sheets from Excel
+        # Process all sheets from Excel with detailed progress
         update_progress(file_id, 20, "Processing Excel sheets...")
         logger.info(f"🔄 Starting Excel sheet processing...")
         processed_sheets = process_excel_with_inference(excel_data, file_id)
@@ -78,10 +78,11 @@ def lambda_handler(event, context):
             if 'master_subsystem' in master_tables:
                 update_progress(file_id, 70, "Creating SSM analysis...")
                 logger.info(f"📊 Creating SSM table...")
-                ssm_table = create_ssm_table(master_tables['master_subsystem'], processed_sheets, bucket)
+                ssm_table = create_ssm_table(master_tables['master_subsystem'], processed_sheets, bucket, file_id)
                 if ssm_table is not None:
                     processed_sheets['ssm'] = ssm_table
                     logger.info(f"✅ SSM table created with {len(ssm_table)} rows")
+                    update_progress(file_id, 78, f"SSM analysis completed ({len(ssm_table)} subsystems)")
         
         # Save each sheet as separate Parquet file
         update_progress(file_id, 80, "Saving processed files...")
@@ -287,8 +288,14 @@ def process_excel_with_inference(excel_data, file_id=None):
             if df is not None and not df.empty:
                 processed_sheets[sheet_name] = df
                 logger.info(f"✅ Sheet '{sheet_name}' processed: {len(df)} rows, {len(df.columns)} columns")
+                if file_id:
+                    completion_progress = 20 + ((i + 1) / total_sheets) * 40
+                    update_progress(file_id, int(completion_progress), f"Completed sheet: {sheet_name} ({len(df)} rows)")
             else:
                 logger.warning(f"⚠️ Sheet '{sheet_name}' resulted in empty dataframe - skipping")
+                if file_id:
+                    completion_progress = 20 + ((i + 1) / total_sheets) * 40
+                    update_progress(file_id, int(completion_progress), f"Skipped empty sheet: {sheet_name}")
             
         except Exception as e:
             logger.warning(f"⚠️ Could not process sheet '{sheet_name}': {str(e)}")
@@ -892,7 +899,7 @@ def save_csv_to_s3(df, bucket, key):
 
 
 
-def create_ssm_table(master_subsystem, processed_sheets, bucket):
+def create_ssm_table(master_subsystem, processed_sheets, bucket, file_id=None):
     """Create SSM table from master_subsystem and additional data"""
     try:
         # Try to download pipelinedata.csv from temporarySource/
@@ -931,9 +938,13 @@ def create_ssm_table(master_subsystem, processed_sheets, bucket):
 
         # Execute full analysis on master_subsystem
         logger.info(f"🔍 Executing SSM analysis...")
-        result2 = execute_full_analysis(master_subsystem)
+        if file_id:
+            update_progress(file_id, 72, "Running SSM queries...")
+        result2 = execute_full_analysis(master_subsystem, file_id)
 
         # Merge with additional data
+        if file_id:
+            update_progress(file_id, 75, "Merging SSM data...")
         result3 = result2.merge(pipelinedata, on='subsystem', how='left')
         result3 = result3.merge(hito_for_subsystem, on='subsystem', how='left')
         ssm = result3.copy() 
@@ -1169,16 +1180,36 @@ def query_6_punch(df):
     
     return result
 
-def execute_full_analysis(df):
+def execute_full_analysis(df, file_id=None):
     """Execute all queries and perform LEFT JOINs"""
     base_df = get_all_subsystems(df)
     
+    if file_id:
+        update_progress(file_id, 72, "Query 1: Insulation analysis...")
     q1_result = query_1_insulation(df)
+    
+    if file_id:
+        update_progress(file_id, 73, "Query 2: Loop analysis...")
     q2_result = query_2_loop(df)
+    
+    if file_id:
+        update_progress(file_id, 73, "Query 3: TP analysis...")
     q3_result = query_3_tp(df)
+    
+    if file_id:
+        update_progress(file_id, 74, "Query 4: Installation analysis...")
     q4_result = query_4_installation(df)
+    
+    if file_id:
+        update_progress(file_id, 74, "Query 5: Tracing analysis...")
     q5_result = query_5_tracing(df)
+    
+    if file_id:
+        update_progress(file_id, 75, "Query 6: Punch analysis...")
     q6_result = query_6_punch(df)
+    
+    if file_id:
+        update_progress(file_id, 75, "Merging query results...")
     
     final_result = base_df
     for query_result in [q1_result, q2_result, q3_result, q4_result, q5_result, q6_result]:
