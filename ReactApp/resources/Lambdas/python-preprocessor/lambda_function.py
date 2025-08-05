@@ -202,13 +202,21 @@ def format_dataframe_columns(df: pd.DataFrame, threshold: float = 0.95) -> pd.Da
                 temp_col = temp_col.str.replace('$', '')  # Remove dollar signs
                 temp_col = temp_col.str.replace('%', '')  # Remove percentages
                 temp_col = temp_col.str.replace(' ', '')  # Remove spaces
-                temp_col = temp_col.replace(['', 'N/A', 'na', 'null'], pd.NA)
+                temp_col = temp_col.replace(['', 'N/A', 'na', 'null', 'nan', 'NaN'], pd.NA)
                 
                 formatted_df[column] = pd.to_numeric(temp_col, errors='coerce')
-                formatted_df[column] = formatted_df[column].astype(pandas_dtype)
+                try:
+                    formatted_df[column] = formatted_df[column].astype(pandas_dtype)
+                except:
+                    # Keep as float64 if conversion fails
+                    formatted_df[column] = formatted_df[column].astype('float64')
             else:
                 formatted_df[column] = formatted_df[column].replace(['', 'N/A', 'na', 'null'], pd.NA)
-                formatted_df[column] = formatted_df[column].astype(pandas_dtype)
+                try:
+                    formatted_df[column] = formatted_df[column].astype(pandas_dtype)
+                except:
+                    # Keep as string if conversion fails
+                    formatted_df[column] = formatted_df[column].astype('string')
 
         except Exception as e:
             conversion_errors[column] = str(e)
@@ -635,7 +643,7 @@ def process_field_control_sheet(excel_data, sheet_name):
                 def extract_avg_values(row):
                     packs = [p.strip() for p in str(row['includes_fc']).split('|') if p.strip() != '']
                     avgs = [round(avg_progress.get(int(p), 0), 2) for p in packs if p.isdigit()]
-                    return pd.Series(avgs + [''] * (3 - len(avgs)))
+                    return pd.Series(avgs + [np.nan] * (3 - len(avgs)))
                 
                 fc_infer[['avg_fc_1', 'avg_fc_2', 'avg_fc_3']] = fc_infer.apply(extract_avg_values, axis=1)
         except:
