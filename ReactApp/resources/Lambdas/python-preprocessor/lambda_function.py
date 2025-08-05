@@ -9,6 +9,8 @@ from typing import Union
 import re
 import logging
 from datetime import datetime
+from functools import reduce
+import unicodedata
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -37,6 +39,13 @@ def lambda_handler(event, context):
         logger.info(f"🔄 Starting Excel sheet processing...")
         processed_sheets = process_excel_with_inference(excel_data)
         logger.info(f"✅ Processed {len(processed_sheets)} sheets")
+        
+        # Create master table if we have the required sheets
+        logger.info(f"🔗 Creating master table...")
+        master_tables = create_master_tables(processed_sheets)
+        if master_tables:
+            processed_sheets.update(master_tables)
+            logger.info(f"✅ Master tables created: {list(master_tables.keys())}")
         
         # Generate file ID
         file_id = key.split('/')[-1].split('.')[0]
@@ -755,3 +764,157 @@ def save_parquet_to_s3(df, bucket, key):
     )
     
     logger.info(f"✅ Parquet saved: s3://{bucket}/{key} ({len(buffer.getvalue())} bytes)")
+
+def create_master_tables(processed_sheets):
+    """Create master tables from processed sheets"""
+    try:
+        # Check if we have all required sheets
+        required_sheets = ['TEST_LOOP', 'ISOS', 'Tuberia', 'TRAC_SIEMSA', 'FIELD CONTROL', 'ISO_INST', 'Punch List']
+        available_sheets = [sheet for sheet in required_sheets if sheet in processed_sheets]
+        
+        if len(available_sheets) < 2:
+            logger.warning(f"Not enough sheets for master table creation: {available_sheets}")
+            return {}
+        
+        # Get dataframes in order
+        dfs = [processed_sheets[sheet] for sheet in available_sheets]
+        
+        # Create master table
+        master_subsystem = create_table_master(*dfs)
+        
+        # Apply post-processing
+        master_subsystem = post_process_master_table(master_subsystem, processed_sheets)
+        
+        # Create TP expansion table if TP sheet exists
+        master_tables = {'master_subsystem': master_subsystem}
+        
+        if 'TP' in processed_sheets:
+            df_tp_full = create_tp_expansion_table(master_subsystem, processed_sheets['TP'])
+            master_tables['df_tp_full'] = df_tp_full
+        
+        return master_tables
+        
+    except Exception as e:
+        logger.error(f"Error creating master tables: {str(e)}")
+        return {}
+
+def create_table_master(*dfs):
+    """Create a master table by merging multiple DataFrames"""
+    logger.info("Creating master table from DataFrames")
+    tables = [df for df in dfs if df is not None and not df.empty]
+    
+    if len(tables) == 0:
+        return pd.DataFrame()
+    
+    # Count records per subsystem in each DataFrame
+    counts = []
+    for i, df in enumerate(tables):
+        if 'subsystem' in df.columns and 'record' in df.columns:
+            count_df = df.groupby('subsystem')['record'].count().reset_index(name=f'count_{i}')
+            counts.append(count_df)
+    
+    if not counts:
+        return pd.DataFrame()
+    
+    # Merge count DataFrames and find maximum count per subsystem
+    max_counts = reduce(lambda left, right: pd.merge(left, right, on='subsystem', how='outer'), counts).fillna(0)
+    max_counts['max_count'] = max_counts[[col for col in max_counts.columns if col.startswith('count_')]].max(axis=1)
+    
+    # Create expanded DataFrame with all subsystem-record combinations
+    expanded = []
+    for _, row in max_counts.iterrows():
+        expanded.extend([(row['subsystem'], i+1) for i in range(int(row['max_count']))])
+    expanded_df = pd.DataFrame(expanded, columns=['subsystem', 'record'])
+    
+    # Merge all input DataFrames with the expanded DataFrame
+    result = expanded_df
+    for df in tables:
+        if 'subsystem' in df.columns and 'record' in df.columns:
+            result = result.merge(df, on=['subsystem', 'record'], how='left')
+    
+    # Sort and clean up the result
+    result = result.sort_values(['subsystem', 'record']).reset_index(drop=True)
+    
+    # Remove columns that are all NaN
+    result = result.dropna(axis=1, how='all')
+    
+    return result
+
+def post_process_master_table(master_subsystem, processed_sheets):
+    """Apply post-processing to master table"""
+    # Remove accents
+    def remove_accents(input_str):
+        if isinstance(input_str, str):
+            nfkd_form = unicodedata.normalize('NFKD', input_str)
+            return ''.join([c for c in nfkd_form if not unicodedata.combining(c)])
+        return input_str
+    
+    master_subsystem = master_subsystem.applymap(remove_accents)
+    
+    # Replace anomalies
+    anomalies = ["", "", ",,", "NA", "N/A", "#NA", "na", "n/a", "#na", "--", "_?"]
+    master_subsystem.replace(anomalies, np.nan, inplace=True)
+    
+    # Strip strings
+    master_subsystem = master_subsystem.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    
+    # Drop empty rows
+    master_subsystem.dropna(how='all', inplace=True)
+    
+    # Clean specific columns
+    if 'subsystem_description_isos' in master_subsystem.columns:
+        master_subsystem['subsystem_description_isos'] = master_subsystem['subsystem_description_isos'].str.replace(',', ';')
+    
+    if 'tp_include_isoinst' in master_subsystem.columns:
+        master_subsystem['tp_include_isoinst'] = master_subsystem['tp_include_isoinst'].str.replace(', ', '|')
+        master_subsystem['tp_include_isoinst'] = master_subsystem['tp_include_isoinst'].str.replace('|X', '')
+    
+    # Create progress columns if TP sheet exists
+    if 'TP' in processed_sheets and 'tp_include_isoinst' in master_subsystem.columns:
+        tp_df = processed_sheets['TP']
+        if 'dossier_id_tp' in tp_df.columns and 'tp_construct_progress__tp' in tp_df.columns:
+            progress_map = dict(zip(tp_df['dossier_id_tp'].astype(str), tp_df['tp_construct_progress__tp']))
+            
+            def extract_progress(isoinst):
+                if pd.isna(isoinst) or isoinst == "NOT_APPLY":
+                    return []
+                dossier_ids = str(isoinst).split("|")
+                return [round(progress_map.get(did), 2) if progress_map.get(did) is not None else None for did in dossier_ids]
+            
+            master_subsystem["progress_list"] = master_subsystem["tp_include_isoinst"].apply(extract_progress)
+            
+            max_progresses = master_subsystem["progress_list"].apply(len).max()
+            
+            for i in range(max_progresses):
+                master_subsystem[f"progress_ac_tp_{i+1}"] = master_subsystem["progress_list"].apply(
+                    lambda x: x[i] if i < len(x) else None
+                )
+            
+            master_subsystem.drop(columns="progress_list", inplace=True)
+    
+    # Map isometric to includes_fc
+    if 'includes_fc' in master_subsystem.columns and 'isometric_fc' in master_subsystem.columns and 'tpvt_isos' in master_subsystem.columns and 'isometricos_ifc3_isos' in master_subsystem.columns:
+        filtered_df = master_subsystem[['includes_fc', 'isometric_fc']].dropna(subset=['includes_fc', 'isometric_fc'])
+        replace_map = dict(zip(filtered_df['isometric_fc'], filtered_df['includes_fc']))
+        master_subsystem['tpvt_isos'] = master_subsystem['isometricos_ifc3_isos'].map(replace_map).combine_first(master_subsystem['tpvt_isos'])
+    
+    return master_subsystem
+
+def create_tp_expansion_table(master_subsystem, tp_df):
+    """Create TP expansion table"""
+    if 'tpvt_isos' not in master_subsystem.columns:
+        return pd.DataFrame()
+    
+    df_tp = master_subsystem[['subsystem', 'tpvt_isos']].dropna(subset=['tpvt_isos']).copy()
+    
+    df_tp['tpvt_isos'] = df_tp['tpvt_isos'].astype(str).str.split('|')
+    df_tp = df_tp.explode('tpvt_isos')
+    
+    df_tp['tpvt_isos'] = df_tp['tpvt_isos'].str.strip()
+    df_tp = df_tp[df_tp['tpvt_isos'] != 'ANULADA']
+    
+    if 'dossier_id_tp' in tp_df.columns:
+        df_tp_full = df_tp.merge(tp_df, left_on='tpvt_isos', right_on='dossier_id_tp', how='left')
+        return df_tp_full
+    
+    return df_tp
