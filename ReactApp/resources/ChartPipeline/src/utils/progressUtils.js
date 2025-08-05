@@ -29,17 +29,37 @@ export const getProcessingProgress = async (fileId) => {
     const progressData = JSON.parse(result.Body.toString());
     console.log('📊 S3 progress result:', progressData);
     
+    // Enhanced progress messages based on stage
+    let enhancedMessage = progressData.message || 'Processing...';
+    const progress = progressData.progress || 0;
+    
+    if (progress >= 0 && progress < 15) {
+      enhancedMessage = 'Initializing Excel processing...';
+    } else if (progress >= 15 && progress < 55) {
+      enhancedMessage = progressData.message || 'Processing Excel sheets with type inference...';
+    } else if (progress >= 55 && progress < 65) {
+      enhancedMessage = 'Creating master tables and joining data...';
+    } else if (progress >= 65 && progress < 75) {
+      enhancedMessage = 'Generating SSM analysis...';
+    } else if (progress >= 75 && progress < 98) {
+      enhancedMessage = 'Saving processed files to S3...';
+    } else if (progress >= 98) {
+      enhancedMessage = 'Finalizing processing...';
+    }
+    
     return {
-      progress: progressData.progress || 0,
-      message: progressData.message || 'Processing...',
-      timestamp: progressData.timestamp
+      progress: progress,
+      message: enhancedMessage,
+      timestamp: progressData.timestamp,
+      stage: getProcessingStage(progress)
     };
   } catch (error) {
     if (error.code === 'NoSuchKey') {
       return {
         progress: 0,
-        message: 'Waiting for processing to start...',
-        timestamp: new Date().toISOString()
+        message: 'Waiting for Python preprocessing to start...',
+        timestamp: new Date().toISOString(),
+        stage: 'initializing'
       };
     }
     console.error('Error fetching progress:', error);
@@ -47,7 +67,33 @@ export const getProcessingProgress = async (fileId) => {
   }
 };
 
+/**
+ * Get processing stage based on progress percentage
+ * @param {number} progress - Progress percentage
+ * @returns {string} Processing stage
+ */
+const getProcessingStage = (progress) => {
+  if (progress < 15) return 'initializing';
+  if (progress < 55) return 'processing_sheets';
+  if (progress < 65) return 'creating_master';
+  if (progress < 75) return 'ssm_analysis';
+  if (progress < 98) return 'saving_files';
+  if (progress >= 100) return 'completed';
+  return 'finalizing';
+};
 
+
+
+// Processing stage descriptions for better UX
+export const PROCESSING_STAGES = {
+  initializing: 'Initializing processing pipeline...',
+  processing_sheets: 'Processing Excel sheets with intelligent type inference...',
+  creating_master: 'Creating master tables and joining datasets...',
+  ssm_analysis: 'Generating SSM analysis and progress calculations...',
+  saving_files: 'Saving processed data to cloud storage...',
+  finalizing: 'Finalizing and preparing results...',
+  completed: 'Processing completed successfully!'
+};
 
 /**
  * Progress monitoring hook-like function
@@ -59,6 +105,7 @@ export const getProcessingProgress = async (fileId) => {
 export const createProgressMonitor = (fileId, onProgress, onError) => {
   let pollingInterval = null;
   let isMonitoring = false;
+  let lastProgress = 0;
 
   const startMonitoring = () => {
     if (isMonitoring) return;
@@ -73,6 +120,12 @@ export const createProgressMonitor = (fileId, onProgress, onError) => {
       try {
         const progressData = await getProcessingProgress(fileId);
         console.log('📈 Polling result:', progressData);
+        
+        // Update last progress for comparison
+        if (progressData.progress > lastProgress) {
+          lastProgress = progressData.progress;
+        }
+        
         onProgress(progressData);
 
         // Stop polling if complete or error
@@ -91,22 +144,40 @@ export const createProgressMonitor = (fileId, onProgress, onError) => {
     // Initial poll
     poll();
     
-    // Set up interval polling
-    pollingInterval = setInterval(poll, 2000); // Poll every 2 seconds
-    console.log('⏰ Polling interval started');
+    // Dynamic polling interval based on progress stage
+    const getPollingInterval = () => {
+      if (lastProgress < 20) return 3000; // 3s during initial processing
+      if (lastProgress < 60) return 2000; // 2s during sheet processing
+      if (lastProgress < 80) return 1500; // 1.5s during master table creation
+      return 1000; // 1s during final stages
+    };
+    
+    // Set up interval polling with dynamic timing
+    const scheduleNextPoll = () => {
+      if (isMonitoring) {
+        pollingInterval = setTimeout(() => {
+          poll().then(scheduleNextPoll);
+        }, getPollingInterval());
+      }
+    };
+    
+    scheduleNextPoll();
+    console.log('⏰ Dynamic polling started');
   };
 
   const stopMonitoring = () => {
     isMonitoring = false;
     if (pollingInterval) {
-      clearInterval(pollingInterval);
+      clearTimeout(pollingInterval);
       pollingInterval = null;
     }
+    lastProgress = 0;
   };
 
   return {
     start: startMonitoring,
     stop: stopMonitoring,
-    isMonitoring: () => isMonitoring
+    isMonitoring: () => isMonitoring,
+    getLastProgress: () => lastProgress
   };
 };

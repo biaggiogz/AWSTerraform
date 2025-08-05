@@ -241,22 +241,22 @@ def lambda_handler(event, context):
         excel_data = response['Body'].read()
         
         # Process all sheets from Excel with detailed progress
-        update_progress(file_id, 20, "Processing Excel sheets...", bucket)
+        update_progress(file_id, 15, "Processing Excel sheets...", bucket)
         processed_sheets = process_excel_with_inference(excel_data, file_id, bucket)
         
         # Create master table if we have the required sheets
-        update_progress(file_id, 60, "Creating master tables...", bucket)
+        update_progress(file_id, 55, "Creating master tables...", bucket)
         master_tables = create_master_tables(processed_sheets)
         if master_tables:
             processed_sheets.update(master_tables)
             
             # Create SSM table if master_subsystem exists
             if 'master_subsystem' in master_tables:
-                update_progress(file_id, 70, "Creating SSM analysis...", bucket)
+                update_progress(file_id, 65, "Creating SSM analysis...", bucket)
                 ssm_table = create_ssm_table(master_tables['master_subsystem'], processed_sheets, bucket, file_id)
                 if ssm_table is not None:
                     processed_sheets['ssm'] = ssm_table
-                    update_progress(file_id, 78, f"SSM analysis completed ({len(ssm_table)} subsystems)", bucket)
+                    update_progress(file_id, 75, f"SSM analysis completed ({len(ssm_table)} subsystems)", bucket)
         
         # Save each sheet as separate Parquet file
         update_progress(file_id, 80, "Saving processed files...", bucket)
@@ -302,7 +302,7 @@ def lambda_handler(event, context):
             )
             metadata_keys.append(metadata_key)
 
-        update_progress(file_id, 95, "Finalizing...", bucket)
+        update_progress(file_id, 98, "Finalizing...", bucket)
         
         # Save final processing summary
         final_summary = {
@@ -374,7 +374,7 @@ def process_excel_with_inference(excel_data, file_id=None, bucket=None):
     for i, sheet_name in enumerate(excel_file.sheet_names):
         try:
             if file_id and bucket:
-                sheet_progress = 20 + (i / total_sheets) * 40
+                sheet_progress = 15 + (i / total_sheets) * 40
                 update_progress(file_id, int(sheet_progress), f"Processing sheet: {sheet_name}", bucket)
             
             # Apply sheet-specific processing
@@ -404,7 +404,7 @@ def process_excel_with_inference(excel_data, file_id=None, bucket=None):
             if df is not None and not df.empty:
                 processed_sheets[sheet_name] = df
                 if file_id and bucket:
-                    completion_progress = 20 + ((i + 1) / total_sheets) * 40
+                    completion_progress = 15 + ((i + 1) / total_sheets) * 40
                     update_progress(file_id, int(completion_progress), f"Completed sheet: {sheet_name} ({len(df)} rows)", bucket)
             
         except Exception as e:
