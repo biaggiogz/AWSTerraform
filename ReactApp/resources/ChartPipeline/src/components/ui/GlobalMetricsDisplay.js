@@ -27,15 +27,18 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
       return {
         totalLoopSignal: 0,
         loopSignalDone: 0,
-        loopSignalPending: 0,
-        dossierCompleted: 0
+        dossierCompleted: 0,
+        testLoopSignalDone: 0,
+        loopSignalPending: 0
       };
     }
     
     let totalLoopSignal = 0;
     let loopSignalDone = 0;
-    let loopSignalPending = 0;
     let dossierCompleted = 0;
+    let testLoopSignalDone = 0;
+    let loopSignalPending = 0;
+
     
     // Single pass through the entire dataset (unfiltered)
     data.forEach(item => {
@@ -60,13 +63,19 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
       if (item['DOSSIER'] && item['DOSSIER'].toString().trim() !== '') {
         dossierCompleted++;
       }
+      
+      // TEST LOOP (Signal) DONE: non-null TEST_LOOP
+      if (item['TEST_LOOP'] && item['TEST_LOOP'].toString().trim() !== '') {
+        testLoopSignalDone++;
+      }
     });
     
     return {
       totalLoopSignal,
+      testLoopSignalDone,
       loopSignalDone,
       loopSignalPending,
-      dossierCompleted
+      dossierCompleted,
     };
   }, [data]);
   
@@ -77,15 +86,29 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
   // Metric items with colors matching the chart legend
   const metricItems = [
     {
-      label: 'TOTAL LOOP (Signal)',
+      label: 'TOTAL LOOP (signals)',
       value: globalMetrics.totalLoopSignal,
       color: '#C4E1E6',
       bgColor: 'rgba(196, 225, 230, 1)',
       sortField: 'totalLoops'
     },
+    {
+      label: 'TEST LOOP DONE (signals)',
+      value: globalMetrics.testLoopSignalDone,
+      color: '#8B5CF6',
+      bgColor: 'rgba(139, 92, 246, 1)',
+      sortField: 'testLoopSignalDone'
+    },
+    {
+      label: 'DOSSIER COMPLETED',
+      value: globalMetrics.dossierCompleted,
+      color: '#B9D4AA',
+      bgColor: 'rgba(185, 212, 170, 1)',
+      sortField: 'dossierCompleted'
+    },
       //
     {
-      label: 'LOOP (Signal) DONE',
+      label: 'Loop  (signals) Phase Construction Done (LPCD) TEN',
       value: globalMetrics.loopSignalDone,
       color: '#1DE9B6',
       bgColor: 'rgba(29, 233, 182, 1)',
@@ -98,13 +121,8 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
       bgColor: 'rgba(255, 22, 139, 1)',
       sortField: 'loopsSignalPending'
     },
-    {
-      label: 'DOSSIER COMPLETED',
-      value: globalMetrics.dossierCompleted,
-      color: '#B9D4AA',
-      bgColor: 'rgba(185, 212, 170, 1)',
-      sortField: 'dossierCompleted'
-    }
+
+
   ];
   
   // Handle metric button click for filtering
