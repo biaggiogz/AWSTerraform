@@ -44,6 +44,38 @@ const ControlInstrumentsByIsometric = () => {
     onIsometricSelect
   } = useInstrumentsTableDataWasm('control');
 
+  // Calculate frozen QTY INST count
+  const frozenQtyInstCount = useMemo(() => {
+    if (!tableData || tableData.length === 0) return 0;
+    return tableData.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0);
+  }, [tableData]);
+
+  // Calculate frozen counts for additional columns
+  const frozenScopeTeigaCount = useMemo(() => {
+    if (!tableData || tableData.length === 0) return 0;
+    return tableData.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0);
+  }, [tableData]);
+
+  const frozenScopeSiemsaCount = useMemo(() => {
+    if (!tableData || tableData.length === 0) return 0;
+    return tableData.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0);
+  }, [tableData]);
+
+  const frozenInstalledTeigaCount = useMemo(() => {
+    if (!tableData || tableData.length === 0) return 0;
+    return tableData.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0);
+  }, [tableData]);
+
+  const frozenInstalledSiemsaCount = useMemo(() => {
+    if (!tableData || tableData.length === 0) return 0;
+    return tableData.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0);
+  }, [tableData]);
+
+  const frozenPendingCount = useMemo(() => {
+    if (!tableData || tableData.length === 0) return 0;
+    return tableData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0);
+  }, [tableData]);
+
   // Helper function to format timestamp to date
   const formatDate = (timestamp) => {
     if (!timestamp) return '';
@@ -335,6 +367,14 @@ const ControlInstrumentsByIsometric = () => {
         height="500px"
         showControlCounts={true}
         frozenControlCounts={frozenControlCounts}
+        showQtyInstCounts={true}
+        frozenQtyInstCount={frozenQtyInstCount}
+        showScopeCounts={true}
+        frozenScopeTeigaCount={frozenScopeTeigaCount}
+        frozenScopeSiemsaCount={frozenScopeSiemsaCount}
+        frozenInstalledTeigaCount={frozenInstalledTeigaCount}
+        frozenInstalledSiemsaCount={frozenInstalledSiemsaCount}
+        frozenPendingCount={frozenPendingCount}
       />
     </Box>
   );
