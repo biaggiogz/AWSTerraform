@@ -108,14 +108,14 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
     },
       //
     {
-      label: 'Loop  (signals) Phase Construction Done (LPCD) TEN',
+      label: 'LOOP (signals) CONSTRUCTION DONE',
       value: globalMetrics.loopSignalDone,
       color: '#1DE9B6',
       bgColor: 'rgba(29, 233, 182, 1)',
       sortField: 'loopSignalDone'
     },
     {
-      label: 'LOOP (Signal) PENDING',
+      label: 'LOOP (Signals) PENDING',
       value: globalMetrics.loopSignalPending,
       color: '#FF168B',
       bgColor: 'rgba(255, 22, 139, 1)',
