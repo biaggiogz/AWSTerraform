@@ -328,28 +328,28 @@ const LazosTableSqlLoopTestControl = () => {
                         title: 'IDENTIFICATION', 
                         colspan: 10,
                         startCol: 0,
-                        color: '#0082A9'
+                        color: '#002b5b'
                     },
                     { 
                         id: 'construction', 
                         title: 'CONSTRUCTION', 
                         colspan: 6,
                         startCol: 10,
-                        color: '#B03052'
+                        color: '#006494'
                     },
                     { 
                         id: 'precommissioning', 
                         title: 'PRECOMMISSIONING', 
                         colspan: 2, 
                         startCol: 16,
-                        color: '#8AB3DB'
+                        color: '#2a9d8F'
                     },
                     { 
                         id: 'comments', 
                         title: 'COMMENTS',
                         colspan: 3, 
                         startCol: 18,
-                        color: '#A888B5'
+                        color: '#287271'
                     }
                 ]
             }
@@ -504,169 +504,188 @@ const LazosTableSqlLoopTestControl = () => {
             </HStack>
 
             <Box
-                ref={lazosTableSqlContainerRef}
-                height="600px"
-                overflowY="auto"
                 border="1px solid"
-                borderColor="gray.200"
-                borderRadius="md"
+                borderColor="gray.800"
+                borderRadius="lg"
+                overflow="hidden"
+                bg="white"
+                boxShadow="sm"
+                width="100%"
+                height="600px"
             >
-                <Box height={`${lazosTableSqlVirtualizer.getTotalSize()}px`} position="relative">
-                    {/* Multi-Level Table Header */}
+                <Box ref={lazosTableSqlContainerRef} style={{ height: '100%', overflow: 'auto' }}>
                     <Box
-                        borderBottom="1px solid"
-                        borderColor="gray.200"
-                        bg="gray.50"
-                        position="sticky"
-                        top={0}
-                        zIndex={1}
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: lazosTableSqlTable.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
+                            position: 'relative',
+                            width: 'fit-content',
+                            borderCollapse: 'collapse'
+                        }}
                     >
-                        {/* Level 1 Headers */}
-                        <Box display="flex" width={`${lazosTableSqlTable.getHeaderGroups()[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
-                            {multiLevelHeaders[0].headers.map(header => {
-                                const totalWidth = lazosTableSqlTable.getHeaderGroups()[0].headers.slice(header.startCol, header.startCol + header.colspan)
-                                    .reduce((sum, col) => sum + col.getSize(), 0);
-                                return (
-                                    <Box
-                                        key={header.id}
-                                        width={`${totalWidth}px`}
-                                        minWidth={`${totalWidth}px`}
-                                        textAlign="center"
-                                        fontSize="xs"
-                                        textTransform="uppercase"
-                                        letterSpacing="wide"
-                                        color="white"
-                                        py={2}
-                                        px={1}
-                                        borderRight="1px solid"
-                                        borderColor="gray.300"
-                                        borderBottom="1px solid"
-                                        display="flex"
-                                        alignItems="center"
-                                        justifyContent="center"
-                                        bg={header.color}
-                                        minHeight="35px"
-                                    >
-                                        <Text fontSize="xs" textAlign="center" noOfLines={2}>
-                                            {header.title}
-                                        </Text>
-                                    </Box>
-                                );
-                            })}
-                        </Box>
+                        {/* Multi-Level Headers */}
+                        <React.Fragment>
+                            {multiLevelHeaders.map((levelGroup, levelIndex) => (
+                                <React.Fragment key={`level-${levelGroup.level}`}>
+                                    {levelGroup.headers.map(header => {
+                                        return (
+                                            <Box
+                                                key={header.id}
+                                                bg={header.color}
+                                                color="white"
+                                                p={2}
+                                                textAlign="center"
+                                                fontWeight="bold"
+                                                fontSize="xs"
+                                                borderRight="1px solid"
+                                                borderColor="gray.800"
+                                                borderBottom="1px solid"
+                                                boxSizing="border-box"
+                                                style={{
+                                                    position: 'sticky',
+                                                    top: `${levelIndex * 40}px`,
+                                                    zIndex: 10 - levelIndex,
+                                                    gridColumn: `${header.startCol + 1} / span ${header.colspan}`,
+                                                    minHeight: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                {header.title}
+                                            </Box>
+                                        );
+                                    })}
+                                </React.Fragment>
+                            ))}
+                        </React.Fragment>
 
-                        {/* Level 2 Headers - Column Headers */}
-                        <Box display="flex" width={`${lazosTableSqlTable.getHeaderGroups()[0].headers.reduce((sum, col) => sum + col.getSize(), 0)}px`} minWidth="fit-content">
-                            {lazosTableSqlTable.getHeaderGroups()[0].headers.map((header, index) => {
-                                const columnColors = {
-                                    // Identification
-                                    'CODE': '#007598',
-                                    'SUBSYSTEM': '#007598',
-                                    'TAG LOOP': '#007598',
-                                    'AREA': '#007598',
-                                    'PRIORITY': '#007598',
-                                    'HITO': '#007598',
-                                    'SIEMSA': '#007598',
-                                    'LOOP': '#007598',
-                                    'TAGS': '#007598',
-                                    'SERVICE': '#007598',
-                                    // Construction
-                                    'INSTALLED': '#B03052',
-                                    'WIRED': '#B03052',
-                                    'CONNECTED': '#B03052',
-                                    'CABLE_TEST': '#B03052',
-                                    'QCF': '#B03052',
-                                    'OK100': '#B03052',
-                                    // Precommissioning
-                                    'DOSSIER': '#7CA2C5',
-                                    'TEST_LOOP': '#7CA2C5',
-                                    // Comments
-                                    'ACTION': '#977AA3',
-                                    'BY': '#977AA3',
-                                    'STATUS_CO': '#977AA3'
-                                };
-                                const columnId = header.column.id;
-                                const bgColor = columnColors[columnId] || '#F7FAFC';
-                                
+                        {/* Column Headers */}
+                        {lazosTableSqlTable.getHeaderGroups().map(headerGroup => (
+                            <React.Fragment key={headerGroup.id}>
+                                {headerGroup.headers.map((header, headerIndex) => {
+                                    const columnColors = {
+                                        'CODE': '#002b5b', 'SUBSYSTEM': '#002b5b', 'TAG LOOP': '#002b5b', 'AREA': '#002b5b',
+                                        'PRIORITY': '#002b5b', 'HITO': '#002b5b', 'SIEMSA': '#002b5b', 'LOOP': '#002b5b',
+                                        'TAGS': '#002b5b', 'SERVICE': '#002b5b', 'INSTALLED': '#006494', 'WIRED': '#006494',
+                                        'CONNECTED': '#006494', 'CABLE_TEST': '#006494', 'QCF': '#006494', 'OK100': '#006494',
+                                        'DOSSIER': '#2a9d8F', 'TEST_LOOP': '#2a9d8F', 'ACTION': '#287271',
+                                        'BY': '#287271', 'STATUS_CO': '#287271'
+                                    };
+                                    const headerColor = columnColors[header.column.id] || 'gray.700';
+                                    
+                                    return (
+                                        <Box
+                                            key={header.id}
+                                            bg={headerColor}
+                                            color="white"
+                                            p={2}
+                                            textAlign="center"
+                                            fontWeight="bold"
+                                            fontSize="xs"
+                                            borderRight="1px solid"
+                                            borderColor="gray.800"
+                                            borderBottom="1px solid"
+                                            boxSizing="border-box"
+                                            width="100%"
+                                            height="100%"
+                                            cursor={header.column.getCanSort() ? 'pointer' : 'default'}
+                                            onClick={header.column.getToggleSortingHandler()}
+                                            _hover={header.column.getCanSort() ? { opacity: 0.8 } : {}}
+                                            style={{
+                                                position: 'sticky',
+                                                top: multiLevelHeaders ? `${multiLevelHeaders.length * 40}px` : '0px',
+                                                zIndex: 1,
+                                                minHeight: '45px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <HStack spacing={1}>
+                                                <Text fontSize="xs" noOfLines={3} textAlign="center">
+                                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                                </Text>
+                                                {header.column.getIsSorted() && (
+                                                    <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
+                                                )}
+                                            </HStack>
+                                        </Box>
+                                    );
+                                })}
+                            </React.Fragment>
+                        ))}
+
+                        <Box
+                            style={{
+                                height: `${lazosTableSqlVirtualizer.getTotalSize()}px`,
+                                width: '100%',
+                                position: 'relative',
+                            }}
+                        >
+                            {lazosTableSqlVirtualizer.getVirtualItems().map(virtualRow => {
+                                const row = lazosTableSqlTable.getRowModel().rows[virtualRow.index];
                                 return (
                                     <Box
-                                        key={header.id}
-                                        width={`${header.getSize()}px`}
-                                        minWidth={`${header.getSize()}px`}
-                                        maxWidth={`${header.getSize()}px`}
-                                        textAlign="center"
-                                        fontSize="xs"
-                                        textTransform="uppercase"
-                                        letterSpacing="wide"
-                                        color="white"
-                                        py={2}
-                                        px={1}
-                                        borderRight="1px solid"
-                                        borderColor="gray.100"
-                                        display="flex"
-                                        alignItems="center"
-                                        justifyContent="center"
-                                        cursor={header.column.getCanSort() ? 'pointer' : 'default'}
-                                        onClick={header.column.getToggleSortingHandler()}
-                                        _hover={header.column.getCanSort() ? { opacity: 0.8 } : {}}
-                                        minHeight="45px"
-                                        position="relative"
-                                        bg={bgColor}
+                                        key={row.id}
+                                        data-index={virtualRow.index}
+                                        ref={lazosTableSqlVirtualizer.measureElement}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            minHeight: `${virtualRow.size}px`,
+                                            transform: `translateY(${virtualRow.start}px)`,
+                                            display: 'grid',
+                                            gridTemplateColumns: lazosTableSqlTable.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
+                                            alignItems: 'stretch',
+                                            backgroundColor: 'white',
+                                            boxSizing: 'border-box'
+                                        }}
                                     >
-                                        <HStack spacing={1}>
-                                            <Text fontSize="xs" noOfLines={3} textAlign="center">
-                                                {flexRender(header.column.columnDef.header, header.getContext())}
-                                            </Text>
-                                            {header.column.getIsSorted() && (
-                                                <Text fontSize="xs">{header.column.getIsSorted() === 'desc' ? '↓' : '↑'}</Text>
-                                            )}
-                                        </HStack>
+                                        {row.getVisibleCells().map((cell, cellIndex) => {
+                                            const columnColors = {
+                                                'CODE': '#002b5b', 'SUBSYSTEM': '#002b5b', 'TAG LOOP': '#002b5b', 'AREA': '#002b5b',
+                                                'PRIORITY': '#002b5b', 'HITO': '#002b5b', 'SIEMSA': '#002b5b', 'LOOP': '#002b5b',
+                                                'TAGS': '#002b5b', 'SERVICE': '#002b5b',
+
+                                                'INSTALLED': '#006494', 'WIRED': '#006494',
+                                                'CONNECTED': '#006494', 'CABLE_TEST': '#006494', 'QCF': '#006494', 'OK100': '#006494',
+
+                                                'DOSSIER': '#2a9d8F', 'TEST_LOOP': '#2a9d8F',
+
+                                                'ACTION': '#287271',
+                                                'BY': '#287271', 'STATUS_CO': '#287271'
+                                            };
+                                            const headerColor = columnColors[cell.column.id] + '15' || '#ffffff';
+                                            
+                                            return (
+                                                <Box
+                                                    key={cell.id}
+                                                    p={2}
+                                                    textAlign="center"
+                                                    borderBottom="1px solid"
+                                                    borderRight="1px solid"
+                                                    borderColor="gray.800"
+                                                    bg={headerColor}
+                                                    _hover={{ bg: 'gray.50' }}
+                                                    overflow="hidden"
+                                                    textOverflow="ellipsis"
+                                                    whiteSpace={cell.column.id === 'SERVICE' ? 'normal' : 'nowrap'}
+                                                    boxSizing="border-box"
+                                                    width="100%"
+                                                    height="100%"
+                                                >
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </Box>
+                                            );
+                                        })}
                                     </Box>
                                 );
                             })}
                         </Box>
                     </Box>
-
-                    {/* Virtual rows */}
-                    {lazosTableSqlVirtualizer.getVirtualItems().map(virtualRow => {
-                        const row = lazosTableSqlTable.getRowModel().rows[virtualRow.index];
-                        return (
-                            <Box
-                                key={row.id}
-                                data-index={virtualRow.index}
-                                ref={lazosTableSqlVirtualizer.measureElement}
-                                position="absolute"
-                                top={0}
-                                left={0}
-                                width="100%"
-                                minHeight={`${virtualRow.size}px`}
-                                transform={`translateY(${virtualRow.start + 40}px)`}
-                                borderBottom="1px solid"
-                                borderColor="gray.100"
-                                _hover={{ bg: 'blue.50' }}
-                            >
-                                <HStack spacing={0} height="100%">
-                                    {row.getVisibleCells().map(cell => (
-                                        <Box
-                                            key={cell.id}
-                                            width={`${cell.column.columnDef.size || 80}px`}
-                                            flexShrink={0}
-                                            px={2}
-                                            py={1}
-                                            borderRight="1px solid"
-                                            borderColor="gray.100"
-                                            display="flex"
-                                            alignItems="center"
-                                            justifyContent={cell.column.id === 'TAG LOOP' || cell.column.id === 'AREA' || cell.column.id === 'PRIORITY' || cell.column.id === 'HITO' || cell.column.id === 'SIEMSA' || cell.column.id === 'LOOP' || cell.column.id === 'TAGS' || cell.column.id === 'INSTALLED' || cell.column.id === 'WIRED' || cell.column.id === 'CONNECTED' || cell.column.id === 'CABLE_TEST' || cell.column.id === 'QCF' || cell.column.id === 'OK100' || cell.column.id === 'DOSSIER' || cell.column.id === 'ACTION' || cell.column.id === 'TEST_LOOP' || cell.column.id === 'BY' || cell.column.id === 'STATUS_CO' ? 'center' : 'flex-start'}
-                                            height="100%"
-                                        >
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </Box>
-                                    ))}
-                                </HStack>
-                            </Box>
-                        );
-                    })}
                 </Box>
             </Box>
             
