@@ -30,8 +30,8 @@ const InstrumentsProgressChart = () => {
     if (!tableData || tableData.length === 0) {
       return {
         totalInst: 0,
-        doneGlobal: 0,
-        pendingGlobal: 0,
+        qfcRelease: 0,
+        pendingQfcToRelease: 0,
         totalSiemsa: 0,
         installedSiemsa: 0,
         pendingSiemsa: 0,
@@ -43,27 +43,28 @@ const InstrumentsProgressChart = () => {
 
     const totals = tableData.reduce((acc, row) => {
       acc.totalInst += Number(row['TOTAL INST']) || 0;
-      acc.doneGlobal += Number(row['DONE']) || 0;
-      acc.pendingGlobal += Number(row['PENDING']) || 0;
+      acc.qfcRelease += Number(row['QFC RELEASE']) || 0;
       acc.totalSiemsa += Number(row['TOTAL SIEMSA']) || 0;
       acc.installedSiemsa += Number(row['INSTALLED SIEMSA']) || 0;
+      acc.pendingSiemsa += Number(row['PENDING SIEMSA']) || 0;
       acc.totalTeiga += Number(row['TOTAL TEIGA']) || 0;
       acc.installedTeiga += Number(row['INSTALLED TEIGA']) || 0;
+      acc.pendingTeiga += Number(row['PENDING TEIGA']) || 0;
       return acc;
     }, {
       totalInst: 0,
-      doneGlobal: 0,
-      pendingGlobal: 0,
+      qfcRelease: 0,
       totalSiemsa: 0,
       installedSiemsa: 0,
+      pendingSiemsa: 0,
       totalTeiga: 0,
-      installedTeiga: 0
+      installedTeiga: 0,
+      pendingTeiga: 0
     });
 
     return {
       ...totals,
-      pendingSiemsa: totals.totalSiemsa - totals.installedSiemsa,
-      pendingTeiga: totals.totalTeiga - totals.installedTeiga
+      pendingQfcToRelease: totals.totalInst - totals.qfcRelease
     };
   }, [tableData]);
 
@@ -74,10 +75,10 @@ const InstrumentsProgressChart = () => {
   // Prepare chart data with 3 concentric rings
   const chartData = useMemo(() => ({
     datasets: [
-      // Outer Ring - Global Totals
+      // Outer Ring - Global QFC
       {
         label: 'Global',
-        data: [calculateProgressData.doneGlobal, calculateProgressData.pendingGlobal],
+        data: [calculateProgressData.qfcRelease, calculateProgressData.pendingQfcToRelease],
         backgroundColor: ['#386641', '#F97A00'],
         borderColor: ['#386641', '#F97A00'],
         borderWidth: 2,
@@ -87,8 +88,8 @@ const InstrumentsProgressChart = () => {
       {
         label: 'SIEMSA',
         data: [calculateProgressData.installedSiemsa, calculateProgressData.pendingSiemsa],
-        backgroundColor: ['#4F959D', '#205781'],
-        borderColor: ['#4F959D', '#205781'],
+        backgroundColor: ['#015551', '#57B4BA'],
+        borderColor: ['#015551', '#57B4BA'],
         borderWidth: 2,
         weight: 0.7
       },
@@ -96,8 +97,8 @@ const InstrumentsProgressChart = () => {
       {
         label: 'TEIGA',
         data: [calculateProgressData.installedTeiga, calculateProgressData.pendingTeiga],
-        backgroundColor: ['#B2A5FF', '#493D9E'],
-        borderColor: ['#B2A5FF', '#493D9E'],
+        backgroundColor: ['#57564F', '#DDDAD0'],
+        borderColor: ['#57564F', '#DDDAD0'],
         borderWidth: 2,
         weight: 0.4
       }
@@ -115,10 +116,10 @@ const InstrumentsProgressChart = () => {
           padding: 10,
           font: { size: 9 },
           generateLabels: () => [
-            { text: 'DONE SIEMSA', fillStyle: '#4F959D' },
-            { text: 'PENDING SIEMSA', fillStyle: '#205781' },
-            { text: 'DONE TEIGA', fillStyle: '#B2A5FF' },
-            { text: 'PENDING TEIGA', fillStyle: '#493D9E' }
+            { text: 'INSTALLED SIEMSA', fillStyle: '#015551' },
+            { text: 'PENDING SIEMSA', fillStyle: '#57B4BA' },
+            { text: 'INSTALLED TEIGA', fillStyle: '#57564F' },
+            { text: 'PENDING TEIGA', fillStyle: '#DDDAD0' }
           ]
         }
       },
@@ -150,7 +151,7 @@ const InstrumentsProgressChart = () => {
         <VStack mb={4} align="center">
           <Text fontSize="sm">
             <Badge colorScheme="blue" mr={2}>Total Instruments:</Badge> {calculateProgressData.totalInst}
-            <Badge ml={2} colorScheme="green">Completion Rate: {calculateProgressData.totalInst > 0 ? ((calculateProgressData.doneGlobal / calculateProgressData.totalInst) * 100).toFixed(1) : 0}%</Badge>
+            <Badge ml={2} colorScheme="green">QFC Release Rate: {calculateProgressData.totalInst > 0 ? ((calculateProgressData.qfcRelease / calculateProgressData.totalInst) * 100).toFixed(1) : 0}%</Badge>
           </Text>
         </VStack>
         
@@ -161,7 +162,7 @@ const InstrumentsProgressChart = () => {
             variant={instrumentsProgressFilter === 'DONE' ? 'solid' : 'outline'}
             onClick={() => handleInstrumentsProgressFilter('DONE')}
           >
-            DONE ({calculateProgressData.doneGlobal})
+            QFC RELEASED ({calculateProgressData.qfcRelease})
           </Button>
           <Button
             size="sm"
@@ -169,7 +170,7 @@ const InstrumentsProgressChart = () => {
             variant={instrumentsProgressFilter === 'PENDING' ? 'solid' : 'outline'}
             onClick={() => handleInstrumentsProgressFilter('PENDING')}
           >
-            PENDING ({calculateProgressData.pendingGlobal})
+            PENDING QFC ({calculateProgressData.pendingQfcToRelease})
           </Button>
           <Button
             size="sm"
@@ -202,7 +203,7 @@ const InstrumentsProgressChart = () => {
             <Text><Badge colorScheme="teal">TEIGA:</Badge> {calculateProgressData.installedTeiga}/{calculateProgressData.totalTeiga}</Text>
           </HStack>
           <Text fontSize="xs" color="gray.600">
-            Global: {calculateProgressData.doneGlobal} Done, {calculateProgressData.pendingGlobal} Pending
+            Global: {calculateProgressData.qfcRelease} QFC Released, {calculateProgressData.pendingQfcToRelease} Pending QFC
           </Text>
         </VStack>
       </Box>
