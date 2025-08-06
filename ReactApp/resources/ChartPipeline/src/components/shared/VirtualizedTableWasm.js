@@ -24,7 +24,17 @@ const VirtualizedTableWasm = ({
   showWiredCounts = false,
   frozenWiredCount = null,
   showConnectedCounts = false,
-  frozenConnectedCount = null
+  frozenConnectedCount = null,
+  showCableTestCounts = false,
+  frozenCableTestCount = null,
+  showQcfCounts = false,
+  frozenQcfCount = null,
+  showOk100Counts = false,
+  frozenOk100Count = null,
+  showDossierCounts = false,
+  frozenDossierCount = null,
+  showTestLoopCounts = false,
+  frozenTestLoopCount = null
 }) => {
   const tableContainerRef = useRef(null);
   const [wasmInitialized, setWasmInitialized] = useState(false);
@@ -375,8 +385,8 @@ const VirtualizedTableWasm = ({
             </React.Fragment>
           )}
 
-          {/* Frozen Count Row for INSTALLED, WIRED and CONNECTED */}
-          {(showInstalledCounts && frozenInstalledCount) || (showWiredCounts && frozenWiredCount) || (showConnectedCounts && frozenConnectedCount) ? (
+          {/* Frozen Count Row for INSTALLED, WIRED, CONNECTED, CABLE_TEST, QCF, OK100, DOSSIER and TEST_LOOP */}
+          {(showInstalledCounts && frozenInstalledCount) || (showWiredCounts && frozenWiredCount) || (showConnectedCounts && frozenConnectedCount) || (showCableTestCounts && frozenCableTestCount) || (showQcfCounts && frozenQcfCount) || (showOk100Counts && frozenOk100Count) || (showDossierCounts && frozenDossierCount) || (showTestLoopCounts && frozenTestLoopCount) ? (
             <React.Fragment>
               {table.getHeaderGroups().map(headerGroup => (
                 <React.Fragment key={`frozen-count-${headerGroup.id}`}>
@@ -388,6 +398,16 @@ const VirtualizedTableWasm = ({
                       countValue = `TOTAL: ${frozenWiredCount}`;
                     } else if (header.column.id === 'CONNECTED' && frozenConnectedCount) {
                       countValue = `TOTAL: ${frozenConnectedCount}`;
+                    } else if (header.column.id === 'CABLE_TEST' && frozenCableTestCount) {
+                      countValue = `TOTAL: ${frozenCableTestCount}`;
+                    } else if (header.column.id === 'QCF' && frozenQcfCount) {
+                      countValue = `TOTAL: ${frozenQcfCount}`;
+                    } else if (header.column.id === 'OK100' && frozenOk100Count) {
+                      countValue = `TOTAL: ${frozenOk100Count}`;
+                    } else if (header.column.id === 'DOSSIER' && frozenDossierCount) {
+                      countValue = `TOTAL: ${frozenDossierCount}`;
+                    } else if (header.column.id === 'TEST_LOOP' && frozenTestLoopCount) {
+                      countValue = `TOTAL: ${frozenTestLoopCount}`;
                     }
                     
                     return (
@@ -424,8 +444,8 @@ const VirtualizedTableWasm = ({
             </React.Fragment>
           ) : null}
 
-          {/* Responsive Count Row for INSTALLED, WIRED and CONNECTED */}
-          {showInstalledCounts || showWiredCounts || showConnectedCounts ? (
+          {/* Responsive Count Row for INSTALLED, WIRED, CONNECTED, CABLE_TEST, QCF, OK100, DOSSIER and TEST_LOOP */}
+          {showInstalledCounts || showWiredCounts || showConnectedCounts || showCableTestCounts || showQcfCounts || showOk100Counts || showDossierCounts || showTestLoopCounts ? (
             <React.Fragment>
               {table.getHeaderGroups().map(headerGroup => (
                 <React.Fragment key={`current-count-${headerGroup.id}`}>
@@ -449,6 +469,36 @@ const VirtualizedTableWasm = ({
                         return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                       }, 0);
                       countValue = `CURRENTLY: ${currentCount}`;
+                    } else if (header.column.id === 'CABLE_TEST' && data && showCableTestCounts) {
+                      const currentCount = data.reduce((sum, row) => {
+                        const value = row.CABLE_TEST;
+                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                      }, 0);
+                      countValue = `CURRENTLY: ${currentCount}`;
+                    } else if (header.column.id === 'QCF' && data && showQcfCounts) {
+                      const currentCount = data.reduce((sum, row) => {
+                        const value = row.QCF;
+                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                      }, 0);
+                      countValue = `CURRENTLY: ${currentCount}`;
+                    } else if (header.column.id === 'OK100' && data && showOk100Counts) {
+                      const currentCount = data.reduce((sum, row) => {
+                        const value = parseFloat(row.OK100) || 0;
+                        return sum + (value === 1.0 ? 1 : 0);
+                      }, 0);
+                      countValue = `CURRENTLY: ${currentCount}`;
+                    } else if (header.column.id === 'DOSSIER' && data && showDossierCounts) {
+                      const currentCount = data.reduce((sum, row) => {
+                        const value = row.DOSSIER;
+                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                      }, 0);
+                      countValue = `CURRENTLY: ${currentCount}`;
+                    } else if (header.column.id === 'TEST_LOOP' && data && showTestLoopCounts) {
+                      const currentCount = data.reduce((sum, row) => {
+                        const value = row.TEST_LOOP;
+                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                      }, 0);
+                      countValue = `CURRENTLY: ${currentCount}`;
                     }
                     
                     return (
@@ -468,7 +518,7 @@ const VirtualizedTableWasm = ({
                         height="100%"
                         style={{
                           position: 'sticky',
-                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + ((frozenInstalledCount || frozenWiredCount || frozenConnectedCount) ? 30 : 0)}px` : `${45 + ((frozenInstalledCount || frozenWiredCount || frozenConnectedCount) ? 30 : 0)}px`,
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + ((frozenInstalledCount || frozenWiredCount || frozenConnectedCount || frozenCableTestCount || frozenQcfCount || frozenOk100Count || frozenDossierCount || frozenTestLoopCount) ? 30 : 0)}px` : `${45 + ((frozenInstalledCount || frozenWiredCount || frozenConnectedCount || frozenCableTestCount || frozenQcfCount || frozenOk100Count || frozenDossierCount || frozenTestLoopCount) ? 30 : 0)}px`,
                           zIndex: 1,
                           minHeight: '30px',
                           display: 'flex',

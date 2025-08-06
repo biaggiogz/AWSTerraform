@@ -52,6 +52,11 @@ const LazosTableSqlLoopTestControl = () => {
     const [frozenInstalledCount, setFrozenInstalledCount] = useState(null);
     const [frozenWiredCount, setFrozenWiredCount] = useState(null);
     const [frozenConnectedCount, setFrozenConnectedCount] = useState(null);
+    const [frozenCableTestCount, setFrozenCableTestCount] = useState(null);
+    const [frozenQcfCount, setFrozenQcfCount] = useState(null);
+    const [frozenOk100Count, setFrozenOk100Count] = useState(null);
+    const [frozenDossierCount, setFrozenDossierCount] = useState(null);
+    const [frozenTestLoopCount, setFrozenTestLoopCount] = useState(null);
 
     // Performance metrics
     const [lazosTableSqlLoadTime, setLazosTableSqlLoadTime] = useState(null);
@@ -354,6 +359,36 @@ const LazosTableSqlLoopTestControl = () => {
                     return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                 }, 0);
                 setFrozenConnectedCount(connectedCount);
+                
+                const cableTestCount = result.reduce((sum, row) => {
+                    const value = row.CABLE_TEST;
+                    return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                }, 0);
+                setFrozenCableTestCount(cableTestCount);
+                
+                const qcfCount = result.reduce((sum, row) => {
+                    const value = row.QCF;
+                    return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                }, 0);
+                setFrozenQcfCount(qcfCount);
+                
+                const ok100Count = result.reduce((sum, row) => {
+                    const value = parseFloat(row.OK100) || 0;
+                    return sum + (value === 1.0 ? 1 : 0);
+                }, 0);
+                setFrozenOk100Count(ok100Count);
+                
+                const dossierCount = result.reduce((sum, row) => {
+                    const value = row.DOSSIER;
+                    return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                }, 0);
+                setFrozenDossierCount(dossierCount);
+                
+                const testLoopCount = result.reduce((sum, row) => {
+                    const value = row.TEST_LOOP;
+                    return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                }, 0);
+                setFrozenTestLoopCount(testLoopCount);
             }
 
             if (setTableData) {
@@ -469,6 +504,16 @@ const LazosTableSqlLoopTestControl = () => {
                 frozenWiredCount={frozenWiredCount}
                 showConnectedCounts={true}
                 frozenConnectedCount={frozenConnectedCount}
+                showCableTestCounts={true}
+                frozenCableTestCount={frozenCableTestCount}
+                showQcfCounts={true}
+                frozenQcfCount={frozenQcfCount}
+                showOk100Counts={true}
+                frozenOk100Count={frozenOk100Count}
+                showDossierCounts={true}
+                frozenDossierCount={frozenDossierCount}
+                showTestLoopCounts={true}
+                frozenTestLoopCount={frozenTestLoopCount}
             />
 
             {/* Lazos Subsystem Filter */}
