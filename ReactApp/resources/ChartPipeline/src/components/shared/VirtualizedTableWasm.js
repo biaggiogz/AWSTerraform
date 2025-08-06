@@ -18,7 +18,13 @@ const VirtualizedTableWasm = ({
   showControlCounts = false,
   frozenControlCounts = null,
   showDynamicCounts = false,
-  frozenDynamicCounts = null
+  frozenDynamicCounts = null,
+  showInstalledCounts = false,
+  frozenInstalledCount = null,
+  showWiredCounts = false,
+  frozenWiredCount = null,
+  showConnectedCounts = false,
+  frozenConnectedCount = null
 }) => {
   const tableContainerRef = useRef(null);
   const [wasmInitialized, setWasmInitialized] = useState(false);
@@ -368,6 +374,116 @@ const VirtualizedTableWasm = ({
               ))}
             </React.Fragment>
           )}
+
+          {/* Frozen Count Row for INSTALLED, WIRED and CONNECTED */}
+          {(showInstalledCounts && frozenInstalledCount) || (showWiredCounts && frozenWiredCount) || (showConnectedCounts && frozenConnectedCount) ? (
+            <React.Fragment>
+              {table.getHeaderGroups().map(headerGroup => (
+                <React.Fragment key={`frozen-count-${headerGroup.id}`}>
+                  {headerGroup.headers.map((header) => {
+                    let countValue = '';
+                    if (header.column.id === 'INSTALLED' && frozenInstalledCount) {
+                      countValue = `TOTAL: ${frozenInstalledCount}`;
+                    } else if (header.column.id === 'WIRED' && frozenWiredCount) {
+                      countValue = `TOTAL: ${frozenWiredCount}`;
+                    } else if (header.column.id === 'CONNECTED' && frozenConnectedCount) {
+                      countValue = `TOTAL: ${frozenConnectedCount}`;
+                    }
+                    
+                    return (
+                      <Box
+                        key={`frozen-count-${header.id}`}
+                        bg="#A9D6E5"
+                        color="white"
+                        p={2}
+                        textAlign="center"
+                        fontWeight="bold"
+                        fontSize="xs"
+                        borderRight="1px solid"
+                        borderColor="gray.800"
+                        borderBottom="1px solid"
+                        boxSizing="border-box"
+                        width="100%"
+                        height="100%"
+                        style={{
+                          position: 'sticky',
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45}px` : '45px',
+                          zIndex: 1,
+                          minHeight: '30px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {countValue}
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          ) : null}
+
+          {/* Responsive Count Row for INSTALLED, WIRED and CONNECTED */}
+          {showInstalledCounts || showWiredCounts || showConnectedCounts ? (
+            <React.Fragment>
+              {table.getHeaderGroups().map(headerGroup => (
+                <React.Fragment key={`current-count-${headerGroup.id}`}>
+                  {headerGroup.headers.map((header) => {
+                    let countValue = '';
+                    if (header.column.id === 'INSTALLED' && data && showInstalledCounts) {
+                      const currentCount = data.reduce((sum, row) => {
+                        const value = row.INSTALLED;
+                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                      }, 0);
+                      countValue = `CURRENTLY: ${currentCount}`;
+                    } else if (header.column.id === 'WIRED' && data && showWiredCounts) {
+                      const currentCount = data.reduce((sum, row) => {
+                        const value = row.WIRED;
+                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                      }, 0);
+                      countValue = `CURRENTLY: ${currentCount}`;
+                    } else if (header.column.id === 'CONNECTED' && data && showConnectedCounts) {
+                      const currentCount = data.reduce((sum, row) => {
+                        const value = row.CONNECTED;
+                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                      }, 0);
+                      countValue = `CURRENTLY: ${currentCount}`;
+                    }
+                    
+                    return (
+                      <Box
+                        key={`current-count-${header.id}`}
+                        bg="#61A5C2"
+                        color="white"
+                        p={2}
+                        textAlign="center"
+                        fontWeight="bold"
+                        fontSize="xs"
+                        borderRight="1px solid"
+                        borderColor="gray.800"
+                        borderBottom="1px solid"
+                        boxSizing="border-box"
+                        width="100%"
+                        height="100%"
+                        style={{
+                          position: 'sticky',
+                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + ((frozenInstalledCount || frozenWiredCount || frozenConnectedCount) ? 30 : 0)}px` : `${45 + ((frozenInstalledCount || frozenWiredCount || frozenConnectedCount) ? 30 : 0)}px`,
+                          zIndex: 1,
+                          minHeight: '30px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {countValue}
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </React.Fragment>
+          ) : null}
 
           <Box
             style={{

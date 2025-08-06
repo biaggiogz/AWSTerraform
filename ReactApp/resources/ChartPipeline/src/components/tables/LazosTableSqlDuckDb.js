@@ -50,6 +50,8 @@ const LazosTableSqlLoopTestControl = () => {
     const [lazosTableSqlLoading, setLazosTableSqlLoading] = useState(true);
     const [lazosTableSqlError, setLazosTableSqlError] = useState(null);
     const [frozenInstalledCount, setFrozenInstalledCount] = useState(null);
+    const [frozenWiredCount, setFrozenWiredCount] = useState(null);
+    const [frozenConnectedCount, setFrozenConnectedCount] = useState(null);
 
     // Performance metrics
     const [lazosTableSqlLoadTime, setLazosTableSqlLoadTime] = useState(null);
@@ -333,13 +335,25 @@ const LazosTableSqlLoopTestControl = () => {
             console.log('Query result count:', result?.length || 0);
             setLazosTableSqlData(result || []);
 
-            // Calculate frozen count on first load
+            // Calculate frozen counts on first load
             if (!frozenInstalledCount && result && result.length > 0) {
                 const installedCount = result.reduce((sum, row) => {
                     const value = row.INSTALLED;
                     return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                 }, 0);
                 setFrozenInstalledCount(installedCount);
+                
+                const wiredCount = result.reduce((sum, row) => {
+                    const value = row.WIRED;
+                    return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                }, 0);
+                setFrozenWiredCount(wiredCount);
+                
+                const connectedCount = result.reduce((sum, row) => {
+                    const value = row.CONNECTED;
+                    return sum + (value && value !== '-' && value !== '' ? 1 : 0);
+                }, 0);
+                setFrozenConnectedCount(connectedCount);
             }
 
             if (setTableData) {
@@ -449,8 +463,12 @@ const LazosTableSqlLoopTestControl = () => {
                 columns={lazosTableSqlColumns}
                 multiLevelHeaders={multiLevelHeaders}
                 height={600}
-                showDynamicCounts={true}
-                frozenDynamicCounts={frozenInstalledCount ? { installed: frozenInstalledCount } : null}
+                showInstalledCounts={true}
+                frozenInstalledCount={frozenInstalledCount}
+                showWiredCounts={true}
+                frozenWiredCount={frozenWiredCount}
+                showConnectedCounts={true}
+                frozenConnectedCount={frozenConnectedCount}
             />
 
             {/* Lazos Subsystem Filter */}
