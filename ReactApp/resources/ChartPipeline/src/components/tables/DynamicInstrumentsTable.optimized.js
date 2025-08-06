@@ -63,12 +63,13 @@ const DynamicInstrumentsTable = () => {
     
     return {
       totalInst: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0),
-      totalSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0),
-      installedSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0),
       totalTeiga: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0),
       installedTeiga: unfilteredData.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0),
-      pending: unfilteredData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0),
-      done: unfilteredData.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)
+      pendingTeiga: unfilteredData.reduce((sum, row) => sum + (Number(row['PENDING TEIGA']) || 0), 0),
+      totalSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0),
+      installedSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0),
+      pendingSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['PENDING SIEMSA']) || 0), 0),
+      qfcRelease: unfilteredData.reduce((sum, row) => sum + (Number(row['QFC RELEASE']) || 0), 0)
     };
   }, [unfilteredData]);
 
@@ -79,12 +80,13 @@ const DynamicInstrumentsTable = () => {
     const subsystemGroups = {};
     const numericFields = [
       'TOTAL INST',
-      'TOTAL SIEMSA', 
-      'INSTALLED TEIGA',
-      'INSTALLED SIEMSA',
       'TOTAL TEIGA',
-      'PENDING',
-      'DONE'
+      'INSTALLED TEIGA',
+      'PENDING TEIGA',
+      'TOTAL SIEMSA',
+      'INSTALLED SIEMSA',
+      'PENDING SIEMSA',
+      'QFC RELEASE'
     ];
 
     rawData.forEach(row => {
@@ -149,16 +151,6 @@ const DynamicInstrumentsTable = () => {
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
     }),
-    columnHelper.accessor('TOTAL SIEMSA', {
-      header: 'TOTAL SIEMSA',
-      cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
-      size: 90,
-    }),
-    columnHelper.accessor('INSTALLED SIEMSA', {
-      header: 'INSTALLED SIEMSA',
-      cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
-      size: 90,
-    }),
     columnHelper.accessor('TOTAL TEIGA', {
       header: 'TOTAL TEIGA',
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
@@ -169,13 +161,28 @@ const DynamicInstrumentsTable = () => {
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
     }),
-    columnHelper.accessor('PENDING', {
-      header: 'PENDING',
+    columnHelper.accessor('PENDING TEIGA', {
+      header: 'PENDING TEIGA',
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
     }),
-    columnHelper.accessor('DONE', {
-      header: 'DONE',
+    columnHelper.accessor('TOTAL SIEMSA', {
+      header: 'TOTAL SIEMSA',
+      cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+      size: 90,
+    }),
+    columnHelper.accessor('INSTALLED SIEMSA', {
+      header: 'INSTALLED SIEMSA',
+      cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+      size: 90,
+    }),
+    columnHelper.accessor('PENDING SIEMSA', {
+      header: 'PENDING SIEMSA',
+      cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+      size: 90,
+    }),
+    columnHelper.accessor('QFC RELEASE', {
+      header: 'QFC RELEASE',
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
     }),

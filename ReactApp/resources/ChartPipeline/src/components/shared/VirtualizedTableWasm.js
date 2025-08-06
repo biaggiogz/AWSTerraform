@@ -305,12 +305,13 @@ const VirtualizedTableWasm = ({
                   {headerGroup.headers.map((header, headerIndex) => {
                     let countValue = '';
                     if (header.column.id === 'TOTAL INST') countValue = `TOTAL: ${frozenDynamicCounts.totalInst}`;
-                    else if (header.column.id === 'TOTAL SIEMSA') countValue = `TOTAL: ${frozenDynamicCounts.totalSiemsa}`;
-                    else if (header.column.id === 'INSTALLED SIEMSA') countValue = `TOTAL: ${frozenDynamicCounts.installedSiemsa}`;
                     else if (header.column.id === 'TOTAL TEIGA') countValue = `TOTAL: ${frozenDynamicCounts.totalTeiga}`;
                     else if (header.column.id === 'INSTALLED TEIGA') countValue = `TOTAL: ${frozenDynamicCounts.installedTeiga}`;
-                    else if (header.column.id === 'PENDING') countValue = `TOTAL: ${frozenDynamicCounts.pending}`;
-                    else if (header.column.id === 'DONE') countValue = `TOTAL: ${frozenDynamicCounts.done}`;
+                    else if (header.column.id === 'PENDING TEIGA') countValue = `TOTAL: ${frozenDynamicCounts.pendingTeiga}`;
+                    else if (header.column.id === 'TOTAL SIEMSA') countValue = `TOTAL: ${frozenDynamicCounts.totalSiemsa}`;
+                    else if (header.column.id === 'INSTALLED SIEMSA') countValue = `TOTAL: ${frozenDynamicCounts.installedSiemsa}`;
+                    else if (header.column.id === 'PENDING SIEMSA') countValue = `TOTAL: ${frozenDynamicCounts.pendingSiemsa}`;
+                    else if (header.column.id === 'QFC RELEASE') countValue = `TOTAL: ${frozenDynamicCounts.qfcRelease}`;
                     
                     return (
                       <Box
@@ -355,12 +356,13 @@ const VirtualizedTableWasm = ({
                     let countValue = '';
                     if (data && data.length > 0) {
                       if (header.column.id === 'TOTAL INST') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
-                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
                       else if (header.column.id === 'TOTAL TEIGA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
                       else if (header.column.id === 'INSTALLED TEIGA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
-                      else if (header.column.id === 'PENDING') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
-                      else if (header.column.id === 'DONE') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
+                      else if (header.column.id === 'PENDING TEIGA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['PENDING TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'PENDING SIEMSA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['PENDING SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'QFC RELEASE') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['QFC RELEASE']) || 0), 0)}`;
                     }
                     
                     return (
