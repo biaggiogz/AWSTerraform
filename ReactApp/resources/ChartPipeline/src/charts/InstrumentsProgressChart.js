@@ -91,7 +91,7 @@ const InstrumentsProgressChart = () => {
         backgroundColor: ['#015551', '#57B4BA'],
         borderColor: ['#015551', '#57B4BA'],
         borderWidth: 2,
-        weight: 0.7
+        weight: 0.9
       },
       // Inner Ring - TEIGA
       {
@@ -100,7 +100,7 @@ const InstrumentsProgressChart = () => {
         backgroundColor: ['#57564F', '#DDDAD0'],
         borderColor: ['#57564F', '#DDDAD0'],
         borderWidth: 2,
-        weight: 0.4
+        weight: 0.9
       }
     ]
   }), [calculateProgressData]);
