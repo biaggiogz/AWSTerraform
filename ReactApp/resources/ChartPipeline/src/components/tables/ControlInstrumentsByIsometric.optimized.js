@@ -100,7 +100,7 @@ const ControlInstrumentsByIsometric = () => {
   
   const columns = useMemo(() => [
     columnHelper.accessor('ISOMETRIC', {
-      header: 'ISOMETRIC',
+      header: 'MOUNTING ON ISO/EQUI/PACK',
       cell: info => {
         const isometric = info.getValue();
         return (
