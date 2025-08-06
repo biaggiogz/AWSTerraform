@@ -28,7 +28,11 @@ const useInstrumentsTableDataWasm = (tableType) => {
   // Get filter context
   const {
     selectedSubsystem,
+    selectedIsometric,
+    selectedTestPack,
     handleSubsystemClick,
+    handleTestPackClick,
+    onIsometricSelect,
     getSqlWhereClause,
     setTableData: setContextTableData,
     setGroupBy: setContextGroupBy
@@ -50,6 +54,26 @@ const useInstrumentsTableDataWasm = (tableType) => {
   // WASM-optimized data processing (currently disabled to prevent filtering issues)
   const [processedData, setProcessedData] = useState([]);
   const [processingTime, setProcessingTime] = useState(null);
+  
+  // Calculate frozen TAG INST count for details table
+  const frozenTagInstCount = useMemo(() => {
+    if (tableType !== 'details' || !rawData || rawData.length === 0) return 0;
+    const uniqueTags = new Set(
+      rawData
+        .map(row => row['TAG INST'])
+        .filter(tag => tag && tag !== '')
+    );
+    return uniqueTags.size;
+  }, [tableType, rawData]);
+  
+  // Calculate frozen control counts for control table
+  const frozenControlCounts = useMemo(() => {
+    if (tableType !== 'control' || !rawData || rawData.length === 0) return null;
+    return {
+      totalRecords: rawData.length,
+      qtyInst: rawData.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0)
+    };
+  }, [tableType, rawData]);
 
   useEffect(() => {
     // For now, just pass through the raw data without WASM filtering
@@ -69,6 +93,7 @@ const useInstrumentsTableDataWasm = (tableType) => {
   return {
     // Data
     data: processedData,
+    originalData: rawData,
     loading,
     error,
     loadTime,
@@ -76,7 +101,13 @@ const useInstrumentsTableDataWasm = (tableType) => {
     processingTime,
     wasmEnabled: wasmInitialized && (multiFilterWasm.isUsingWasm() || sqlEngineWasm.isUsingWasm()),
     
-
+    // Control-specific data
+    frozenControlCounts,
+    frozenTagInstCount,
+    selectedIsometric,
+    selectedTestPack,
+    handleTestPackClick,
+    onIsometricSelect,
     
     // Filter state
     selectedSubsystem,

@@ -33,6 +33,19 @@ class SimpleQueryOptimizer {
   }
 
   injectWhereClause(query, whereClause) {
+    // Handle control table's complex CTE query
+    if (query.includes('WITH inst_data AS')) {
+      // Find the WHERE clause in the CTE and add our condition
+      const cteWhereMatch = query.match(/(WHERE on_isoinst != 'W_ISO')/i);
+      if (cteWhereMatch) {
+        return query.replace(
+          /WHERE on_isoinst != 'W_ISO'/i,
+          `WHERE on_isoinst != 'W_ISO' AND ${whereClause.substring(6)}`
+        );
+      }
+    }
+    
+    // Handle simple queries
     if (query.includes('WHERE')) {
       return query.replace(/WHERE\s+/, `WHERE ${whereClause.substring(6)} AND `);
     }
