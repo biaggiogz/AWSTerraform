@@ -175,27 +175,63 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('INSTALLED', {
             header: 'INSTALLED',
-            size: 100,
-            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
+            size: 110,
+            cell: info => (
+                <Text
+                    fontSize="xs"
+                    textAlign="center"
+                    wordBreak="break-word"
+                    whiteSpace="normal"
+                >
+                    {info.getValue() || '-'}
+                </Text>
+            )
         }),
         lazosTableSqlColumnHelper.accessor('WIRED', {
             header: 'WIRED',
-            size: 80,
-            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
+            size: 100,
+            cell: info => (
+                <Text
+                    fontSize="xs"
+                    textAlign="center"
+                    wordBreak="break-word"
+                    whiteSpace="normal"
+                >
+                    {info.getValue() || '-'}
+                </Text>
+            )
         }),
         lazosTableSqlColumnHelper.accessor('CONNECTED', {
             header: 'CONNECTED',
-            size: 96,
-            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
+            size: 106,
+            cell: info => (
+                <Text
+                    fontSize="xs"
+                    textAlign="center"
+                    wordBreak="break-word"
+                    whiteSpace="normal"
+                >
+                    {info.getValue() || '-'}
+                </Text>
+            )
         }),
         lazosTableSqlColumnHelper.accessor('CABLE_TEST', {
             header: 'CABLE TEST',
             size: 96,
-            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
+            cell: info => (
+                <Text
+                    fontSize="xs"
+                    textAlign="center"
+                    wordBreak="break-word"
+                    whiteSpace="normal"
+                >
+                    {info.getValue() || '-'}
+                </Text>
+            )
         }),
         lazosTableSqlColumnHelper.accessor('QCF', {
             header: 'QCF',
-            size: 80,
+            size: 90,
             cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         lazosTableSqlColumnHelper.accessor('OK100', {
@@ -231,8 +267,17 @@ const LazosTableSqlLoopTestControl = () => {
         }),
         lazosTableSqlColumnHelper.accessor('DOSSIER', {
             header: 'DOSSIER',
-            size: 80,
-            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>,
+            size: 90,
+            cell: info => (
+                <Text
+                    fontSize="xs"
+                    textAlign="center"
+                    wordBreak="break-word"
+                    whiteSpace="normal"
+                >
+                    {info.getValue() || '-'}
+                </Text>
+            ),
         }),
         lazosTableSqlColumnHelper.accessor('TEST_LOOP', {
             header: 'TEST LOOP',
