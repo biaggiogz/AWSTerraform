@@ -296,12 +296,30 @@ const LazosTableSqlLoopTestControl = () => {
         lazosTableSqlColumnHelper.accessor('ACTION', {
             header: 'ACTION',
             size: 100,
-            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
+            cell: info => (
+                <Text
+                    fontSize="xs"
+                    textAlign="center"
+                    wordBreak="break-word"
+                    whiteSpace="normal"
+                >
+                    {info.getValue() || '-'}
+                </Text>
+            )
         }),
         lazosTableSqlColumnHelper.accessor('BY', {
             header: 'BY',
             size: 80,
-            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
+            cell: info => (
+                <Text
+                    fontSize="xs"
+                    textAlign="center"
+                    wordBreak="break-word"
+                    whiteSpace="normal"
+                >
+                    {info.getValue() || '-'}
+                </Text>
+            )
         }),
         lazosTableSqlColumnHelper.accessor('STATUS_CO', {
             header: 'Status C/O',
