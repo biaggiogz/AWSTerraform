@@ -165,6 +165,9 @@ const DetailsInstrumentsTable = () => {
       header: 'MOUNTING ON ISO/EQUI/PACK',
       cell: info => {
         const isometric = info.getValue();
+        if (isometric === 'WITHOUT ISOMETRIC') {
+          return <Text fontSize="xs" color="gray.500">{isometric}</Text>;
+        }
         return (
           <Button
             size="xs"
@@ -180,6 +183,7 @@ const DetailsInstrumentsTable = () => {
             height="18px"
             px={2}
             borderRadius="sm"
+            cursor="pointer"
           >
             {isometric}
           </Button>
