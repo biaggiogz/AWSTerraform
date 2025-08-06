@@ -94,8 +94,8 @@ const SubsystemCompletionChart = () => {
     labels: ['Fully Completed', 'Fully Pending'],
     datasets: [{
       data: [calculateCompletionData.completedCount, calculateCompletionData.pendingCount],
-      backgroundColor: ['#1DE9B6', '#FF168B'],
-      borderColor: ['#1DE9B6', '#FF168B'],
+      backgroundColor: ['#386641', '#F97A00'],
+      borderColor: ['#386641', '#F97A00'],
       borderWidth: 2
     }]
   }), [calculateCompletionData]);
@@ -134,12 +134,12 @@ const SubsystemCompletionChart = () => {
     <Box>
       {/* Chart container - matching LoopTestProgressChart structure exactly */}
       <Box p={4} borderWidth="1px" borderRadius="lg" bg="white"  mt={4}>
-        <Heading size="md" mb={2}>
+        <Heading size="md" mb={2} textAlign="center">
           SUBSYSTEM COMPLETION STATUS
         </Heading>
         
         {/* Summary statistics - matching LoopTestProgressChart */}
-        <VStack mb={4} align="flex-start">
+        <VStack mb={4} align="center">
           <Text fontSize="sm">
             <Badge colorScheme="blue" mr={2}>Total Subsystems:</Badge> {totalSubsystems}
             <Badge ml={2} colorScheme="green">Completion Rate: {totalSubsystems > 0 ? ((calculateCompletionData.completedCount / totalSubsystems) * 100).toFixed(1) : 0}%</Badge>

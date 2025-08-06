@@ -95,8 +95,8 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
     {
       label: 'TEST LOOP DONE (signals)',
       value: globalMetrics.testLoopSignalDone,
-      color: '#8B5CF6',
-      bgColor: 'rgba(139, 92, 246, 1)',
+      color: '#00809D',
+      bgColor: 'rgba(0, 128, 157, 1)',
       sortField: 'testLoopSignalDone'
     },
     {
@@ -110,15 +110,15 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
     {
       label: 'LOOP (signals) CONSTRUCTION DONE',
       value: globalMetrics.loopSignalDone,
-      color: '#1DE9B6',
-      bgColor: 'rgba(29, 233, 182, 1)',
+      color:  '#386641',
+      bgColor: 'rgba(56, 102, 65, 1)',
       sortField: 'loopSignalDone'
     },
     {
       label: 'LOOP (Signals) PENDING',
       value: globalMetrics.loopSignalPending,
-      color: '#FF168B',
-      bgColor: 'rgba(255, 22, 139, 1)',
+      color: '#F97A00',
+      bgColor: 'rgba(249, 122, 0, 1)',
       sortField: 'loopsSignalPending'
     },
 
