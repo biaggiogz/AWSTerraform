@@ -74,11 +74,11 @@ export const buildLoopTestProgressQuery = (whereClause) => {
   
   const query = `
     SELECT 
-      code_tlp AS "CODE",
+      CAST(code_tlp AS INTEGER) AS "CODE",
       subsystem AS "SUBSYSTEM", 
       tag_loop_tlp AS "TAG LOOP",
       area_tlp AS "AREA",
-      priority_tlp AS "PRIORITY",
+      CAST(priority_tlp AS INTEGER) AS "PRIORITY",
       hito_tlp AS "HITO",
       siemsa_tlp AS "SIEMSA",
       loop_tlp AS "LOOP",
