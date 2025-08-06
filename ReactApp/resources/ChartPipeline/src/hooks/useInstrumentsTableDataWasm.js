@@ -48,6 +48,11 @@ const useInstrumentsTableDataWasm = (tableType) => {
     loadTime,
     queryTime
   } = useInstrumentsDataLoader(tableType, whereClause, cacheKey);
+  
+  // Load unfiltered data for frozen counts
+  const {
+    data: unfilteredData
+  } = useInstrumentsDataLoader(tableType, '', `${tableType}_unfiltered`);
 
 
 
@@ -55,25 +60,25 @@ const useInstrumentsTableDataWasm = (tableType) => {
   const [processedData, setProcessedData] = useState([]);
   const [processingTime, setProcessingTime] = useState(null);
   
-  // Calculate frozen TAG INST count for details table
+  // Calculate frozen TAG INST count for details table from unfiltered data
   const frozenTagInstCount = useMemo(() => {
-    if (tableType !== 'details' || !rawData || rawData.length === 0) return 0;
+    if (tableType !== 'details' || !unfilteredData || unfilteredData.length === 0) return 0;
     const uniqueTags = new Set(
-      rawData
+      unfilteredData
         .map(row => row['TAG INST'])
         .filter(tag => tag && tag !== '')
     );
     return uniqueTags.size;
-  }, [tableType, rawData]);
+  }, [tableType, unfilteredData]);
   
-  // Calculate frozen control counts for control table
+  // Calculate frozen control counts for control table from unfiltered data
   const frozenControlCounts = useMemo(() => {
-    if (tableType !== 'control' || !rawData || rawData.length === 0) return null;
+    if (tableType !== 'control' || !unfilteredData || unfilteredData.length === 0) return null;
     return {
-      totalRecords: rawData.length,
-      qtyInst: rawData.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0)
+      totalRecords: unfilteredData.length,
+      qtyInst: unfilteredData.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0)
     };
-  }, [tableType, rawData]);
+  }, [tableType, unfilteredData]);
 
   useEffect(() => {
     // For now, just pass through the raw data without WASM filtering
@@ -94,6 +99,7 @@ const useInstrumentsTableDataWasm = (tableType) => {
     // Data
     data: processedData,
     originalData: rawData,
+    unfilteredData,
     loading,
     error,
     loadTime,

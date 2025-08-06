@@ -30,6 +30,7 @@ const ControlInstrumentsByIsometric = () => {
   const {
     data: tableData,
     originalData,
+    unfilteredData,
     loading,
     error,
     loadTime,
@@ -45,37 +46,37 @@ const ControlInstrumentsByIsometric = () => {
     onIsometricSelect
   } = useInstrumentsTableDataWasm('control');
 
-  // Calculate frozen QTY INST count from original unfiltered data
+  // Calculate frozen QTY INST count from truly unfiltered data
   const frozenQtyInstCount = useMemo(() => {
-    if (!originalData || originalData.length === 0) return 0;
-    return originalData.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0);
-  }, [originalData]);
+    if (!unfilteredData || unfilteredData.length === 0) return 0;
+    return unfilteredData.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0);
+  }, [unfilteredData]);
 
-  // Calculate frozen counts for additional columns from original unfiltered data
+  // Calculate frozen counts for additional columns from truly unfiltered data
   const frozenScopeTeigaCount = useMemo(() => {
-    if (!originalData || originalData.length === 0) return 0;
-    return originalData.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0);
-  }, [originalData]);
+    if (!unfilteredData || unfilteredData.length === 0) return 0;
+    return unfilteredData.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0);
+  }, [unfilteredData]);
 
   const frozenScopeSiemsaCount = useMemo(() => {
-    if (!originalData || originalData.length === 0) return 0;
-    return originalData.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0);
-  }, [originalData]);
+    if (!unfilteredData || unfilteredData.length === 0) return 0;
+    return unfilteredData.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0);
+  }, [unfilteredData]);
 
   const frozenInstalledTeigaCount = useMemo(() => {
-    if (!originalData || originalData.length === 0) return 0;
-    return originalData.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0);
-  }, [originalData]);
+    if (!unfilteredData || unfilteredData.length === 0) return 0;
+    return unfilteredData.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0);
+  }, [unfilteredData]);
 
   const frozenInstalledSiemsaCount = useMemo(() => {
-    if (!originalData || originalData.length === 0) return 0;
-    return originalData.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0);
-  }, [originalData]);
+    if (!unfilteredData || unfilteredData.length === 0) return 0;
+    return unfilteredData.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0);
+  }, [unfilteredData]);
 
   const frozenPendingCount = useMemo(() => {
-    if (!originalData || originalData.length === 0) return 0;
-    return originalData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0);
-  }, [originalData]);
+    if (!unfilteredData || unfilteredData.length === 0) return 0;
+    return unfilteredData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0);
+  }, [unfilteredData]);
 
   // Helper function to format timestamp to date
   const formatDate = (timestamp) => {

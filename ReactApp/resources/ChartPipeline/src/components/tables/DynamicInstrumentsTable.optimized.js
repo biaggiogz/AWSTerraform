@@ -26,6 +26,7 @@ const DynamicInstrumentsTable = () => {
   // Get data and filter integration with WASM optimization
   const {
     data: rawData,
+    unfilteredData,
     loading,
     error,
     loadTime,
@@ -42,20 +43,20 @@ const DynamicInstrumentsTable = () => {
   const [tableData, setTableData] = useState([]);
   const [expanded, setExpanded] = useState({});
 
-  // Calculate frozen sums from raw data (not affected by filters)
+  // Calculate frozen sums from truly unfiltered data (never affected by filters)
   const frozenDynamicCounts = useMemo(() => {
-    if (!rawData || rawData.length === 0) return null;
+    if (!unfilteredData || unfilteredData.length === 0) return null;
     
     return {
-      totalInst: rawData.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0),
-      totalSiemsa: rawData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0),
-      installedSiemsa: rawData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0),
-      totalTeiga: rawData.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0),
-      installedTeiga: rawData.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0),
-      pending: rawData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0),
-      done: rawData.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)
+      totalInst: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0),
+      totalSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0),
+      installedSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0),
+      totalTeiga: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0),
+      installedTeiga: unfilteredData.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0),
+      pending: unfilteredData.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0),
+      done: unfilteredData.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)
     };
-  }, [rawData]);
+  }, [unfilteredData]);
 
   // Simple grouping by SUBSYSTEM only
   const groupBySubsystem = useMemo(() => {

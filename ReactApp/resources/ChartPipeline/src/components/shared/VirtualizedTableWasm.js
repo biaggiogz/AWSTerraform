@@ -350,13 +350,13 @@ const VirtualizedTableWasm = ({
                   {headerGroup.headers.map((header, headerIndex) => {
                     let countValue = '';
                     if (data && data.length > 0) {
-                      if (header.column.id === 'TOTAL INST') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
-                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'TOTAL TEIGA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED TEIGA') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
-                      else if (header.column.id === 'PENDING') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
-                      else if (header.column.id === 'DONE') countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
+                      if (header.column.id === 'TOTAL INST') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL TEIGA') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED TEIGA') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'PENDING') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
+                      else if (header.column.id === 'DONE') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
                     }
                     
                     return (
@@ -458,17 +458,17 @@ const VirtualizedTableWasm = ({
                     if (data && data.length > 0) {
                       if (header.column.id === 'QTY INST') {
                         const currentCount = data.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0);
-                        countValue = `CURRENTLY: ${currentCount}`;
+                        countValue = `FILTERED: ${currentCount}`;
                       } else if (header.column.id === 'SCOPE BY TEIGA-TMI') {
-                        countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0)}`;
+                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0)}`;
                       } else if (header.column.id === 'SCOPE BY SIEMSA') {
-                        countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0)}`;
+                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0)}`;
                       } else if (header.column.id === 'INSTALLED BY TEIGA-TMI') {
-                        countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0)}`;
+                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0)}`;
                       } else if (header.column.id === 'INSTALLED BY SIEMSA') {
-                        countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0)}`;
+                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0)}`;
                       } else if (header.column.id === 'PENDING') {
-                        countValue = `CURRENTLY: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
+                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
                       }
                     }
                     
@@ -579,49 +579,49 @@ const VirtualizedTableWasm = ({
                         const value = row.INSTALLED;
                         return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                       }, 0);
-                      countValue = `CURRENTLY: ${currentCount}`;
+                      countValue = `FILTERED: ${currentCount}`;
                     } else if (header.column.id === 'WIRED' && data && showWiredCounts) {
                       const currentCount = data.reduce((sum, row) => {
                         const value = row.WIRED;
                         return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                       }, 0);
-                      countValue = `CURRENTLY: ${currentCount}`;
+                      countValue = `FILTERED: ${currentCount}`;
                     } else if (header.column.id === 'CONNECTED' && data && showConnectedCounts) {
                       const currentCount = data.reduce((sum, row) => {
                         const value = row.CONNECTED;
                         return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                       }, 0);
-                      countValue = `CURRENTLY: ${currentCount}`;
+                      countValue = `FILTERED: ${currentCount}`;
                     } else if (header.column.id === 'CABLE_TEST' && data && showCableTestCounts) {
                       const currentCount = data.reduce((sum, row) => {
                         const value = row.CABLE_TEST;
                         return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                       }, 0);
-                      countValue = `CURRENTLY: ${currentCount}`;
+                      countValue = `FILTERED: ${currentCount}`;
                     } else if (header.column.id === 'QCF' && data && showQcfCounts) {
                       const currentCount = data.reduce((sum, row) => {
                         const value = row.QCF;
                         return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                       }, 0);
-                      countValue = `CURRENTLY: ${currentCount}`;
+                      countValue = `FILTERED: ${currentCount}`;
                     } else if (header.column.id === 'OK100' && data && showOk100Counts) {
                       const currentCount = data.reduce((sum, row) => {
                         const value = parseFloat(row.OK100) || 0;
                         return sum + (value === 1.0 ? 1 : 0);
                       }, 0);
-                      countValue = `CURRENTLY: ${currentCount}`;
+                      countValue = `FILTERED: ${currentCount}`;
                     } else if (header.column.id === 'DOSSIER' && data && showDossierCounts) {
                       const currentCount = data.reduce((sum, row) => {
                         const value = row.DOSSIER;
                         return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                       }, 0);
-                      countValue = `CURRENTLY: ${currentCount}`;
+                      countValue = `FILTERED: ${currentCount}`;
                     } else if (header.column.id === 'TEST_LOOP' && data && showTestLoopCounts) {
                       const currentCount = data.reduce((sum, row) => {
                         const value = row.TEST_LOOP;
                         return sum + (value && value !== '-' && value !== '' ? 1 : 0);
                       }, 0);
-                      countValue = `CURRENTLY: ${currentCount}`;
+                      countValue = `FILTERED: ${currentCount}`;
                     }
                     
                     return (
