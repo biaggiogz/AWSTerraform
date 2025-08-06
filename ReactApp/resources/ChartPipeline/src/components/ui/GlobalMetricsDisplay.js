@@ -88,8 +88,8 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
     {
       label: 'TOTAL LOOP (signals)',
       value: globalMetrics.totalLoopSignal,
-      color: '#C4E1E6',
-      bgColor: 'rgba(196, 225, 230, 1)',
+      color: '#213448',
+      bgColor: 'rgba(33, 52, 72, 1)',
       sortField: 'totalLoops'
     },
     {
@@ -102,8 +102,8 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
     {
       label: 'DOSSIER COMPLETED',
       value: globalMetrics.dossierCompleted,
-      color: '#B9D4AA',
-      bgColor: 'rgba(185, 212, 170, 1)',
+      color: '#57564F',
+      bgColor: 'rgba(87, 86, 79, 1)',
       sortField: 'dossierCompleted'
     },
       //
@@ -181,11 +181,11 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
                 size="sm"
                 variant={progressFilter === metric.label ? "solid" : "outline"}
                 borderColor={metric.color}
-                color={progressFilter === metric.label ? "white" : "black"}
+                color="white"
                 bg={progressFilter === metric.label ? metric.color : metric.bgColor}
                 _hover={{
                   bg: metric.color,
-                  color: "black"
+                  color: "white"
                 }}
                 fontSize="xs"
                 fontWeight="medium"

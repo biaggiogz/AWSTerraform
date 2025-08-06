@@ -206,8 +206,8 @@ const LoopTestProgressChart = ({
       {
         label: 'TOTAL LOOP (signals)',
         data: sortedCompleteMetrics.map(item => item.totalLoops),
-        backgroundColor: progressFilter && progressFilter !== 'TOTAL LOOP (signals)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
-        borderColor: progressFilter && progressFilter !== 'TOTAL LOOP (signals)' ? 'rgba(196, 225, 230, 1)' : '#C4E1E6',
+        backgroundColor: progressFilter && progressFilter !== 'TOTAL LOOP (signals)' ? 'rgba(33, 52, 72, 1)' : '#213448',
+        borderColor: progressFilter && progressFilter !== 'TOTAL LOOP (signals)' ? 'rgba(33, 52, 72, 1)' : '#213448',
         borderWidth: 1,
         sortField: 'totalLoops',
         hidden: progressFilter && progressFilter !== 'TOTAL LOOP (signals)'
@@ -242,8 +242,8 @@ const LoopTestProgressChart = ({
       {
         label: 'DOSSIER COMPLETED',
         data: sortedCompleteMetrics.map(item => item.dossierCompleted),
-        backgroundColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#386641',
-        borderColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#386641',
+        backgroundColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#57564F',
+        borderColor: progressFilter && progressFilter !== 'DOSSIER COMPLETED' ? 'rgba(185, 212, 170, 1)' : '#57564F',
         borderWidth: 1,
         sortField: 'dossierCompleted',
         hidden: progressFilter && progressFilter !== 'DOSSIER COMPLETED'
