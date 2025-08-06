@@ -110,6 +110,15 @@ const LazosTableSqlLoopTestControl = () => {
             return 'Invalid date';
         }
     };
+
+    // Helper function to format text with timestamp
+    const formatTextWithTimestamp = (value) => {
+        if (!value) return '-';
+        // Replace timestamp pattern (YYYY-MM-DD HH:MM:SS) with just date (YYYY-MM-DD)
+        return value.replace(/\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}/g, (match) => {
+            return match.split(' ')[0];
+        });
+    };
     // Define columns using TanStack's column helper
     const lazosTableSqlColumnHelper = createColumnHelper();
 
@@ -183,7 +192,7 @@ const LazosTableSqlLoopTestControl = () => {
                     wordBreak="break-word"
                     whiteSpace="normal"
                 >
-                    {info.getValue() || '-'}
+                    {formatTextWithTimestamp(info.getValue())}
                 </Text>
             )
         }),
@@ -197,7 +206,7 @@ const LazosTableSqlLoopTestControl = () => {
                     wordBreak="break-word"
                     whiteSpace="normal"
                 >
-                    {info.getValue() || '-'}
+                    {formatTextWithTimestamp(info.getValue())}
                 </Text>
             )
         }),
@@ -211,7 +220,7 @@ const LazosTableSqlLoopTestControl = () => {
                     wordBreak="break-word"
                     whiteSpace="normal"
                 >
-                    {info.getValue() || '-'}
+                    {formatTextWithTimestamp(info.getValue())}
                 </Text>
             )
         }),
@@ -225,7 +234,7 @@ const LazosTableSqlLoopTestControl = () => {
                     wordBreak="break-word"
                     whiteSpace="normal"
                 >
-                    {info.getValue() || '-'}
+                    {formatTextWithTimestamp(info.getValue())}
                 </Text>
             )
         }),
@@ -275,7 +284,7 @@ const LazosTableSqlLoopTestControl = () => {
                     wordBreak="break-word"
                     whiteSpace="normal"
                 >
-                    {info.getValue() || '-'}
+                    {formatTextWithTimestamp(info.getValue())}
                 </Text>
             ),
         }),
