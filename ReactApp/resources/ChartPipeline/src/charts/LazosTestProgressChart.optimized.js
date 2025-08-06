@@ -304,16 +304,7 @@ const LoopTestProgressChart = ({
         },
         // Configure the datalabels plugin
         datalabels: {
-          color: function(context) {
-            // Choose text color based on background color for better contrast
-            const backgroundColor = context.dataset.backgroundColor;
-            // For dark backgrounds (like blue), use white text
-            if (backgroundColor === '#3B4CCA') {
-              return 'white';
-            }
-            // For light backgrounds, use dark text
-            return '#333333';
-          },
+          color: 'white',
           font: {
             weight: 'bold',
             size: 11
