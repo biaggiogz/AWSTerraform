@@ -7,12 +7,16 @@ import {
   HStack,
   Spinner,
   Center,
+  IconButton,
 } from '@chakra-ui/react';
+import { MdCategory } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
 import useInstrumentsTableDataWasm from '../../hooks/useInstrumentsTableDataWasm';
 import PerformanceMetricWasm from '../shared/PerformanceMetricWasm';
 import SubsystemCell from '../shared/SubsystemCell';
 import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
+import InstrumentsSubsystemFilter from '../filters/InstrumentsSubsystemFilter';
+import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 
 
 
@@ -39,8 +43,16 @@ const DynamicInstrumentsTable = () => {
     setContextGroupBy
   } = useInstrumentsTableDataWasm('dynamic');
 
+  // Get subsystem filter context
+  const {
+    isSubsystemFilterVisible,
+    setIsSubsystemFilterVisible,
+    subsystemFilteredData,
+    setSubsystemFilteredData
+  } = useInstrumentsTableFilterContext();
+
   // State declarations
-  const [tableData, setTableData] = useState([]);
+  const [baseTableData, setBaseTableData] = useState([]);
   const [expanded, setExpanded] = useState({});
 
   // Calculate frozen sums from truly unfiltered data (never affected by filters)
@@ -95,11 +107,18 @@ const DynamicInstrumentsTable = () => {
   // Apply grouping when data changes
   useEffect(() => {
     if (rawData.length > 0) {
-      setTableData(groupBySubsystem);
+      setBaseTableData(groupBySubsystem);
       setContextTableData(groupBySubsystem);
       setContextGroupBy(['SUBSYSTEM']);
     }
   }, [rawData, groupBySubsystem, setContextTableData, setContextGroupBy]);
+
+  // Apply subsystem filter
+  const tableData = useMemo(() => {
+    if (subsystemFilteredData.length === 0) return baseTableData;
+    const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
+    return baseTableData.filter(row => subsystemSet.has(row.SUBSYSTEM));
+  }, [baseTableData, subsystemFilteredData]);
 
 
 
@@ -193,11 +212,29 @@ const DynamicInstrumentsTable = () => {
         <HStack justify="space-between" align="center" mb={4}>
           <Heading size="md" color="gray.700">Dynamic Instruments Table</Heading>
           <HStack>
+            <IconButton
+              icon={<MdCategory />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (isSubsystemFilterVisible) {
+                  setSubsystemFilteredData([]);
+                }
+                setIsSubsystemFilterVisible(!isSubsystemFilterVisible);
+              }}
+              aria-label="Toggle subsystem filter"
+              title="Subsystem Filter"
+            />
             {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
             {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
               {tableData.length} / {rawData.length} Records
             </Badge>
+            {subsystemFilteredData.length > 0 && (
+              <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
+                Filtered from {baseTableData.length}
+              </Badge>
+            )}
           </HStack>
         </HStack>
 
@@ -210,6 +247,16 @@ const DynamicInstrumentsTable = () => {
           height="500px"
           showDynamicCounts={true}
           frozenDynamicCounts={frozenDynamicCounts}
+        />
+
+        <InstrumentsSubsystemFilter
+          data={rawData}
+          onFilterChange={setSubsystemFilteredData}
+          isVisible={isSubsystemFilterVisible}
+          onClose={() => {
+            setIsSubsystemFilterVisible(false);
+            setSubsystemFilteredData([]);
+          }}
         />
       </Box>
   );

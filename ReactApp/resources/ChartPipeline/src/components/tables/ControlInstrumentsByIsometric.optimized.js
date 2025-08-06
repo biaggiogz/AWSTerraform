@@ -8,7 +8,9 @@ import {
   Spinner,
   Center,
   Button,
+  IconButton,
 } from '@chakra-ui/react';
+import { MdCategory } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
 import useInstrumentsTableDataWasm from '../../hooks/useInstrumentsTableDataWasm';
 import PerformanceMetricWasm from '../shared/PerformanceMetricWasm';
@@ -16,6 +18,8 @@ import SubsystemCell from '../shared/SubsystemCell';
 import TestPackCell from '../shared/TestPackCell';
 import TestPackProgressCell from '../shared/TestPackProgressCell';
 import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
+import InstrumentsSubsystemFilter from '../filters/InstrumentsSubsystemFilter';
+import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 
 
 
@@ -28,7 +32,7 @@ import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
 const ControlInstrumentsByIsometric = () => {
   // Get data and filter integration with WASM optimization
   const {
-    data: tableData,
+    data: rawTableData,
     originalData,
     unfilteredData,
     loading,
@@ -45,6 +49,21 @@ const ControlInstrumentsByIsometric = () => {
     handleSubsystemClick,
     onIsometricSelect
   } = useInstrumentsTableDataWasm('control');
+
+  // Get subsystem filter context
+  const {
+    isSubsystemFilterVisible,
+    setIsSubsystemFilterVisible,
+    subsystemFilteredData,
+    setSubsystemFilteredData
+  } = useInstrumentsTableFilterContext();
+
+  // Apply subsystem filter
+  const tableData = useMemo(() => {
+    if (subsystemFilteredData.length === 0) return rawTableData;
+    const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
+    return rawTableData.filter(row => subsystemSet.has(row.SUBSYSTEM));
+  }, [rawTableData, subsystemFilteredData]);
 
   // Calculate frozen QTY INST count from truly unfiltered data
   const frozenQtyInstCount = useMemo(() => {
@@ -353,11 +372,29 @@ const ControlInstrumentsByIsometric = () => {
       <HStack justify="space-between" align="center" mb={4}>
         <Heading size="md" color="gray.700">Controls Instruments By Isometric</Heading>
         <HStack>
+          <IconButton
+            icon={<MdCategory />}
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              if (isSubsystemFilterVisible) {
+                setSubsystemFilteredData([]);
+              }
+              setIsSubsystemFilterVisible(!isSubsystemFilterVisible);
+            }}
+            aria-label="Toggle subsystem filter"
+            title="Subsystem Filter"
+          />
           {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
           {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
           <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
             {tableData.length} Records
           </Badge>
+          {subsystemFilteredData.length > 0 && (
+            <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
+              Filtered from {rawTableData.length}
+            </Badge>
+          )}
         </HStack>
       </HStack>
 
@@ -377,6 +414,16 @@ const ControlInstrumentsByIsometric = () => {
         frozenInstalledTeigaCount={frozenInstalledTeigaCount}
         frozenInstalledSiemsaCount={frozenInstalledSiemsaCount}
         frozenPendingCount={frozenPendingCount}
+      />
+
+      <InstrumentsSubsystemFilter
+        data={rawTableData}
+        onFilterChange={setSubsystemFilteredData}
+        isVisible={isSubsystemFilterVisible}
+        onClose={() => {
+          setIsSubsystemFilterVisible(false);
+          setSubsystemFilteredData([]);
+        }}
       />
     </Box>
   );

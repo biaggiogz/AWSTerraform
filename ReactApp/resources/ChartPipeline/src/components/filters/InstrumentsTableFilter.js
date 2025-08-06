@@ -16,6 +16,10 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
   const [selectedTestPack, setSelectedTestPack] = useState(null);
   const [selectedSubsystem, setSelectedSubsystem] = useState(null);
 
+  // Subsystem filter state
+  const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
+  const [subsystemFilteredData, setSubsystemFilteredData] = useState([]);
+
   // Table data for chart visualization
   const [tableData, setTableData] = useState([]);
   const [groupBy, setGroupBy] = useState(['SUBSYSTEM', 'HITO']);
@@ -142,6 +146,12 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
     selectedTestPack,
     selectedSubsystem,
 
+    // Subsystem filter state
+    isSubsystemFilterVisible,
+    setIsSubsystemFilterVisible,
+    subsystemFilteredData,
+    setSubsystemFilteredData,
+
     // Filter handlers
     onIsometricSelect,
     handleTestPackClick,
@@ -165,6 +175,10 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
     selectedIsometric,
     selectedTestPack,
     selectedSubsystem,
+    isSubsystemFilterVisible,
+    setIsSubsystemFilterVisible,
+    subsystemFilteredData,
+    setSubsystemFilteredData,
     onIsometricSelect,
     handleTestPackClick,
     handleSubsystemClick,
