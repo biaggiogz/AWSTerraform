@@ -287,7 +287,26 @@ def lambda_handler(event, context):
                 csv_key = f"processedPython/{file_id}_{sheet_name}.csv"
                 save_csv_to_s3(df, bucket, csv_key)
                 parquet_keys.append(csv_key)
-            
+
+                # Copy ssm.csv to data/ folder
+                data_csv_key = "data/ssm.csv"
+                s3_client.copy_object(
+                    CopySource={'Bucket': bucket, 'Key': csv_key},
+                    Bucket=bucket,
+                    Key=data_csv_key
+                )
+                logger.info(f"Copied SSM CSV to {data_csv_key}")
+
+            # Copy master_subsystem.parquet to data/ folder
+            if sheet_name == 'master_subsystem':
+                data_parquet_key = "data/master_subsystem.parquet"
+                s3_client.copy_object(
+                    CopySource={'Bucket': bucket, 'Key': parquet_key},
+                    Bucket=bucket,
+                    Key=data_parquet_key
+                )
+                logger.info(f"Copied master_subsystem parquet to {data_parquet_key}")
+
             # Create sheet metadata
             sheet_metadata = {
                 'file_id': file_id,
