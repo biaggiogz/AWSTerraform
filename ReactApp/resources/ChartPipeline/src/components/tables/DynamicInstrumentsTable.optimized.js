@@ -8,6 +8,7 @@ import {
   Spinner,
   Center,
   IconButton,
+  VStack,
 } from '@chakra-ui/react';
 import { MdCategory } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
@@ -16,6 +17,7 @@ import PerformanceMetricWasm from '../shared/PerformanceMetricWasm';
 import SubsystemCell from '../shared/SubsystemCell';
 import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
 import InstrumentsSubsystemFilter from '../filters/InstrumentsSubsystemFilter';
+import InstrumentsProgressChart from '../../charts/InstrumentsProgressChart';
 import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 
 
@@ -119,6 +121,11 @@ const DynamicInstrumentsTable = () => {
     const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
     return baseTableData.filter(row => subsystemSet.has(row.SUBSYSTEM));
   }, [baseTableData, subsystemFilteredData]);
+
+  // Update context table data for chart
+  useEffect(() => {
+    setContextTableData(tableData);
+  }, [tableData, setContextTableData]);
 
 
 
@@ -238,16 +245,23 @@ const DynamicInstrumentsTable = () => {
           </HStack>
         </HStack>
 
-        <VirtualizedTableWasm
-          data={tableData}
-          columns={columns}
-          expanded={expanded}
-          onExpandedChange={setExpanded}
-          width="800px"
-          height="500px"
-          showDynamicCounts={true}
-          frozenDynamicCounts={frozenDynamicCounts}
-        />
+        <HStack spacing={4} align="flex-start">
+          <Box flex="2">
+            <VirtualizedTableWasm
+              data={tableData}
+              columns={columns}
+              expanded={expanded}
+              onExpandedChange={setExpanded}
+              width="100%"
+              height="500px"
+              showDynamicCounts={true}
+              frozenDynamicCounts={frozenDynamicCounts}
+            />
+          </Box>
+          <Box flex="1">
+            <InstrumentsProgressChart />
+          </Box>
+        </HStack>
 
         <InstrumentsSubsystemFilter
           data={rawData}

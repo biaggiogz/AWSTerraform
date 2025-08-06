@@ -82,12 +82,16 @@ const VirtualizedTableWasm = ({
 
   const { rows } = table.getRowModel();
 
+  // Calculate total count rows needed
+  const hasFrozenCounts = (showInstalledCounts && frozenInstalledCount) || (showWiredCounts && frozenWiredCount) || (showConnectedCounts && frozenConnectedCount) || (showCableTestCounts && frozenCableTestCount) || (showQcfCounts && frozenQcfCount) || (showOk100Counts && frozenOk100Count) || (showDossierCounts && frozenDossierCount) || (showTestLoopCounts && frozenTestLoopCount);
+  const hasResponsiveCounts = showInstalledCounts || showWiredCounts || showConnectedCounts || showCableTestCounts || showQcfCounts || showOk100Counts || showDossierCounts || showTestLoopCounts;
+  const countRowsCount = (hasFrozenCounts ? 1 : 0) + (hasResponsiveCounts ? 1 : 0);
+
   const rowVirtualizer = useVirtualizer({
-    count: rows.length,
+    count: rows.length + countRowsCount,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: (index) => optimizedRowHeights[index] || 30,
+    estimateSize: (index) => index < countRowsCount ? 30 : (optimizedRowHeights[index - countRowsCount] || 30),
     overscan: 10,
-    // Remove expensive DOM measurements
     measureElement: undefined,
   });
 
@@ -350,13 +354,13 @@ const VirtualizedTableWasm = ({
                   {headerGroup.headers.map((header, headerIndex) => {
                     let countValue = '';
                     if (data && data.length > 0) {
-                      if (header.column.id === 'TOTAL INST') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
-                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
-                      else if (header.column.id === 'TOTAL TEIGA') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
-                      else if (header.column.id === 'INSTALLED TEIGA') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
-                      else if (header.column.id === 'PENDING') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
-                      else if (header.column.id === 'DONE') countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
+                      if (header.column.id === 'TOTAL INST') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL SIEMSA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
+                      else if (header.column.id === 'TOTAL TEIGA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'INSTALLED TEIGA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED TEIGA']) || 0), 0)}`;
+                      else if (header.column.id === 'PENDING') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
+                      else if (header.column.id === 'DONE') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['DONE']) || 0), 0)}`;
                     }
                     
                     return (
@@ -458,17 +462,17 @@ const VirtualizedTableWasm = ({
                     if (data && data.length > 0) {
                       if (header.column.id === 'QTY INST') {
                         const currentCount = data.reduce((sum, row) => sum + (Number(row['QTY INST']) || 0), 0);
-                        countValue = `FILTERED: ${currentCount}`;
+                        countValue = `CURRENLTY: ${currentCount}`;
                       } else if (header.column.id === 'SCOPE BY TEIGA-TMI') {
-                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0)}`;
+                        countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY TEIGA-TMI']) || 0), 0)}`;
                       } else if (header.column.id === 'SCOPE BY SIEMSA') {
-                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0)}`;
+                        countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['SCOPE BY SIEMSA']) || 0), 0)}`;
                       } else if (header.column.id === 'INSTALLED BY TEIGA-TMI') {
-                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0)}`;
+                        countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY TEIGA-TMI']) || 0), 0)}`;
                       } else if (header.column.id === 'INSTALLED BY SIEMSA') {
-                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0)}`;
+                        countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED BY SIEMSA']) || 0), 0)}`;
                       } else if (header.column.id === 'PENDING') {
-                        countValue = `FILTERED: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
+                        countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['PENDING']) || 0), 0)}`;
                       }
                     }
                     
@@ -508,155 +512,7 @@ const VirtualizedTableWasm = ({
 
 
 
-          {/* Frozen Count Row for INSTALLED, WIRED, CONNECTED, CABLE_TEST, QCF, OK100, DOSSIER and TEST_LOOP */}
-          {(showInstalledCounts && frozenInstalledCount) || (showWiredCounts && frozenWiredCount) || (showConnectedCounts && frozenConnectedCount) || (showCableTestCounts && frozenCableTestCount) || (showQcfCounts && frozenQcfCount) || (showOk100Counts && frozenOk100Count) || (showDossierCounts && frozenDossierCount) || (showTestLoopCounts && frozenTestLoopCount) ? (
-            <React.Fragment>
-              {table.getHeaderGroups().map(headerGroup => (
-                <React.Fragment key={`frozen-count-${headerGroup.id}`}>
-                  {headerGroup.headers.map((header) => {
-                    let countValue = '';
-                    if (header.column.id === 'INSTALLED' && frozenInstalledCount) {
-                      countValue = `TOTAL: ${frozenInstalledCount}`;
-                    } else if (header.column.id === 'WIRED' && frozenWiredCount) {
-                      countValue = `TOTAL: ${frozenWiredCount}`;
-                    } else if (header.column.id === 'CONNECTED' && frozenConnectedCount) {
-                      countValue = `TOTAL: ${frozenConnectedCount}`;
-                    } else if (header.column.id === 'CABLE_TEST' && frozenCableTestCount) {
-                      countValue = `TOTAL: ${frozenCableTestCount}`;
-                    } else if (header.column.id === 'QCF' && frozenQcfCount) {
-                      countValue = `TOTAL: ${frozenQcfCount}`;
-                    } else if (header.column.id === 'OK100' && frozenOk100Count) {
-                      countValue = `TOTAL: ${frozenOk100Count}`;
-                    } else if (header.column.id === 'DOSSIER' && frozenDossierCount) {
-                      countValue = `TOTAL: ${frozenDossierCount}`;
-                    } else if (header.column.id === 'TEST_LOOP' && frozenTestLoopCount) {
-                      countValue = `TOTAL: ${frozenTestLoopCount}`;
-                    }
-                    
-                    return (
-                      <Box
-                        key={`frozen-count-${header.id}`}
-                        bg="#A9D6E5"
-                        color="white"
-                        p={2}
-                        textAlign="center"
-                        fontWeight="bold"
-                        fontSize="xs"
-                        borderRight="1px solid"
-                        borderColor="gray.800"
-                        borderBottom="1px solid"
-                        boxSizing="border-box"
-                        width="100%"
-                        height="100%"
-                        style={{
-                          position: 'sticky',
-                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + 60}px` : `${45 + 60}px`,
-                          zIndex: 1,
-                          minHeight: '30px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {countValue}
-                      </Box>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </React.Fragment>
-          ) : null}
 
-          {/* Responsive Count Row for INSTALLED, WIRED, CONNECTED, CABLE_TEST, QCF, OK100, DOSSIER and TEST_LOOP */}
-          {showInstalledCounts || showWiredCounts || showConnectedCounts || showCableTestCounts || showQcfCounts || showOk100Counts || showDossierCounts || showTestLoopCounts ? (
-            <React.Fragment>
-              {table.getHeaderGroups().map(headerGroup => (
-                <React.Fragment key={`current-count-${headerGroup.id}`}>
-                  {headerGroup.headers.map((header) => {
-                    let countValue = '';
-                    if (header.column.id === 'INSTALLED' && data && showInstalledCounts) {
-                      const currentCount = data.reduce((sum, row) => {
-                        const value = row.INSTALLED;
-                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
-                      }, 0);
-                      countValue = `FILTERED: ${currentCount}`;
-                    } else if (header.column.id === 'WIRED' && data && showWiredCounts) {
-                      const currentCount = data.reduce((sum, row) => {
-                        const value = row.WIRED;
-                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
-                      }, 0);
-                      countValue = `FILTERED: ${currentCount}`;
-                    } else if (header.column.id === 'CONNECTED' && data && showConnectedCounts) {
-                      const currentCount = data.reduce((sum, row) => {
-                        const value = row.CONNECTED;
-                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
-                      }, 0);
-                      countValue = `FILTERED: ${currentCount}`;
-                    } else if (header.column.id === 'CABLE_TEST' && data && showCableTestCounts) {
-                      const currentCount = data.reduce((sum, row) => {
-                        const value = row.CABLE_TEST;
-                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
-                      }, 0);
-                      countValue = `FILTERED: ${currentCount}`;
-                    } else if (header.column.id === 'QCF' && data && showQcfCounts) {
-                      const currentCount = data.reduce((sum, row) => {
-                        const value = row.QCF;
-                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
-                      }, 0);
-                      countValue = `FILTERED: ${currentCount}`;
-                    } else if (header.column.id === 'OK100' && data && showOk100Counts) {
-                      const currentCount = data.reduce((sum, row) => {
-                        const value = parseFloat(row.OK100) || 0;
-                        return sum + (value === 1.0 ? 1 : 0);
-                      }, 0);
-                      countValue = `FILTERED: ${currentCount}`;
-                    } else if (header.column.id === 'DOSSIER' && data && showDossierCounts) {
-                      const currentCount = data.reduce((sum, row) => {
-                        const value = row.DOSSIER;
-                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
-                      }, 0);
-                      countValue = `FILTERED: ${currentCount}`;
-                    } else if (header.column.id === 'TEST_LOOP' && data && showTestLoopCounts) {
-                      const currentCount = data.reduce((sum, row) => {
-                        const value = row.TEST_LOOP;
-                        return sum + (value && value !== '-' && value !== '' ? 1 : 0);
-                      }, 0);
-                      countValue = `FILTERED: ${currentCount}`;
-                    }
-                    
-                    return (
-                      <Box
-                        key={`current-count-${header.id}`}
-                        bg="#61A5C2"
-                        color="white"
-                        p={2}
-                        textAlign="center"
-                        fontWeight="bold"
-                        fontSize="xs"
-                        borderRight="1px solid"
-                        borderColor="gray.800"
-                        borderBottom="1px solid"
-                        boxSizing="border-box"
-                        width="100%"
-                        height="100%"
-                        style={{
-                          position: 'sticky',
-                          top: multiLevelHeaders ? `${multiLevelHeaders.length * 40 + 45 + 60 + ((frozenInstalledCount || frozenWiredCount || frozenConnectedCount || frozenCableTestCount || frozenQcfCount || frozenOk100Count || frozenDossierCount || frozenTestLoopCount) ? 30 : 0)}px` : `${45 + 60 + ((frozenInstalledCount || frozenWiredCount || frozenConnectedCount || frozenCableTestCount || frozenQcfCount || frozenOk100Count || frozenDossierCount || frozenTestLoopCount) ? 30 : 0)}px`,
-                          zIndex: 1,
-                          minHeight: '30px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        {countValue}
-                      </Box>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </React.Fragment>
-          ) : null}
 
           <Box
             style={{
@@ -666,7 +522,110 @@ const VirtualizedTableWasm = ({
             }}
           >
             {rowVirtualizer.getVirtualItems().map(virtualRow => {
-              const row = rows[virtualRow.index];
+              // Handle count rows
+              if (virtualRow.index < countRowsCount) {
+                const isFrozenRow = virtualRow.index === 0 && hasFrozenCounts;
+                const isResponsiveRow = (virtualRow.index === 0 && !hasFrozenCounts) || (virtualRow.index === 1 && hasFrozenCounts);
+                
+                return (
+                  <Box
+                    key={`count-row-${virtualRow.index}`}
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      minHeight: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                      display: 'grid',
+                      gridTemplateColumns: table.getAllColumns().map(col => `${col.getSize() || 150}px`).join(' '),
+                      alignItems: 'stretch',
+                      backgroundColor: 'transparent',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    {table.getAllColumns().map((column, cellIndex) => {
+                      let countValue = '';
+                      
+                      if (isFrozenRow) {
+                        if (column.id === 'INSTALLED' && frozenInstalledCount) countValue = `TOTAL: ${frozenInstalledCount}`;
+                        else if (column.id === 'WIRED' && frozenWiredCount) countValue = `TOTAL: ${frozenWiredCount}`;
+                        else if (column.id === 'CONNECTED' && frozenConnectedCount) countValue = `TOTAL: ${frozenConnectedCount}`;
+                        else if (column.id === 'CABLE_TEST' && frozenCableTestCount) countValue = `TOTAL: ${frozenCableTestCount}`;
+                        else if (column.id === 'QCF' && frozenQcfCount) countValue = `TOTAL: ${frozenQcfCount}`;
+                        else if (column.id === 'OK100' && frozenOk100Count) countValue = `TOTAL: ${frozenOk100Count}`;
+                        else if (column.id === 'DOSSIER' && frozenDossierCount) countValue = `TOTAL: ${frozenDossierCount}`;
+                        else if (column.id === 'TEST_LOOP' && frozenTestLoopCount) countValue = `TOTAL: ${frozenTestLoopCount}`;
+                      } else if (isResponsiveRow && data) {
+                        if (column.id === 'INSTALLED' && showInstalledCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row.INSTALLED && row.INSTALLED !== '-' && row.INSTALLED !== '' ? 1 : 0), 0);
+                          countValue = `CURRENLTY: ${currentCount}`;
+                        } else if (column.id === 'WIRED' && showWiredCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row.WIRED && row.WIRED !== '-' && row.WIRED !== '' ? 1 : 0), 0);
+                          countValue = `CURRENLTY: ${currentCount}`;
+                        } else if (column.id === 'CONNECTED' && showConnectedCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row.CONNECTED && row.CONNECTED !== '-' && row.CONNECTED !== '' ? 1 : 0), 0);
+                          countValue = `CURRENLTY: ${currentCount}`;
+                        } else if (column.id === 'CABLE_TEST' && showCableTestCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row.CABLE_TEST && row.CABLE_TEST !== '-' && row.CABLE_TEST !== '' ? 1 : 0), 0);
+                          countValue = `CURRENLTY: ${currentCount}`;
+                        } else if (column.id === 'QCF' && showQcfCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row.QCF && row.QCF !== '-' && row.QCF !== '' ? 1 : 0), 0);
+                          countValue = `CURRENLTY: ${currentCount}`;
+                        } else if (column.id === 'OK100' && showOk100Counts) {
+                          const currentCount = data.reduce((sum, row) => sum + (parseFloat(row.OK100) === 1.0 ? 1 : 0), 0);
+                          countValue = `CURRENLTY: ${currentCount}`;
+                        } else if (column.id === 'DOSSIER' && showDossierCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row.DOSSIER && row.DOSSIER !== '-' && row.DOSSIER !== '' ? 1 : 0), 0);
+                          countValue = `CURRENLTY: ${currentCount}`;
+                        } else if (column.id === 'TEST_LOOP' && showTestLoopCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row.TEST_LOOP && row.TEST_LOOP !== '-' && row.TEST_LOOP !== '' ? 1 : 0), 0);
+                          countValue = `CURRENLTY: ${currentCount}`;
+                        }
+                      }
+                      
+                      // Find which header group this column belongs to
+                      let headerColor = '#ffffff';
+                      if (multiLevelHeaders && multiLevelHeaders[0]) {
+                        const header = multiLevelHeaders[0].headers.find(h => 
+                          cellIndex >= h.startCol && cellIndex < h.startCol + h.colspan
+                        );
+                        if (header) {
+                          headerColor = header.color + '40'; // Add transparency
+                        }
+                      }
+                      
+                      return (
+                        <Box
+                          key={`count-cell-${cellIndex}`}
+                          p={2}
+                          textAlign="center"
+                          borderBottom="1px solid"
+                          borderRight="1px solid"
+                          borderColor="gray.800"
+                          bg={headerColor}
+                          color="black"
+                          fontWeight="bold"
+                          fontSize="xs"
+                          boxSizing="border-box"
+                          width="100%"
+                          height="100%"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          {countValue}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                );
+              }
+              
+              // Handle data rows
+              const row = rows[virtualRow.index - countRowsCount];
               const isGroupRow = row.original.children !== undefined;
               return (
                 <Box

@@ -20,6 +20,9 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [subsystemFilteredData, setSubsystemFilteredData] = useState([]);
 
+  // Instruments progress filter state
+  const [instrumentsProgressFilter, setInstrumentsProgressFilter] = useState(null);
+
   // Table data for chart visualization
   const [tableData, setTableData] = useState([]);
   const [groupBy, setGroupBy] = useState(['SUBSYSTEM', 'HITO']);
@@ -37,6 +40,11 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
   // Handle subsystem selection
   const handleSubsystemClick = useCallback((subsystem) => {
     setSelectedSubsystem(prev => prev === subsystem ? null : subsystem);
+  }, []);
+
+  // Handle instruments progress filter
+  const handleInstrumentsProgressFilter = useCallback((filterType) => {
+    setInstrumentsProgressFilter(prev => prev === filterType ? null : filterType);
   }, []);
 
   // Clear all filters
@@ -136,8 +144,19 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
       conditions.push(`tp_include_isoinst LIKE '%${selectedTestPack}%'`);
     }
 
+    if (instrumentsProgressFilter) {
+      switch (instrumentsProgressFilter) {
+        case 'DONE':
+          conditions.push('ok100_isoinst = 1');
+          break;
+        case 'PENDING':
+          conditions.push('(ok100_isoinst < 1 OR ok100_isoinst IS NULL)');
+          break;
+      }
+    }
+
     return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  }, [selectedIsometric, selectedTestPack, selectedSubsystem]);
+  }, [selectedIsometric, selectedTestPack, selectedSubsystem, instrumentsProgressFilter]);
 
   // Context value
   const value = useMemo(() => ({
@@ -151,6 +170,10 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
     setIsSubsystemFilterVisible,
     subsystemFilteredData,
     setSubsystemFilteredData,
+
+    // Instruments progress filter state
+    instrumentsProgressFilter,
+    handleInstrumentsProgressFilter,
 
     // Filter handlers
     onIsometricSelect,
