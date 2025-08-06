@@ -38,6 +38,7 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
     let dossierCompleted = 0;
     let testLoopSignalDone = 0;
     let loopSignalPending = 0;
+    let sumOK100 = 0;
 
     
     // Single pass through the entire dataset (unfiltered)
@@ -48,6 +49,9 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
       // Process OK value - using the correct field name
       const okValue = item['OK100'];
       const okPercent = parseFloat(okValue) || 0;
+      
+      // Sum OK100 values for advance progress
+      sumOK100 += okPercent;
       
       // LOOP (Signal) DONE: OK100 = 1.0 (100%)
       if (okPercent === 1.0) {
@@ -76,6 +80,7 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
       loopSignalDone,
       loopSignalPending,
       dossierCompleted,
+      sumOK100
     };
   }, [data]);
   
@@ -242,6 +247,97 @@ const GlobalMetricsDisplay = ({ data, onProgressFilter, progressFilter, sortFiel
           </Button>
         </Flex>
       )}
+      
+      {/* Progress Bar Metrics */}
+      <VStack spacing={3} mt={4} align="stretch">
+        <Text fontSize="xs" color="gray.600" textAlign="center">
+          📈 Progress Metrics
+        </Text>
+        
+        {/* Loop Progress (Precom) */}
+        <HStack spacing={3} align="center">
+          <Text fontSize="sm" minW="200px" fontWeight="medium">
+            Loop Progress (Precom):
+          </Text>
+          <Box flex={1} bg="gray.500" borderRadius="md" h="20px" border="1px solid black" position="relative">
+            <Box
+              bg="green.500"
+              h="100%"
+              borderRadius="md"
+              w={`${globalMetrics.totalLoopSignal > 0 ? (globalMetrics.loopSignalDone / globalMetrics.totalLoopSignal) * 100 : 0}%`}
+              border="1px solid black"
+            />
+            <Text
+              position="absolute"
+              top="50%"
+              left="50%"
+              transform="translate(-50%, -50%)"
+              fontSize="xs"
+              fontWeight="semibold"
+              color="white"
+              textShadow="1px 1px 1px rgba(0,0,0,0.8)"
+            >
+              {globalMetrics.totalLoopSignal > 0 ? ((globalMetrics.loopSignalDone / globalMetrics.totalLoopSignal) * 100).toFixed(1) : 0}%
+            </Text>
+          </Box>
+        </HStack>
+        
+        {/* Loop Advance Progress (CNS) */}
+        <HStack spacing={3} align="center">
+          <Text fontSize="sm" minW="200px" fontWeight="medium">
+            Loop Advance Progress (CNS):
+          </Text>
+          <Box flex={1} bg="gray.500" borderRadius="md" h="20px" border="1px solid black" position="relative">
+            <Box
+              bg="green.500"
+              h="100%"
+              borderRadius="md"
+              w={`${globalMetrics.totalLoopSignal > 0 ? (globalMetrics.sumOK100 / globalMetrics.totalLoopSignal) * 100 : 0}%`}
+              border="1px solid black"
+            />
+            <Text
+              position="absolute"
+              top="50%"
+              left="50%"
+              transform="translate(-50%, -50%)"
+              fontSize="xs"
+              fontWeight="semibold"
+              color="white"
+              textShadow="1px 1px 1px rgba(0,0,0,0.8)"
+            >
+              {globalMetrics.totalLoopSignal > 0 ? ((globalMetrics.sumOK100 / globalMetrics.totalLoopSignal) * 100).toFixed(1) : 0}%
+            </Text>
+          </Box>
+        </HStack>
+        
+        {/* Loop Checked Progress */}
+        <HStack spacing={3} align="center">
+          <Text fontSize="sm" minW="200px" fontWeight="medium">
+            Loop Checked Progress:
+          </Text>
+          <Box flex={1} bg="gray.500" borderRadius="md" h="20px" border="1px solid black" position="relative">
+            <Box
+              bg="green.500"
+              h="100%"
+              borderRadius="md"
+              w={`${globalMetrics.totalLoopSignal > 0 ? (globalMetrics.testLoopSignalDone / globalMetrics.totalLoopSignal) * 100 : 0}%`}
+              border="1px solid black"
+            />
+            <Text
+              position="absolute"
+              top="50%"
+              left="50%"
+              transform="translate(-50%, -50%)"
+              fontSize="xs"
+              fontWeight="semibold"
+              color="white"
+              textShadow="1px 1px 1px rgba(0,0,0,0.8)"
+            >
+              {globalMetrics.totalLoopSignal > 0 ? ((globalMetrics.testLoopSignalDone / globalMetrics.totalLoopSignal) * 100).toFixed(1) : 0}%
+            </Text>
+          </Box>
+        </HStack>
+      </VStack>
     </VStack>
   );
 };
