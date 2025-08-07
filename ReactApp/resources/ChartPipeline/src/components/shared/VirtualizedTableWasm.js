@@ -316,6 +316,7 @@ const VirtualizedTableWasm = ({
                     else if (header.column.id === 'INSTALLED SIEMSA') countValue = `TOTAL: ${frozenDynamicCounts.installedSiemsa}`;
                     else if (header.column.id === 'PENDING SIEMSA') countValue = `TOTAL: ${frozenDynamicCounts.pendingSiemsa}`;
                     else if (header.column.id === 'QFC RELEASE') countValue = `TOTAL: ${frozenDynamicCounts.qfcRelease}`;
+                    else if (header.column.id === 'QFC PENDING') countValue = `TOTAL: ${frozenDynamicCounts.qfcPending}`;
                     
                     return (
                       <Box
@@ -367,6 +368,7 @@ const VirtualizedTableWasm = ({
                       else if (header.column.id === 'INSTALLED SIEMSA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0)}`;
                       else if (header.column.id === 'PENDING SIEMSA') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['PENDING SIEMSA']) || 0), 0)}`;
                       else if (header.column.id === 'QFC RELEASE') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['QFC RELEASE']) || 0), 0)}`;
+                      else if (header.column.id === 'QFC PENDING') countValue = `CURRENLTY: ${data.reduce((sum, row) => sum + (Number(row['QFC PENDING']) || 0), 0)}`;
                     }
                     
                     return (
