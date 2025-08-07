@@ -60,7 +60,7 @@ const DynamicInstrumentsTable = () => {
   // Calculate frozen sums from truly unfiltered data (never affected by filters)
   const frozenDynamicCounts = useMemo(() => {
     if (!unfilteredData || unfilteredData.length === 0) return null;
-    
+
     return {
       totalInst: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL INST']) || 0), 0),
       totalTeiga: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL TEIGA']) || 0), 0),
@@ -99,11 +99,11 @@ const DynamicInstrumentsTable = () => {
 
     return Object.entries(subsystemGroups).map(([subsystem, items]) => {
       const node = { 'SUBSYSTEM': subsystem };
-      
+
       numericFields.forEach(field => {
         node[field] = items.reduce((sum, row) => sum + (Number(row[field]) || 0), 0);
       });
-      
+
       return node;
     });
   }, [rawData]);
@@ -122,18 +122,18 @@ const DynamicInstrumentsTable = () => {
   // Apply subsystem filter and selected subsystem filter
   const tableData = useMemo(() => {
     let filteredData = baseTableData;
-    
+
     // Apply subsystem filter from InstrumentsSubsystemFilter
     if (subsystemFilteredData.length > 0) {
       const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
       filteredData = filteredData.filter(row => subsystemSet.has(row.SUBSYSTEM));
     }
-    
+
     // Apply selected subsystem filter from button clicks
     if (selectedSubsystem) {
       filteredData = filteredData.filter(row => row.SUBSYSTEM === selectedSubsystem);
     }
-    
+
     return filteredData;
   }, [baseTableData, subsystemFilteredData, selectedSubsystem]);
 
@@ -151,11 +151,11 @@ const DynamicInstrumentsTable = () => {
     columnHelper.accessor('SUBSYSTEM', {
       header: 'SUBSYSTEM',
       cell: info => (
-        <SubsystemCell
-          subsystem={info.getValue()}
-          onSubsystemSelect={handleSubsystemClick}
-          selectedSubsystem={selectedSubsystem}
-        />
+          <SubsystemCell
+              subsystem={info.getValue()}
+              onSubsystemSelect={handleSubsystemClick}
+              selectedSubsystem={selectedSubsystem}
+          />
       ),
       size: 120,
     }),
@@ -250,28 +250,15 @@ const DynamicInstrumentsTable = () => {
         <HStack justify="space-between" align="center" mb={4}>
           <Heading size="md" color="gray.700">Dynamic Instruments Table</Heading>
           <HStack>
-            <IconButton
-              icon={<MdCategory />}
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                if (isSubsystemFilterVisible) {
-                  setSubsystemFilteredData([]);
-                }
-                setIsSubsystemFilterVisible(!isSubsystemFilterVisible);
-              }}
-              aria-label="Toggle subsystem filter"
-              title="Subsystem Filter"
-            />
             {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
             {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
               {tableData.length} / {rawData.length} Records
             </Badge>
             {subsystemFilteredData.length > 0 && (
-              <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
-                Filtered from {baseTableData.length}
-              </Badge>
+                <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
+                  Filtered from {baseTableData.length}
+                </Badge>
             )}
           </HStack>
         </HStack>
@@ -279,14 +266,14 @@ const DynamicInstrumentsTable = () => {
         <HStack spacing={4} align="flex-start">
           <Box flex="2">
             <VirtualizedTableWasm
-              data={tableData}
-              columns={columns}
-              expanded={expanded}
-              onExpandedChange={setExpanded}
-              width="100%"
-              height="500px"
-              showDynamicCounts={true}
-              frozenDynamicCounts={frozenDynamicCounts}
+                data={tableData}
+                columns={columns}
+                expanded={expanded}
+                onExpandedChange={setExpanded}
+                width="100%"
+                height="500px"
+                showDynamicCounts={true}
+                frozenDynamicCounts={frozenDynamicCounts}
             />
           </Box>
           <Box flex="1">
@@ -294,15 +281,7 @@ const DynamicInstrumentsTable = () => {
           </Box>
         </HStack>
 
-        <InstrumentsSubsystemFilter
-          data={rawData}
-          onFilterChange={setSubsystemFilteredData}
-          isVisible={isSubsystemFilterVisible}
-          onClose={() => {
-            setIsSubsystemFilterVisible(false);
-            setSubsystemFilteredData([]);
-          }}
-        />
+
       </Box>
   );
 };

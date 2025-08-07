@@ -399,19 +399,7 @@ const DetailsInstrumentsTable = () => {
       <HStack justify="space-between" align="center" mb={4}>
         <Heading size="md" color="gray.700">Details Instruments Table</Heading>
         <HStack>
-          <IconButton
-            icon={<MdCategory />}
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              if (isSubsystemFilterVisible) {
-                setSubsystemFilteredData([]);
-              }
-              setIsSubsystemFilterVisible(!isSubsystemFilterVisible);
-            }}
-            aria-label="Toggle subsystem filter"
-            title="Subsystem Filter"
-          />
+
           {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
           {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
           <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
@@ -436,15 +424,7 @@ const DetailsInstrumentsTable = () => {
         frozenTagInstCount={frozenTagInstCount}
       />
 
-      <InstrumentsSubsystemFilter
-        data={rawTableData}
-        onFilterChange={setSubsystemFilteredData}
-        isVisible={isSubsystemFilterVisible}
-        onClose={() => {
-          setIsSubsystemFilterVisible(false);
-          setSubsystemFilteredData([]);
-        }}
-      />
+
     </Box>
   );
 };

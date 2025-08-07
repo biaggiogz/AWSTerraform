@@ -113,34 +113,34 @@ const ControlInstrumentsByIsometric = () => {
     if (!testPackStr || testPackStr === '' || testPackStr === 'NOT_APPLY') return [];
     return testPackStr.toString().split("|").map(v => v.trim()).filter(v => v !== '');
   };
-  
+
   // Define columns using TanStack's column helper
   const columnHelper = createColumnHelper();
-  
+
   const columns = useMemo(() => [
     columnHelper.accessor('ISOMETRIC', {
       header: 'MOUNTING ON ISO/EQUI/PACK',
       cell: info => {
         const isometric = info.getValue();
         return (
-          <Button
-            size="xs"
-            variant={selectedIsometric === isometric ? "solid" : "outline"}
-            onClick={() => onIsometricSelect && onIsometricSelect(isometric)}
-            _hover={{ bg: selectedIsometric === isometric ? "purple.200" : "blue.200" }}
-            fontSize="10px"
-            fontWeight="medium"
-            color={selectedIsometric === isometric ? "white" : "blue.600"}
-            bg={selectedIsometric === isometric ? "purple.500" : "white"}
-            borderColor={selectedIsometric === isometric ? "purple.500" : "blue.500"}
-            minWidth="30px"
-            height="18px"
-            px={2}
-            borderRadius="sm"
-            fontFamily="mono"
-          >
-            {String(isometric)}
-          </Button>
+            <Button
+                size="xs"
+                variant={selectedIsometric === isometric ? "solid" : "outline"}
+                onClick={() => onIsometricSelect && onIsometricSelect(isometric)}
+                _hover={{ bg: selectedIsometric === isometric ? "purple.200" : "blue.200" }}
+                fontSize="10px"
+                fontWeight="medium"
+                color={selectedIsometric === isometric ? "white" : "blue.600"}
+                bg={selectedIsometric === isometric ? "purple.500" : "white"}
+                borderColor={selectedIsometric === isometric ? "purple.500" : "blue.500"}
+                minWidth="30px"
+                height="18px"
+                px={2}
+                borderRadius="sm"
+                fontFamily="mono"
+            >
+              {String(isometric)}
+            </Button>
         );
       },
       size: 240,
@@ -151,27 +151,27 @@ const ControlInstrumentsByIsometric = () => {
         const value = parseFloat(info.getValue()) || 0;
         const percentage = Math.min(Math.max(value, 0), 1) * 100;
         return (
-          <Box w="100%" position="relative">
-            <Box 
-              h="16px" 
-              w={`${percentage}%`} 
-              bg="green.500"
-              borderRadius="sm"
-            />
-            <Text 
-              fontSize="xs" 
-              position="absolute" 
-              top="0" 
-              left="0" 
-              right="0" 
-              textAlign="center"
-              color="white"
-              fontWeight="bold"
-              textShadow="0px 0px 2px rgba(0,0,0,0.7)"
-            >
-              {percentage.toFixed(0)}%
-            </Text>
-          </Box>
+            <Box w="100%" position="relative">
+              <Box
+                  h="16px"
+                  w={`${percentage}%`}
+                  bg="green.500"
+                  borderRadius="sm"
+              />
+              <Text
+                  fontSize="xs"
+                  position="absolute"
+                  top="0"
+                  left="0"
+                  right="0"
+                  textAlign="center"
+                  color="white"
+                  fontWeight="bold"
+                  textShadow="0px 0px 2px rgba(0,0,0,0.7)"
+              >
+                {percentage.toFixed(0)}%
+              </Text>
+            </Box>
         );
       },
       size: 90,
@@ -179,11 +179,11 @@ const ControlInstrumentsByIsometric = () => {
     columnHelper.accessor('SUBSYSTEM', {
       header: 'SUBSYSTEM',
       cell: info => (
-        <SubsystemCell
-          subsystem={info.getValue()}
-          onSubsystemSelect={handleSubsystemClick}
-          selectedSubsystem={selectedSubsystem}
-        />
+          <SubsystemCell
+              subsystem={info.getValue()}
+              onSubsystemSelect={handleSubsystemClick}
+              selectedSubsystem={selectedSubsystem}
+          />
       ),
       size: 105,
     }),
@@ -214,11 +214,11 @@ const ControlInstrumentsByIsometric = () => {
         const testPacks = splitTestPack(testPackValue);
 
         return (
-          <TestPackCell
-            testPacks={testPacks}
-            onTestPackSelect={handleTestPackClick}
-            selectedTestPack={selectedTestPack}
-          />
+            <TestPackCell
+                testPacks={testPacks}
+                onTestPackSelect={handleTestPackClick}
+                selectedTestPack={selectedTestPack}
+            />
         );
       },
       size: 95,
@@ -238,10 +238,10 @@ const ControlInstrumentsByIsometric = () => {
         };
 
         return (
-          <TestPackProgressCell
-            testPacks={testPacks}
-            progressValues={progressValues}
-          />
+            <TestPackProgressCell
+                testPacks={testPacks}
+                progressValues={progressValues}
+            />
         );
       },
       size: 95,
@@ -342,90 +342,89 @@ const ControlInstrumentsByIsometric = () => {
 
   if (loading) {
     return (
-      <Box mt={6}>
-        <Heading size="xs" color="gray.700" mb={2}>
-          Control Instruments by Isometric
-        </Heading>
-        <Center p={8}>
-          <Spinner size="xs" color="blue.500" />
-          <Text ml={2} color="gray.600">
-            Loading data ...
-          </Text>
-        </Center>
-      </Box>
+        <Box mt={6}>
+          <Heading size="xs" color="gray.700" mb={2}>
+            Control Instruments by Isometric
+          </Heading>
+          <Center p={8}>
+            <Spinner size="xs" color="blue.500" />
+            <Text ml={2} color="gray.600">
+              Loading data ...
+            </Text>
+          </Center>
+        </Box>
     );
   }
 
   if (error) {
     return (
-      <Box mt={6} p={4} bg="red.50" borderRadius="md">
-        <Heading size="md" color="red.600" mb={2}>
-          Error
-        </Heading>
-        <Text color="red.700">{error}</Text>
-      </Box>
+        <Box mt={6} p={4} bg="red.50" borderRadius="md">
+          <Heading size="md" color="red.600" mb={2}>
+            Error
+          </Heading>
+          <Text color="red.700">{error}</Text>
+        </Box>
     );
   }
 
   return (
-    <Box mt={6}>
-      <HStack justify="space-between" align="center" mb={4}>
-        <Heading size="md" color="gray.700">Controls Instruments By Isometric</Heading>
-        <HStack>
-          <IconButton
-            icon={<MdCategory />}
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              if (isSubsystemFilterVisible) {
-                setSubsystemFilteredData([]);
-              }
-              setIsSubsystemFilterVisible(!isSubsystemFilterVisible);
-            }}
-            aria-label="Toggle subsystem filter"
-            title="Subsystem Filter"
-          />
-          {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
-          {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
-          <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
-            {tableData.length} Records
-          </Badge>
-          {subsystemFilteredData.length > 0 && (
-            <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
-              Filtered from {rawTableData.length}
+      <Box mt={6}>
+        <HStack justify="space-between" align="center" mb={4}>
+          <Heading size="md" color="gray.700">Controls Instruments By Isometric</Heading>
+          <HStack>
+            <IconButton
+                icon={<MdCategory />}
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  if (isSubsystemFilterVisible) {
+                    setSubsystemFilteredData([]);
+                  }
+                  setIsSubsystemFilterVisible(!isSubsystemFilterVisible);
+                }}
+                aria-label="Toggle subsystem filter"
+                title="Subsystem Filter"
+            />
+            {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
+            {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
+            <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
+              {tableData.length} Records
             </Badge>
-          )}
+            {subsystemFilteredData.length > 0 && (
+                <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
+                  Filtered from {rawTableData.length}
+                </Badge>
+            )}
+          </HStack>
         </HStack>
-      </HStack>
 
-      <VirtualizedTableWasm
-        data={tableData}
-        columns={columns}
-        multiLevelHeaders={multiLevelHeaders}
-        width="100%"
-        height="500px"
-        showControlCounts={true}
-        frozenControlCounts={frozenControlCounts}
-        showQtyInstCounts={true}
-        frozenQtyInstCount={frozenQtyInstCount}
-        showScopeCounts={true}
-        frozenScopeTeigaCount={frozenScopeTeigaCount}
-        frozenScopeSiemsaCount={frozenScopeSiemsaCount}
-        frozenInstalledTeigaCount={frozenInstalledTeigaCount}
-        frozenInstalledSiemsaCount={frozenInstalledSiemsaCount}
-        frozenPendingCount={frozenPendingCount}
-      />
+        <VirtualizedTableWasm
+            data={tableData}
+            columns={columns}
+            multiLevelHeaders={multiLevelHeaders}
+            width="100%"
+            height="500px"
+            showControlCounts={true}
+            frozenControlCounts={frozenControlCounts}
+            showQtyInstCounts={true}
+            frozenQtyInstCount={frozenQtyInstCount}
+            showScopeCounts={true}
+            frozenScopeTeigaCount={frozenScopeTeigaCount}
+            frozenScopeSiemsaCount={frozenScopeSiemsaCount}
+            frozenInstalledTeigaCount={frozenInstalledTeigaCount}
+            frozenInstalledSiemsaCount={frozenInstalledSiemsaCount}
+            frozenPendingCount={frozenPendingCount}
+        />
 
-      <InstrumentsSubsystemFilter
-        data={rawTableData}
-        onFilterChange={setSubsystemFilteredData}
-        isVisible={isSubsystemFilterVisible}
-        onClose={() => {
-          setIsSubsystemFilterVisible(false);
-          setSubsystemFilteredData([]);
-        }}
-      />
-    </Box>
+        <InstrumentsSubsystemFilter
+            data={rawTableData}
+            onFilterChange={setSubsystemFilteredData}
+            isVisible={isSubsystemFilterVisible}
+            onClose={() => {
+              setIsSubsystemFilterVisible(false);
+            }}
+        />
+      </Box>
   );
 };
 
