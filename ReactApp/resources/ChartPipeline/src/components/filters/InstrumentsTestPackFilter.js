@@ -37,8 +37,10 @@ const InstrumentsTestPackFilter = ({
         const values = {};
         data.forEach(row => {
             if (row.TPs && row.TPs !== '' && row.TPs !== 'NOT_APPLY') {
-                // Use the entire TPs value as the filter key
-                values[row.TPs] = true;
+                const testPacks = row.TPs.toString().split("|").map(v => v.trim()).filter(v => v !== '');
+                testPacks.forEach(tp => {
+                    values[tp] = true;
+                });
             }
         });
 
@@ -69,8 +71,8 @@ const InstrumentsTestPackFilter = ({
         if (!data || data.length === 0) return [];
         return data.filter(row => {
             if (!row.TPs || row.TPs === '' || row.TPs === 'NOT_APPLY') return false;
-            // Check if the entire TPs value matches any selected test pack
-            return selectedTestPacks[row.TPs];
+            const testPacks = row.TPs.toString().split("|").map(v => v.trim()).filter(v => v !== '');
+            return testPacks.some(tp => selectedTestPacks[tp]);
         });
     }, [data, selectedTestPacks]);
 

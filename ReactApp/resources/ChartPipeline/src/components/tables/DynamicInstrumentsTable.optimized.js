@@ -10,13 +10,14 @@ import {
   IconButton,
   VStack,
 } from '@chakra-ui/react';
-import { MdCategory } from 'react-icons/md';
+import { MdCategory, MdViewModule } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
 import useInstrumentsTableDataWasm from '../../hooks/useInstrumentsTableDataWasm';
 import PerformanceMetricWasm from '../shared/PerformanceMetricWasm';
 import SubsystemCell from '../shared/SubsystemCell';
 import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
 import InstrumentsSubsystemFilter from '../filters/InstrumentsSubsystemFilter';
+import InstrumentsTestPackFilter from '../filters/InstrumentsTestPackFilter';
 import InstrumentsProgressChart from '../../charts/InstrumentsProgressChart';
 import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 
@@ -45,12 +46,16 @@ const DynamicInstrumentsTable = () => {
     setContextGroupBy
   } = useInstrumentsTableDataWasm('dynamic');
 
-  // Get subsystem filter context
+  // Get filter context
   const {
     isSubsystemFilterVisible,
     setIsSubsystemFilterVisible,
     subsystemFilteredData,
-    setSubsystemFilteredData
+    setSubsystemFilteredData,
+    isTestPackFilterVisible,
+    setIsTestPackFilterVisible,
+    testPackFilteredData,
+    setTestPackFilteredData
   } = useInstrumentsTableFilterContext();
 
   // State declarations
@@ -250,12 +255,38 @@ const DynamicInstrumentsTable = () => {
         <HStack justify="space-between" align="center" mb={4}>
           <Heading size="md" color="gray.700">Dynamic Instruments Table</Heading>
           <HStack>
+            <IconButton
+              icon={<MdCategory />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (isSubsystemFilterVisible) {
+                  setSubsystemFilteredData([]);
+                }
+                setIsSubsystemFilterVisible(!isSubsystemFilterVisible);
+              }}
+              aria-label="Toggle subsystem filter"
+              title="Subsystem Filter"
+            />
+            <IconButton
+              icon={<MdViewModule />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (isTestPackFilterVisible) {
+                  setTestPackFilteredData([]);
+                }
+                setIsTestPackFilterVisible(!isTestPackFilterVisible);
+              }}
+              aria-label="Toggle test pack filter"
+              title="Test Pack Filter"
+            />
             {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
             {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
               {tableData.length} / {rawData.length} Records
             </Badge>
-            {subsystemFilteredData.length > 0 && (
+            {(subsystemFilteredData.length > 0 || testPackFilteredData.length > 0) && (
                 <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
                   Filtered from {baseTableData.length}
                 </Badge>
@@ -281,7 +312,23 @@ const DynamicInstrumentsTable = () => {
           </Box>
         </HStack>
 
+        <InstrumentsSubsystemFilter
+          data={rawData}
+          onFilterChange={setSubsystemFilteredData}
+          isVisible={isSubsystemFilterVisible}
+          onClose={() => {
+            setIsSubsystemFilterVisible(false);
+          }}
+        />
 
+        <InstrumentsTestPackFilter
+          data={rawData}
+          onFilterChange={setTestPackFilteredData}
+          isVisible={isTestPackFilterVisible}
+          onClose={() => {
+            setIsTestPackFilterVisible(false);
+          }}
+        />
       </Box>
   );
 };

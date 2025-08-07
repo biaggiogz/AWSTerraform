@@ -10,7 +10,7 @@ import {
   Button,
   IconButton,
 } from '@chakra-ui/react';
-import { MdCategory, MdViewModule } from 'react-icons/md';
+import { MdCategory } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
 import useInstrumentsTableDataWasm from '../../hooks/useInstrumentsTableDataWasm';
 import PerformanceMetricWasm from '../shared/PerformanceMetricWasm';
@@ -18,8 +18,7 @@ import SubsystemCell from '../shared/SubsystemCell';
 import TestPackCell from '../shared/TestPackCell';
 import TestPackProgressCell from '../shared/TestPackProgressCell';
 import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
-import InstrumentsSubsystemFilter from '../filters/InstrumentsSubsystemFilter';
-import InstrumentsTestPackFilter from '../filters/InstrumentsTestPackFilter';
+
 import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 
 
@@ -75,10 +74,17 @@ const ControlInstrumentsByIsometric = () => {
     
     // Apply testpack filter
     if (testPackFilteredData.length > 0) {
-      const testPackSet = new Set(testPackFilteredData.map(row => row.TPs));
+      const testPackSet = new Set();
+      testPackFilteredData.forEach(row => {
+        if (row.TPs && row.TPs !== '' && row.TPs !== 'NOT_APPLY') {
+          const testPacks = row.TPs.toString().split("|").map(v => v.trim()).filter(v => v !== '');
+          testPacks.forEach(tp => testPackSet.add(tp));
+        }
+      });
       filteredData = filteredData.filter(row => {
         if (!row.TPs || row.TPs === '' || row.TPs === 'NOT_APPLY') return false;
-        return testPackSet.has(row.TPs);
+        const testPacks = row.TPs.toString().split("|").map(v => v.trim()).filter(v => v !== '');
+        return testPacks.some(tp => testPackSet.has(tp));
       });
     }
     
@@ -390,32 +396,7 @@ const ControlInstrumentsByIsometric = () => {
         <HStack justify="space-between" align="center" mb={4}>
           <Heading size="md" color="gray.700">Controls Instruments By Isometric</Heading>
           <HStack>
-            <IconButton
-                icon={<MdCategory />}
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  if (isSubsystemFilterVisible) {
-                    setSubsystemFilteredData([]);
-                  }
-                  setIsSubsystemFilterVisible(!isSubsystemFilterVisible);
-                }}
-                aria-label="Toggle subsystem filter"
-                title="Subsystem Filter"
-            />
-            <IconButton
-                icon={<MdViewModule />}
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  if (isTestPackFilterVisible) {
-                    setTestPackFilteredData([]);
-                  }
-                  setIsTestPackFilterVisible(!isTestPackFilterVisible);
-                }}
-                aria-label="Toggle test pack filter"
-                title="Test Pack Filter"
-            />
+
             {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
             {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
@@ -447,23 +428,7 @@ const ControlInstrumentsByIsometric = () => {
             frozenPendingCount={frozenPendingCount}
         />
 
-        <InstrumentsSubsystemFilter
-            data={rawTableData}
-            onFilterChange={setSubsystemFilteredData}
-            isVisible={isSubsystemFilterVisible}
-            onClose={() => {
-              setIsSubsystemFilterVisible(false);
-            }}
-        />
 
-        <InstrumentsTestPackFilter
-            data={rawTableData}
-            onFilterChange={setTestPackFilteredData}
-            isVisible={isTestPackFilterVisible}
-            onClose={() => {
-              setIsTestPackFilterVisible(false);
-            }}
-        />
       </Box>
   );
 };
