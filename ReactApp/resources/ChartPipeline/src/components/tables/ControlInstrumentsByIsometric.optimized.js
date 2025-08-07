@@ -59,7 +59,11 @@ const ControlInstrumentsByIsometric = () => {
     isTestPackFilterVisible,
     setIsTestPackFilterVisible,
     testPackFilteredData,
-    setTestPackFilteredData
+    setTestPackFilteredData,
+    isMountingFilterVisible,
+    setIsMountingFilterVisible,
+    mountingFilteredData,
+    setMountingFilteredData
   } = useInstrumentsTableFilterContext();
 
   // Apply filters
@@ -88,8 +92,16 @@ const ControlInstrumentsByIsometric = () => {
       });
     }
     
+    // Apply mounting filter (using ISOMETRIC column since it's the equivalent)
+    if (mountingFilteredData.length > 0) {
+      const mountingSet = new Set(mountingFilteredData.map(row => row['MOUNTING ON ISO/EQUI/PACK']));
+      filteredData = filteredData.filter(row => {
+        return mountingSet.has(row['ISOMETRIC']);
+      });
+    }
+    
     return filteredData;
-  }, [rawTableData, subsystemFilteredData, testPackFilteredData]);
+  }, [rawTableData, subsystemFilteredData, testPackFilteredData, mountingFilteredData]);
 
   // Calculate frozen QTY INST count from truly unfiltered data
   const frozenQtyInstCount = useMemo(() => {
@@ -402,7 +414,7 @@ const ControlInstrumentsByIsometric = () => {
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
               {tableData.length} Records
             </Badge>
-            {(subsystemFilteredData.length > 0 || testPackFilteredData.length > 0) && (
+            {(subsystemFilteredData.length > 0 || testPackFilteredData.length > 0 || mountingFilteredData.length > 0) && (
                 <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
                   Filtered from {rawTableData.length}
                 </Badge>

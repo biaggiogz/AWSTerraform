@@ -57,7 +57,11 @@ const DetailsInstrumentsTable = () => {
     isTestPackFilterVisible,
     setIsTestPackFilterVisible,
     testPackFilteredData,
-    setTestPackFilteredData
+    setTestPackFilteredData,
+    isMountingFilterVisible,
+    setIsMountingFilterVisible,
+    mountingFilteredData,
+    setMountingFilteredData
   } = useInstrumentsTableFilterContext();
 
   // Apply filters
@@ -86,8 +90,16 @@ const DetailsInstrumentsTable = () => {
       });
     }
     
+    // Apply mounting filter
+    if (mountingFilteredData.length > 0) {
+      const mountingSet = new Set(mountingFilteredData.map(row => row['MOUNTING ON ISO/EQUI/PACK']));
+      filteredData = filteredData.filter(row => {
+        return mountingSet.has(row['MOUNTING ON ISO/EQUI/PACK']);
+      });
+    }
+    
     return filteredData;
-  }, [rawTableData, subsystemFilteredData, testPackFilteredData]);
+  }, [rawTableData, subsystemFilteredData, testPackFilteredData, mountingFilteredData]);
   
   // Helper function to format timestamp to date
   const formatDate = (timestamp) => {
@@ -430,7 +442,7 @@ const DetailsInstrumentsTable = () => {
           <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
             {tableData?.length || 0} Records
           </Badge>
-          {(subsystemFilteredData.length > 0 || testPackFilteredData.length > 0) && (
+          {(subsystemFilteredData.length > 0 || testPackFilteredData.length > 0 || mountingFilteredData.length > 0) && (
             <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
               Filtered from {rawTableData?.length || 0}
             </Badge>

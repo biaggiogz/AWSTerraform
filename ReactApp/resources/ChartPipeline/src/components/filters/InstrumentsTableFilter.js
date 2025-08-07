@@ -24,6 +24,10 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
   const [isTestPackFilterVisible, setIsTestPackFilterVisible] = useState(false);
   const [testPackFilteredData, setTestPackFilteredData] = useState([]);
 
+  // MountingIsoEquiPack filter state
+  const [isMountingFilterVisible, setIsMountingFilterVisible] = useState(false);
+  const [mountingFilteredData, setMountingFilteredData] = useState([]);
+
   // Instruments progress filter state
   const [instrumentsProgressFilter, setInstrumentsProgressFilter] = useState(null);
 
@@ -181,6 +185,12 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
     testPackFilteredData,
     setTestPackFilteredData,
 
+    // MountingIsoEquiPack filter state
+    isMountingFilterVisible,
+    setIsMountingFilterVisible,
+    mountingFilteredData,
+    setMountingFilteredData,
+
     // Instruments progress filter state
     instrumentsProgressFilter,
     handleInstrumentsProgressFilter,
@@ -216,6 +226,10 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
     setIsTestPackFilterVisible,
     testPackFilteredData,
     setTestPackFilteredData,
+    isMountingFilterVisible,
+    setIsMountingFilterVisible,
+    mountingFilteredData,
+    setMountingFilteredData,
     onIsometricSelect,
     handleTestPackClick,
     handleSubsystemClick,

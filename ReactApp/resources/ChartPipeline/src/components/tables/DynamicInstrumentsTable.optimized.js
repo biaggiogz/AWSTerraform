@@ -10,7 +10,7 @@ import {
   IconButton,
   VStack,
 } from '@chakra-ui/react';
-import { MdCategory, MdViewModule } from 'react-icons/md';
+import { MdCategory, MdViewModule, MdLocationOn } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
 import useInstrumentsTableDataWasm from '../../hooks/useInstrumentsTableDataWasm';
 import PerformanceMetricWasm from '../shared/PerformanceMetricWasm';
@@ -18,6 +18,7 @@ import SubsystemCell from '../shared/SubsystemCell';
 import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
 import InstrumentsSubsystemFilter from '../filters/InstrumentsSubsystemFilter';
 import InstrumentsTestPackFilter from '../filters/InstrumentsTestPackFilter';
+import MountingIsoEquiPackInstrumentsFilter from '../filters/MountingIsoEquiPackInstrumentsFilter';
 import InstrumentsProgressChart from '../../charts/InstrumentsProgressChart';
 import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 
@@ -60,7 +61,11 @@ const DynamicInstrumentsTable = () => {
     isTestPackFilterVisible,
     setIsTestPackFilterVisible,
     testPackFilteredData,
-    setTestPackFilteredData
+    setTestPackFilteredData,
+    isMountingFilterVisible,
+    setIsMountingFilterVisible,
+    mountingFilteredData,
+    setMountingFilteredData
   } = useInstrumentsTableFilterContext();
 
   // State declarations
@@ -150,13 +155,24 @@ const DynamicInstrumentsTable = () => {
       filteredData = filteredData.filter(row => affectedSubsystems.has(row.SUBSYSTEM));
     }
 
+    // Apply mounting filter by finding subsystems that contain the selected mounting values
+    if (mountingFilteredData.length > 0) {
+      const affectedSubsystems = new Set();
+      mountingFilteredData.forEach(row => {
+        if (row.SUBSYSTEM) {
+          affectedSubsystems.add(row.SUBSYSTEM);
+        }
+      });
+      filteredData = filteredData.filter(row => affectedSubsystems.has(row.SUBSYSTEM));
+    }
+
     // Apply selected subsystem filter from button clicks
     if (selectedSubsystem) {
       filteredData = filteredData.filter(row => row.SUBSYSTEM === selectedSubsystem);
     }
 
     return filteredData;
-  }, [baseTableData, subsystemFilteredData, testPackFilteredData, selectedSubsystem]);
+  }, [baseTableData, subsystemFilteredData, testPackFilteredData, mountingFilteredData, selectedSubsystem]);
 
   // Update context table data for chart
   useEffect(() => {
@@ -297,12 +313,25 @@ const DynamicInstrumentsTable = () => {
               aria-label="Toggle test pack filter"
               title="Test Pack Filter"
             />
+            <IconButton
+              icon={<MdLocationOn />}
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (isMountingFilterVisible) {
+                  setMountingFilteredData([]);
+                }
+                setIsMountingFilterVisible(!isMountingFilterVisible);
+              }}
+              aria-label="Toggle mounting filter"
+              title="Mounting ISO/EQUI/PACK Filter"
+            />
             {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
             {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
             <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
               {tableData.length} / {rawData.length} Records
             </Badge>
-            {(subsystemFilteredData.length > 0 || testPackFilteredData.length > 0) && (
+            {(subsystemFilteredData.length > 0 || testPackFilteredData.length > 0 || mountingFilteredData.length > 0) && (
                 <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
                   Filtered from {baseTableData.length}
                 </Badge>
@@ -343,6 +372,15 @@ const DynamicInstrumentsTable = () => {
           isVisible={isTestPackFilterVisible}
           onClose={() => {
             setIsTestPackFilterVisible(false);
+          }}
+        />
+
+        <MountingIsoEquiPackInstrumentsFilter
+          data={detailsData || []}
+          onFilterChange={setMountingFilteredData}
+          isVisible={isMountingFilterVisible}
+          onClose={() => {
+            setIsMountingFilterVisible(false);
           }}
         />
       </Box>
