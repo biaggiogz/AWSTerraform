@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Text, HStack } from '@chakra-ui/react';
+import { Button, Text, HStack, VStack, Badge } from '@chakra-ui/react';
 
 const TestPackCell = React.memo(({ testPacks, tp, onTestPackSelect, selectedTestPack }) => {
   // Handle single test pack (for DynamicInstrumentsTable)
@@ -9,23 +9,16 @@ const TestPackCell = React.memo(({ testPacks, tp, onTestPackSelect, selectedTest
     }
 
     return (
-      <Button
-        size="xs"
-        variant={selectedTestPack === tp ? "solid" : "outline"}
-        onClick={() => onTestPackSelect && onTestPackSelect(tp)}
-        _hover={{ bg: selectedTestPack === tp ? "green.200" : "blue.200" }}
+      <Badge
+        size="sm"
+        colorScheme="blue"
         fontSize="10px"
-        fontWeight="medium"
-        color={selectedTestPack === tp ? "white" : "blue.600"}
-        bg={selectedTestPack === tp ? "green.500" : "white"}
-        borderColor={selectedTestPack === tp ? "green.500" : "blue.500"}
-        minWidth="30px"
-        height="18px"
         px={2}
+        py={1}
         borderRadius="sm"
       >
         {tp}
-      </Button>
+      </Badge>
     );
   }
 
@@ -36,49 +29,35 @@ const TestPackCell = React.memo(({ testPacks, tp, onTestPackSelect, selectedTest
 
   if (testPacks.length === 1) {
     return (
-      <Button
-        size="xs"
-        variant={selectedTestPack === testPacks[0] ? "solid" : "outline"}
-        onClick={() => onTestPackSelect && onTestPackSelect(testPacks[0])}
-        _hover={{ bg: selectedTestPack === testPacks[0] ? "green.200" : "blue.200" }}
+      <Badge
+        size="sm"
+        colorScheme="blue"
         fontSize="10px"
-        fontWeight="medium"
-        color={selectedTestPack === testPacks[0] ? "white" : "blue.600"}
-        bg={selectedTestPack === testPacks[0] ? "green.500" : "white"}
-        borderColor={selectedTestPack === testPacks[0] ? "green.500" : "blue.500"}
-        minWidth="30px"
-        height="18px"
         px={2}
+        py={1}
         borderRadius="sm"
       >
         {testPacks[0]}
-      </Button>
+      </Badge>
     );
   }
 
   return (
-    <HStack spacing={1} wrap="wrap" justify="center">
+    <VStack spacing={1} align="center">
       {testPacks.map((testPack, index) => (
-        <Button
+        <Badge
           key={`${testPack}-${index}`}
-          size="xs"
-          variant={selectedTestPack === testPack ? "solid" : "outline"}
-          onClick={() => onTestPackSelect && onTestPackSelect(testPack)}
-          _hover={{ bg: selectedTestPack === testPack ? "green.200" : "blue.200" }}
+          size="sm"
+          colorScheme="blue"
           fontSize="10px"
-          fontWeight="medium"
-          color={selectedTestPack === testPack ? "white" : "blue.600"}
-          bg={selectedTestPack === testPack ? "green.500" : "white"}
-          borderColor={selectedTestPack === testPack ? "green.500" : "blue.500"}
-          minWidth="30px"
-          height="18px"
           px={2}
+          py={1}
           borderRadius="sm"
         >
           {testPack}
-        </Button>
+        </Badge>
       ))}
-    </HStack>
+    </VStack>
   );
 });
 

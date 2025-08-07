@@ -20,6 +20,10 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
   const [isSubsystemFilterVisible, setIsSubsystemFilterVisible] = useState(false);
   const [subsystemFilteredData, setSubsystemFilteredData] = useState([]);
 
+  // TestPack filter state
+  const [isTestPackFilterVisible, setIsTestPackFilterVisible] = useState(false);
+  const [testPackFilteredData, setTestPackFilteredData] = useState([]);
+
   // Instruments progress filter state
   const [instrumentsProgressFilter, setInstrumentsProgressFilter] = useState(null);
 
@@ -171,6 +175,12 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
     subsystemFilteredData,
     setSubsystemFilteredData,
 
+    // TestPack filter state
+    isTestPackFilterVisible,
+    setIsTestPackFilterVisible,
+    testPackFilteredData,
+    setTestPackFilteredData,
+
     // Instruments progress filter state
     instrumentsProgressFilter,
     handleInstrumentsProgressFilter,
@@ -202,6 +212,10 @@ export const InstrumentsTableFilterProvider = ({ children }) => {
     setIsSubsystemFilterVisible,
     subsystemFilteredData,
     setSubsystemFilteredData,
+    isTestPackFilterVisible,
+    setIsTestPackFilterVisible,
+    testPackFilteredData,
+    setTestPackFilteredData,
     onIsometricSelect,
     handleTestPackClick,
     handleSubsystemClick,

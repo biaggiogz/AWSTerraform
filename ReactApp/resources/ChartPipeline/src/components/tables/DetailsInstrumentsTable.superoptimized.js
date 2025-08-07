@@ -10,7 +10,7 @@ import {
   Button,
   IconButton,
 } from '@chakra-ui/react';
-import { MdCategory } from 'react-icons/md';
+import { MdCategory, MdViewModule } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
 import useInstrumentsTableDataWasm from '../../hooks/useInstrumentsTableDataWasm';
 import PerformanceMetricWasm from '../shared/PerformanceMetricWasm';
@@ -19,6 +19,7 @@ import TestPackCell from '../shared/TestPackCell';
 import TestPackProgressCell from '../shared/TestPackProgressCell';
 import VirtualizedTableWasm from '../shared/VirtualizedTableWasm';
 import InstrumentsSubsystemFilter from '../filters/InstrumentsSubsystemFilter';
+import InstrumentsTestPackFilter from '../filters/InstrumentsTestPackFilter';
 import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFilter';
 
 
@@ -48,20 +49,39 @@ const DetailsInstrumentsTable = () => {
     onIsometricSelect
   } = useInstrumentsTableDataWasm('details');
 
-  // Get subsystem filter context
+  // Get filter context
   const {
     isSubsystemFilterVisible,
     setIsSubsystemFilterVisible,
     subsystemFilteredData,
-    setSubsystemFilteredData
+    setSubsystemFilteredData,
+    isTestPackFilterVisible,
+    setIsTestPackFilterVisible,
+    testPackFilteredData,
+    setTestPackFilteredData
   } = useInstrumentsTableFilterContext();
 
-  // Apply subsystem filter
+  // Apply filters
   const tableData = useMemo(() => {
-    if (subsystemFilteredData.length === 0) return rawTableData;
-    const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
-    return rawTableData.filter(row => subsystemSet.has(row.SUBSYSTEM));
-  }, [rawTableData, subsystemFilteredData]);
+    let filteredData = rawTableData;
+    
+    // Apply subsystem filter
+    if (subsystemFilteredData.length > 0) {
+      const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
+      filteredData = filteredData.filter(row => subsystemSet.has(row.SUBSYSTEM));
+    }
+    
+    // Apply testpack filter
+    if (testPackFilteredData.length > 0) {
+      const testPackSet = new Set(testPackFilteredData.map(row => row.TPs));
+      filteredData = filteredData.filter(row => {
+        if (!row.TPs || row.TPs === '' || row.TPs === 'NOT_APPLY') return false;
+        return testPackSet.has(row.TPs);
+      });
+    }
+    
+    return filteredData;
+  }, [rawTableData, subsystemFilteredData, testPackFilteredData]);
   
   // Helper function to format timestamp to date
   const formatDate = (timestamp) => {
@@ -125,8 +145,6 @@ const DetailsInstrumentsTable = () => {
         return (
           <TestPackCell
             testPacks={testPacks}
-            onTestPackSelect={handleTestPackClick}
-            selectedTestPack={selectedTestPack}
           />
         );
       },
@@ -399,13 +417,39 @@ const DetailsInstrumentsTable = () => {
       <HStack justify="space-between" align="center" mb={4}>
         <Heading size="md" color="gray.700">Details Instruments Table</Heading>
         <HStack>
+          <IconButton
+            icon={<MdCategory />}
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              if (isSubsystemFilterVisible) {
+                setSubsystemFilteredData([]);
+              }
+              setIsSubsystemFilterVisible(!isSubsystemFilterVisible);
+            }}
+            aria-label="Toggle subsystem filter"
+            title="Subsystem Filter"
+          />
+          <IconButton
+            icon={<MdViewModule />}
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              if (isTestPackFilterVisible) {
+                setTestPackFilteredData([]);
+              }
+              setIsTestPackFilterVisible(!isTestPackFilterVisible);
+            }}
+            aria-label="Toggle test pack filter"
+            title="Test Pack Filter"
+          />
 
           {loadTime && <PerformanceMetricWasm label="Load" value={`${loadTime}ms`} description="Time to load data from source and process it" processingTime={processingTime} wasmEnabled={wasmEnabled} />}
           {queryTime && <PerformanceMetricWasm label="Query" value={`${queryTime}ms`} description="Time to execute DuckDB query" />}
           <Badge colorScheme="purple" fontSize="sm" px={3} py={1}>
             {tableData?.length || 0} Records
           </Badge>
-          {subsystemFilteredData.length > 0 && (
+          {(subsystemFilteredData.length > 0 || testPackFilteredData.length > 0) && (
             <Badge colorScheme="orange" fontSize="xs" px={2} py={1}>
               Filtered from {rawTableData?.length || 0}
             </Badge>
@@ -424,7 +468,14 @@ const DetailsInstrumentsTable = () => {
         frozenTagInstCount={frozenTagInstCount}
       />
 
-
+      <InstrumentsTestPackFilter
+        data={rawTableData}
+        onFilterChange={setTestPackFilteredData}
+        isVisible={isTestPackFilterVisible}
+        onClose={() => {
+          setIsTestPackFilterVisible(false);
+        }}
+      />
     </Box>
   );
 };

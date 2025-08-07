@@ -874,8 +874,8 @@ def create_master_tables(processed_sheets):
             # Process TP progress if TP sheet is available
             if 'TP' in processed_sheets and 'tp_include_isoinst' in master_subsystem.columns:
                 tp_data = processed_sheets['TP']
-                if 'dossier_id_tp' in tp_data.columns and 'tp_construct_progress__tp' in tp_data.columns:
-                    progress_map = dict(zip(tp_data['dossier_id_tp'].astype(str), tp_data['tp_construct_progress__tp']))
+                if 'dossier_id_tp' in tp_data.columns and '1_tp' in tp_data.columns:
+                    progress_map = dict(zip(tp_data['dossier_id_tp'].astype(str), tp_data['1_tp']))
                     
                     def extract_progress(isoinst):
                         if pd.isna(isoinst) or isoinst == "NOT_APPLY":
