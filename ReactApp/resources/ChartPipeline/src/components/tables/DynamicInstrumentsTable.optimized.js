@@ -160,11 +160,13 @@ const DynamicInstrumentsTable = () => {
       header: 'INSTALLED TEIGA',
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
+      meta: { headerStyle: { backgroundColor: '#57564F', color: 'white' } }
     }),
     columnHelper.accessor('PENDING TEIGA', {
       header: 'PENDING TEIGA',
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
+      meta: { headerStyle: { backgroundColor: '#DDDAD0', color: 'black' } }
     }),
     columnHelper.accessor('TOTAL SIEMSA', {
       header: 'TOTAL SIEMSA',
@@ -175,16 +177,19 @@ const DynamicInstrumentsTable = () => {
       header: 'INSTALLED SIEMSA',
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
+      meta: { headerStyle: { backgroundColor: '#015551', color: 'white' } }
     }),
     columnHelper.accessor('PENDING SIEMSA', {
       header: 'PENDING SIEMSA',
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
+      meta: { headerStyle: { backgroundColor: '#57B4BA', color: 'white' } }
     }),
     columnHelper.accessor('QFC RELEASE', {
       header: 'QFC RELEASE',
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
+      meta: { headerStyle: { backgroundColor: '#386641', color: 'white' } }
     }),
   ], [selectedSubsystem, handleSubsystemClick]);
 

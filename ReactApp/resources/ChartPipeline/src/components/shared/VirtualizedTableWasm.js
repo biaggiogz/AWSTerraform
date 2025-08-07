@@ -161,7 +161,11 @@ const VirtualizedTableWasm = ({
               {headerGroup.headers.map((header, headerIndex) => {
                 // Find which header group this column belongs to
                 let headerColor = 'gray.700';
-                if (multiLevelHeaders && multiLevelHeaders[0]) {
+                
+                // Check for individual column header style first
+                if (header.column.columnDef.meta?.headerStyle?.backgroundColor) {
+                  headerColor = header.column.columnDef.meta.headerStyle.backgroundColor;
+                } else if (multiLevelHeaders && multiLevelHeaders[0]) {
                   const groupHeader = multiLevelHeaders[0].headers.find(h => 
                     headerIndex >= h.startCol && headerIndex < h.startCol + h.colspan
                   );
