@@ -119,12 +119,23 @@ const DynamicInstrumentsTable = () => {
     }
   }, [rawData, groupBySubsystem, setContextTableData, setContextGroupBy]);
 
-  // Apply subsystem filter
+  // Apply subsystem filter and selected subsystem filter
   const tableData = useMemo(() => {
-    if (subsystemFilteredData.length === 0) return baseTableData;
-    const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
-    return baseTableData.filter(row => subsystemSet.has(row.SUBSYSTEM));
-  }, [baseTableData, subsystemFilteredData]);
+    let filteredData = baseTableData;
+    
+    // Apply subsystem filter from InstrumentsSubsystemFilter
+    if (subsystemFilteredData.length > 0) {
+      const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
+      filteredData = filteredData.filter(row => subsystemSet.has(row.SUBSYSTEM));
+    }
+    
+    // Apply selected subsystem filter from button clicks
+    if (selectedSubsystem) {
+      filteredData = filteredData.filter(row => row.SUBSYSTEM === selectedSubsystem);
+    }
+    
+    return filteredData;
+  }, [baseTableData, subsystemFilteredData, selectedSubsystem]);
 
   // Update context table data for chart
   useEffect(() => {

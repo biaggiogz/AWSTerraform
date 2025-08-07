@@ -27,7 +27,10 @@ const InstrumentsProgressChart = () => {
 
   // Calculate progress data from filtered table data
   const calculateProgressData = useMemo(() => {
-    if (!tableData || tableData.length === 0) {
+    // Use the actual filtered table data that responds to all filters
+    const dataToUse = tableData && tableData.length > 0 ? tableData : [];
+    
+    if (dataToUse.length === 0) {
       return {
         totalInst: 0,
         qfcRelease: 0,
@@ -42,7 +45,7 @@ const InstrumentsProgressChart = () => {
       };
     }
 
-    const totals = tableData.reduce((acc, row) => {
+    const totals = dataToUse.reduce((acc, row) => {
       acc.totalInst += Number(row['TOTAL INST']) || 0;
       acc.qfcRelease += Number(row['QFC RELEASE']) || 0;
       acc.qfcPending += Number(row['QFC PENDING']) || 0;
