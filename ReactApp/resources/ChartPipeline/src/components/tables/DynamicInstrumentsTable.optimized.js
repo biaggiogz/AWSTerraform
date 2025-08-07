@@ -69,7 +69,8 @@ const DynamicInstrumentsTable = () => {
       totalSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['TOTAL SIEMSA']) || 0), 0),
       installedSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['INSTALLED SIEMSA']) || 0), 0),
       pendingSiemsa: unfilteredData.reduce((sum, row) => sum + (Number(row['PENDING SIEMSA']) || 0), 0),
-      qfcRelease: unfilteredData.reduce((sum, row) => sum + (Number(row['QFC RELEASE']) || 0), 0)
+      qfcRelease: unfilteredData.reduce((sum, row) => sum + (Number(row['QFC RELEASE']) || 0), 0),
+      qfcPending: unfilteredData.reduce((sum, row) => sum + (Number(row['QFC PENDING']) || 0), 0)
     };
   }, [unfilteredData]);
 
@@ -86,7 +87,8 @@ const DynamicInstrumentsTable = () => {
       'TOTAL SIEMSA',
       'INSTALLED SIEMSA',
       'PENDING SIEMSA',
-      'QFC RELEASE'
+      'QFC RELEASE',
+      'QFC PENDING'
     ];
 
     rawData.forEach(row => {
@@ -190,6 +192,12 @@ const DynamicInstrumentsTable = () => {
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
       meta: { headerStyle: { backgroundColor: '#386641', color: 'white' } }
+    }),
+    columnHelper.accessor('QFC PENDING', {
+      header: 'QFC PENDING',
+      cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
+      size: 90,
+      meta: { headerStyle: { backgroundColor: '#F97A00', color: 'white' } }
     }),
   ], [selectedSubsystem, handleSubsystemClick]);
 

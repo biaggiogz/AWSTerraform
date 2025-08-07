@@ -111,6 +111,18 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
         scope__by_isoinst = 'SIEMSA' 
         AND installed_isoinst IS NOT NULL
     ) AS "PENDING SIEMSA",
+             (COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+        AND installed_teigatmi_isoinst = 1 
+        AND date_installed_teigatmi_isoinst IS NOT NULL
+    )) + (COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+        AND installed_isoinst IS NOT NULL
+    )) AS "QFC PENDING",
              COUNT(qcf_released_instrument_isoinst) FILTER(WHERE qcf_released_instrument_isoinst IS NOT NULL) AS "QFC RELEASE"
            FROM master_subsystem
            WHERE item_isoinst IS NOT NULL

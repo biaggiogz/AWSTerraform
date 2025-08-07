@@ -31,6 +31,7 @@ const InstrumentsProgressChart = () => {
       return {
         totalInst: 0,
         qfcRelease: 0,
+        qfcPending: 0,
         pendingQfcToRelease: 0,
         totalSiemsa: 0,
         installedSiemsa: 0,
@@ -44,6 +45,7 @@ const InstrumentsProgressChart = () => {
     const totals = tableData.reduce((acc, row) => {
       acc.totalInst += Number(row['TOTAL INST']) || 0;
       acc.qfcRelease += Number(row['QFC RELEASE']) || 0;
+      acc.qfcPending += Number(row['QFC PENDING']) || 0;
       acc.totalSiemsa += Number(row['TOTAL SIEMSA']) || 0;
       acc.installedSiemsa += Number(row['INSTALLED SIEMSA']) || 0;
       acc.pendingSiemsa += Number(row['PENDING SIEMSA']) || 0;
@@ -54,6 +56,7 @@ const InstrumentsProgressChart = () => {
     }, {
       totalInst: 0,
       qfcRelease: 0,
+      qfcPending: 0,
       totalSiemsa: 0,
       installedSiemsa: 0,
       pendingSiemsa: 0,
@@ -64,7 +67,7 @@ const InstrumentsProgressChart = () => {
 
     return {
       ...totals,
-      pendingQfcToRelease: totals.totalInst - totals.qfcRelease
+      pendingQfcToRelease: totals.qfcPending
     };
   }, [tableData]);
 
@@ -170,7 +173,7 @@ const InstrumentsProgressChart = () => {
             variant={instrumentsProgressFilter === 'PENDING' ? 'solid' : 'outline'}
             onClick={() => handleInstrumentsProgressFilter('PENDING')}
           >
-            PENDING QFC ({calculateProgressData.pendingQfcToRelease})
+            QFC PENDING ({calculateProgressData.pendingQfcToRelease})
           </Button>
           <Button
             size="sm"
