@@ -46,6 +46,11 @@ const DynamicInstrumentsTable = () => {
     setContextGroupBy
   } = useInstrumentsTableDataWasm('dynamic');
 
+  // Get details data for TestPack filter (contains TPs column)
+  const {
+    data: detailsData
+  } = useInstrumentsTableDataWasm('details');
+
   // Get filter context
   const {
     isSubsystemFilterVisible,
@@ -313,7 +318,7 @@ const DynamicInstrumentsTable = () => {
         </HStack>
 
         <InstrumentsSubsystemFilter
-          data={rawData}
+          data={detailsData || []}
           onFilterChange={setSubsystemFilteredData}
           isVisible={isSubsystemFilterVisible}
           onClose={() => {
@@ -322,7 +327,7 @@ const DynamicInstrumentsTable = () => {
         />
 
         <InstrumentsTestPackFilter
-          data={rawData}
+          data={detailsData || []}
           onFilterChange={setTestPackFilteredData}
           isVisible={isTestPackFilterVisible}
           onClose={() => {
