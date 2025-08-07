@@ -139,13 +139,24 @@ const DynamicInstrumentsTable = () => {
       filteredData = filteredData.filter(row => subsystemSet.has(row.SUBSYSTEM));
     }
 
+    // Apply testpack filter by finding subsystems that contain the selected test packs
+    if (testPackFilteredData.length > 0) {
+      const affectedSubsystems = new Set();
+      testPackFilteredData.forEach(row => {
+        if (row.SUBSYSTEM) {
+          affectedSubsystems.add(row.SUBSYSTEM);
+        }
+      });
+      filteredData = filteredData.filter(row => affectedSubsystems.has(row.SUBSYSTEM));
+    }
+
     // Apply selected subsystem filter from button clicks
     if (selectedSubsystem) {
       filteredData = filteredData.filter(row => row.SUBSYSTEM === selectedSubsystem);
     }
 
     return filteredData;
-  }, [baseTableData, subsystemFilteredData, selectedSubsystem]);
+  }, [baseTableData, subsystemFilteredData, testPackFilteredData, selectedSubsystem]);
 
   // Update context table data for chart
   useEffect(() => {

@@ -115,7 +115,7 @@ const InstrumentsTestPackFilter = ({
     }, [sortedTestPacks]);
 
     const getTestPackColor = useCallback(() => {
-        return '#28a745';
+        return '#007598';
     }, []);
 
     const filteredTestPacks = useMemo(() => {
