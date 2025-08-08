@@ -9,6 +9,7 @@ import {
   Center,
   IconButton,
   VStack,
+  Select,
 } from '@chakra-ui/react';
 import { MdCategory, MdViewModule, MdLocationOn } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
@@ -31,6 +32,9 @@ import { useInstrumentsTableFilterContext } from '../filters/InstrumentsTableFil
 
 
 const DynamicInstrumentsTable = () => {
+  // State for GROUP BY selection
+  const [groupByField, setGroupByField] = useState('subsystem');
+  
   // Get data and filter integration with WASM optimization
   const {
     data: rawData,
@@ -45,7 +49,7 @@ const DynamicInstrumentsTable = () => {
     handleSubsystemClick,
     setContextTableData,
     setContextGroupBy
-  } = useInstrumentsTableDataWasm('dynamic');
+  } = useInstrumentsTableDataWasm('dynamic', groupByField);
 
   // Get details data for TestPack filter (contains TPs column)
   const {
@@ -87,92 +91,54 @@ const DynamicInstrumentsTable = () => {
       qfcRelease: unfilteredData.reduce((sum, row) => sum + (Number(row['QFC RELEASE']) || 0), 0),
       qfcPending: unfilteredData.reduce((sum, row) => sum + (Number(row['QFC PENDING']) || 0), 0)
     };
-  }, [unfilteredData]);
+  }, [unfilteredData, groupByField]);
 
-  // Simple grouping by SUBSYSTEM only
-  const groupBySubsystem = useMemo(() => {
-    if (!rawData || rawData.length === 0) return [];
-
-    const subsystemGroups = {};
-    const numericFields = [
-      'TOTAL INST',
-      'TOTAL TEIGA',
-      'INSTALLED TEIGA',
-      'PENDING TEIGA',
-      'TOTAL SIEMSA',
-      'INSTALLED SIEMSA',
-      'PENDING SIEMSA',
-      'QFC RELEASE',
-      'QFC PENDING'
-    ];
-
-    rawData.forEach(row => {
-      const subsystem = row['SUBSYSTEM'] || 'N/A';
-      if (!subsystemGroups[subsystem]) subsystemGroups[subsystem] = [];
-      subsystemGroups[subsystem].push(row);
-    });
-
-    return Object.entries(subsystemGroups).map(([subsystem, items]) => {
-      const node = { 'SUBSYSTEM': subsystem };
-
-      numericFields.forEach(field => {
-        node[field] = items.reduce((sum, row) => sum + (Number(row[field]) || 0), 0);
-      });
-
-      return node;
-    });
-  }, [rawData]);
+  // Data is already grouped by the SQL query, no need for client-side grouping
 
 
 
   // Apply grouping when data changes
   useEffect(() => {
-    if (rawData.length > 0) {
-      setBaseTableData(groupBySubsystem);
-      setContextTableData(groupBySubsystem);
-      setContextGroupBy(['SUBSYSTEM']);
+    if (rawData && rawData.length > 0) {
+      setBaseTableData(rawData);
+      setContextTableData(rawData);
+      const groupByKey = groupByField === 'hito' ? 'HITO' : 'SUBSYSTEM';
+      setContextGroupBy([groupByKey]);
+    } else {
+      setBaseTableData([]);
     }
-  }, [rawData, groupBySubsystem, setContextTableData, setContextGroupBy]);
+  }, [rawData, groupByField, setContextTableData, setContextGroupBy]);
 
-  // Apply subsystem filter and selected subsystem filter
+  // Apply filters based on current GROUP BY field
   const tableData = useMemo(() => {
     let filteredData = baseTableData;
+    const groupByKey = groupByField === 'hito' ? 'HITO' : 'SUBSYSTEM';
 
     // Apply subsystem filter from InstrumentsSubsystemFilter
     if (subsystemFilteredData.length > 0) {
-      const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
-      filteredData = filteredData.filter(row => subsystemSet.has(row.SUBSYSTEM));
+      if (groupByField === 'subsystem') {
+        const subsystemSet = new Set(subsystemFilteredData.map(row => row.SUBSYSTEM));
+        filteredData = filteredData.filter(row => subsystemSet.has(row[groupByKey]));
+      }
+      // For HITO grouping, let SQL handle the filtering
     }
 
-    // Apply testpack filter by finding subsystems that contain the selected test packs
-    if (testPackFilteredData.length > 0) {
-      const affectedSubsystems = new Set();
-      testPackFilteredData.forEach(row => {
-        if (row.SUBSYSTEM) {
-          affectedSubsystems.add(row.SUBSYSTEM);
-        }
-      });
-      filteredData = filteredData.filter(row => affectedSubsystems.has(row.SUBSYSTEM));
-    }
-
-    // Apply mounting filter by finding subsystems that contain the selected mounting values
+    // Apply mounting filter by affected subsystems
     if (mountingFilteredData.length > 0) {
-      const affectedSubsystems = new Set();
-      mountingFilteredData.forEach(row => {
-        if (row.SUBSYSTEM) {
-          affectedSubsystems.add(row.SUBSYSTEM);
-        }
-      });
-      filteredData = filteredData.filter(row => affectedSubsystems.has(row.SUBSYSTEM));
+      if (groupByField === 'subsystem') {
+        const affectedSubsystems = new Set(mountingFilteredData.map(row => row.SUBSYSTEM));
+        filteredData = filteredData.filter(row => affectedSubsystems.has(row[groupByKey]));
+      }
+      // For HITO grouping, let SQL handle the filtering
     }
 
     // Apply selected subsystem filter from button clicks
-    if (selectedSubsystem) {
-      filteredData = filteredData.filter(row => row.SUBSYSTEM === selectedSubsystem);
+    if (selectedSubsystem && groupByField === 'subsystem') {
+      filteredData = filteredData.filter(row => row[groupByKey] === selectedSubsystem);
     }
 
     return filteredData;
-  }, [baseTableData, subsystemFilteredData, testPackFilteredData, mountingFilteredData, selectedSubsystem]);
+  }, [baseTableData, subsystemFilteredData, mountingFilteredData, selectedSubsystem, groupByField]);
 
   // Update context table data for chart
   useEffect(() => {
@@ -184,18 +150,29 @@ const DynamicInstrumentsTable = () => {
   // Column definitions
   const columnHelper = createColumnHelper();
 
-  const columns = useMemo(() => [
-    columnHelper.accessor('SUBSYSTEM', {
-      header: 'SUBSYSTEM',
-      cell: info => (
-          <SubsystemCell
+  const columns = useMemo(() => {
+    // Dynamic first column based on GROUP BY field
+    const firstColumnKey = groupByField === 'hito' ? 'HITO' : 'SUBSYSTEM';
+    
+    const firstColumn = columnHelper.accessor(firstColumnKey, {
+      header: firstColumnKey,
+      cell: info => {
+        if (groupByField === 'subsystem') {
+          return (
+            <SubsystemCell
               subsystem={info.getValue()}
               onSubsystemSelect={handleSubsystemClick}
               selectedSubsystem={selectedSubsystem}
-          />
-      ),
+            />
+          );
+        }
+        return <Text fontSize="xs">{info.getValue()}</Text>;
+      },
       size: 120,
-    }),
+    });
+    
+    return [
+      firstColumn,
     columnHelper.accessor('TOTAL INST', {
       header: 'TOTAL INST',
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
@@ -247,7 +224,8 @@ const DynamicInstrumentsTable = () => {
       size: 90,
       meta: { headerStyle: { backgroundColor: '#F97A00', color: 'white' } }
     }),
-  ], [selectedSubsystem, handleSubsystemClick]);
+    ];
+  }, [selectedSubsystem, handleSubsystemClick, groupByField, columnHelper]);
 
 
 
@@ -285,7 +263,19 @@ const DynamicInstrumentsTable = () => {
   return (
       <Box mt={6}>
         <HStack justify="space-between" align="center" mb={4}>
-          <Heading size="md" color="gray.700">Dynamic Instruments Table</Heading>
+          <HStack>
+            <Heading size="md" color="gray.700">Dynamic Instruments Table</Heading>
+            <Select
+              size="sm"
+              value={groupByField}
+              onChange={(e) => setGroupByField(e.target.value)}
+              width="150px"
+              bg="white"
+            >
+              <option value="subsystem">Group by SUBSYSTEM</option>
+              <option value="hito">Group by HITO</option>
+            </Select>
+          </HStack>
           <HStack>
             <IconButton
               icon={<MdCategory />}

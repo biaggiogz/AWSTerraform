@@ -4,7 +4,7 @@ import { multiFilterWasm } from '../wasm/multi-filter.wasm.js';
 import { sqlEngineWasm } from '../wasm/sql-engine.wasm.js';
 import { useEffect, useState, useMemo } from 'react';
 
-const useInstrumentsTableDataWasm = (tableType) => {
+const useInstrumentsTableDataWasm = (tableType, groupByField = null) => {
   const [wasmInitialized, setWasmInitialized] = useState(false);
   
   // Initialize WASM modules
@@ -40,19 +40,19 @@ const useInstrumentsTableDataWasm = (tableType) => {
 
   // Data loading with WASM optimization
   const whereClause = getSqlWhereClause(tableType);
-  const cacheKey = `${tableType}_${selectedSubsystem || 'all'}`;
+  const cacheKey = `${tableType}_${groupByField || 'default'}_${selectedSubsystem || 'all'}`;
   const {
     data: rawData,
     loading,
     error,
     loadTime,
     queryTime
-  } = useInstrumentsDataLoader(tableType, whereClause, cacheKey);
+  } = useInstrumentsDataLoader(tableType, whereClause, cacheKey, groupByField);
   
   // Load unfiltered data for frozen counts
   const {
     data: unfilteredData
-  } = useInstrumentsDataLoader(tableType, '', `${tableType}_unfiltered`);
+  } = useInstrumentsDataLoader(tableType, '', `${tableType}_${groupByField || 'default'}_unfiltered`, groupByField);
 
 
 

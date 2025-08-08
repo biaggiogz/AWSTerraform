@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import useDuckDB from './useDuckDB3';
 import simpleQueryOptimizer from '../utils/simpleQueryOptimizer';
 
-const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
+const useInstrumentsDataLoader = (tableType, whereClause, cacheKey, groupByField = null) => {
   const {
     createTableFromParquet,
     executeQuery,
@@ -79,7 +79,104 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
         i.progress_ac_tp_3
       FROM inst_data i
              LEFT JOIN progress_data p ON i.isometric = p.isometric`,
-      dynamic:
+      dynamic_subsystem:
+          `SELECT
+             subsystem AS "SUBSYSTEM",
+             COUNT(tag_inst_isoinst) AS "TOTAL INST",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+    ) AS "TOTAL TEIGA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+        AND installed_teigatmi_isoinst = 1 
+        AND date_installed_teigatmi_isoinst IS NOT NULL
+    ) AS "INSTALLED TEIGA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+        AND installed_teigatmi_isoinst = 1 
+        AND date_installed_teigatmi_isoinst IS NOT NULL
+    ) AS "PENDING TEIGA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+    ) AS "TOTAL SIEMSA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+        AND installed_isoinst IS NOT NULL
+    ) AS "INSTALLED SIEMSA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+        AND installed_isoinst IS NOT NULL
+    ) AS "PENDING SIEMSA",
+             (COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+        AND installed_teigatmi_isoinst = 1 
+        AND date_installed_teigatmi_isoinst IS NOT NULL
+    )) + (COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+        AND installed_isoinst IS NOT NULL
+    )) AS "QFC PENDING",
+             COUNT(qcf_released_instrument_isoinst) FILTER(WHERE qcf_released_instrument_isoinst IS NOT NULL) AS "QFC RELEASE"
+           FROM master_subsystem
+           WHERE item_isoinst IS NOT NULL
+           GROUP BY subsystem`,
+      dynamic_hito:
+          `SELECT
+             hito_isoinst AS "HITO",
+             COUNT(tag_inst_isoinst) AS "TOTAL INST",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+    ) AS "TOTAL TEIGA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+        AND installed_teigatmi_isoinst = 1 
+        AND date_installed_teigatmi_isoinst IS NOT NULL
+    ) AS "INSTALLED TEIGA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+        AND installed_teigatmi_isoinst = 1 
+        AND date_installed_teigatmi_isoinst IS NOT NULL
+    ) AS "PENDING TEIGA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+    ) AS "TOTAL SIEMSA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+        AND installed_isoinst IS NOT NULL
+    ) AS "INSTALLED SIEMSA",
+             COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+        AND installed_isoinst IS NOT NULL
+    ) AS "PENDING SIEMSA",
+             (COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'TEIGA-TMI' 
+        AND installed_teigatmi_isoinst = 1 
+        AND date_installed_teigatmi_isoinst IS NOT NULL
+    )) + (COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+    ) - COUNT(scope__by_isoinst) FILTER(WHERE 
+        scope__by_isoinst = 'SIEMSA' 
+        AND installed_isoinst IS NOT NULL
+    )) AS "QFC PENDING",
+             COUNT(qcf_released_instrument_isoinst) FILTER(WHERE qcf_released_instrument_isoinst IS NOT NULL) AS "QFC RELEASE"
+           FROM master_subsystem
+           WHERE item_isoinst IS NOT NULL AND hito_isoinst IS NOT NULL
+           GROUP BY hito_isoinst`,
+
+      dynamic: // Fallback for backward compatibility
           `SELECT
              subsystem AS "SUBSYSTEM",
              COUNT(tag_inst_isoinst) AS "TOTAL INST",
@@ -134,8 +231,13 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
   }, []);
 
   const getQuery = useCallback((tableType, whereClause) => {
+    // Handle dynamic table with GROUP BY parameter
+    if (tableType === 'dynamic') {
+      const dynamicTableType = groupByField ? `dynamic_${groupByField.toLowerCase()}` : 'dynamic';
+      return simpleQueryOptimizer.optimizeQuery(dynamicTableType, whereClause || '');
+    }
     return simpleQueryOptimizer.optimizeQuery(tableType, whereClause || '');
-  }, []);
+  }, [groupByField]);
 
   const loadData = useCallback(async () => {
     try {
@@ -183,7 +285,7 @@ const useInstrumentsDataLoader = (tableType, whereClause, cacheKey) => {
     } finally {
       setLoading(false);
     }
-  }, [tableType, whereClause, cacheKey, dbLoading, dbError, createTableFromParquet, executeQuery, getQuery]);
+  }, [tableType, whereClause, cacheKey, groupByField, dbLoading, dbError, createTableFromParquet, executeQuery, getQuery]);
 
   useEffect(() => {
     loadData();
