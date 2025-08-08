@@ -105,23 +105,49 @@ const InsulationTableSqlDuckDb = () => {
         }),
         insulationTableSqlColumnHelper.accessor('TPs', {
             header: 'TPs',
-            size: 100,
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            size: 120,
+            cell: info => {
+                const tps = info.getValue();
+                const progress = info.row.original['TP_PROGRESS'];
+                if (!tps) return <Text fontSize="xs">-</Text>;
+                
+                const tpArray = tps.split('|').filter(tp => tp.trim());
+                const progressArray = progress ? progress.split('|').filter(p => p.trim()) : [];
+                
+                return (
+                    <Box>
+                        {tpArray.map((tp, index) => (
+                            <HStack key={index} spacing={2} justify="space-between">
+                                <Text fontSize="xs">{tp}</Text>
+                                <Text fontSize="xs" color="blue.500">
+                                    {progressArray[index] ? `${(parseFloat(progressArray[index]) * 100).toFixed(0)}%` : '-'}
+                                </Text>
+                            </HStack>
+                        ))}
+                    </Box>
+                );
+            }
         }),
     ], []);
 
-    // Load parquet file once
+    // Load parquet files once
     const loadParquetFile = async () => {
         if (parquetLoaded || dbLoading || dbError) return;
 
         try {
             const startLoadTime = performance.now();
-            const res = await fetch('/data/master_subsystem.parquet');
-
-            if (!res.ok) throw new Error(`Failed to fetch Parquet: ${res.status}`);
-
-            const parquetBuffer = await res.arrayBuffer();
-            await createTableFromParquet('master_subsystem', parquetBuffer);
+            
+            // Load master_subsystem.parquet
+            const res1 = await fetch('/data/master_subsystem.parquet');
+            if (!res1.ok) throw new Error(`Failed to fetch master_subsystem: ${res1.status}`);
+            const parquetBuffer1 = await res1.arrayBuffer();
+            await createTableFromParquet('master_subsystem', parquetBuffer1);
+            
+            // Load MASTER_DATASET_df_tp_full.parquet
+            const res2 = await fetch('/data/MASTER_DATASET_df_tp_full.parquet');
+            if (!res2.ok) throw new Error(`Failed to fetch tp_full: ${res2.status}`);
+            const parquetBuffer2 = await res2.arrayBuffer();
+            await createTableFromParquet('MASTER_DATASET_df_tp_full', parquetBuffer2);
 
             const endLoadTime = performance.now();
             setInsulationTableSqlLoadTime(Math.round(endLoadTime - startLoadTime));
@@ -165,6 +191,21 @@ const InsulationTableSqlDuckDb = () => {
                     FROM master_subsystem
                     WHERE isometricos_ifc3_isos IS NOT NULL
                     ORDER BY isometricos_ifc3_isos
+                ),
+                tp_progress AS (
+                    SELECT 
+                        dossier_id_tp,
+                        "1_tp" as progress_tp
+                    FROM MASTER_DATASET_df_tp_full
+                    WHERE dossier_id_tp IS NOT NULL
+                ),
+                tp_expanded AS (
+                    SELECT 
+                        s2.isometricos_isos,
+                        s2.tpvt_isos,
+                        UNNEST(string_split(s2.tpvt_isos, '|')) as tp_id
+                    FROM s2
+                    WHERE s2.tpvt_isos IS NOT NULL
                 )
                 SELECT 
                     s1.iso_insulation AS 'ISOMETRIC',
@@ -177,9 +218,15 @@ const InsulationTableSqlDuckDb = () => {
                     s2.teiga_insulation_isos AS 'TEIGA INSULATION',
                     s2.siemsa_isos AS 'SIEMSA',
                     s2.ten_isos AS 'TEN',
-                    s2.tpvt_isos AS 'TPs'
+                    s2.tpvt_isos AS 'TPs',
+                    string_agg(tp_progress.progress_tp::VARCHAR, '|') AS 'TP_PROGRESS'
                 FROM s1 
                 LEFT JOIN s2 ON s1.iso_insulation = s2.isometricos_isos
+                LEFT JOIN tp_expanded ON s2.isometricos_isos = tp_expanded.isometricos_isos
+                LEFT JOIN tp_progress ON tp_expanded.tp_id = tp_progress.dossier_id_tp
+                GROUP BY s1.iso_insulation, s1.subsystem, s1.mleq, s1.m2eq, s1.total_m_advance, 
+                         s2.hito_isos, s2.teiga_reinstatement_isos, s2.teiga_insulation_isos, 
+                         s2.siemsa_isos, s2.ten_isos, s2.tpvt_isos
             `;
 
             console.log('Insulation SQL query:', insulationQuery);
