@@ -81,15 +81,7 @@ const useInstrumentsTableDataWasm = (tableType, groupByField = null) => {
     });
     
     return {
-      totalTagInst: uniqueTags.size,
-      totalTestPack: uniqueTestPacks.size,
-      totalInstalled: unfilteredData.filter(row => row.INSTALLED && row.INSTALLED !== '').length,
-      totalWired: unfilteredData.filter(row => row.WIRED && row.WIRED !== '').length,
-      totalConnected: unfilteredData.filter(row => row.CONNECTED && row.CONNECTED !== '').length,
-      totalCableTest: unfilteredData.filter(row => row['CABLE TEST'] && row['CABLE TEST'] !== '').length,
-      totalQfcReleased: unfilteredData.filter(row => row['QFC released instrument'] && row['QFC released instrument'] !== '').length,
-      totalQfc: unfilteredData.filter(row => row.QFC && row.QFC !== '').length,
-      totalOk100: unfilteredData.filter(row => row['OK=100%'] === 1 || row['OK=100%'] === '1').length
+      totalTagInst: uniqueTags.size
     };
   }, [tableType, unfilteredData]);
   
