@@ -61,47 +61,47 @@ const InsulationTableSqlDuckDb = () => {
         insulationTableSqlColumnHelper.accessor('SUBSYSTEM', {
             header: 'SUBSYSTEM',
             size: 120,
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('MLEQ', {
             header: 'MLEQ',
             size: 100,
-            cell: info => <Text fontSize="xs" textAlign="right">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
+            cell: info => <Text fontSize="xs" textAlign="center">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('M2EQ', {
             header: 'M2EQ',
             size: 100,
-            cell: info => <Text fontSize="xs" textAlign="right">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
+            cell: info => <Text fontSize="xs" textAlign="center">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('TOTAL M ADVANCE', {
             header: 'TOTAL M ADVANCE',
             size: 80,
-            cell: info => <Text fontSize="xs" textAlign="right">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
+            cell: info => <Text fontSize="xs" textAlign="center">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('HITO', {
             header: 'HITO',
             size: 100,
-            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() || '-'}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('TEIGA REINSTATEMENT', {
             header: 'TEIGA REINSTATEMENT',
-            size: 150,
-            cell: info => <Text fontSize="xs">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
+            size: 110,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('TEIGA INSULATION', {
             header: 'TEIGA INSULATION',
-            size: 150,
-            cell: info => <Text fontSize="xs">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
+            size: 100,
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('SIEMSA', {
             header: 'SIEMSA',
             size: 100,
-            cell: info => <Text fontSize="xs">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('TEN', {
             header: 'TEN',
             size: 100,
-            cell: info => <Text fontSize="xs">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
+            cell: info => <Text fontSize="xs" textAlign="center">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('TPs', {
             header: 'TPs',
@@ -402,7 +402,18 @@ const InsulationTableSqlDuckDb = () => {
                                             borderColor="gray.100"
                                             display="flex"
                                             alignItems="center"
-                                            justifyContent={cell.column.id === 'Mleq' || cell.column.id === 'M2eq' || cell.column.id === 'TOTAL M ADVANCE' ? 'flex-end' : 'flex-start'}
+                                            justifyContent={
+                                                cell.column.id === 'SUBSYSTEM' || 
+                                                cell.column.id === 'MLEQ' || 
+                                                cell.column.id === 'M2EQ' || 
+                                                cell.column.id === 'TOTAL M ADVANCE' || 
+                                                cell.column.id === 'HITO' || 
+                                                cell.column.id === 'TEIGA REINSTATEMENT' || 
+                                                cell.column.id === 'TEIGA INSULATION' || 
+                                                cell.column.id === 'SIEMSA' || 
+                                                cell.column.id === 'TEN' 
+                                                ? 'center' : 'flex-start'
+                                            }
                                             height="100%"
                                         >
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
