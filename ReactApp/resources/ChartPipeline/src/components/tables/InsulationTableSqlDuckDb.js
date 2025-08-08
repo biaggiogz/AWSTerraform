@@ -8,6 +8,7 @@ import {
     Spinner,
     Center,
     Tooltip,
+    Progress,
 } from '@chakra-ui/react';
 import {
     createColumnHelper,
@@ -77,6 +78,27 @@ const InsulationTableSqlDuckDb = () => {
             header: 'TOTAL M ADVANCE',
             size: 80,
             cell: info => <Text fontSize="xs" textAlign="center">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
+        }),
+        insulationTableSqlColumnHelper.accessor('% ADVANCE', {
+            header: '% ADVANCE',
+            size: 120,
+            cell: info => {
+                const value = parseFloat(info.getValue() || 0);
+                const percentage = Math.round(value * 100);
+                return (
+                    <Box width="100%" px={2}>
+                        <Progress 
+                            value={percentage} 
+                            size="sm" 
+                            colorScheme={percentage >= 80 ? 'green' : percentage >= 50 ? 'green' : 'green'}
+                            bg="gray.200"
+                        />
+                        <Text fontSize="xs" textAlign="center" mt={1}>
+                            {percentage}%
+                        </Text>
+                    </Box>
+                );
+            }
         }),
         insulationTableSqlColumnHelper.accessor('HITO', {
             header: 'HITO',
@@ -219,6 +241,7 @@ const InsulationTableSqlDuckDb = () => {
                     s2.siemsa_isos AS 'SIEMSA',
                     s2.ten_isos AS 'TEN',
                     s2.tpvt_isos AS 'TPs',
+                    (s1.total_m_advance/s1.mleq)::FLOAT AS '% ADVANCE',
                     string_agg(tp_progress.progress_tp::VARCHAR, '|') AS 'TP_PROGRESS'
                 FROM s1 
                 LEFT JOIN s2 ON s1.iso_insulation = s2.isometricos_isos
@@ -407,6 +430,7 @@ const InsulationTableSqlDuckDb = () => {
                                                 cell.column.id === 'MLEQ' || 
                                                 cell.column.id === 'M2EQ' || 
                                                 cell.column.id === 'TOTAL M ADVANCE' || 
+                                                cell.column.id === '% ADVANCE' || 
                                                 cell.column.id === 'HITO' || 
                                                 cell.column.id === 'TEIGA REINSTATEMENT' || 
                                                 cell.column.id === 'TEIGA INSULATION' || 
