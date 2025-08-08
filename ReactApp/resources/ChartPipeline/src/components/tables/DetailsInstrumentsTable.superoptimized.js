@@ -224,24 +224,16 @@ const DetailsInstrumentsTable = () => {
           return <Text fontSize="xs" color="gray.500">{isometric}</Text>;
         }
         return (
-          <Button
-            size="xs"
-            variant={selectedIsometric === isometric ? "solid" : "outline"}
-            onClick={() => onIsometricSelect && onIsometricSelect(isometric)}
-            _hover={{ bg: selectedIsometric === isometric ? "purple.200" : "blue.200" }}
+          <Badge
+            size="sm"
+            colorScheme="blue"
             fontSize="10px"
-            fontWeight="medium"
-            color={selectedIsometric === isometric ? "white" : "blue.600"}
-            bg={selectedIsometric === isometric ? "purple.500" : "white"}
-            borderColor={selectedIsometric === isometric ? "purple.500" : "blue.500"}
-            minWidth="30px"
-            height="18px"
             px={2}
+            py={1}
             borderRadius="sm"
-            cursor="pointer"
           >
             {isometric}
-          </Button>
+          </Badge>
         );
       },
       size: 230,
@@ -347,7 +339,7 @@ const DetailsInstrumentsTable = () => {
       cell: info => <Text fontSize="xs">{info.getValue()}</Text>,
       size: 95,
     }),
-  ], [formatDate, handleSubsystemClick, handleTestPackClick, selectedSubsystem, selectedTestPack, selectedIsometric, onIsometricSelect]);
+  ], [formatDate, handleSubsystemClick, selectedSubsystem]);
 
   // Calculate unique TAG INST count
   const uniqueTagInstCount = useMemo(() => {

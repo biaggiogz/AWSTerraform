@@ -161,24 +161,17 @@ const ControlInstrumentsByIsometric = () => {
       cell: info => {
         const isometric = info.getValue();
         return (
-            <Button
-                size="xs"
-                variant={selectedIsometric === isometric ? "solid" : "outline"}
-                onClick={() => onIsometricSelect && onIsometricSelect(isometric)}
-                _hover={{ bg: selectedIsometric === isometric ? "purple.200" : "blue.200" }}
+            <Badge
+                size="sm"
+                colorScheme="blue"
                 fontSize="10px"
-                fontWeight="medium"
-                color={selectedIsometric === isometric ? "white" : "blue.600"}
-                bg={selectedIsometric === isometric ? "purple.500" : "white"}
-                borderColor={selectedIsometric === isometric ? "purple.500" : "blue.500"}
-                minWidth="30px"
-                height="18px"
                 px={2}
+                py={1}
                 borderRadius="sm"
                 fontFamily="mono"
             >
               {String(isometric)}
-            </Button>
+            </Badge>
         );
       },
       size: 240,
@@ -312,7 +305,7 @@ const ControlInstrumentsByIsometric = () => {
       cell: info => <Text fontSize="xs">{Number(info.getValue())}</Text>,
       size: 90,
     }),
-  ], [formatDate, handleSubsystemClick, handleTestPackClick, onIsometricSelect, selectedIsometric, selectedSubsystem, selectedTestPack]);
+  ], [formatDate, handleSubsystemClick, selectedSubsystem]);
 
 
   // Define multi-level header structure with row colors
