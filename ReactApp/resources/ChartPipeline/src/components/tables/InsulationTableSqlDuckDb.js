@@ -53,9 +53,9 @@ const InsulationTableSqlDuckDb = () => {
     const insulationTableSqlColumnHelper = createColumnHelper();
 
     const insulationTableSqlColumns = useMemo(() => [
-        insulationTableSqlColumnHelper.accessor('ISO', {
-            header: 'ISO',
-            size: 120,
+        insulationTableSqlColumnHelper.accessor('ISOMETRIC', {
+            header: 'ISOMETRIC',
+            size: 260,
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('SUBSYSTEM', {
@@ -63,20 +63,50 @@ const InsulationTableSqlDuckDb = () => {
             size: 120,
             cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
-        insulationTableSqlColumnHelper.accessor('Mleq', {
-            header: 'Mleq',
+        insulationTableSqlColumnHelper.accessor('MLEQ', {
+            header: 'MLEQ',
             size: 100,
             cell: info => <Text fontSize="xs" textAlign="right">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
         }),
-        insulationTableSqlColumnHelper.accessor('M2eq', {
-            header: 'M2eq',
+        insulationTableSqlColumnHelper.accessor('M2EQ', {
+            header: 'M2EQ',
             size: 100,
             cell: info => <Text fontSize="xs" textAlign="right">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
         }),
         insulationTableSqlColumnHelper.accessor('TOTAL M ADVANCE', {
             header: 'TOTAL M ADVANCE',
-            size: 150,
+            size: 80,
             cell: info => <Text fontSize="xs" textAlign="right">{parseFloat(info.getValue() || 0).toFixed(2)}</Text>
+        }),
+        insulationTableSqlColumnHelper.accessor('HITO', {
+            header: 'HITO',
+            size: 100,
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
+        }),
+        insulationTableSqlColumnHelper.accessor('TEIGA REINSTATEMENT', {
+            header: 'TEIGA REINSTATEMENT',
+            size: 150,
+            cell: info => <Text fontSize="xs">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
+        }),
+        insulationTableSqlColumnHelper.accessor('TEIGA INSULATION', {
+            header: 'TEIGA INSULATION',
+            size: 150,
+            cell: info => <Text fontSize="xs">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
+        }),
+        insulationTableSqlColumnHelper.accessor('SIEMSA', {
+            header: 'SIEMSA',
+            size: 100,
+            cell: info => <Text fontSize="xs">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
+        }),
+        insulationTableSqlColumnHelper.accessor('TEN', {
+            header: 'TEN',
+            size: 100,
+            cell: info => <Text fontSize="xs">{info.getValue() ? new Date(info.getValue()).toLocaleDateString() : '-'}</Text>
+        }),
+        insulationTableSqlColumnHelper.accessor('TPs', {
+            header: 'TPs',
+            size: 100,
+            cell: info => <Text fontSize="xs">{info.getValue() || '-'}</Text>
         }),
     ], []);
 
@@ -111,16 +141,45 @@ const InsulationTableSqlDuckDb = () => {
             const startQueryTime = performance.now();
 
             const insulationQuery = `
+                WITH s1 AS (
+                    SELECT 
+                        iso_insulation AS iso_insulation,
+                        MAX(subsystem) AS subsystem, 
+                        SUM(mleq_insulation)::FLOAT AS mleq,
+                        SUM(m2eq_insulation)::FLOAT AS m2eq,
+                        SUM(total_m_avance_insulation)::FLOAT AS total_m_advance
+                    FROM master_subsystem
+                    WHERE iso_insulation IS NOT NULL
+                    GROUP BY iso_insulation
+                    ORDER BY iso_insulation
+                ),
+                s2 AS (
+                    SELECT 
+                        isometricos_ifc3_isos as isometricos_isos,
+                        hito_isos,
+                        teiga_reinstatement_isos,
+                        teiga_insulation_isos,
+                        siemsa_isos,
+                        ten_isos,
+                        tpvt_isos
+                    FROM master_subsystem
+                    WHERE isometricos_ifc3_isos IS NOT NULL
+                    ORDER BY isometricos_ifc3_isos
+                )
                 SELECT 
-                    iso_insulation AS 'ISO',
-                    MAX(subsystem) AS 'SUBSYSTEM', 
-                    SUM(mleq_insulation)::FLOAT AS 'Mleq',
-                    SUM(m2eq_insulation)::FLOAT AS 'M2eq',
-                    SUM(total_m_avance_insulation)::FLOAT AS 'TOTAL M ADVANCE'
-                FROM master_subsystem
-                WHERE iso_insulation IS NOT NULL
-                GROUP BY iso_insulation
-                ORDER BY iso_insulation
+                    s1.iso_insulation AS 'ISOMETRIC',
+                    s1.subsystem AS 'SUBSYSTEM', 
+                    s1.mleq AS 'MLEQ',
+                    s1.m2eq AS 'M2EQ',
+                    s1.total_m_advance AS 'TOTAL M ADVANCE',
+                    s2.hito_isos AS 'HITO',
+                    s2.teiga_reinstatement_isos AS 'TEIGA REINSTATEMENT',
+                    s2.teiga_insulation_isos AS 'TEIGA INSULATION',
+                    s2.siemsa_isos AS 'SIEMSA',
+                    s2.ten_isos AS 'TEN',
+                    s2.tpvt_isos AS 'TPs'
+                FROM s1 
+                LEFT JOIN s2 ON s1.iso_insulation = s2.isometricos_isos
             `;
 
             console.log('Insulation SQL query:', insulationQuery);
