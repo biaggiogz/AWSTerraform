@@ -35,6 +35,10 @@ const VirtualizedTableWasm = ({
   frozenDossierCount = null,
   showTestLoopCounts = false,
   frozenTestLoopCount = null,
+  showTestPackCounts = false,
+  frozenTestPackCount = null,
+  showQfcReleasedCounts = false,
+  frozenQfcReleasedCount = null,
   showQtyInstCounts = false,
   frozenQtyInstCount = null,
   showScopeCounts = false,
@@ -83,8 +87,8 @@ const VirtualizedTableWasm = ({
   const { rows } = table.getRowModel();
 
   // Calculate total count rows needed
-  const hasFrozenCounts = (showInstalledCounts && frozenInstalledCount) || (showWiredCounts && frozenWiredCount) || (showConnectedCounts && frozenConnectedCount) || (showCableTestCounts && frozenCableTestCount) || (showQcfCounts && frozenQcfCount) || (showOk100Counts && frozenOk100Count) || (showDossierCounts && frozenDossierCount) || (showTestLoopCounts && frozenTestLoopCount);
-  const hasResponsiveCounts = showInstalledCounts || showWiredCounts || showConnectedCounts || showCableTestCounts || showQcfCounts || showOk100Counts || showDossierCounts || showTestLoopCounts;
+  const hasFrozenCounts = (showInstalledCounts && frozenInstalledCount) || (showWiredCounts && frozenWiredCount) || (showConnectedCounts && frozenConnectedCount) || (showCableTestCounts && frozenCableTestCount) || (showQcfCounts && frozenQcfCount) || (showOk100Counts && frozenOk100Count) || (showDossierCounts && frozenDossierCount) || (showTestLoopCounts && frozenTestLoopCount) || (showTestPackCounts && frozenTestPackCount) || (showQfcReleasedCounts && frozenQfcReleasedCount);
+  const hasResponsiveCounts = showInstalledCounts || showWiredCounts || showConnectedCounts || showCableTestCounts || showQcfCounts || showOk100Counts || showDossierCounts || showTestLoopCounts || showTestPackCounts || showQfcReleasedCounts;
   const countRowsCount = (hasFrozenCounts ? 1 : 0) + (hasResponsiveCounts ? 1 : 0);
 
   const rowVirtualizer = useVirtualizer({
@@ -561,9 +565,11 @@ const VirtualizedTableWasm = ({
                         if (column.id === 'INSTALLED' && frozenInstalledCount) countValue = `TOTAL: ${frozenInstalledCount}`;
                         else if (column.id === 'WIRED' && frozenWiredCount) countValue = `TOTAL: ${frozenWiredCount}`;
                         else if (column.id === 'CONNECTED' && frozenConnectedCount) countValue = `TOTAL: ${frozenConnectedCount}`;
-                        else if (column.id === 'CABLE_TEST' && frozenCableTestCount) countValue = `TOTAL: ${frozenCableTestCount}`;
-                        else if (column.id === 'QCF' && frozenQcfCount) countValue = `TOTAL: ${frozenQcfCount}`;
-                        else if (column.id === 'OK100' && frozenOk100Count) countValue = `TOTAL: ${frozenOk100Count}`;
+                        else if (column.id === 'CABLE TEST' && frozenCableTestCount) countValue = `TOTAL: ${frozenCableTestCount}`;
+                        else if (column.id === 'QFC' && frozenQcfCount) countValue = `TOTAL: ${frozenQcfCount}`;
+                        else if (column.id === 'QFC released instrument' && frozenQfcReleasedCount) countValue = `TOTAL: ${frozenQfcReleasedCount}`;
+                        else if (column.id === 'OK=100%' && frozenOk100Count) countValue = `TOTAL: ${frozenOk100Count}`;
+                        else if (column.id === 'TPs' && frozenTestPackCount) countValue = `TOTAL: ${frozenTestPackCount}`;
                         else if (column.id === 'DOSSIER' && frozenDossierCount) countValue = `TOTAL: ${frozenDossierCount}`;
                         else if (column.id === 'TEST_LOOP' && frozenTestLoopCount) countValue = `TOTAL: ${frozenTestLoopCount}`;
                       } else if (isResponsiveRow && data) {
@@ -576,15 +582,27 @@ const VirtualizedTableWasm = ({
                         } else if (column.id === 'CONNECTED' && showConnectedCounts) {
                           const currentCount = data.reduce((sum, row) => sum + (row.CONNECTED && row.CONNECTED !== '-' && row.CONNECTED !== '' ? 1 : 0), 0);
                           countValue = `CURRENLTY: ${currentCount}`;
-                        } else if (column.id === 'CABLE_TEST' && showCableTestCounts) {
-                          const currentCount = data.reduce((sum, row) => sum + (row.CABLE_TEST && row.CABLE_TEST !== '-' && row.CABLE_TEST !== '' ? 1 : 0), 0);
+                        } else if (column.id === 'CABLE TEST' && showCableTestCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row['CABLE TEST'] && row['CABLE TEST'] !== '-' && row['CABLE TEST'] !== '' ? 1 : 0), 0);
                           countValue = `CURRENLTY: ${currentCount}`;
-                        } else if (column.id === 'QCF' && showQcfCounts) {
-                          const currentCount = data.reduce((sum, row) => sum + (row.QCF && row.QCF !== '-' && row.QCF !== '' ? 1 : 0), 0);
+                        } else if (column.id === 'QFC' && showQcfCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row.QFC && row.QFC !== '-' && row.QFC !== '' ? 1 : 0), 0);
                           countValue = `CURRENLTY: ${currentCount}`;
-                        } else if (column.id === 'OK100' && showOk100Counts) {
-                          const currentCount = data.reduce((sum, row) => sum + (parseFloat(row.OK100) === 1.0 ? 1 : 0), 0);
+                        } else if (column.id === 'QFC released instrument' && showQfcReleasedCounts) {
+                          const currentCount = data.reduce((sum, row) => sum + (row['QFC released instrument'] && row['QFC released instrument'] !== '-' && row['QFC released instrument'] !== '' ? 1 : 0), 0);
                           countValue = `CURRENLTY: ${currentCount}`;
+                        } else if (column.id === 'OK=100%' && showOk100Counts) {
+                          const currentCount = data.reduce((sum, row) => sum + (parseFloat(row['OK=100%']) === 1.0 ? 1 : 0), 0);
+                          countValue = `CURRENLTY: ${currentCount}`;
+                        } else if (column.id === 'TPs' && showTestPackCounts) {
+                          const uniqueTestPacks = new Set();
+                          data.forEach(row => {
+                            if (row.TPs && row.TPs !== '' && row.TPs !== 'NOT_APPLY') {
+                              const testPacks = row.TPs.toString().split("|").map(v => v.trim()).filter(v => v !== '');
+                              testPacks.forEach(tp => uniqueTestPacks.add(tp));
+                            }
+                          });
+                          countValue = `CURRENLTY: ${uniqueTestPacks.size}`;
                         } else if (column.id === 'DOSSIER' && showDossierCounts) {
                           const currentCount = data.reduce((sum, row) => sum + (row.DOSSIER && row.DOSSIER !== '-' && row.DOSSIER !== '' ? 1 : 0), 0);
                           countValue = `CURRENLTY: ${currentCount}`;

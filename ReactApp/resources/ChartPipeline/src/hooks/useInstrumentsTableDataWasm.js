@@ -60,16 +60,43 @@ const useInstrumentsTableDataWasm = (tableType, groupByField = null) => {
   const [processedData, setProcessedData] = useState([]);
   const [processingTime, setProcessingTime] = useState(null);
   
-  // Calculate frozen TAG INST count for details table from unfiltered data
-  const frozenTagInstCount = useMemo(() => {
-    if (tableType !== 'details' || !unfilteredData || unfilteredData.length === 0) return 0;
+  // Calculate frozen counts for details table from unfiltered data
+  const frozenDetailsCounts = useMemo(() => {
+    if (tableType !== 'details' || !unfilteredData || unfilteredData.length === 0) return null;
+    
+    // TOTAL TAG INST - unique count
     const uniqueTags = new Set(
       unfilteredData
         .map(row => row['TAG INST'])
         .filter(tag => tag && tag !== '')
     );
-    return uniqueTags.size;
+    
+    // TOTAL TEST PACK - unique count from split TPs
+    const uniqueTestPacks = new Set();
+    unfilteredData.forEach(row => {
+      if (row.TPs && row.TPs !== '' && row.TPs !== 'NOT_APPLY') {
+        const testPacks = row.TPs.toString().split("|").map(v => v.trim()).filter(v => v !== '');
+        testPacks.forEach(tp => uniqueTestPacks.add(tp));
+      }
+    });
+    
+    return {
+      totalTagInst: uniqueTags.size,
+      totalTestPack: uniqueTestPacks.size,
+      totalInstalled: unfilteredData.filter(row => row.INSTALLED && row.INSTALLED !== '').length,
+      totalWired: unfilteredData.filter(row => row.WIRED && row.WIRED !== '').length,
+      totalConnected: unfilteredData.filter(row => row.CONNECTED && row.CONNECTED !== '').length,
+      totalCableTest: unfilteredData.filter(row => row['CABLE TEST'] && row['CABLE TEST'] !== '').length,
+      totalQfcReleased: unfilteredData.filter(row => row['QFC released instrument'] && row['QFC released instrument'] !== '').length,
+      totalQfc: unfilteredData.filter(row => row.QFC && row.QFC !== '').length,
+      totalOk100: unfilteredData.filter(row => row['OK=100%'] === 1 || row['OK=100%'] === '1').length
+    };
   }, [tableType, unfilteredData]);
+  
+  // Backward compatibility - keep frozenTagInstCount for existing code
+  const frozenTagInstCount = useMemo(() => {
+    return frozenDetailsCounts?.totalTagInst || 0;
+  }, [frozenDetailsCounts]);
   
   // Calculate frozen control counts for control table from unfiltered data
   const frozenControlCounts = useMemo(() => {
@@ -110,6 +137,7 @@ const useInstrumentsTableDataWasm = (tableType, groupByField = null) => {
     // Control-specific data
     frozenControlCounts,
     frozenTagInstCount,
+    frozenDetailsCounts,
     selectedIsometric,
     selectedTestPack,
     handleTestPackClick,

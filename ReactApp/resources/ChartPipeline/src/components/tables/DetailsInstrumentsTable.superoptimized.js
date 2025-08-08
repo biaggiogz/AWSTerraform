@@ -40,6 +40,7 @@ const DetailsInstrumentsTable = () => {
     processingTime,
     wasmEnabled,
     frozenTagInstCount,
+    frozenDetailsCounts,
     selectedIsometric,
     selectedTestPack,
     selectedSubsystem,
@@ -450,7 +451,23 @@ const DetailsInstrumentsTable = () => {
         enableSorting
         enableFiltering
         showTagInstCount={true}
-        frozenTagInstCount={frozenTagInstCount}
+        frozenTagInstCount={frozenDetailsCounts?.totalTagInst}
+        showInstalledCounts={true}
+        frozenInstalledCount={frozenDetailsCounts?.totalInstalled}
+        showWiredCounts={true}
+        frozenWiredCount={frozenDetailsCounts?.totalWired}
+        showConnectedCounts={true}
+        frozenConnectedCount={frozenDetailsCounts?.totalConnected}
+        showCableTestCounts={true}
+        frozenCableTestCount={frozenDetailsCounts?.totalCableTest}
+        showQcfCounts={true}
+        frozenQcfCount={frozenDetailsCounts?.totalQfc}
+        showOk100Counts={true}
+        frozenOk100Count={frozenDetailsCounts?.totalOk100}
+        showTestPackCounts={true}
+        frozenTestPackCount={frozenDetailsCounts?.totalTestPack}
+        showQfcReleasedCounts={true}
+        frozenQfcReleasedCount={frozenDetailsCounts?.totalQfcReleased}
       />
 
 
