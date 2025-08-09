@@ -92,7 +92,7 @@ function App() {
         <Heading mb={2} fontSize="16px">Pipeline Construction Dashboard</Heading>
 
         {/* Main layout with filter panel on left and charts on right */}
-        {activeDashboard === 'SUMMARY SUBSYSTEMS' || activeDashboard === 'INSTRUMENTS REPORT' || activeDashboard === 'LOOP SIGNAL PROGRESS REPORT' ? (
+        {activeDashboard === 'SUMMARY SUBSYSTEMS' || activeDashboard === 'INSTRUMENTS REPORT' || activeDashboard === 'LOOP SIGNAL PROGRESS REPORT' || activeDashboard === 'INSULATION PROGRESS REPORT' ? (
           <Box>
             <Suspense fallback={<Center p={4}><Spinner /></Center>}>
               <ChartSelector 

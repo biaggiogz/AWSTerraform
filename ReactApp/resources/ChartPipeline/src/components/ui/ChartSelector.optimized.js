@@ -25,6 +25,7 @@ const SubsystemCompletionChart = lazy(() => import('../../charts/SubsystemComple
 const TestPackProgressChart = lazy(() => import('../../charts/TestPackProgressChart.optimized'));
 const LazosTableSql = lazy(() => import('../tables/LazosTableSqlDuckDb'));
 const InsulationTableSqlDuckDb = lazy(() => import('../tables/InsulationTableSqlDuckDb'));
+const ProgressInsulationTable = lazy(() => import('../tables/ProgressInsulationTable'));
 const ControlInstrumentsByIsometric = lazy(() => import('../tables/ControlInstrumentsByIsometric.optimized'));
 const DynamicInstrumentsTable = lazy(() => import('../tables/DynamicInstrumentsTable.optimized'));
 const DetailsInstrumentsTable = lazy(() => import('../tables/DetailsInstrumentsTable.superoptimized'));
@@ -144,7 +145,10 @@ const ChartSelector = ({ data, rawData, activeDashboard, onDashboardChange, onPr
 
             <TabPanel p={0}>
               <Suspense fallback={<Center height="300px"><Spinner /></Center>}>
-                <InsulationTableSqlDuckDb />
+                <VStack spacing={4} align="stretch">
+                  <ProgressInsulationTable />
+                  <InsulationTableSqlDuckDb />
+                </VStack>
               </Suspense>
             </TabPanel>
 
