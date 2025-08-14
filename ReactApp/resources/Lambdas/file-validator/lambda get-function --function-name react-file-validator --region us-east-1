@@ -1,0 +1,17 @@
+{
+    "imageDetails": [
+        {
+            "registryId": "881490115226",
+            "repositoryName": "file-validator",
+            "imageDigest": "sha256:129f96434c30475890cbabd3d30f922fcaa9056f0ebe3056b4fd531b6d186726",
+            "imageTags": [
+                "latest"
+            ],
+            "imageSizeInBytes": 416029636,
+            "imagePushedAt": "2025-08-09T16:21:51.159000+00:00",
+            "imageManifestMediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "artifactMediaType": "application/vnd.docker.container.image.v1+json",
+            "lastRecordedPullTime": "2025-08-09T16:33:09.501000+00:00"
+        }
+    ]
+}

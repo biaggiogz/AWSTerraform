@@ -1,0 +1,4 @@
+[
+  { "sheetName": "TEST_LOOP", "columnRange": "B:V", "skipRows": 11 },
+  { "sheetName": "TP", "columnRange": "B:AS", "skipRows": 4 }
+]

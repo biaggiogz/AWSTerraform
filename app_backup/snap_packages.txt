@@ -1,0 +1,12 @@
+Name               Version          Rev    Tracking         Publisher       Notes
+amazon-ssm-agent   3.3.1957.0       11321  latest/stable/…  aws**           classic
+bare               1.0              5      latest/stable    canonical**     base
+chromium           138.0.7204.157   3205   latest/stable    canonical**     -
+core20             20250526         2603   latest/stable    canonical**     base
+core22             20250612         2049   latest/stable    canonical**     base
+cups               2.4.12-2         1102   latest/stable    openprinting**  -
+firefox            141.0-2          6563   latest/stable    mozilla**       -
+gnome-42-2204      0+git.38ea591    201    latest/stable    canonical**     -
+gtk-common-themes  0.1-81-g442e511  1535   latest/stable    canonical**     -
+lxd                5.0.4-497fe1e    31335  5.0/stable/…     canonical**     -
+snapd              2.70             24787  latest/stable/…  canonical**     snapd

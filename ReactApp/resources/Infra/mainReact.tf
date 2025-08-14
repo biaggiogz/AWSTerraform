@@ -318,18 +318,6 @@ resource "aws_iam_role_policy" "cognito_s3_policy" {
           "s3:GetObject"
         ]
         Resource = "${aws_s3_bucket.react_app_bucket.arn}/progress/*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:PutObject",
-          "s3:GetObject"
-        ]
-        Resource = [
-          "${aws_s3_bucket.react_app_bucket.arn}/validation/*",
-          "${aws_s3_bucket.react_app_bucket.arn}/validation-params/*",
-          "${aws_s3_bucket.react_app_bucket.arn}/validation-results/*"
-        ]
       }
     ]
   })
@@ -367,34 +355,6 @@ output "progress_table_name" {
 #   value       = aws_lambda_function.excel_processor.arn
 #   description = "ARN of the Excel processor Lambda function"
 # }
-
-# EventBridge rule for validation parameters
-resource "aws_cloudwatch_event_rule" "validation_params_rule" {
-  name        = "${var.app_name_react}-validation-params-rule"
-  description = "Trigger when validation parameters are uploaded"
-
-  event_pattern = jsonencode({
-    source      = ["aws.s3"]
-    detail-type = ["Object Created"]
-    detail = {
-      bucket = {
-        name = [aws_s3_bucket.react_app_bucket.bucket]
-      }
-      object = {
-        key = [{
-          prefix = "validation-params/"
-        }]
-      }
-    }
-  })
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.app_name_react}-validation-params-rule"
-    }
-  )
-}
 
 # EventBridge rule to trigger on S3 object creation in rawDataset/ folder
 resource "aws_cloudwatch_event_rule" "s3_file_upload_rule" {
@@ -664,114 +624,6 @@ resource "aws_iam_role_policy" "excel_processor_lambda_policy" {
   })
 }
 
-# File validation Lambda function
-resource "aws_lambda_function" "file_validator" {
-  function_name = "${var.app_name_react}-file-validator"
-  role         = aws_iam_role.excel_processor_lambda_role.arn
-  handler      = "index.handler"
-  runtime      = "python3.9"
-  timeout      = 60
-  memory_size  = 512
-
-  filename = "file_validator.zip"
-  source_code_hash = data.archive_file.file_validator.output_base64sha256
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.app_name_react}-file-validator"
-    }
-  )
-}
-
-# Archive file validator code
-data "archive_file" "file_validator" {
-  type        = "zip"
-  output_path = "file_validator.zip"
-  source {
-    content = <<EOF
-import json
-import boto3
-import pandas as pd
-from io import BytesIO
-
-s3 = boto3.client('s3')
-
-def handler(event, context):
-    try:
-        bucket = event['detail']['bucket']['name']
-        key = event['detail']['object']['key']
-        
-        if not key.startswith('validation-params/'):
-            return {'statusCode': 200}
-            
-        file_id = key.split('/')[-1].replace('.json', '')
-        file_key = f'validation/{file_id}.xlsx'
-        result_key = f'validation-results/{file_id}.json'
-        
-        # Get parameters
-        param_obj = s3.get_object(Bucket=bucket, Key=key)
-        parameters = json.loads(param_obj['Body'].read())
-        
-        # Get file
-        file_obj = s3.get_object(Bucket=bucket, Key=file_key)
-        file_data = file_obj['Body'].read()
-        
-        # Validate sheets
-        errors = []
-        
-        try:
-            excel_file = pd.ExcelFile(BytesIO(file_data))
-            available_sheets = excel_file.sheet_names
-            
-            for sheet_config in parameters:
-                sheet_name = sheet_config['sheetName']
-                column_range = sheet_config['columnRange']
-                skip_rows = sheet_config['skipRows']
-                
-                if sheet_name not in available_sheets:
-                    errors.append(f"Sheet '{sheet_name}' not found")
-                    continue
-                    
-                try:
-                    df = pd.read_excel(
-                        BytesIO(file_data),
-                        sheet_name=sheet_name,
-                        usecols=column_range,
-                        skiprows=skip_rows,
-                        nrows=1
-                    )
-                except Exception as e:
-                    errors.append(f"Sheet '{sheet_name}': Invalid range '{column_range}' or skip rows {skip_rows}")
-                    
-        except Exception as e:
-            errors.append(f"Cannot read Excel file: {str(e)}")
-            
-        # Save validation result
-        result = {
-            'valid': len(errors) == 0,
-            'errors': errors,
-            'file_id': file_id,
-            'timestamp': context.aws_request_id
-        }
-        
-        s3.put_object(
-            Bucket=bucket,
-            Key=result_key,
-            Body=json.dumps(result),
-            ContentType='application/json'
-        )
-        
-        return {'statusCode': 200}
-        
-    except Exception as e:
-        print(f"Validation error: {str(e)}")
-        return {'statusCode': 500}
-EOF
-    filename = "index.py"
-  }
-}
-
 # Python preprocessor Lambda function
 resource "aws_lambda_function" "python_preprocessor" {
   function_name = "${var.app_name_react}-python-preprocessor"
@@ -785,6 +637,10 @@ resource "aws_lambda_function" "python_preprocessor" {
   memory_size = 3008
 
   architectures = ["arm64"]
+  
+
+  
+
   
   tags = merge(
     var.tags,
@@ -817,13 +673,6 @@ resource "aws_lambda_function" "python_preprocessor" {
 #   )
 # }
 
-# EventBridge target for file validation
-resource "aws_cloudwatch_event_target" "file_validator_target" {
-  rule      = aws_cloudwatch_event_rule.validation_params_rule.name
-  target_id = "FileValidatorTarget"
-  arn       = aws_lambda_function.file_validator.arn
-}
-
 # EventBridge target to trigger Python preprocessor
 resource "aws_cloudwatch_event_target" "python_preprocessor_target" {
   rule      = aws_cloudwatch_event_rule.s3_file_upload_rule.name
@@ -837,15 +686,6 @@ resource "aws_cloudwatch_event_target" "python_preprocessor_target" {
 #   target_id = "ExcelProcessorTarget"
 #   arn       = aws_lambda_function.excel_processor.arn
 # }
-
-# Lambda permission for file validator
-resource "aws_lambda_permission" "allow_validator_eventbridge" {
-  statement_id  = "AllowValidatorExecutionFromEventBridge"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.file_validator.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.validation_params_rule.arn
-}
 
 # Lambda permission for Python preprocessor
 resource "aws_lambda_permission" "allow_python_eventbridge" {

@@ -1,0 +1,5 @@
+/home/ubuntu/.nvm/versions/node/v24.3.0/lib
+├── @anthropic-ai/claude-code@1.0.53
+├── corepack@0.33.0
+└── npm@11.4.2
+

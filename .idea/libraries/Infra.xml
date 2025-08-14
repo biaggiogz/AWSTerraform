@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Infra">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/ReactApp/resources/Infra/streamlit-assets.zip!/" />
+      <root url="jar://$PROJECT_DIR$/ReactApp/resources/Infra/react-assets.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -18,10 +18,9 @@ import {
   AlertDescription
 } from '@chakra-ui/react';
 import { DeleteIcon, DownloadIcon } from '@chakra-ui/icons';
-import { uploadFileToS3, deleteFileFromS3, listS3Objects, uploadApprovalRequest, uploadFileWithParameters, getValidationResult } from '../../utils/s3Utils';
+import { uploadFileToS3, deleteFileFromS3, listS3Objects, uploadApprovalRequest } from '../../utils/s3Utils';
 import { createProgressMonitor } from '../../utils/progressUtils';
 import ProcessingResultsView from './ProcessingResultsView';
-import FileParametersConfig from './FileParametersConfig';
 
 const FileUploadSection = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -32,9 +31,6 @@ const FileUploadSection = () => {
   const [processingMessage, setProcessingMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentFileId, setCurrentFileId] = useState(null);
-  const [fileParameters, setFileParameters] = useState(null);
-  const [validationStep, setValidationStep] = useState(false);
-  const [pendingFiles, setPendingFiles] = useState([]);
   const progressMonitorRef = useRef(null);
   const toast = useToast();
 
@@ -42,13 +38,13 @@ const FileUploadSection = () => {
     const files = Array.from(event.target.files);
     const validFiles = files.filter(file => {
       const ext = file.name.toLowerCase();
-      return ext.endsWith('.xlsx');
+      return ext.endsWith('.csv') || ext.endsWith('.xlsx') || ext.endsWith('.xlsm');
     });
 
     if (validFiles.length !== files.length) {
       toast({
         title: "Invalid files detected",
-        description: "Only XLSX files are allowed for validation",
+        description: "Only CSV, XLSX, and XLSM files are allowed",
         status: "warning",
         duration: 3000
       });
@@ -56,138 +52,59 @@ const FileUploadSection = () => {
 
     if (validFiles.length === 0) return;
 
-    if (!fileParameters) {
-      toast({
-        title: "Parameters required",
-        description: "Please set sheet parameters first",
-        status: "warning",
-        duration: 3000
-      });
-      return;
+    setUploading(true);
+    const successfulUploads = [];
+
+    for (const file of validFiles) {
+      try {
+        const result = await uploadFileToS3(file, file.name);
+        const fileData = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          uploadDate: new Date().toLocaleString(),
+          s3Key: result.key,
+          s3Url: result.url
+        };
+        successfulUploads.push(fileData);
+      } catch (error) {
+        toast({
+          title: "Upload failed",
+          description: `Failed to upload ${file.name}: ${error.message}`,
+          status: "error",
+          duration: 5000
+        });
+      }
     }
 
-    setPendingFiles(validFiles);
-    setValidationStep(true);
-    handleValidatedFileUpload(fileParameters);
-  }, [toast]);
-
-  const handleParametersSet = useCallback((parameters) => {
-    setFileParameters(parameters);
-    toast({
-      title: "Parameters set",
-      description: "You can now upload XLSX files for validation",
-      status: "success",
-      duration: 3000
-    });
-  }, [toast]);
-
-  const handleValidatedFileUpload = useCallback(async (parameters) => {
-    if (pendingFiles.length === 0) return;
-
-    setUploading(true);
+    setUploadedFiles(prev => [...prev, ...successfulUploads]);
+    setUploading(false);
     
-    try {
-      const file = pendingFiles[0];
-      await uploadFileWithParameters(file, file.name, parameters);
-      
+    if (successfulUploads.length > 0) {
       toast({
-        title: "File uploaded for validation",
-        description: "Checking sheet parameters...",
-        status: "info",
-        duration: 3000
-      });
-
-      // Start validation monitoring
-      startValidationMonitoring(file.name);
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: error.message,
-        status: "error",
+        title: "Files uploaded to S3",
+        description: `${successfulUploads.length} file(s) uploaded. Processing started...`,
+        status: "success",
         duration: 5000
       });
-      setUploading(false);
+      
+      // Start progress tracking - use filename without extension to match Lambda
+      const fileId = successfulUploads[0].name.split('.')[0];
+      setCurrentFileId(fileId);
+      setIsProcessing(true);
+      setProcessingProgress(0);
+      setProcessingMessage('Processing started...');
+      
+      console.log('🚀 Starting processing pipeline:', {
+        files: successfulUploads.map(f => f.name),
+        fileId: fileId
+      });
+      
+      // Start progress monitoring
+      startProgressMonitoring(fileId);
     }
-  }, [pendingFiles, toast]);
-
-  const startValidationMonitoring = useCallback(async (fileName) => {
-    let attempts = 0;
-    const maxAttempts = 30;
-    
-    const checkValidation = async () => {
-      try {
-        const result = await getValidationResult(fileName);
-        
-        if (result) {
-          setUploading(false);
-          
-          if (result.valid) {
-            // Validation passed, proceed with normal upload
-            const file = pendingFiles[0];
-            const uploadResult = await uploadFileToS3(file, file.name);
-            
-            const fileData = {
-              id: Date.now() + Math.random(),
-              name: file.name,
-              size: file.size,
-              type: file.type,
-              uploadDate: new Date().toLocaleString(),
-              s3Key: uploadResult.key,
-              s3Url: uploadResult.url
-            };
-            
-            setUploadedFiles(prev => [...prev, fileData]);
-            setPendingFiles([]);
-            setValidationStep(false);
-            
-            toast({
-              title: "Validation passed",
-              description: "File processing started...",
-              status: "success",
-              duration: 3000
-            });
-            
-            // Start normal processing
-            const fileId = file.name.split('.')[0];
-            setCurrentFileId(fileId);
-            setIsProcessing(true);
-            setProcessingProgress(0);
-            setProcessingMessage('Processing started...');
-            startProgressMonitoring(fileId);
-          } else {
-            // Validation failed
-            setPendingFiles([]);
-            setValidationStep(false);
-            
-            toast({
-              title: "Validation failed",
-              description: result.errors.join(', '),
-              status: "error",
-              duration: 8000
-            });
-          }
-          return;
-        }
-        
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(checkValidation, 2000);
-        } else {
-          setUploading(false);
-          toast({
-            title: "Validation timeout",
-            description: "File validation took too long",
-            status: "warning",
-            duration: 5000
-          });
-        }
-      } catch (error) {
-        console.error('Validation check error:', error);
-      }
-    };
-    
-    checkValidation();
-  }, [pendingFiles, toast]);
+  }, [toast]);
 
   const removeFile = useCallback(async (fileId) => {
     const file = uploadedFiles.find(f => f.id === fileId);
@@ -450,69 +367,46 @@ const FileUploadSection = () => {
           </Alert>
         )}
 
-        {/* File Parameters Configuration */}
-        {!validationStep && (
-          <FileParametersConfig 
-            onParametersSet={handleParametersSet}
-            isProcessing={isProcessing || uploading}
-          />
-        )}
-
         {/* Upload Area */}
-        {!validationStep && (
-          <Box
-            border="2px dashed"
-            borderColor={isProcessing ? "gray.200" : "gray.300"}
-            borderRadius="md"
-            p={8}
-            textAlign="center"
-            _hover={{ borderColor: isProcessing ? "gray.200" : "blue.400" }}
-            opacity={isProcessing ? 0.6 : 1}
-          >
-            <VStack spacing={3}>
-              <Text color="gray.600">
-                Drag and drop XLSX files here, or click to select
-              </Text>
-              <Text fontSize="sm" color="gray.500">
-                Configure sheet parameters above, then upload XLSX files
-              </Text>
-              <Button
-                as="label"
-                colorScheme="blue"
-                cursor="pointer"
-                htmlFor="file-upload"
-                isLoading={uploading}
-                loadingText={uploading ? "Validating..." : "Uploading..."}
-                disabled={uploading || isProcessing || !fileParameters}
-              >
-                {uploading ? <Spinner size="sm" mr={2} /> : null}
-                Select XLSX Files
-              </Button>
-              <input
-                id="file-upload"
-                type="file"
-                multiple
-                accept=".xlsx"
-                onChange={handleFileUpload}
-                style={{ display: 'none' }}
-                disabled={isProcessing || !fileParameters}
-              />
-            </VStack>
-          </Box>
-        )}
-
-        {/* Validation Step */}
-        {validationStep && (
-          <Alert status="info" borderRadius="md">
-            <AlertIcon />
-            <Box flex="1">
-              <AlertTitle>Validating File Parameters</AlertTitle>
-              <AlertDescription>
-                Checking if uploaded file matches the specified sheet parameters...
-              </AlertDescription>
-            </Box>
-          </Alert>
-        )}
+        <Box
+          border="2px dashed"
+          borderColor={isProcessing ? "gray.200" : "gray.300"}
+          borderRadius="md"
+          p={8}
+          textAlign="center"
+          _hover={{ borderColor: isProcessing ? "gray.200" : "blue.400" }}
+          opacity={isProcessing ? 0.6 : 1}
+        >
+          <VStack spacing={3}>
+            <Text color="gray.600">
+              Drag and drop files here, or click to select
+            </Text>
+            <Text fontSize="sm" color="gray.500">
+              Supported formats: CSV, XLSX, XLSM
+            </Text>
+            <Button
+              as="label"
+              colorScheme="blue"
+              cursor="pointer"
+              htmlFor="file-upload"
+              isLoading={uploading}
+              loadingText="Uploading..."
+              disabled={uploading || isProcessing}
+            >
+              {uploading ? <Spinner size="sm" mr={2} /> : null}
+              Select Files
+            </Button>
+            <input
+              id="file-upload"
+              type="file"
+              multiple
+              accept=".csv,.xlsx,.xlsm"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+              disabled={isProcessing}
+            />
+          </VStack>
+        </Box>
 
         {/* Uploaded Files List */}
         {uploadedFiles.length > 0 && (
