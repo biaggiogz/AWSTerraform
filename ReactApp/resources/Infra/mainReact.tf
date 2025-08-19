@@ -631,12 +631,12 @@ resource "aws_lambda_function" "python_preprocessor" {
   
   # Using container image
   package_type = "Image"
-  image_uri    = "881490115226.dkr.ecr.us-east-1.amazonaws.com/python-preprocessor:latest"
+  image_uri    = "585315265780.dkr.ecr.us-east-1.amazonaws.com/python-preprocessor:latest"
 
   timeout     = 300
   memory_size = 3008
 
-  architectures = ["arm64"]
+  architectures = ["x86_64"]
   
 
   

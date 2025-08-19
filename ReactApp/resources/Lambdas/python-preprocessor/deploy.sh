@@ -5,7 +5,7 @@ echo "Building and deploying Python preprocessor Lambda Docker image..."
 
 # Configuration
 REGION="us-east-1"
-ACCOUNT_ID="881490115226"
+ACCOUNT_ID="585315265780"
 REPO_NAME="python-preprocessor"
 IMAGE_TAG="latest"
 IMAGE_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}"

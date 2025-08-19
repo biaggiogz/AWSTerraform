@@ -31,6 +31,7 @@ const FileUploadSection = () => {
   const [processingMessage, setProcessingMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentFileId, setCurrentFileId] = useState(null);
+  const [errorDetails, setErrorDetails] = useState(null);
   const progressMonitorRef = useRef(null);
   const toast = useToast();
 
@@ -151,9 +152,11 @@ const FileUploadSection = () => {
         console.log('📊 Progress update:', progressData);
         setProcessingProgress(progressData.progress);
         setProcessingMessage(progressData.message);
+        setErrorDetails(progressData.error_details);
         
         if (progressData.progress >= 100) {
           setIsProcessing(false);
+          setErrorDetails(null);
           toast({
             title: "Processing Complete",
             description: "File processing completed successfully!",
@@ -173,7 +176,7 @@ const FileUploadSection = () => {
             title: "Processing Error",
             description: progressData.message,
             status: "error",
-            duration: 5000
+            duration: 8000
           });
         }
       },
@@ -201,6 +204,7 @@ const FileUploadSection = () => {
   useEffect(() => {
     return () => {
       setIsProcessing(false);
+      setErrorDetails(null);
       if (progressMonitorRef.current) {
         progressMonitorRef.current.stop();
       }
@@ -345,22 +349,44 @@ const FileUploadSection = () => {
         
         {/* Processing Progress */}
         {isProcessing && (
-          <Alert status="info" borderRadius="md">
+          <Alert status={processingProgress < 0 ? "error" : "info"} borderRadius="md">
             <AlertIcon />
             <Box flex="1">
-              <AlertTitle>Processing File...</AlertTitle>
+              <AlertTitle>{processingProgress < 0 ? "Processing Error" : "Processing File..."}</AlertTitle>
               <AlertDescription>
                 <VStack align="stretch" spacing={2} mt={2}>
                   <Text fontSize="sm">{processingMessage}</Text>
-                  <Progress 
-                    value={processingProgress} 
-                    colorScheme="blue" 
-                    size="lg" 
-                    borderRadius="md"
-                  />
-                  <Text fontSize="xs" color="gray.600">
-                    {processingProgress}% complete
-                  </Text>
+                  {processingProgress >= 0 && (
+                    <>
+                      <Progress 
+                        value={processingProgress} 
+                        colorScheme="blue" 
+                        size="lg" 
+                        borderRadius="md"
+                      />
+                      <Text fontSize="xs" color="gray.600">
+                        {processingProgress}% complete
+                      </Text>
+                    </>
+                  )}
+                  {errorDetails && (
+                    <Box mt={3} p={3} bg="red.50" borderRadius="md" borderWidth="1px" borderColor="red.200">
+                      <Text fontSize="sm" fontWeight="semibold" color="red.700" mb={2}>
+                        Error Details:
+                      </Text>
+                      <Text fontSize="xs" color="red.600" mb={1}>
+                        Type: {errorDetails.error_type}
+                      </Text>
+                      <Text fontSize="xs" color="red.600" fontFamily="mono">
+                        {errorDetails.details}
+                      </Text>
+                      {errorDetails.columns && (
+                        <Text fontSize="xs" color="red.600" mt={1}>
+                          Columns: {errorDetails.columns.join(', ')}
+                        </Text>
+                      )}
+                    </Box>
+                  )}
                 </VStack>
               </AlertDescription>
             </Box>

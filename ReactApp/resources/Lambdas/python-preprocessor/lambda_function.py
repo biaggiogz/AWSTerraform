@@ -211,7 +211,182 @@ def format_dataframe_columns(df: pd.DataFrame, threshold: float = 0.95) -> pd.Da
                     # Keep as float64 if conversion fails
                     formatted_df[column] = formatted_df[column].astype('float64')
             else:
-                formatted_df[column] = formatted_df[column].replace(['', 'N/A', 'na', 'null'], pd.NA)
+                formatted_df[column] = formatted_df[column].astype('string')
+                
+        except Exception as e:
+            conversion_errors[column] = str(e)
+            print(f"Error converting column '{column}': {e}")
+            formatted_df[column] = formatted_df[column].astype('string')
+    
+    return formatted_df
+
+def update_progress(bucket, file_id, progress, message, error_details=None):
+    """Update processing progress in S3"""
+    progress_data = {
+        'progress': progress,
+        'message': message,
+        'timestamp': datetime.now().isoformat()
+    }
+    
+    if error_details:
+        progress_data['error_details'] = error_details
+    
+    try:
+        s3_client.put_object(
+            Bucket=bucket,
+            Key=f'progress/{file_id}.json',
+            Body=json.dumps(progress_data),
+            ContentType='application/json'
+        )
+    except Exception as e:
+        logger.error(f"Failed to update progress: {e}")
+
+def lambda_handler(event, context):
+    try:
+        # Extract S3 event details
+        bucket = event['detail']['bucket']['name']
+        key = event['detail']['object']['key']
+        file_id = key.split('/')[-1].split('.')[0]
+        
+        logger.info(f"Processing file: {key}")
+        update_progress(bucket, file_id, 10, "Starting file processing...")
+        
+        # Download file from S3
+        try:
+            response = s3_client.get_object(Bucket=bucket, Key=key)
+            file_content = response['Body'].read()
+            update_progress(bucket, file_id, 20, "File downloaded, reading data...")
+        except Exception as e:
+            error_details = {
+                'error_type': 'file_access_error',
+                'file_key': key,
+                'details': str(e)
+            }
+            update_progress(bucket, file_id, -1, f"Failed to download file: {str(e)}", error_details)
+            return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+        
+        # Read file based on extension
+        try:
+            if key.lower().endswith('.csv'):
+                df = pd.read_csv(BytesIO(file_content))
+            elif key.lower().endswith(('.xlsx', '.xlsm')):
+                df = pd.read_excel(BytesIO(file_content))
+            else:
+                raise ValueError(f"Unsupported file format: {key}")
+            
+            update_progress(bucket, file_id, 40, f"Data loaded: {len(df)} rows, {len(df.columns)} columns")
+        except Exception as e:
+            error_details = {
+                'error_type': 'file_format_error',
+                'file_extension': key.split('.')[-1],
+                'details': str(e)
+            }
+            update_progress(bucket, file_id, -1, f"Failed to read file: {str(e)}", error_details)
+            return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+        
+        # Validate data
+        if df.empty:
+            error_details = {
+                'error_type': 'empty_file_error',
+                'details': 'File contains no data'
+            }
+            update_progress(bucket, file_id, -1, "File is empty", error_details)
+            return {'statusCode': 400, 'body': json.dumps({'error': 'Empty file'})}
+        
+        update_progress(bucket, file_id, 60, "Processing column types...")
+        
+        # Format columns with error tracking
+        try:
+            formatted_df = format_dataframe_columns(df)
+            
+            # Check for conversion issues
+            null_counts = formatted_df.isnull().sum()
+            high_null_columns = null_counts[null_counts > len(formatted_df) * 0.5].to_dict()
+            
+            warnings = []
+            if high_null_columns:
+                warnings.append(f"High null values in columns: {list(high_null_columns.keys())}")
+            
+            update_progress(bucket, file_id, 80, "Converting to Parquet format...")
+            
+        except Exception as e:
+            error_details = {
+                'error_type': 'column_processing_error',
+                'details': str(e),
+                'columns': list(df.columns)
+            }
+            update_progress(bucket, file_id, -1, f"Column processing failed: {str(e)}", error_details)
+            return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+        
+        # Save as Parquet
+        try:
+            parquet_buffer = BytesIO()
+            table = pa.Table.from_pandas(formatted_df)
+            pq.write_table(table, parquet_buffer)
+            parquet_buffer.seek(0)
+            
+            result_key = f'processing-results/{file_id}.parquet'
+            s3_client.put_object(
+                Bucket=bucket,
+                Key=result_key,
+                Body=parquet_buffer.getvalue(),
+                ContentType='application/octet-stream'
+            )
+            
+            # Save processing results metadata
+            result_metadata = {
+                'file_id': file_id,
+                'original_file': key,
+                'processed_file': result_key,
+                'rows': len(formatted_df),
+                'columns': len(formatted_df.columns),
+                'column_types': {col: str(formatted_df[col].dtype) for col in formatted_df.columns},
+                'warnings': warnings,
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            s3_client.put_object(
+                Bucket=bucket,
+                Key=f'processing-results/{file_id}.json',
+                Body=json.dumps(result_metadata),
+                ContentType='application/json'
+            )
+            
+            update_progress(bucket, file_id, 100, "Processing completed successfully")
+            
+        except Exception as e:
+            error_details = {
+                'error_type': 'parquet_conversion_error',
+                'details': str(e)
+            }
+            update_progress(bucket, file_id, -1, f"Failed to save Parquet: {str(e)}", error_details)
+            return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Processing completed',
+                'file_id': file_id,
+                'result_key': result_key
+            })
+        }
+        
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        try:
+            file_id = event.get('detail', {}).get('object', {}).get('key', 'unknown').split('/')[-1].split('.')[0]
+            bucket = event.get('detail', {}).get('bucket', {}).get('name', '')
+            if bucket and file_id != 'unknown':
+                error_details = {
+                    'error_type': 'unexpected_error',
+                    'details': str(e),
+                    'stack_trace': str(e.__traceback__)
+                }
+                update_progress(bucket, file_id, -1, f"Unexpected error: {str(e)}", error_details)
+        except:
+            pass
+        
+        return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}eplace(['', 'N/A', 'na', 'null'], pd.NA)
                 try:
                     formatted_df[column] = formatted_df[column].astype(pandas_dtype)
                 except:
