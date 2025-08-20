@@ -241,6 +241,51 @@ def update_progress(bucket, file_id, progress, message, error_details=None):
     except Exception as e:
         logger.error(f"Failed to update progress: {e}")
 
+def load_config(bucket, file_id):
+    """Load processing configuration if available"""
+    try:
+        config_key = f'processing-config/{file_id}.json'
+        response = s3_client.get_object(Bucket=bucket, Key=config_key)
+        return json.loads(response['Body'].read())
+    except:
+        return None
+
+def read_excel_with_config(file_content, config):
+    """Read Excel file with configuration parameters"""
+    if not config or not config.get('sheets'):
+        return pd.read_excel(BytesIO(file_content))
+    
+    sheets_data = []
+    for sheet_config in config['sheets']:
+        read_params = {}
+        
+        if sheet_config.get('sheet_name'):
+            read_params['sheet_name'] = sheet_config['sheet_name']
+        
+        if sheet_config.get('skip_rows', 0) > 0:
+            read_params['skiprows'] = sheet_config['skip_rows']
+        
+        if sheet_config.get('header_row', 0) > 0:
+            read_params['header'] = sheet_config['header_row']
+        
+        if sheet_config.get('column_range'):
+            read_params['usecols'] = sheet_config['column_range']
+        
+        df = pd.read_excel(BytesIO(file_content), **read_params)
+        
+        # Add sheet identifier if multiple sheets
+        if len(config['sheets']) > 1:
+            sheet_name = sheet_config.get('sheet_name', 'Sheet1')
+            df.columns = [f"{sheet_name}_{col}" for col in df.columns]
+        
+        sheets_data.append(df)
+    
+    # Combine all sheets if multiple
+    if len(sheets_data) > 1:
+        return pd.concat(sheets_data, axis=1)
+    else:
+        return sheets_data[0]
+
 def lambda_handler(event, context):
     try:
         # Extract S3 event details
@@ -250,6 +295,12 @@ def lambda_handler(event, context):
         
         logger.info(f"Processing file: {key}")
         update_progress(bucket, file_id, 10, "Starting file processing...")
+        
+        # Load configuration if available
+        config = load_config(bucket, file_id)
+        if config:
+            logger.info(f"Using custom configuration: {config}")
+            update_progress(bucket, file_id, 15, "Configuration loaded")
         
         # Download file from S3
         try:
@@ -265,12 +316,12 @@ def lambda_handler(event, context):
             update_progress(bucket, file_id, -1, f"Failed to download file: {str(e)}", error_details)
             return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
         
-        # Read file based on extension
+        # Read file based on extension and configuration
         try:
             if key.lower().endswith('.csv'):
                 df = pd.read_csv(BytesIO(file_content))
             elif key.lower().endswith(('.xlsx', '.xlsm')):
-                df = pd.read_excel(BytesIO(file_content))
+                df = read_excel_with_config(file_content, config)
             else:
                 raise ValueError(f"Unsupported file format: {key}")
             
@@ -279,10 +330,11 @@ def lambda_handler(event, context):
             error_details = {
                 'error_type': 'file_format_error',
                 'file_extension': key.split('.')[-1],
-                'details': str(e)
+                'details': str(e),
+                'config_used': config is not None
             }
             update_progress(bucket, file_id, -1, f"Failed to read file: {str(e)}", error_details)
-            return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+            return {'statusCode': 500, 'body': json.dumps({'error': str(e)}))
         
         # Validate data
         if df.empty:

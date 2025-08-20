@@ -21,6 +21,7 @@ import { DeleteIcon, DownloadIcon } from '@chakra-ui/icons';
 import { uploadFileToS3, deleteFileFromS3, listS3Objects, uploadApprovalRequest } from '../../utils/s3Utils';
 import { createProgressMonitor } from '../../utils/progressUtils';
 import ProcessingResultsView from './ProcessingResultsView';
+import ExcelConfigPanel from './ExcelConfigPanel';
 
 const FileUploadSection = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -32,6 +33,8 @@ const FileUploadSection = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentFileId, setCurrentFileId] = useState(null);
   const [errorDetails, setErrorDetails] = useState(null);
+  const [showConfigPanel, setShowConfigPanel] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
   const progressMonitorRef = useRef(null);
   const toast = useToast();
 
@@ -83,29 +86,74 @@ const FileUploadSection = () => {
     setUploading(false);
     
     if (successfulUploads.length > 0) {
-      toast({
-        title: "Files uploaded to S3",
-        description: `${successfulUploads.length} file(s) uploaded. Processing started...`,
-        status: "success",
-        duration: 5000
-      });
+      const firstFile = successfulUploads[0];
+      const isExcel = firstFile.name.toLowerCase().endsWith('.xlsx') || firstFile.name.toLowerCase().endsWith('.xlsm');
       
-      // Start progress tracking - use filename without extension to match Lambda
-      const fileId = successfulUploads[0].name.split('.')[0];
-      setCurrentFileId(fileId);
-      setIsProcessing(true);
-      setProcessingProgress(0);
-      setProcessingMessage('Processing started...');
-      
-      console.log('🚀 Starting processing pipeline:', {
-        files: successfulUploads.map(f => f.name),
-        fileId: fileId
-      });
-      
-      // Start progress monitoring
-      startProgressMonitoring(fileId);
+      if (isExcel) {
+        // Show configuration panel for Excel files
+        setPendingFile(firstFile);
+        setShowConfigPanel(true);
+        toast({
+          title: "Excel file uploaded",
+          description: "Configure processing parameters before continuing",
+          status: "info",
+          duration: 3000
+        });
+      } else {
+        // Process CSV files immediately
+        startFileProcessing(firstFile);
+      }
     }
   }, [toast]);
+
+  const startFileProcessing = useCallback((file, config = null) => {
+    const fileId = file.name.split('.')[0];
+    
+    // Upload configuration if provided
+    if (config) {
+      const configKey = `processing-config/${fileId}.json`;
+      uploadApprovalRequest(configKey, config).catch(error => {
+        console.error('Failed to upload config:', error);
+      });
+    }
+    
+    setCurrentFileId(fileId);
+    setIsProcessing(true);
+    setProcessingProgress(0);
+    setProcessingMessage('Processing started...');
+    
+    toast({
+      title: "Processing started",
+      description: config ? "Using custom configuration" : "Using default settings",
+      status: "success",
+      duration: 3000
+    });
+    
+    console.log('🚀 Starting processing pipeline:', {
+      fileName: file.name,
+      fileId: fileId,
+      config: config
+    });
+    
+    startProgressMonitoring(fileId);
+  }, [toast]);
+
+  const handleConfigSave = useCallback((config) => {
+    if (pendingFile) {
+      startFileProcessing(pendingFile, config);
+      setShowConfigPanel(false);
+      setPendingFile(null);
+    }
+  }, [pendingFile, startFileProcessing]);
+
+  const handleConfigCancel = useCallback(() => {
+    if (pendingFile) {
+      // Remove the uploaded file since user cancelled configuration
+      removeFile(pendingFile.id);
+    }
+    setShowConfigPanel(false);
+    setPendingFile(null);
+  }, [pendingFile]);
 
   const removeFile = useCallback(async (fileId) => {
     const file = uploadedFiles.find(f => f.id === fileId);
@@ -331,6 +379,16 @@ const FileUploadSection = () => {
     if (ext.endsWith('.xlsm')) return 'purple';
     return 'gray';
   };
+
+  if (showConfigPanel && pendingFile) {
+    return (
+      <ExcelConfigPanel
+        fileName={pendingFile.name}
+        onConfigSave={handleConfigSave}
+        onCancel={handleConfigCancel}
+      />
+    );
+  }
 
   if (showResults && processingResultKey) {
     return (
