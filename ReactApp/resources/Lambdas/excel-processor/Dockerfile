@@ -1,7 +1,9 @@
+# Multi-stage build for Rust Lambda with cargo-chef for dependency caching
 FROM ghcr.io/cargo-lambda/cargo-lambda:latest AS chef
 WORKDIR /usr/src/app
 RUN cargo install cargo-chef --locked
 
+# Prepare recipe for dependency caching
 FROM chef AS planner
 COPY Cargo.toml Cargo.lock ./
 COPY lambda/excel-processor/Cargo.toml ./lambda/excel-processor/
@@ -9,23 +11,27 @@ RUN mkdir -p lambda/excel-processor/src && \
     touch lambda/excel-processor/src/main.rs && \
     cargo chef prepare --recipe-path recipe.json
 
+# Cache dependencies
 FROM chef AS cacher
 COPY --from=planner /usr/src/app/recipe.json recipe.json
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 RUN cargo chef cook --release --recipe-path recipe.json
 
+# Build the application
 FROM chef AS builder
 WORKDIR /usr/src/app
 ENV PACKAGE=excel-processor
-ENV TARGETPLATFORM=linux/arm64
+ENV TARGETPLATFORM=linux/amd64
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 
+# Copy cached dependencies and source code
 COPY --from=cacher /usr/src/app/target target
 COPY Cargo.toml Cargo.lock ./
 COPY lambda/ ./lambda/
 
+# Build for the target architecture
 RUN case ${TARGETPLATFORM} in \
     "linux/amd64") RUST_ARCH=x86_64-unknown-linux-gnu ;; \
     "linux/arm64") RUST_ARCH=aarch64-unknown-linux-gnu ;; \
@@ -33,8 +39,13 @@ RUN case ${TARGETPLATFORM} in \
     esac && \
     cargo lambda build --release --target ${RUST_ARCH} -p ${PACKAGE}
 
+# Runtime image
 FROM public.ecr.aws/lambda/provided:al2023
 ENV PACKAGE=excel-processor
+
+# Copy the compiled binary
 COPY --from=builder /usr/src/app/target/lambda/${PACKAGE}/bootstrap ${LAMBDA_RUNTIME_DIR}/bootstrap
 RUN chmod +x ${LAMBDA_RUNTIME_DIR}/bootstrap
+
+# Set the CMD to your handler
 CMD [ "bootstrap" ]

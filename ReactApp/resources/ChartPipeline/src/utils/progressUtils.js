@@ -32,8 +32,7 @@ export const getProcessingProgress = async (fileId) => {
     return {
       progress: progressData.progress || 0,
       message: progressData.message || 'Processing...',
-      timestamp: progressData.timestamp,
-      error_details: progressData.error_details || null
+      timestamp: progressData.timestamp
     };
   } catch (error) {
     if (error.code === 'NoSuchKey') {

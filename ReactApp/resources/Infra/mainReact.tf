@@ -112,9 +112,9 @@ resource "null_resource" "build_and_deploy_react_app" {
       export PATH="./node_modules/.bin:/usr/bin:/usr/local/bin:$PATH" && \
       chmod +x sync-data.sh && \
       ./sync-data.sh && \
-      /usr/bin/npm install && \
+      npm install && \
       chmod +x node_modules/.bin/* && \
-      REACT_APP_CACHE_VERSION=$(date +%s) REACT_APP_IDENTITY_POOL_ID=${aws_cognito_identity_pool.file_upload_pool.id} REACT_APP_S3_BUCKET=${aws_s3_bucket.react_app_bucket.bucket} REACT_APP_AWS_REGION=${data.aws_region.current.name} /usr/bin/npm run build && \
+      REACT_APP_CACHE_VERSION=$(date +%s) REACT_APP_IDENTITY_POOL_ID=${aws_cognito_identity_pool.file_upload_pool.id} REACT_APP_S3_BUCKET=${aws_s3_bucket.react_app_bucket.bucket} REACT_APP_AWS_REGION=${data.aws_region.current.name} REACT_APP_LAMBDA_PREFIX=${var.app_name_react} npm run build && \
       aws s3 sync build/ s3://${aws_s3_bucket.react_app_bucket.bucket} --delete --cache-control "no-cache, no-store, must-revalidate" --metadata-directive REPLACE && \
       aws s3 sync build/data/ s3://${aws_s3_bucket.react_app_bucket.bucket}/data/ --cache-control "no-cache, no-store, must-revalidate, max-age=0" --metadata-directive REPLACE
     EOT
@@ -628,20 +628,20 @@ resource "aws_iam_role_policy" "excel_processor_lambda_policy" {
 resource "aws_lambda_function" "python_preprocessor" {
   function_name = "${var.app_name_react}-python-preprocessor"
   role         = aws_iam_role.excel_processor_lambda_role.arn
-  
+
   # Using container image
   package_type = "Image"
-  image_uri    = "585315265780.dkr.ecr.us-east-1.amazonaws.com/python-preprocessor:latest"
+  image_uri    = "585315265780.dkr.ecr.us-east-1.amazonaws.com/react-app-excel-processor:latest"
 
   timeout     = 300
   memory_size = 3008
 
   architectures = ["x86_64"]
-  
 
-  
 
-  
+
+
+
   tags = merge(
     var.tags,
     {

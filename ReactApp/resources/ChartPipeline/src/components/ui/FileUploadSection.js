@@ -21,7 +21,6 @@ import { DeleteIcon, DownloadIcon } from '@chakra-ui/icons';
 import { uploadFileToS3, deleteFileFromS3, listS3Objects, uploadApprovalRequest } from '../../utils/s3Utils';
 import { createProgressMonitor } from '../../utils/progressUtils';
 import ProcessingResultsView from './ProcessingResultsView';
-import ExcelConfigPanel from './ExcelConfigPanel';
 
 const FileUploadSection = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -32,9 +31,6 @@ const FileUploadSection = () => {
   const [processingMessage, setProcessingMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentFileId, setCurrentFileId] = useState(null);
-  const [errorDetails, setErrorDetails] = useState(null);
-  const [showConfigPanel, setShowConfigPanel] = useState(false);
-  const [pendingFile, setPendingFile] = useState(null);
   const progressMonitorRef = useRef(null);
   const toast = useToast();
 
@@ -86,74 +82,29 @@ const FileUploadSection = () => {
     setUploading(false);
     
     if (successfulUploads.length > 0) {
-      const firstFile = successfulUploads[0];
-      const isExcel = firstFile.name.toLowerCase().endsWith('.xlsx') || firstFile.name.toLowerCase().endsWith('.xlsm');
-      
-      if (isExcel) {
-        // Show configuration panel for Excel files
-        setPendingFile(firstFile);
-        setShowConfigPanel(true);
-        toast({
-          title: "Excel file uploaded",
-          description: "Configure processing parameters before continuing",
-          status: "info",
-          duration: 3000
-        });
-      } else {
-        // Process CSV files immediately
-        startFileProcessing(firstFile);
-      }
-    }
-  }, [toast]);
-
-  const startFileProcessing = useCallback((file, config = null) => {
-    const fileId = file.name.split('.')[0];
-    
-    // Upload configuration if provided
-    if (config) {
-      const configKey = `processing-config/${fileId}.json`;
-      uploadApprovalRequest(configKey, config).catch(error => {
-        console.error('Failed to upload config:', error);
+      toast({
+        title: "Files uploaded to S3",
+        description: `${successfulUploads.length} file(s) uploaded. Processing started...`,
+        status: "success",
+        duration: 5000
       });
+      
+      // Start progress tracking - use filename without extension to match Lambda
+      const fileId = successfulUploads[0].name.split('.')[0];
+      setCurrentFileId(fileId);
+      setIsProcessing(true);
+      setProcessingProgress(0);
+      setProcessingMessage('Processing started...');
+      
+      console.log('🚀 Starting processing pipeline:', {
+        files: successfulUploads.map(f => f.name),
+        fileId: fileId
+      });
+      
+      // Start progress monitoring
+      startProgressMonitoring(fileId);
     }
-    
-    setCurrentFileId(fileId);
-    setIsProcessing(true);
-    setProcessingProgress(0);
-    setProcessingMessage('Processing started...');
-    
-    toast({
-      title: "Processing started",
-      description: config ? "Using custom configuration" : "Using default settings",
-      status: "success",
-      duration: 3000
-    });
-    
-    console.log('🚀 Starting processing pipeline:', {
-      fileName: file.name,
-      fileId: fileId,
-      config: config
-    });
-    
-    startProgressMonitoring(fileId);
   }, [toast]);
-
-  const handleConfigSave = useCallback((config) => {
-    if (pendingFile) {
-      startFileProcessing(pendingFile, config);
-      setShowConfigPanel(false);
-      setPendingFile(null);
-    }
-  }, [pendingFile, startFileProcessing]);
-
-  const handleConfigCancel = useCallback(() => {
-    if (pendingFile) {
-      // Remove the uploaded file since user cancelled configuration
-      removeFile(pendingFile.id);
-    }
-    setShowConfigPanel(false);
-    setPendingFile(null);
-  }, [pendingFile]);
 
   const removeFile = useCallback(async (fileId) => {
     const file = uploadedFiles.find(f => f.id === fileId);
@@ -200,11 +151,9 @@ const FileUploadSection = () => {
         console.log('📊 Progress update:', progressData);
         setProcessingProgress(progressData.progress);
         setProcessingMessage(progressData.message);
-        setErrorDetails(progressData.error_details);
         
         if (progressData.progress >= 100) {
           setIsProcessing(false);
-          setErrorDetails(null);
           toast({
             title: "Processing Complete",
             description: "File processing completed successfully!",
@@ -224,7 +173,7 @@ const FileUploadSection = () => {
             title: "Processing Error",
             description: progressData.message,
             status: "error",
-            duration: 8000
+            duration: 5000
           });
         }
       },
@@ -252,7 +201,6 @@ const FileUploadSection = () => {
   useEffect(() => {
     return () => {
       setIsProcessing(false);
-      setErrorDetails(null);
       if (progressMonitorRef.current) {
         progressMonitorRef.current.stop();
       }
@@ -380,16 +328,6 @@ const FileUploadSection = () => {
     return 'gray';
   };
 
-  if (showConfigPanel && pendingFile) {
-    return (
-      <ExcelConfigPanel
-        fileName={pendingFile.name}
-        onConfigSave={handleConfigSave}
-        onCancel={handleConfigCancel}
-      />
-    );
-  }
-
   if (showResults && processingResultKey) {
     return (
       <ProcessingResultsView
@@ -407,44 +345,22 @@ const FileUploadSection = () => {
         
         {/* Processing Progress */}
         {isProcessing && (
-          <Alert status={processingProgress < 0 ? "error" : "info"} borderRadius="md">
+          <Alert status="info" borderRadius="md">
             <AlertIcon />
             <Box flex="1">
-              <AlertTitle>{processingProgress < 0 ? "Processing Error" : "Processing File..."}</AlertTitle>
+              <AlertTitle>Processing File...</AlertTitle>
               <AlertDescription>
                 <VStack align="stretch" spacing={2} mt={2}>
                   <Text fontSize="sm">{processingMessage}</Text>
-                  {processingProgress >= 0 && (
-                    <>
-                      <Progress 
-                        value={processingProgress} 
-                        colorScheme="blue" 
-                        size="lg" 
-                        borderRadius="md"
-                      />
-                      <Text fontSize="xs" color="gray.600">
-                        {processingProgress}% complete
-                      </Text>
-                    </>
-                  )}
-                  {errorDetails && (
-                    <Box mt={3} p={3} bg="red.50" borderRadius="md" borderWidth="1px" borderColor="red.200">
-                      <Text fontSize="sm" fontWeight="semibold" color="red.700" mb={2}>
-                        Error Details:
-                      </Text>
-                      <Text fontSize="xs" color="red.600" mb={1}>
-                        Type: {errorDetails.error_type}
-                      </Text>
-                      <Text fontSize="xs" color="red.600" fontFamily="mono">
-                        {errorDetails.details}
-                      </Text>
-                      {errorDetails.columns && (
-                        <Text fontSize="xs" color="red.600" mt={1}>
-                          Columns: {errorDetails.columns.join(', ')}
-                        </Text>
-                      )}
-                    </Box>
-                  )}
+                  <Progress 
+                    value={processingProgress} 
+                    colorScheme="blue" 
+                    size="lg" 
+                    borderRadius="md"
+                  />
+                  <Text fontSize="xs" color="gray.600">
+                    {processingProgress}% complete
+                  </Text>
                 </VStack>
               </AlertDescription>
             </Box>
