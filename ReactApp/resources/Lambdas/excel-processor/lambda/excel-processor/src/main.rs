@@ -67,7 +67,31 @@ async fn function_handler(
         if sheet_name == "ssm" {
             let csv_key = format!("processedRust/{}_{}.csv", file_id, sheet_name);
             save_csv_to_s3(s3_client, df, bucket, &csv_key).await?;
-            parquet_keys.push(csv_key);
+            parquet_keys.push(csv_key.clone());
+            
+            // Copy ssm.csv to data/ folder like Python
+            let data_csv_key = "data/ssm.csv";
+            s3_client.copy_object()
+                .copy_source(format!("{}/{}", bucket, csv_key))
+                .bucket(bucket)
+                .key(data_csv_key)
+                .send()
+                .await
+                .map_err(|e| format!("Failed to copy SSM CSV: {}", e))?;
+            info!("Copied SSM CSV to {}", data_csv_key);
+        }
+        
+        // Copy master_subsystem.parquet to data/ folder like Python
+        if sheet_name == "master_subsystem" {
+            let data_parquet_key = "data/master_subsystem.parquet";
+            s3_client.copy_object()
+                .copy_source(format!("{}/{}", bucket, parquet_key))
+                .bucket(bucket)
+                .key(data_parquet_key)
+                .send()
+                .await
+                .map_err(|e| format!("Failed to copy master_subsystem parquet: {}", e))?;
+            info!("Copied master_subsystem parquet to {}", data_parquet_key);
         }
         
         info!("✅ Processed sheet '{}' with {} rows and {} columns", 
@@ -332,11 +356,39 @@ fn rename_columns(mut df: DataFrame, new_names: Vec<String>) -> Result<DataFrame
 fn create_master_tables(processed_sheets: &HashMap<String, DataFrame>) -> HashMap<String, DataFrame> {
     let mut master_tables = HashMap::new();
     
-    // Create basic SSM table
+    // Check if we have the required sheets for master table creation like Python
+    let required_sheets = ["TEST_LOOP", "ISOS", "Tuberia", "TRAC_SIEMSA", "FIELD_CONTROL", "ISO_INST", "Punch_List"];
+    let available_sheets: Vec<&str> = required_sheets.iter()
+        .filter(|sheet| processed_sheets.contains_key(&sheet.to_string()))
+        .copied()
+        .collect();
+    
+    if available_sheets.len() >= 7 {
+        // Create master subsystem table by joining all sheets like Python
+        if let Some(base_df) = processed_sheets.get("TEST_LOOP") {
+            let mut master_df = base_df.clone();
+            
+            // Join with other sheets on subsystem and record
+            for sheet_name in ["ISOS", "Tuberia", "TRAC_SIEMSA", "FIELD_CONTROL", "ISO_INST", "Punch_List"] {
+                if let Some(sheet_df) = processed_sheets.get(sheet_name) {
+                    if let Ok(joined) = master_df.join(
+                        sheet_df,
+                        ["subsystem", "record"],
+                        ["subsystem", "record"],
+                        JoinArgs::new(JoinType::Left)
+                    ) {
+                        master_df = joined;
+                    }
+                }
+            }
+            
+            master_tables.insert("master_subsystem".to_string(), master_df);
+        }
+    }
+    
+    // Create basic SSM table like Python
     if let Some(subsystems_df) = processed_sheets.get("Subsystems") {
-        let ssm_df = subsystems_df.clone()
-            .select(["subsystem"])
-            .unwrap_or_else(|_| subsystems_df.clone());
+        let ssm_df = subsystems_df.clone();
         master_tables.insert("ssm".to_string(), ssm_df);
     }
     
