@@ -250,7 +250,7 @@ fn apply_column_transformations(mut df: DataFrame, sheet_name: &str) -> Result<D
             let new_columns: Vec<String> = df.get_column_names()
                 .iter()
                 .map(|name| {
-                    let clean_name = if name.as_str() == "SUBS_PRE" { "SUBSYSTEM" } else { name.as_str() };
+                    let clean_name = if name == "SUBS_PRE" { "SUBSYSTEM" } else { name };
                     if clean_name == "SUBSYSTEM" {
                         clean_name.to_string()
                     } else {
@@ -273,7 +273,7 @@ fn apply_column_transformations(mut df: DataFrame, sheet_name: &str) -> Result<D
             let new_columns: Vec<String> = df.get_column_names()
                 .iter()
                 .map(|name| {
-                    if name.as_str() == "SUBSYSTEM" {
+                    if name == "SUBSYSTEM" {
                         name.to_string()
                     } else {
                         format!("{}_ISOS", name)
@@ -287,7 +287,7 @@ fn apply_column_transformations(mut df: DataFrame, sheet_name: &str) -> Result<D
             let new_columns: Vec<String> = df.get_column_names()
                 .iter()
                 .map(|name| {
-                    let clean_name = if name.as_str() == "SUBSISTEMA" { "SUBSYSTEM" } else { name.as_str() };
+                    let clean_name = if name == "SUBSISTEMA" { "SUBSYSTEM" } else { name };
                     if clean_name == "SUBSYSTEM" {
                         clean_name.to_string()
                     } else {
@@ -322,7 +322,7 @@ fn rename_columns(mut df: DataFrame, new_names: Vec<String>) -> Result<DataFrame
     
     for (old, new) in old_names.iter().zip(new_names.iter()) {
         if old != new {
-            df.rename(old, new.clone().into())?;
+            df.rename(old, new.clone())?;
         }
     }
     
@@ -335,7 +335,7 @@ fn create_master_tables(processed_sheets: &HashMap<String, DataFrame>) -> HashMa
     // Create basic SSM table
     if let Some(subsystems_df) = processed_sheets.get("Subsystems") {
         let ssm_df = subsystems_df.clone()
-            .select(["subsystem"])
+            .select([col("subsystem")])
             .unwrap_or_else(|_| subsystems_df.clone());
         master_tables.insert("ssm".to_string(), ssm_df);
     }
@@ -355,7 +355,7 @@ async fn save_csv_to_s3(
         .map_err(|e| format!("Failed to create temp CSV file: {}", e))?;
     
     CsvWriter::new(&mut file)
-        .finish(&mut df.clone())
+        .finish(df)
         .map_err(|e| format!("Failed to write CSV: {}", e))?;
     
     let data = std::fs::read(&temp_path)
