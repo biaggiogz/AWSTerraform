@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use tracing::info;
 use calamine::{Range, Data, Reader, Xlsx, open_workbook_from_rs};
 use std::io::Cursor;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 struct EventBridgeEvent {
@@ -52,7 +53,9 @@ async fn function_handler(
     
     // Create master tables like Python version
     let master_tables = create_master_tables(&processed_sheets);
+    info!("Created {} master tables", master_tables.len());
     for (name, df) in master_tables {
+        info!("Adding master table: {} with {} rows", name, df.height());
         processed_sheets.insert(name, df);
     }
     
@@ -145,61 +148,61 @@ fn process_excel_with_inference(excel_data: &[u8]) -> Result<HashMap<String, Dat
 
 fn process_test_loop_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 11, Some((1, 21)))?;
-    let mut df = apply_column_transformations(df, "TEST_LOOP")?;
+    let df = apply_column_transformations(df, "TEST_LOOP")?;
     Ok(Some(df))
 }
 
 fn process_tp_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 4, Some((1, 44)))?;
-    let mut df = apply_column_transformations(df, "TP")?;
+    let df = apply_column_transformations(df, "TP")?;
     Ok(Some(df))
 }
 
 fn process_general_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 3, None)?;
-    let mut df = apply_column_transformations(df, "general")?;
+    let df = apply_column_transformations(df, "general")?;
     Ok(Some(df))
 }
 
 fn process_subsystems_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 0, None)?;
-    let mut df = apply_column_transformations(df, "Subsystems")?;
+    let df = apply_column_transformations(df, "Subsystems")?;
     Ok(Some(df))
 }
 
 fn process_isos_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 1, Some((0, 37)))?;
-    let mut df = apply_column_transformations(df, "ISOS")?;
+    let df = apply_column_transformations(df, "ISOS")?;
     Ok(Some(df))
 }
 
 fn process_insulation_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 8, Some((0, 54)))?;
-    let mut df = apply_column_transformations(df, "Tuberia")?;
+    let df = apply_column_transformations(df, "Tuberia")?;
     Ok(Some(df))
 }
 
 fn process_tracing_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 7, Some((1, 32)))?;
-    let mut df = apply_column_transformations(df, "TRAC_SIEMSA")?;
+    let df = apply_column_transformations(df, "TRAC_SIEMSA")?;
     Ok(Some(df))
 }
 
 fn process_field_control_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 4, Some((0, 61)))?;
-    let mut df = apply_column_transformations(df, "FIELD_CONTROL")?;
+    let df = apply_column_transformations(df, "FIELD_CONTROL")?;
     Ok(Some(df))
 }
 
 fn process_iso_inst_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 4, Some((0, 35)))?;
-    let mut df = apply_column_transformations(df, "ISO_INST")?;
+    let df = apply_column_transformations(df, "ISO_INST")?;
     Ok(Some(df))
 }
 
 fn process_punch_list_sheet(range: &Range<Data>) -> Result<Option<DataFrame>, PolarsError> {
     let df = range_to_dataframe(range, 5, Some((1, 22)))?;
-    let mut df = apply_column_transformations(df, "Punch_List")?;
+    let df = apply_column_transformations(df, "Punch_List")?;
     Ok(Some(df))
 }
 
@@ -266,8 +269,10 @@ fn range_to_dataframe(
     DataFrame::new(df_columns)
 }
 
-fn apply_column_transformations(mut df: DataFrame, sheet_name: &str) -> Result<DataFrame, PolarsError> {
-    // Apply Python-like transformations
+fn apply_column_transformations(df: DataFrame, sheet_name: &str) -> Result<DataFrame, PolarsError> {
+    // Apply basic cleaning first
+    let df = format_dataframe_columns(df)?;
+    
     match sheet_name {
         "TEST_LOOP" => {
             // Rename SUBS_PRE to SUBSYSTEM and add _TLP suffix
@@ -282,7 +287,10 @@ fn apply_column_transformations(mut df: DataFrame, sheet_name: &str) -> Result<D
                     }
                 })
                 .collect();
-            df = rename_columns(df, new_columns)?;
+            
+            let mut result_df = rename_columns(df, new_columns)?;
+            result_df = add_record_column(result_df, "SUBSYSTEM")?;
+            return Ok(result_df);
         }
         "TP" => {
             // Add _TP suffix to all columns
@@ -290,24 +298,101 @@ fn apply_column_transformations(mut df: DataFrame, sheet_name: &str) -> Result<D
                 .iter()
                 .map(|name| format!("{}_TP", name))
                 .collect();
-            df = rename_columns(df, new_columns)?;
+            return rename_columns(df, new_columns);
         }
         "ISOS" => {
-            // Add _ISOS suffix except SUBSYSTEM
+            let new_columns: Vec<String> = df.get_column_names()
+                .iter()
+                .map(|name| {
+                    let clean_name = if name.as_str() == "SUBSYSTEM_2" { "SUBSYSTEMv2" } else { name.as_str() };
+                    if clean_name == "SUBSYSTEM" {
+                        clean_name.to_string()
+                    } else {
+                        format!("{}_ISOS", clean_name)
+                    }
+                })
+                .collect();
+            
+            let mut result_df = rename_columns(df, new_columns)?;
+            result_df = add_record_column(result_df, "SUBSYSTEM")?;
+            return Ok(result_df);
+        }
+        "Tuberia" => {
+            let new_columns: Vec<String> = df.get_column_names()
+                .iter()
+                .map(|name| {
+                    let clean_name = match name.as_str() {
+                        "SUBSYSTEM_2" => "SUBSYSTEMv2",
+                        "SUBSYTEM" => "SUBSYSTEM",
+                        _ => name.as_str()
+                    };
+                    if clean_name == "SUBSYSTEM" {
+                        clean_name.to_string()
+                    } else {
+                        format!("{}_INSULATION", clean_name)
+                    }
+                })
+                .collect();
+            
+            let mut result_df = rename_columns(df, new_columns)?;
+            result_df = add_record_column(result_df, "SUBSYSTEM")?;
+            return Ok(result_df);
+        }
+        "TRAC_SIEMSA" => {
             let new_columns: Vec<String> = df.get_column_names()
                 .iter()
                 .map(|name| {
                     if name.as_str() == "SUBSYSTEM" {
                         name.to_string()
                     } else {
-                        format!("{}_ISOS", name)
+                        format!("{}_TRACING", name)
                     }
                 })
                 .collect();
-            df = rename_columns(df, new_columns)?;
+            
+            let mut result_df = rename_columns(df, new_columns)?;
+            if result_df.get_column_names().iter().any(|name| name.as_str() == "SUBSYSTEM") {
+                result_df = result_df.filter(&result_df.column("SUBSYSTEM")?.is_not_null())?;
+            }
+            result_df = add_record_column(result_df, "SUBSYSTEM")?;
+            return Ok(result_df);
+        }
+        "FIELD_CONTROL" => {
+            let new_columns: Vec<String> = df.get_column_names()
+                .iter()
+                .map(|name| {
+                    if name.as_str() == "SUBSYSTEM" {
+                        name.to_string()
+                    } else {
+                        format!("{}_FC", name)
+                    }
+                })
+                .collect();
+            
+            let mut result_df = rename_columns(df, new_columns)?;
+            if result_df.get_column_names().iter().any(|name| name.as_str() == "SUBSYSTEM") {
+                result_df = result_df.filter(&result_df.column("SUBSYSTEM")?.is_not_null())?;
+            }
+            result_df = add_record_column(result_df, "SUBSYSTEM")?;
+            return Ok(result_df);
+        }
+        "ISO_INST" => {
+            let new_columns: Vec<String> = df.get_column_names()
+                .iter()
+                .map(|name| {
+                    if name.as_str() == "SUBSYSTEM" {
+                        name.to_string()
+                    } else {
+                        format!("{}_ISOINST", name)
+                    }
+                })
+                .collect();
+            
+            let mut result_df = rename_columns(df, new_columns)?;
+            result_df = add_record_column(result_df, "SUBSYSTEM")?;
+            return Ok(result_df);
         }
         "Punch_List" => {
-            // Rename SUBSISTEMA to SUBSYSTEM and add _PUNCH_L suffix
             let new_columns: Vec<String> = df.get_column_names()
                 .iter()
                 .map(|name| {
@@ -319,12 +404,18 @@ fn apply_column_transformations(mut df: DataFrame, sheet_name: &str) -> Result<D
                     }
                 })
                 .collect();
-            df = rename_columns(df, new_columns)?;
+            
+            let mut result_df = rename_columns(df, new_columns)?;
+            if result_df.get_column_names().iter().any(|name| name.as_str() == "SUBSYSTEM") {
+                result_df = result_df.filter(&result_df.column("SUBSYSTEM")?.is_not_null())?;
+            }
+            result_df = add_record_column(result_df, "subsystem")?;
+            return Ok(result_df);
         }
         _ => {}
     }
     
-    // Normalize column names like Python
+    // Normalize column names
     let normalized_columns: Vec<String> = df.get_column_names()
         .iter()
         .map(|name| {
@@ -337,8 +428,24 @@ fn apply_column_transformations(mut df: DataFrame, sheet_name: &str) -> Result<D
         })
         .collect();
     
-    df = rename_columns(df, normalized_columns)?;
+    rename_columns(df, normalized_columns)
+}
+
+fn format_dataframe_columns(df: DataFrame) -> Result<DataFrame, PolarsError> {
+    // Apply basic cleaning - simplified version
     Ok(df)
+}
+
+fn add_record_column(mut df: DataFrame, groupby_col: &str) -> Result<DataFrame, PolarsError> {
+    // Add record numbering - simplified version
+    if df.get_column_names().iter().any(|name| name.as_str() == groupby_col) {
+        // Add a simple record column with row numbers
+        let record_values: Vec<i32> = (1..=df.height() as i32).collect();
+        let record_series = Series::new("record".into(), record_values);
+        Ok(df.with_column(record_series)?.clone())
+    } else {
+        Ok(df)
+    }
 }
 
 fn rename_columns(mut df: DataFrame, new_names: Vec<String>) -> Result<DataFrame, PolarsError> {
@@ -356,6 +463,8 @@ fn rename_columns(mut df: DataFrame, new_names: Vec<String>) -> Result<DataFrame
 fn create_master_tables(processed_sheets: &HashMap<String, DataFrame>) -> HashMap<String, DataFrame> {
     let mut master_tables = HashMap::new();
     
+    info!("Available sheets: {:?}", processed_sheets.keys().collect::<Vec<_>>());
+    
     // Check if we have the required sheets for master table creation like Python
     let required_sheets = ["TEST_LOOP", "ISOS", "Tuberia", "TRAC_SIEMSA", "FIELD_CONTROL", "ISO_INST", "Punch_List"];
     let available_sheets: Vec<&str> = required_sheets.iter()
@@ -363,36 +472,118 @@ fn create_master_tables(processed_sheets: &HashMap<String, DataFrame>) -> HashMa
         .copied()
         .collect();
     
+    info!("Available required sheets: {:?} (need 7, have {})", available_sheets, available_sheets.len());
+    
+    // Create master_subsystem if we have enough sheets
     if available_sheets.len() >= 7 {
-        // Create master subsystem table by joining all sheets like Python
-        if let Some(base_df) = processed_sheets.get("TEST_LOOP") {
-            let mut master_df = base_df.clone();
+        info!("Creating master_subsystem table");
+        
+        let sheets_to_join = ["TEST_LOOP", "ISOS", "Tuberia", "TRAC_SIEMSA", "FIELD_CONTROL", "ISO_INST", "Punch_List"];
+        let dfs: Vec<&DataFrame> = sheets_to_join.iter()
+            .filter_map(|name| processed_sheets.get(&name.to_string()))
+            .collect();
+        
+        if dfs.len() == 7 {
+            if let Ok(master_df) = create_table_master(&dfs) {
+                master_tables.insert("master_subsystem".to_string(), master_df.clone());
+                
+                // Create SSM table from master_subsystem like Python
+                if let Ok(ssm_df) = create_ssm_table(&master_df) {
+                    master_tables.insert("ssm".to_string(), ssm_df);
+                }
+            }
+        }
+    } else {
+        info!("Not enough sheets for master_subsystem table");
+        
+        // Create SSM table from Subsystems sheet if available
+        if let Some(subsystems_df) = processed_sheets.get("Subsystems") {
+            info!("Creating SSM table from Subsystems sheet");
+            let ssm_df = subsystems_df.clone();
+            master_tables.insert("ssm".to_string(), ssm_df);
+        }
+    }
+    
+    master_tables
+}
+
+fn create_table_master(dfs: &[&DataFrame]) -> Result<DataFrame, PolarsError> {
+    if dfs.is_empty() {
+        return Err(PolarsError::ComputeError("No DataFrames provided".into()));
+    }
+    
+    // Start with the first DataFrame
+    let mut result = dfs[0].clone();
+    
+    // Join with remaining DataFrames
+    for df in &dfs[1..] {
+        if let Ok(joined) = result.join(
+            df,
+            ["subsystem", "record"],
+            ["subsystem", "record"],
+            JoinArgs::new(JoinType::Left)
+        ) {
+            result = joined;
+        } else {
+            // If join fails, try with full join
+            if let Ok(joined) = result.join(
+                df,
+                ["subsystem", "record"],
+                ["subsystem", "record"],
+                JoinArgs::new(JoinType::Full)
+            ) {
+                result = joined;
+            }
+        }
+    }
+    
+    // Sort by subsystem and record if columns exist
+    if result.get_column_names().iter().any(|name| name.as_str() == "subsystem") &&
+       result.get_column_names().iter().any(|name| name.as_str() == "record") {
+        result = result.sort(["subsystem", "record"], SortMultipleOptions::default())?;
+    }
+    
+    Ok(result)
+}
+
+fn create_ssm_table(master_df: &DataFrame) -> Result<DataFrame, PolarsError> {
+    // Create SSM analysis table like Python version - simplified
+    if let Ok(subsystem_col) = master_df.column("subsystem") {
+        if let Ok(unique_subsystems) = subsystem_col.unique() {
+            let mut subsystems = Vec::new();
+            let mut counts = Vec::new();
+            let mut descriptions = Vec::new();
             
-            // Join with other sheets on subsystem and record
-            for sheet_name in ["ISOS", "Tuberia", "TRAC_SIEMSA", "FIELD_CONTROL", "ISO_INST", "Punch_List"] {
-                if let Some(sheet_df) = processed_sheets.get(sheet_name) {
-                    if let Ok(joined) = master_df.join(
-                        sheet_df,
-                        ["subsystem", "record"],
-                        ["subsystem", "record"],
-                        JoinArgs::new(JoinType::Left)
-                    ) {
-                        master_df = joined;
+            // Extract unique subsystems
+            if let Ok(str_col) = unique_subsystems.str() {
+                for opt_val in str_col.into_iter() {
+                    if let Some(subsystem) = opt_val {
+                        // Count records for this subsystem
+                        if let Ok(filtered) = master_df.filter(
+                            &master_df.column("subsystem")?.str()?.contains(subsystem, false)?
+                        ) {
+                            subsystems.push(subsystem.to_string());
+                            counts.push(filtered.height() as i32);
+                            descriptions.push(format!("Analysis for {}", subsystem));
+                        }
                     }
                 }
             }
             
-            master_tables.insert("master_subsystem".to_string(), master_df);
+            return df! {
+                "subsystem" => subsystems,
+                "record_count" => counts,
+                "description" => descriptions,
+            };
         }
     }
     
-    // Create basic SSM table like Python
-    if let Some(subsystems_df) = processed_sheets.get("Subsystems") {
-        let ssm_df = subsystems_df.clone();
-        master_tables.insert("ssm".to_string(), ssm_df);
+    // Fallback: return empty DataFrame with correct schema
+    df! {
+        "subsystem" => Vec::<String>::new(),
+        "record_count" => Vec::<i32>::new(),
+        "description" => Vec::<String>::new(),
     }
-    
-    master_tables
 }
 
 async fn save_csv_to_s3(
@@ -401,7 +592,7 @@ async fn save_csv_to_s3(
     bucket: &str,
     key: &str,
 ) -> Result<(), Error> {
-    let temp_path = format!("/tmp/{}.csv", uuid::Uuid::new_v4());
+    let temp_path = format!("/tmp/{}.csv", Uuid::new_v4());
     
     let mut file = std::fs::File::create(&temp_path)
         .map_err(|e| format!("Failed to create temp CSV file: {}", e))?;
@@ -457,7 +648,7 @@ async fn save_parquet_to_s3(
     bucket: &str,
     key: &str,
 ) -> Result<(), Error> {
-    let temp_path = format!("/tmp/{}.parquet", uuid::Uuid::new_v4());
+    let temp_path = format!("/tmp/{}.parquet", Uuid::new_v4());
     
     let mut file = std::fs::File::create(&temp_path)
         .map_err(|e| format!("Failed to create temp file: {}", e))?;
